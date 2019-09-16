@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Example API written using the JAQU-CAZ archetype
+
+Globals:
+  Api:
+    # API Gateway regional endpoints
+    EndpointConfiguration: REGIONAL
+
+Resources:
+  JaquCazFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: uk.gov.caz.psr.amazonaws.StreamLambdaHandler::handleRequest
+      Runtime: java8
+      CodeUri: target/payment-service-1.0-SNAPSHOT-lambda-package.zip
+      MemorySize: 1512
+      Policies: AWSLambdaBasicExecutionRole
+      Timeout: 60
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: any
+      Environment:
+        Variables:
+          SPRING_PROFILES_ACTIVE: default
+
+Outputs:
+  SpringBootJaquCazApi:
+    Description: URL for application
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/entities'
+    Export:
+      Name: SpringBootJaquCazApi

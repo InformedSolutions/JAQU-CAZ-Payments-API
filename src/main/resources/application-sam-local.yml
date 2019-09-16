@@ -1,0 +1,6 @@
+# This profile is used when running AWS SAM Local tool - simulated, local/docker AWS Lambda environment.
+# Running 'make sam-local-run' sets Spring profile to 'sam-local' and runs SAM Local tool using sam.yaml template.
+# AWS_SAM_LOCAL=true environment variable is set in this profile so you can customize setting up AWS services.
+---
+spring:
+  profiles: sam-local
