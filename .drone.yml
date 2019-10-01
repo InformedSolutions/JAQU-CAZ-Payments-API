@@ -112,7 +112,6 @@ steps:
     commands:
       - mvn package -DskipUnitTests
 
-
   # Integration test - run after sonar scan to leave test reports unaffected.
   - name: integration test
     image: payments-api-base
@@ -180,7 +179,7 @@ steps:
       event:
         exclude:
           - pull_request
-      branch: develop
+      branch: feature/CAZ-1172/drone-pipeline
 
 volumes:
 
@@ -197,7 +196,7 @@ volumes:
 # Triggers
 trigger:
   branch:
-    - develop
+    - feature/CAZ-1172/drone-pipeline
     - release/*
   event:
     - pull_request
