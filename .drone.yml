@@ -112,6 +112,7 @@ steps:
     commands:
       - mvn package -DskipUnitTests
 
+
   # Integration test - run after sonar scan to leave test reports unaffected.
   - name: integration test
     image: payments-api-base
