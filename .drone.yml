@@ -75,6 +75,7 @@ steps:
         path: /root/.m2
     commands:
       - mvn test -P jacoco
+
   # Scan with sonar
   - name: sonar scan
     image: payments-api-base
