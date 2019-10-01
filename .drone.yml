@@ -182,7 +182,6 @@ steps:
       branch: feature/CAZ-1172/drone-pipeline
 
 volumes:
-
   - name: docker_sock
     host:
       path: /var/run/docker.sock
