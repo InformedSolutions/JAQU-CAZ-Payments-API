@@ -1,8 +1,5 @@
 package uk.gov.caz.psr.amazonaws;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import com.amazonaws.serverless.exceptions.ContainerInitializationException;
 import com.amazonaws.serverless.proxy.model.AwsProxyRequest;
 import com.amazonaws.serverless.proxy.model.AwsProxyResponse;
@@ -10,6 +7,9 @@ import com.amazonaws.serverless.proxy.spring.SpringBootLambdaContainerHandler;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.google.common.base.Splitter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import uk.gov.caz.psr.Application;
 
 public class StreamLambdaHandler implements RequestStreamHandler {
