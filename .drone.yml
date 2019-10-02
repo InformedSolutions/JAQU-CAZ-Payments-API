@@ -123,7 +123,7 @@ steps:
         path: /root/.m2
     environment:
       BUILD_ID: ${DRONE_BUILD_NUMBER}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/caz_vcc
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/caz_payments
       AWS_REGION: eu-west-2
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
