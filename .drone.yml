@@ -148,7 +148,6 @@ steps:
       - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
       - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
       - cd JAQU-CAZ-IAC
-      - git checkout feature/CAZ/Payments
       - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
       - cd terraform/projects/payments/layers/00.global
       - PATH=$PATH:../../../../bin/
@@ -179,7 +178,7 @@ steps:
       event:
         exclude:
           - pull_request
-      branch: feature/CAZ-1172/drone-pipeline
+      branch: develop
 
 volumes:
 
@@ -196,7 +195,7 @@ volumes:
 # Triggers
 trigger:
   branch:
-    - feature/CAZ-1172/drone-pipeline
+    - develop
     - release/*
   event:
     - pull_request
