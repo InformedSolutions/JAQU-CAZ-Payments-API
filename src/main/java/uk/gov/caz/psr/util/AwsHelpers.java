@@ -2,11 +2,15 @@ package uk.gov.caz.psr.util;
 
 public final class AwsHelpers {
 
+  private AwsHelpers() {
+
+  }
+
   /**
    * Determines if code is running locally using AWS SAM Local tool.
    *
-   * @return true if code is running in Lambda environment simulated locally by AWS SAM Local tool
-   *     (docker).
+   * @return true if code is running in Lambda environment simulated locally by
+   *         AWS SAM Local tool (docker).
    */
   public static boolean areWeRunningLocallyUsingSam() {
     return System.getenv("AWS_SAM_LOCAL") != null;
@@ -15,7 +19,8 @@ public final class AwsHelpers {
   /**
    * Returns value of AWS_ACCESS_KEY_ID environment variable (if set).
    *
-   * @return value of AWS_ACCESS_KEY_ID environment variable if set or null otherwise.
+   * @return value of AWS_ACCESS_KEY_ID environment variable if set or null
+   *         otherwise.
    */
   public static String getAwsAccessKeyFromEnvVar() {
     return System.getenv("AWS_ACCESS_KEY_ID");
