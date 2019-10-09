@@ -1,2 +1,8 @@
 application:
   title: Payment Microservice
+
+springfox:
+  documentation:
+    swagger:
+      v2:
+        path: /v1/swagger-docs

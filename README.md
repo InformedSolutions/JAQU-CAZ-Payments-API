@@ -122,4 +122,4 @@ $ make deploy-to-aws S3_BUCKET_NAME=name_of_your_bucket STACK_NAME=name_of_your_
 
 ## API specification
 
-API specification is available at `{server.host}:{server.port}/v2/api-docs` (locally usually at http://localhost:8080/v2/api-docs)
+API specification is available at `{server.host}:{server.port}/v1/swagger-docs`
