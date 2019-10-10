@@ -7,14 +7,14 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.Import;
 import uk.gov.caz.psr.configuration.RequestMappingConfiguration;
 import uk.gov.caz.psr.configuration.SwaggerConfiguration;
-import uk.gov.caz.psr.controller.ExampleController;
+import uk.gov.caz.psr.controller.ChargeSettlementController;
 
 @SpringBootConfiguration
 @EnableAutoConfiguration
 @Import({
     RequestMappingConfiguration.class,
     SwaggerConfiguration.class,
-    ExampleController.class
+    ChargeSettlementController.class
 })
 public class Application extends SpringBootServletInitializer {
 

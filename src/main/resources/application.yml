@@ -6,3 +6,37 @@ springfox:
     swagger:
       v2:
         path: /v1/swagger-docs
+
+swagger:
+  model:
+    descriptions:
+      payment-status:
+        payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
+        payment-id: GOV.UK Pay unique payment identifier
+        case-reference: A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
+      payment-info:
+        results: An array containig details about payments of queried VRNs
+        vrn: Vehicle registration number
+        payments: An array containing information about particular payments of the given VRN
+        payment-id: GOV.UK Pay unique payment identifier
+        payment-date: ISO 8601 formatted date string that specifies the date on which the payment was made via GOV.UK Pay
+        payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
+        case-reference: A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
+        charge-paid: The GBP value of the payment linked to the paymentId. If the motorist paid in advance to travel in to the CAZ on multiple dates, then the payment amount will be a multiple of the daily charge due (e.g. if the daily charge for a car entering a CAZ is £8.00, but the motorist paid in advance for 3 days of travel, then the chargePaid would be equal to £24.00). Expressed in pounds and pence format to 2 decimal places
+        travel-dates: Array containing ISO 8601 formatted date strings that specify the date(s) for which the vehicle has paid to travel in to the CAZ (identified by the x-api-key header parameter). All dates of travel associated with the payment will be returned.
+      payment-status-update:
+        vrn: Vehicle registration number
+        status-updates: An array containing details of separate payment which needs to be updated
+        date-caz-entry: SO 8601 formatted date string. Used in combination with the vrn attribute to uniquely identify a payment whose status requires updating
+        payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
+        case-reference: A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
+        payment-id: GOV.UK Pay unique payment identifier returned by the payment-status GET method
+
+  operations:
+    charge-settlement:
+      payment-status-update:
+        description: Allows Local Authorities to update the status of one or more paid CAZ charges to reflect any action that is being taken with the payment (e.g. such as the processing of a refund or chargeback)
+      payment-status:
+        description: Allows LAs to query and retrieve data that enables them to determine whether a vehicle that has entered their CAZ (a 'vehicle entrant') has paid the charge that they are liable for in order to determine whether enforcement action is required
+      payment-info:
+        description: Allows LAs to query and retrieve data about a payment that has been made via GOV.UK Pay in relation to a vehicle that has entered their CAZ (a 'vehicle entrant')

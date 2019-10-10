@@ -287,6 +287,10 @@
               <goal>cpd-check</goal>
               <goal>pmd</goal> <!-- to generate the report during the build -->
             </goals>
+
+            <configuration>
+              <excludeFromFailureFile>src${file.separator}main${file.separator}resources${file.separator}exclude-cpd.properties</excludeFromFailureFile>
+            </configuration>
           </execution>
         </executions>
       </plugin>
