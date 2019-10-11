@@ -1,10 +1,49 @@
+  ################################################### YAML Anchors ########################################################
+
+  # Note that these are used when common environment variables are present in a step to reduce repetition - see terraform steps
+
+global-variables:
+  environment: &shared_terraform_credentials
+    TF_VAR_access_key:
+      from_secret: aws_access_key_id
+    TF_VAR_secret_key:
+      from_secret: aws_secret_access_key
+    TF_VAR_account_id:
+      from_secret: aws_account_id
+    GIT_PRIVATE_SSH:
+      from_secret: github_private_key
+
+  ################################################# End YAML Anchors ########################################################
+
+
+
 kind: pipeline
+type: docker
 name: default
 
-platform:
-  os: linux
-  arch: amd64
+trigger:
+  branch:
+    - develop
+    - release/*
+    - staging
+    - master
+  event:
+    - pull_request
+    - push
+concurrency:
+  limit: 1
 
+volumes:
+  - name: docker_sock
+    host:
+      path: /var/run/docker.sock
+
+  - name: package_directory
+    temp: {}
+
+  - name: m2_repo
+    temp: {}
+    
 services:
   - name: postgres
     image: postgres:11-alpine
@@ -16,6 +55,9 @@ services:
       - 5432
 
 steps:
+
+    ################################################### DEV/SIT Steps ########################################################
+
   # Clean agent images and containers to prevent disk space overuse
   - name: clean agent
     image: docker
@@ -24,24 +66,6 @@ steps:
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
-
-  # Prepare configuration for Maven and Nexus
-  - name: prepare maven and nexus config
-    image: alpine
-    commands:
-      - sed -i 's|${env.JAQU_NEXUS_URL}|'"$JAQU_NEXUS_URL"'|g' ci-cd-resources/settings.ci.xml.template
-      - sed -i 's|${env.JAQU_NEXUS_USER}|'"$JAQU_NEXUS_USER"'|g' ci-cd-resources/settings.ci.xml.template
-      - sed -i 's|${env.JAQU_NEXUS_PASSWORD}|'"$JAQU_NEXUS_PASSWORD"'|g' ci-cd-resources/settings.ci.xml.template
-    volumes:
-      - name: docker_sock
-        path: /var/run/docker.sock
-    environment:
-      JAQU_NEXUS_URL:
-        from_secret: nexus_url
-      JAQU_NEXUS_USER:
-        from_secret: nexus_username
-      JAQU_NEXUS_PASSWORD:
-        from_secret: nexus_password
 
   # Build docker images
   - name: build docker maven base
@@ -63,6 +87,17 @@ steps:
         path: /root/.m2
     commands:
       - mvn test -P cucumber-tests
+    environment:
+      JAQU_NEXUS_URL:
+        from_secret: nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: nexus_password
+    when:
+      branch: 
+        - develop
+        - release/*
 
   # Unit test
   - name: unit test
@@ -75,28 +110,17 @@ steps:
         path: /root/.m2
     commands:
       - mvn test -P jacoco
-
-  # Scan with sonar
-  - name: sonar scan
-    image: payments-api-base
-    volumes:
-      - name: package_directory
-        path: /drone/src/target
-      - name: m2_repo
-        path: /root/.m2
     environment:
-      sonar_host:
-        from_secret: sonar_host
-      sonar_token:
-        from_secret: sonar_token
-    pull: never
-    commands:
-      - mvn sonar:sonar -Dsonar.host.url=$sonar_host
-        -Dsonar.projectKey=${DRONE_REPO}
-        -Dsonar.projectName=${DRONE_REPO}
-        -Dsonar.login=$sonar_token
-        -Dsonar.coverage.jacoco.xmlReportPaths=/drone/src/target/site/jacoco-aggregate/jacoco.xml
-        -Dsonar.tests=src/test/java,src/it/java --no-transfer-progress
+      JAQU_NEXUS_URL:
+        from_secret: nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: nexus_password
+    when:
+      branch: 
+        - develop
+        - release/*
 
   # Package
   - name: package
@@ -107,10 +131,61 @@ steps:
       - name: m2_repo
         path: /root/.m2
     environment:
+      JAQU_NEXUS_URL:
+        from_secret: nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: nexus_password
       BUILD_ID: ${DRONE_BUILD_NUMBER}
     pull: never
     commands:
       - mvn package -DskipUnitTests
+    when:
+      branch: 
+        - develop
+        - release/*
+
+  ################################################### End Dev/SIT Steps #######################################################
+  
+  
+  
+  
+  
+  
+  
+  ################################################### Development Only #######################################################
+
+  # Scan with sonar
+  - name: sonar scan
+    image: vccs-api-base
+    volumes:
+      - name: package_directory
+        path: /drone/src/target
+      - name: m2_repo
+        path: /root/.m2
+    environment:
+      JAQU_NEXUS_URL:
+        from_secret: nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: nexus_password
+      SONAR_HOST:
+        from_secret: sonar_host
+      SONAR_TOKEN:
+        from_secret: sonar_token
+    pull: never
+    commands:
+      - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST
+        -Dsonar.projectKey=${DRONE_REPO}
+        -Dsonar.projectName=${DRONE_REPO}
+        -Dsonar.login=$SONAR_TOKEN
+        -Dsonar.coverage.jacoco.xmlReportPaths=/drone/src/target/site/jacoco-aggregate/jacoco.xml
+        -Dsonar.tests=src/test/java,src/it/java --no-transfer-progress
+    when:
+      branch: 
+        - develop
 
   # Integration test - run after sonar scan to leave test reports unaffected.
   - name: integration test
@@ -180,26 +255,15 @@ steps:
           - pull_request
       branch: develop
 
-volumes:
+  ################################################# End Development Only #######################################################
 
-  - name: docker_sock
-    host:
-      path: /var/run/docker.sock
 
-  - name: package_directory
-    temp: {}
 
-  - name: m2_repo
-    temp: {}
 
-# Triggers
-trigger:
-  branch:
-    - develop
-    - release/*
-  event:
-    - pull_request
-    - push
+
+  ################################################ Secrets #########################################################
+
+
 
 # Note the below values are pulled from AWS Secrets Manager via the aws-secrets Drone plugin
 ---
@@ -257,3 +321,5 @@ name: nexus_password
 get:
   path: /secret/drone.global
   name: nexusPassword
+
+  ################################################ End Secrets #########################################################
