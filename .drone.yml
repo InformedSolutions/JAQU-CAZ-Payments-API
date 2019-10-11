@@ -253,7 +253,8 @@ steps:
       event:
         exclude:
           - pull_request
-      branch: develop
+      branch: 
+        - develop
 
   ################################################# End Development Only #######################################################
 
