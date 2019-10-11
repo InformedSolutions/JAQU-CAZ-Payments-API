@@ -19,7 +19,7 @@ global-variables:
 
 kind: pipeline
 type: docker
-name: default
+name: payments-api
 
 trigger:
   branch:
