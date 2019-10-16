@@ -110,6 +110,16 @@ $ make deploy-to-aws S3_BUCKET_NAME=name_of_your_bucket STACK_NAME=name_of_your_
 
 [Detailed descripton of how to build, run and test service](RUNNING_AND_TESTING.md)
 
+## Architecture
+#### C4 Level 1 - System Context Model
+![Level 1](./C4L1.png)
+#### C4 Level 2 - Container
+![Level 2](./C4L2.webp)
+#### C4 Level 3 - Component
+![Level 3](./C4L3.png)
+#### ERD
+![ERD](./ERD.png)
+
 ## API specification
 
 API specification is available at `{server.host}:{server.port}/v2/api-docs` (locally usually at http://localhost:8080/v2/api-docs)
