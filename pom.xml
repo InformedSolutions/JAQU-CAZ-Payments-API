@@ -475,6 +475,8 @@
                 <exclude>**/Application.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
                 <exclude>**/util/AwsHelpers.class</exclude>
+                <!-- TODO remove once controllers are implemented and tested -->
+                <exclude>**/psr/controller/*.class</exclude>
               </excludes>
               <rules>
                 <rule>
