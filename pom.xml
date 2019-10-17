@@ -17,23 +17,51 @@
 
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
+    <internal.libraries.version>1.5.1-SNAPSHOT</internal.libraries.version>
+
     <codeCoverage.minCoveredRatio>0.90</codeCoverage.minCoveredRatio>
     <codeCoverage.classMaxMissedCount>0</codeCoverage.classMaxMissedCount>
+
+    <sonar.coverage.exclusions>
+      **/configuration/**/*.java,
+      **/Application.java,
+      **/amazonaws/StreamLambdaHandler.java,
+      **/util/AwsHelpers.java
+    </sonar.coverage.exclusions>
+    <sonar.coverage.jacoco.xmlReportPaths>
+      ./target/site/jacoco-aggregate/jacoco.xml
+    </sonar.coverage.jacoco.xmlReportPaths>
 
     <!-- to enable running only integration tests without unit tests -->
     <skipUnitTests>${skipTests}</skipUnitTests>
     <skipITs>${skipTests}</skipITs>
+    <skipLocalContainersSetup>${skipTests}</skipLocalContainersSetup>
   </properties>
 
-  <repositories>
-    <repository>
-      <id>jcenter-release</id>
-      <name>jcenter</name>
-      <url>https://jcenter.bintray.com/</url>
-    </repository>
-  </repositories>
-
   <dependencies>
+    <!-- Internal libraries : begin -->
+    <dependency>
+      <groupId>uk.gov.caz</groupId>
+      <artifactId>aws-lambda-base</artifactId>
+      <version>${internal.libraries.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>uk.gov.caz</groupId>
+      <artifactId>correlation-id</artifactId>
+      <version>${internal.libraries.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>uk.gov.caz</groupId>
+      <artifactId>logger</artifactId>
+      <version>${internal.libraries.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>uk.gov.caz</groupId>
+      <artifactId>global-exception-mapper</artifactId>
+      <version>${internal.libraries.version}</version>
+    </dependency>
+    <!-- Internal libraries : end -->
+
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
@@ -190,6 +218,8 @@
           </execution>
         </executions>
         <configuration>
+          <!-- to enforce running integration tests sequentially -->
+          <threadCount>1</threadCount>
           <includes>
             <include>**/*IT.java</include>
           </includes>
@@ -223,7 +253,7 @@
         </executions>
 
         <configuration>
-          <skip>${skipITs}</skip>
+          <skip>${skipLocalContainersSetup}</skip>
           <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
           <images>
             <image>
@@ -245,6 +275,7 @@
         <version>3.12.0</version>
         <configuration>
           <linkXRef>false</linkXRef>
+          <printFailingErrors>true</printFailingErrors>
         </configuration>
         <executions>
           <execution>
@@ -256,6 +287,10 @@
               <goal>cpd-check</goal>
               <goal>pmd</goal> <!-- to generate the report during the build -->
             </goals>
+
+            <configuration>
+              <excludeFromFailureFile>src${file.separator}main${file.separator}resources${file.separator}exclude-cpd.properties</excludeFromFailureFile>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -286,57 +321,6 @@
         </executions>
       </plugin>
 
-      <!-- code coverage -->
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.4</version>
-        <configuration>
-          <haltOnFailure>true</haltOnFailure>
-
-          <excludes>
-            <exclude>**/configuration/**/*.class</exclude>
-            <exclude>**/Application.class</exclude>
-            <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
-            <exclude>**/util/AwsHelpers.class</exclude>
-          </excludes>
-          <rules>
-            <rule>
-              <element>BUNDLE</element>
-              <limits>
-                <limit>
-                  <counter>INSTRUCTION</counter>
-                  <value>COVEREDRATIO</value>
-                  <minimum>${codeCoverage.minCoveredRatio}</minimum>
-                </limit>
-                <limit>
-                  <counter>CLASS</counter>
-                  <value>MISSEDCOUNT</value>
-                  <maximum>${codeCoverage.classMaxMissedCount}</maximum>
-                </limit>
-              </limits>
-            </rule>
-          </rules>
-        </configuration>
-
-        <executions>
-          <execution>
-            <id>jacoco-prepare-agent</id>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-
-          <execution>
-            <id>jacoco-prepare-package-check</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>check</goal>
-              <goal>report</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
 
       <!-- Build and Package  -->
       <!-- don't build a jar, we'll use the classes dir -->
@@ -391,10 +375,20 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>pl.project13.maven</groupId>
+        <artifactId>git-commit-id-plugin</artifactId>
+      </plugin>
     </plugins>
     <pluginManagement>
     	<plugins>
-    		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.sonarsource.scanner.maven</groupId>
+          <artifactId>sonar-maven-plugin</artifactId>
+          <version>3.4.0.905</version>
+        </plugin>
+
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
     		<plugin>
     			<groupId>org.eclipse.m2e</groupId>
     			<artifactId>lifecycle-mapping</artifactId>
@@ -456,31 +450,140 @@
       </plugin>
 
       <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>uk/gov/jaqu/caz/application/configuration/**/*.class</exclude>
-            <exclude>uk/gov/jaqu/caz/application/Application.class</exclude>
-            <exclude>uk/gov/jaqu/caz/application/amazonaws/StreamLambdaHandler.class</exclude>
-            <exclude>uk/gov/jaqu/caz/util/AwsHelpers.class</exclude>
-          </excludes>
-        </configuration>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <report>report</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.0.1</version>
       </plugin>
     </plugins>
   </reporting>
+
+  <profiles>
+    <profile>
+      <id>jacoco</id>
+      <build>
+        <plugins>
+          <!-- code coverage -->
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.4</version>
+            <configuration>
+              <haltOnFailure>true</haltOnFailure>
+
+              <excludes>
+                <exclude>**/configuration/**/*.class</exclude>
+                <exclude>**/Application.class</exclude>
+                <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
+                <exclude>**/util/AwsHelpers.class</exclude>
+                <!-- TODO remove once controllers are implemented and tested -->
+                <exclude>**/psr/controller/*.class</exclude>
+              </excludes>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>INSTRUCTION</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>${codeCoverage.minCoveredRatio}</minimum>
+                    </limit>
+                    <limit>
+                      <counter>CLASS</counter>
+                      <value>MISSEDCOUNT</value>
+                      <maximum>${codeCoverage.classMaxMissedCount}</maximum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+            <executions>
+              <execution>
+                <id>pre-unit-test</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>post-unit-test</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>pre-integration-test</id>
+                <goals>
+                  <goal>prepare-agent-integration</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>post-integration-test</id>
+                <goals>
+                  <goal>report-integration</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>merge-results</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>merge</goal>
+                </goals>
+                <configuration>
+                  <fileSets>
+                    <fileSet>
+                      <directory>${project.build.directory}</directory>
+                      <includes>
+                        <include>*.exec</include>
+                      </includes>
+                      <excludes>
+                        <exclude>jacoco-aggregate.exec</exclude>
+                      </excludes>
+                    </fileSet>
+                  </fileSets>
+                  <destFile>${project.build.directory}/jacoco-aggregate.exec</destFile>
+                </configuration>
+              </execution>
+              <execution>
+                <id>post-merge-report</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+                <configuration>
+                  <dataFile>${project.build.directory}/jacoco-aggregate.exec</dataFile>
+                  <outputDirectory>${project.reporting.outputDirectory}/jacoco-aggregate
+                  </outputDirectory>
+                </configuration>
+              </execution>
+              <execution>
+                <id>post-merge-check</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <configuration>
+                  <dataFile>${project.build.directory}/jacoco-aggregate.exec</dataFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>ci</id>
+      <activation>
+        <property>
+          <name>env.BUILD_ID</name>
+        </property>
+      </activation>
+      <properties>
+        <artifactFinalName>${project.artifactId}-${env.BUILD_ID}</artifactFinalName>
+        <skipLocalContainersSetup>true</skipLocalContainersSetup>
+        <skipITs>false</skipITs>
+      </properties>
+    </profile>
+  </profiles>
 
 </project>
