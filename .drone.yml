@@ -54,25 +54,6 @@ steps:
       - name: docker_sock
         path: /var/run/docker.sock
 
-  # Cucumber/business rules test
-  - name: cucumber test
-    image: payments-api-base
-    pull: never
-    volumes:
-      - name: package_directory
-        path: /drone/src/target
-      - name: m2_repo
-        path: /root/.m2
-    commands:
-      - mvn test -P cucumber-tests
-    environment:
-      JAQU_NEXUS_URL:
-        from_secret: nexus_url
-      JAQU_NEXUS_USER:
-        from_secret: nexus_username
-      JAQU_NEXUS_PASSWORD:
-        from_secret: nexus_password
-
   # Unit test
   - name: unit test
     image: payments-api-base
