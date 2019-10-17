@@ -8,13 +8,15 @@ import org.springframework.context.annotation.Import;
 import uk.gov.caz.psr.configuration.RequestMappingConfiguration;
 import uk.gov.caz.psr.configuration.SwaggerConfiguration;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
+import uk.gov.caz.psr.controller.PaymentsController;
 
 @SpringBootConfiguration
 @EnableAutoConfiguration
 @Import({
     RequestMappingConfiguration.class,
     SwaggerConfiguration.class,
-    ChargeSettlementController.class
+    ChargeSettlementController.class,
+    PaymentsController.class
 })
 public class Application extends SpringBootServletInitializer {
 
