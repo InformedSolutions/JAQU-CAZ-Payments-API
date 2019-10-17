@@ -33,7 +33,7 @@ run:
 	./mvnw spring-boot:run
 
 run-development:
-	SPRING_PROFILES_ACTIVE=development ./mvnw spring-boot:run
+	SPRING_PROFILES_ACTIVE=development ./mvnw spring-boot:run -Dstart-class=uk.gov.caz.Application
 
 checkstyle:
 	./mvnw checkstyle:checkstyle

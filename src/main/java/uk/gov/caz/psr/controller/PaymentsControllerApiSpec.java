@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.controller;
 
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
@@ -21,7 +20,6 @@ import uk.gov.caz.psr.dto.VehicleEntranceRequest;
     value = PaymentsController.BASE_PATH,
     produces = MediaType.APPLICATION_JSON_UTF8_VALUE
 )
-@Api(value = PaymentsController.BASE_PATH)
 public interface PaymentsControllerApiSpec {
 
   /**
@@ -32,8 +30,7 @@ public interface PaymentsControllerApiSpec {
    * @return {@link PaymentStatusResponse} wrapped in {@link ResponseEntity}.
    */
   @ApiOperation(
-      value = "${swagger.operations.payments.create-vehicle-entrance.description}",
-      response = PaymentStatusResponse.class
+      value = "${swagger.operations.payments.create-vehicle-entrance.description}"
   )
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),

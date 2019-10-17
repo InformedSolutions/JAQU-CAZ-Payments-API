@@ -10,7 +10,7 @@ import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import uk.gov.caz.psr.Application;
+import uk.gov.caz.Application;
 
 public class StreamLambdaHandler implements RequestStreamHandler {
 

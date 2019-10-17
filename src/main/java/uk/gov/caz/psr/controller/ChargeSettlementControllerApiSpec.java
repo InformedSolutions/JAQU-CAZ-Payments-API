@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.controller;
 
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
@@ -22,7 +21,6 @@ import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
     value = ChargeSettlementController.BASE_PATH,
     produces = MediaType.APPLICATION_JSON_UTF8_VALUE
 )
-@Api(value = ChargeSettlementController.BASE_PATH)
 public interface ChargeSettlementControllerApiSpec {
 
   /**
