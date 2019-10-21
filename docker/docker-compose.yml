@@ -9,4 +9,4 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: name_of_your_database
+      POSTGRES_DB: caz-payments
