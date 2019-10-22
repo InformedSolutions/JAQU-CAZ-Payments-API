@@ -13,6 +13,9 @@
             <outputDirectory>lib</outputDirectory>
             <excludes>
                 <exclude>tomcat-embed*</exclude>
+                <exclude>spring-boot-devtools*</exclude>
+                <exclude>spring-boot-starter-tomcat*</exclude>
+                <exclude>lombok*</exclude>
             </excludes>
         </fileSet>
         <!-- copy all classes -->

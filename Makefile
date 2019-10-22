@@ -12,7 +12,7 @@
 	create-archetype
 
 build:
-	./mvnw verify
+	./mvnw verify -P jacoco
 
 build-yolo:
 	./mvnw verify -DskipTests

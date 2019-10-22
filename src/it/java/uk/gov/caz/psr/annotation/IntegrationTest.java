@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest
-@ActiveProfiles("localstack")
+@ActiveProfiles("integration-tests")
 public @interface IntegrationTest {
 
 }

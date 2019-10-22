@@ -86,6 +86,11 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+
     <!-- Spring-related : end -->
 
     <!-- swagger: begin -->
@@ -106,6 +111,17 @@
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-xml</artifactId>
     </dependency>
+
+    <!-- db: begin -->
+    <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+    </dependency>
+    <!-- db: end -->
 
     <!-- development-related: begin -->
     <dependency>
@@ -477,6 +493,7 @@
                 <exclude>**/util/AwsHelpers.class</exclude>
                 <!-- TODO remove once controllers are implemented and tested -->
                 <exclude>**/psr/controller/*.class</exclude>
+                <exclude>**/psr/dto/PaymentStatus.class</exclude>
               </excludes>
               <rules>
                 <rule>

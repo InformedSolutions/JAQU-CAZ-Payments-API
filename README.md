@@ -112,13 +112,17 @@ $ make deploy-to-aws S3_BUCKET_NAME=name_of_your_bucket STACK_NAME=name_of_your_
 
 ## Architecture
 #### C4 Level 1 - System Context Model
-![Level 1](./C4L1.png)
+![Level 1](documentation-assets/C4L1.png)
 #### C4 Level 2 - Container
-![Level 2](./C4L2.webp)
+![Level 2](documentation-assets/C4L2.webp)
 #### C4 Level 3 - Component
-![Level 3](./C4L3.png)
-#### ERD
-![ERD](./ERD.png)
+![Level 3](documentation-assets/C4L3.png)
+
+#### ERDs
+##### Conceptual model
+![ERD](documentation-assets/ERD-conceptual-model.png)
+##### Physical model
+![ERD](documentation-assets/ERD-physical-model.png)
 
 ## API specification
 

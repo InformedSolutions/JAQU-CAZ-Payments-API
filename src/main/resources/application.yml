@@ -7,6 +7,15 @@ springfox:
       v2:
         path: /v1/swagger-docs
 
+spring:
+  liquibase:
+    enabled: true
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/caz-payments
+    username: postgres
+    password: postgres
+
 swagger:
   model:
     descriptions:
