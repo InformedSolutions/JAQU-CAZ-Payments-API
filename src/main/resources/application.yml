@@ -44,6 +44,13 @@ swagger:
         vrn: Vehicle registration number
         date-of-entrance: ISO 8601 formatted date string that specifies the date on which the vehicle entered the CAZ
         clean-zone-id: Clean Air Zone identifier
+      payment-initiate:
+        vrn: Vehicle registration number
+        days: Array of ISO 8601 formatted dates string that specifies the dates for which user wants to pay.
+        clean-zone-id: Clean Air Zone identifier
+        amount: Amount to pay
+        return-url: Front end URL used as return URL after payment.
+         
 
   operations:
     payments:
