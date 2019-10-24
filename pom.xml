@@ -19,12 +19,12 @@
 
     <internal.libraries.version>1.5.1-SNAPSHOT</internal.libraries.version>
 
-    <codeCoverage.minCoveredRatio>0.90</codeCoverage.minCoveredRatio>
+    <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
     <codeCoverage.classMaxMissedCount>0</codeCoverage.classMaxMissedCount>
 
     <sonar.coverage.exclusions>
       **/configuration/**/*.java,
-      **/Application.java,
+      **/PsrSpringConfig.java,
       **/amazonaws/StreamLambdaHandler.java,
       **/util/AwsHelpers.java
     </sonar.coverage.exclusions>
@@ -496,8 +496,10 @@
                 <exclude>**/Application.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
                 <exclude>**/util/AwsHelpers.class</exclude>
-                <!-- TODO remove once controllers are implemented and tested -->
-                <exclude>**/psr/controller/*.class</exclude>
+                <!-- TODO remove once ChargeSettlementController is implemented and tested -->
+                <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
+                <!-- TODO remove once CAZ-1238 is implemented -->
+                <exclude>**/psr/repository/VehicleEntranceRepository.class</exclude>
                 <exclude>**/psr/dto/PaymentStatus.class</exclude>
               </excludes>
               <rules>

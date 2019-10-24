@@ -7,6 +7,7 @@ import uk.gov.caz.ApplicationConfiguration;
 @Configuration
 @ComponentScan(basePackages = {
     "uk.gov.caz.psr.configuration",
+    "uk.gov.caz.psr.service",
     "uk.gov.caz.psr.controller"
 })
 public class PsrSpringConfig implements ApplicationConfiguration {
