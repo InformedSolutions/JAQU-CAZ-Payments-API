@@ -3,12 +3,17 @@ package uk.gov.caz.psr.dto;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
 import java.util.UUID;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import lombok.Value;
+import uk.gov.caz.psr.model.VehicleEntrance;
 
+/**
+ * A class that represents a request from VCCS that a vehicle entered the CAZ.
+ */
 @Value
 public class VehicleEntranceRequest {
+
   @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.clean-zone-id}")
   @NotNull
   UUID cleanZoneId;
@@ -18,6 +23,20 @@ public class VehicleEntranceRequest {
   LocalDate dateOfEntrance;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.vrn}")
-  @NotBlank
+  @NotNull
+  @Size(min = 1, max = 15)
   String vrn;
+
+  /**
+   * Maps this value object to an instance of the model.
+   *
+   * @return An instance of {@link VehicleEntrance} whose parameters comes from this object.
+   */
+  public VehicleEntrance toVehicleEntrance() {
+    return VehicleEntrance.builder()
+        .cleanZoneId(cleanZoneId)
+        .dateOfEntrance(dateOfEntrance)
+        .vrn(vrn)
+        .build();
+  }
 }
