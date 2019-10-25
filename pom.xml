@@ -499,7 +499,7 @@
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
                 <!-- TODO remove once CAZ-1238 is implemented -->
-                <exclude>**/psr/repository/VehicleEntranceRepository.class</exclude>
+                <exclude>**/psr/repository/*.class</exclude>
                 <exclude>**/psr/dto/PaymentStatus.class</exclude>
               </excludes>
               <rules>
