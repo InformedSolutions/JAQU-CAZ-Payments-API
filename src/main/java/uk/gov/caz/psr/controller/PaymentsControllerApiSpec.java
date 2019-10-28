@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.controller;
 
+import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
+
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
@@ -11,9 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
@@ -23,10 +25,10 @@ import uk.gov.caz.psr.dto.PaymentStatusResponse;
     produces = MediaType.APPLICATION_JSON_UTF8_VALUE
 )
 public interface PaymentsControllerApiSpec {
- 
+
   /**
-   * Allows Payments Front-end to create a new payment based on requested details
-   * It creates the payment in GOV.UK PAY and returns next steps which needs to be completed.
+   * Allows Payments Front-end to create a new payment based on requested details It creates the
+   * payment in GOV.UK PAY and returns next steps which needs to be completed.
    *
    * @return {@link PaymentStatusResponse} wrapped in {@link ResponseEntity}.
    */
@@ -39,7 +41,7 @@ public interface PaymentsControllerApiSpec {
       @ApiResponse(code = 400, message = "Missing Correlation Id header")
   })
   @ApiImplicitParams({
-      @ApiImplicitParam(name = Constants.X_CORRELATION_ID_HEADER,
+      @ApiImplicitParam(name = X_CORRELATION_ID_HEADER,
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header")
@@ -47,5 +49,6 @@ public interface PaymentsControllerApiSpec {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   ResponseEntity<InitiatePaymentResponse> initiatePayment(
-      @Valid @RequestBody InitiatePaymentRequest request);
+      @Valid @RequestBody InitiatePaymentRequest request,
+      @RequestHeader(X_CORRELATION_ID_HEADER) String correlationId);
 }
