@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -19,8 +20,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
+import uk.gov.caz.psr.dto.external.PaymentState;
+import uk.gov.caz.psr.model.Payment;
 
 @ExtendWith(MockitoExtension.class)
 class ExternalPaymentsRepositoryTest {
@@ -47,31 +51,55 @@ class ExternalPaymentsRepositoryTest {
   }
 
   @Test
-  public void shouldReturnEmptyOptionalUponCallFailure() {
+  public void shouldReturnEmptyOptionalWhen404StatusCodeIsReturned() {
     // given
     given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willThrow(
         HttpClientErrorException.create(HttpStatus.NOT_FOUND, "", new HttpHeaders(), null, null));
     String id = "payment id";
 
     // when
-    Optional<GetPaymentResult> result = paymentsRepository.findById(id);
+    Optional<Payment> result = paymentsRepository.findById(id);
 
     // then
     assertThat(result).isEmpty();
   }
 
   @Test
-  public void shouldCallRestTemplateExchange() {
+  public void shouldRethrowExceptionWhenCallFails() {
     // given
-    given(restTemplate.exchange(any(), eq(GetPaymentResult.class)))
-        .willReturn(new ResponseEntity<>(GetPaymentResult.builder().build(), HttpStatus.OK));
+    given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willThrow(
+        HttpClientErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR, "", new HttpHeaders(), null, null));
     String id = "payment id";
 
     // when
-    Optional<GetPaymentResult> result = paymentsRepository.findById(id);
+    Throwable throwable = catchThrowable(() -> paymentsRepository.findById(id));
+
+    // then
+    assertThat(throwable).isInstanceOf(RestClientException.class);
+  }
+
+  @Test
+  public void shouldCallRestTemplateExchange() {
+    // given
+    mockRestTemplateResult();
+    String id = "payment id";
+
+    // when
+    Optional<Payment> result = paymentsRepository.findById(id);
 
     // then
     assertThat(result).isNotEmpty();
     verify(restTemplate).exchange(any(), eq(GetPaymentResult.class));
+  }
+
+  private void mockRestTemplateResult() {
+    given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willReturn(
+        new ResponseEntity<>(
+            GetPaymentResult.builder()
+                .state(PaymentState.builder().status("success").build())
+                .build(),
+            HttpStatus.OK
+        )
+    );
   }
 }

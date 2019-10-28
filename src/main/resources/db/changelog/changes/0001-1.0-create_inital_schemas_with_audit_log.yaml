@@ -3,6 +3,16 @@ databaseChangeLog:
       id: 0001.1-1.0
       author: radoslaw.morytko
       changes:
+        - sql:
+            comment: Conditionally enables uuid-ossp extension
+            dbms: postgresql
+            endDelimiter: ;GO
+            splitStatements: true
+            sql: create extension if not exists "uuid-ossp";
+  - changeSet:
+      id: 0001.2-1.0
+      author: radoslaw.morytko
+      changes:
         - sqlFile:
             dbms: postgresql
             encoding: utf8
@@ -12,7 +22,7 @@ databaseChangeLog:
             splitStatements: true
             stripComments: true
   - changeSet:
-      id: 0001.2-1.0
+      id: 0001.3-1.0
       author: radoslaw.morytko
       changes:
         - createTable:
@@ -56,6 +66,7 @@ databaseChangeLog:
               - column:
                   name: PAYMENT_ID
                   type: uuid
+                  defaultValueComputed: uuid_generate_v1mc()
                   constraints:
                     primaryKey: true
                     nullable: false
@@ -220,7 +231,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
   - changeSet:
-      id: 0001.3-1.1
+      id: 0001.4-1.1
       author: radoslaw.morytko
       changes:
         - sql:
