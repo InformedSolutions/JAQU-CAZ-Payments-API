@@ -31,7 +31,7 @@ public class PaymentInfoResponse {
     LocalDate paymentDate;
 
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-status}")
-    PaymentStatus paymentStatus;
+    ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
 
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.case-reference}")
     String caseReference;

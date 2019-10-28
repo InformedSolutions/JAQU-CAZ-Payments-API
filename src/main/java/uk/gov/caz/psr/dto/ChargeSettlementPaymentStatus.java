@@ -1,6 +1,6 @@
 package uk.gov.caz.psr.dto;
 
-public enum PaymentStatus {
+public enum ChargeSettlementPaymentStatus {
   PAID,
   NOT_PAID,
   REFUNDED,

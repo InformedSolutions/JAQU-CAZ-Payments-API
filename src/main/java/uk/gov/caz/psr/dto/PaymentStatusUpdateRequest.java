@@ -32,7 +32,7 @@ public class PaymentStatusUpdateRequest {
 
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.payment-status}")
     @NotNull
-    PaymentStatus paymentStatus;
+    ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
 
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.case-reference}")
     @NotBlank

@@ -231,7 +231,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
   - changeSet:
-      id: 0001.4-1.1
+      id: 0001.4-1.0
       author: radoslaw.morytko
       changes:
         - sql:

@@ -8,7 +8,7 @@ import lombok.Value;
 public class PaymentStatusResponse {
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-status}")
   @NotNull
-  PaymentStatus paymentStatus;
+  ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-id}")
   String paymentId;

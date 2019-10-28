@@ -16,9 +16,10 @@ public class Payment {
   private final UUID cleanZoneId;
   private final PaymentStatus status;
   private final String caseReference;
-  private final String paymentMethod;
+  private final PaymentMethod paymentMethod;
   private final Integer chargePaid;
   private final String correlationId;
 
-  String nextUrl;
+  // transient field, not saved in the database
+  private final String nextUrl;
 }
