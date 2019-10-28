@@ -62,7 +62,7 @@ databaseChangeLog:
                     primaryKeyName: payment_payment_id_pkey
               - column:
                   name: EXTERNAL_PAYMENT_ID
-                  type: uuid
+                  type: varchar(255)
                   constraints:
                     nullable: true
               - column:
@@ -105,6 +105,11 @@ databaseChangeLog:
                   name: UPDATE_TIMESTAMP
                   type: timestamp
                   defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: CORRELATION_ID
+                  type: varchar(256)
                   constraints:
                     nullable: false
         - createTable:

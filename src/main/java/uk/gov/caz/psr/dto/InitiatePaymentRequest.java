@@ -30,7 +30,7 @@ public class InitiatePaymentRequest {
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.amount}")
   @NotNull
   @Positive
-  Double amount;
+  Integer amount;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.return-url}")
   @NotBlank
