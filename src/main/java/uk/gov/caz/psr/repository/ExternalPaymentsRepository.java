@@ -13,6 +13,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.client.HttpClientErrorException.NotFound;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -27,7 +28,7 @@ import uk.gov.caz.psr.model.Payment;
 @Repository
 public class ExternalPaymentsRepository {
 
-  private static final String FIND_BY_ID_URI = "/v1/payments/{paymentId}";
+  private static final String FIND_BY_ID_URI_TEMPLATE = "/v1/payments/{paymentId}";
   private static final String CREATE_URI = "/v1/payments";
 
   private final RestTemplate restTemplate;
@@ -51,20 +52,18 @@ public class ExternalPaymentsRepository {
    * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist, {@link
    * Optional#empty()} otherwise.
    */
-  public Optional<CreatePaymentResult> create(Payment payment, String returnUrl) {
+  public Optional<Payment> create(Payment payment, String returnUrl) {
     try {
-      log.info("Create Payment for {}: start", payment.getId());
+      log.info("Create the payment for {}: start", payment.getId());
       RequestEntity<Map<String, Object>> request = buildRequestEntityForCreate(
           buildCreateBody(payment, returnUrl));
-      ResponseEntity<CreatePaymentResult> responseEntity = restTemplate.exchange(request,
-          CreatePaymentResult.class);
-      CreatePaymentResult body = responseEntity.getBody();
-      return Optional.of(body);
+      restTemplate.exchange(request, CreatePaymentResult.class);
+      return Optional.of(payment);
     } catch (RestClientException e) {
       log.error("Error while creating the payment for '{}'", payment.getId(), e);
       return Optional.empty();
     } finally {
-      log.info("Create Payment for {}: start", payment.getId());
+      log.info("Create the payment for {}: finish", payment.getId());
     }
   }
 
@@ -75,18 +74,19 @@ public class ExternalPaymentsRepository {
    * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist, {@link
    * Optional#empty()} otherwise.
    */
-  public Optional<GetPaymentResult> findById(String id) {
+  public Optional<Payment> findById(String id) {
     try {
       log.info("Get payment by id '{}' : start", id);
       RequestEntity<Void> request = buildRequestEntityForFindById(id);
       ResponseEntity<GetPaymentResult> responseEntity = restTemplate.exchange(request,
           GetPaymentResult.class);
-      responseEntity.getBody();
-      GetPaymentResult body = responseEntity.getBody();
-      return Optional.of(body);
-    } catch (RestClientException e) {
-      log.error("Error while getting the payment by id '{}'", id, e);
+      return Optional.of(responseEntity.getBody().toPayment());
+    } catch (NotFound e) {
+      log.error("Payment with id '{}' not found", id);
       return Optional.empty();
+    } catch (RestClientException e) {
+      log.error("Error while getting the payment by id '{}'", id);
+      throw e;
     } finally {
       log.info("Get payment by id '{}' : finish", id);
     }
@@ -105,7 +105,7 @@ public class ExternalPaymentsRepository {
    * Creates {@link URI} for {@code findBy} operation.
    */
   private URI buildFindByUri(String id) {
-    return UriComponentsBuilder.fromUriString(rootUrl + FIND_BY_ID_URI).build(id);
+    return UriComponentsBuilder.fromUriString(rootUrl + FIND_BY_ID_URI_TEMPLATE).build(id);
   }
 
   /**

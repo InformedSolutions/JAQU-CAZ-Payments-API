@@ -8,14 +8,13 @@ import lombok.Data;
  * An entity which represents a row stored in the database in {@code PAYMENT} table.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class Payment {
-  String externalPaymentId;
-  String status;
-
-  private final UUID id;
+  UUID id;
+  private final String externalPaymentId;
   private final UUID userId;
   private final UUID cleanZoneId;
+  private final PaymentStatus status;
   private final String caseReference;
   private final String paymentMethod;
   private final Integer chargePaid;
