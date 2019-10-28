@@ -14,23 +14,13 @@ public class GetAndUpdatePaymentStatusResponse {
   @NonNull
   UUID paymentId;
   @NonNull
-  PaymentStatus paymentStatus;
+  SuccessFailurePaymentStatus status;
 
   /**
    * Creates an instance of this class based on the passed {@link Payment} instance.
    */
   public static GetAndUpdatePaymentStatusResponse from(Payment payment) {
     return new GetAndUpdatePaymentStatusResponse(payment.getId(),
-        fromInternalStatus(payment.getStatus()));
-  }
-
-  /**
-   * Maps the internal payment's status to the one returned to the REST API caller.
-   */
-  private static PaymentStatus fromInternalStatus(uk.gov.caz.psr.model.PaymentStatus status) {
-    if (status == uk.gov.caz.psr.model.PaymentStatus.SUCCESS) {
-      return PaymentStatus.PAID;
-    }
-    return PaymentStatus.NOT_PAID;
+        SuccessFailurePaymentStatus.from(payment.getStatus()));
   }
 }
