@@ -25,6 +25,7 @@ import uk.gov.caz.GlobalExceptionHandlerConfiguration;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.service.GetAndUpdatePaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 
 @ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class, Configuration.class,
@@ -33,6 +34,9 @@ import uk.gov.caz.psr.service.InitiatePaymentService;
 class PaymentsControllerTest {
   @MockBean
   private InitiatePaymentService initiatePaymentService;
+
+  @MockBean
+  private GetAndUpdatePaymentsService getAndUpdatePaymentsService;
 
   @MockBean
   private ExternalPaymentsRepository externalPaymentsRepository;

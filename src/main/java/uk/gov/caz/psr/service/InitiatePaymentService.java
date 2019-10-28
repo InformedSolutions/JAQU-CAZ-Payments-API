@@ -1,11 +1,9 @@
 package uk.gov.caz.psr.service;
 
 import java.util.Optional;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.dto.external.CreatePaymentResult;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -28,16 +26,13 @@ public class InitiatePaymentService {
    */
   public Payment createPayment(InitiatePaymentRequest request, String correlationId) {
     Payment payment = buildPayment(request, correlationId);
-    Optional<CreatePaymentResult> externalPaymentResult;
+    Optional<Payment> externalPaymentResult;
 
     paymentRepository.insert(payment);
     externalPaymentResult = externalPaymentsRepository.create(payment, request.getReturnUrl());
 
     externalPaymentResult.ifPresent(externalPayment -> {
-      payment.setExternalPaymentId(externalPayment.getPaymentId());
-      payment.setStatus(externalPayment.getState().getStatus());
-      payment.setNextUrl(externalPayment.getLinks().getNextUrl().getHref());
-      paymentRepository.update(payment);
+      paymentRepository.update(externalPayment);
     });
 
     return payment;
@@ -51,7 +46,6 @@ public class InitiatePaymentService {
    */
   private Payment buildPayment(InitiatePaymentRequest request, String correlationId) {
     return Payment.builder()
-        .id(UUID.randomUUID())
         .cleanZoneId(request.getCleanZoneId())
         .chargePaid(request.getAmount())
         .correlationId(correlationId)
