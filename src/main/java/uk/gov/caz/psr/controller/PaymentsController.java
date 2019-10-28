@@ -2,7 +2,6 @@ package uk.gov.caz.psr.controller;
 
 import java.util.Optional;
 import java.util.UUID;
-import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,14 +23,10 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   private final GetAndUpdatePaymentsService getAndUpdatePaymentsService;
 
   @Override
-  public ResponseEntity<InitiatePaymentResponse> initiatePayment(
-      @Valid InitiatePaymentRequest request, String correlationId) {
-
+  public ResponseEntity<InitiatePaymentResponse> initiatePayment(InitiatePaymentRequest request,
+      String correlationId) {
     Payment payment = initiatePaymentService.createPayment(request, correlationId);
-
-    InitiatePaymentResponse response = new InitiatePaymentResponse(payment.getId(),
-        payment.getNextUrl());
-    return new ResponseEntity<>(response, HttpStatus.CREATED);
+    return ResponseEntity.status(HttpStatus.CREATED).body(InitiatePaymentResponse.from(payment));
   }
 
   @Override

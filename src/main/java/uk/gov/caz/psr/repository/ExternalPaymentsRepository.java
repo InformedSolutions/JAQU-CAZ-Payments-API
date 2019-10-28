@@ -1,8 +1,6 @@
 package uk.gov.caz.psr.repository;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,9 +15,11 @@ import org.springframework.web.client.HttpClientErrorException.NotFound;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import uk.gov.caz.psr.dto.external.CreateCardPaymentRequest;
 import uk.gov.caz.psr.dto.external.CreatePaymentResult;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.PaymentStatus;
 
 /**
  * REST http client for GOV UK PAY service.
@@ -33,6 +33,7 @@ public class ExternalPaymentsRepository {
 
   private final RestTemplate restTemplate;
   private final String rootUrl;
+  private final URI createPaymentUri;
 
   /**
    * Constructor for {@link ExternalPaymentsRepository}.
@@ -42,28 +43,44 @@ public class ExternalPaymentsRepository {
       RestTemplateBuilder restTemplateBuilder) {
     this.rootUrl = rootUrl;
     this.restTemplate = restTemplateBuilder.interceptors(apiKeyHeaderInjector(apiKey)).build();
+    this.createPaymentUri = URI.create(rootUrl + CREATE_URI);
   }
 
   /**
-   * Create Payment for provided payment.
+   * Creates a payment in the external service for the provided {@code payment} entity.
    *
-   * @param payment   Object of the internal payment.
+   * @param payment Object of the internal payment.
    * @param returnUrl Url from the Fronted to redirect after payment in GOV.UK PAY.
-   * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist, {@link
-   * Optional#empty()} otherwise.
+   * @return An instance of {@link Payment} with {@code externalPaymentId} and {@code nextUrl}
+   *     properties set.
    */
-  public Optional<Payment> create(Payment payment, String returnUrl) {
+  public Payment create(Payment payment, String returnUrl) {
     try {
       log.info("Create the payment for {}: start", payment.getId());
-      RequestEntity<Map<String, Object>> request = buildRequestEntityForCreate(
+      RequestEntity<CreateCardPaymentRequest> request = buildRequestEntityForCreate(
           buildCreateBody(payment, returnUrl));
-      restTemplate.exchange(request, CreatePaymentResult.class);
-      return Optional.of(payment);
+      ResponseEntity<CreatePaymentResult> responseEntity = restTemplate.exchange(request,
+          CreatePaymentResult.class);
+      CreatePaymentResult responseBody = responseEntity.getBody();
+      return payment.toBuilder()
+          .externalPaymentId(responseBody.getPaymentId())
+          .status(toModelStatus(responseBody.getState().getStatus()))
+          .nextUrl(responseBody.getLinks().getNextUrl().getHref())
+          .build();
     } catch (RestClientException e) {
-      log.error("Error while creating the payment for '{}'", payment.getId(), e);
-      return Optional.empty();
+      log.error("Error while creating the payment for '{}'", payment.getId());
+      throw e;
     } finally {
       log.info("Create the payment for {}: finish", payment.getId());
+    }
+  }
+
+  private PaymentStatus toModelStatus(String status) {
+    try {
+      return PaymentStatus.valueOf(status.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      log.error("Unrecognized payment status '{}', returning {}", status, PaymentStatus.UNKNOWN);
+      return PaymentStatus.UNKNOWN;
     }
   }
 
@@ -72,7 +89,7 @@ public class ExternalPaymentsRepository {
    *
    * @param id ID of the payment.
    * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist, {@link
-   * Optional#empty()} otherwise.
+   *     Optional#empty()} otherwise.
    */
   public Optional<Payment> findById(String id) {
     try {
@@ -111,30 +128,24 @@ public class ExternalPaymentsRepository {
   /**
    * Creates a request entity for {@code create} operation.
    */
-  private RequestEntity<Map<String, Object>> buildRequestEntityForCreate(Map<String, Object> body) {
-    return RequestEntity.post(buildCreateUri())
-        .contentType(MediaType.APPLICATION_JSON)
+  private RequestEntity<CreateCardPaymentRequest> buildRequestEntityForCreate(
+      CreateCardPaymentRequest body) {
+    return RequestEntity.post(createPaymentUri)
         .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
         .body(body);
   }
 
   /**
    * Creates {@link URI} for {@code create} operation.
    */
-  private URI buildCreateUri() {
-    return URI.create(rootUrl + CREATE_URI);
-  }
-
-  /**
-   * Creates {@link URI} for {@code create} operation.
-   */
-  private Map<String, Object> buildCreateBody(Payment payment, String returnUrl) {
-    Map<String, Object> root = new HashMap<>();
-    root.put("amount", payment.getChargePaid());
-    root.put("reference", payment.getId());
-    root.put("description", "Payment for #" + payment.getId());
-    root.put("return_url", returnUrl);
-    return root;
+  private CreateCardPaymentRequest buildCreateBody(Payment payment, String returnUrl) {
+    return CreateCardPaymentRequest.builder()
+        .amount(payment.getChargePaid())
+        .description("Payment for #" + payment.getId())
+        .reference(payment.getId().toString())
+        .returnUrl(returnUrl)
+        .build();
   }
 
   /**
