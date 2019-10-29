@@ -15,7 +15,7 @@ public class InitiatePaymentRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.clean-zone-id}")
   @NotNull
-  UUID cleanZoneId;
+  UUID cleanAirZoneId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.days}")
   @NotNull
