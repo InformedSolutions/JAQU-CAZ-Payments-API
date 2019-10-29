@@ -196,10 +196,8 @@ steps:
     commands:
       - apk add --update bash python python-dev py-pip build-base jq
       - pip install awscli
-      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_jaqu_caz.sh .
-      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_cleanup.sh .
-      - bash deploy_jaqu_caz.sh
-      - bash deploy_cleanup.sh
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh .
+      - bash deploy_lambda.sh    
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
