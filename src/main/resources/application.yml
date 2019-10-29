@@ -25,6 +25,17 @@ services:
     root-url: https://publicapi.payments.service.gov.uk
     api-key: to-be-replaced-by-external-value
 
+management:
+  endpoints:
+    web:
+      base-path:
+  endpoint:
+    health:
+      show-details: always
+  health:
+    diskspace:
+      enabled: false
+
 swagger:
   model:
     descriptions:
