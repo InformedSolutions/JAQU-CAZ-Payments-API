@@ -45,7 +45,7 @@ public class InitiatePaymentService {
     return Payment.builder()
         .status(PaymentStatus.INITIATED)
         .paymentMethod(PaymentMethod.CREDIT_CARD)
-        .cleanZoneId(request.getCleanZoneId())
+        .cleanZoneId(request.getCleanAirZoneId())
         .chargePaid(request.getAmount())
         .correlationId(correlationId)
         .build();
