@@ -23,7 +23,7 @@ volumes:
 
   - name: m2_repo
     temp: {}
-    
+
 services:
   - name: postgres
     image: postgres:11-alpine
@@ -189,6 +189,28 @@ steps:
     when:
       event:
         - push
+
+ - name: codedeploy api dev
+   image: alpine:latest
+   commands:
+     - apk add --update bash python python-dev py-pip build-base jq
+     - pip install awscli
+     - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_jaqu_caz.sh .
+     - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_cleanup.sh .
+     - bash deploy_jaqu_caz.sh
+     - bash deploy_cleanup.sh
+   environment:
+     AWS_ACCESS_KEY_ID:
+       from_secret: aws_access_key_id
+     AWS_SECRET_ACCESS_KEY:
+       from_secret: aws_secret_access_key
+     AWS_DEFAULT_REGION: eu-west-2
+     PROJECT: payments
+     DEPLOY_ENVIRONMENT: dev
+     LAMBDA_BUCKET: jaqu-projects-lambda-bucket
+   when:
+     event:
+       - push
 
   ################################################# End DEV Steps #######################################################
 
