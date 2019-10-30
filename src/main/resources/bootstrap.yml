@@ -1,0 +1,16 @@
+aws:
+  secretsmanager:
+    prefix: /config
+    defaultContext: payments
+    profileSeparator: .
+    name: payments
+    failFast: true
+    enabled: true
+
+cloud:
+  aws:
+    region:
+      auto: false
+      static: eu-west-2
+    stack:
+      auto: false

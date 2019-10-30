@@ -44,6 +44,7 @@ public class ExternalPaymentsRepository {
     this.rootUrl = rootUrl;
     this.restTemplate = restTemplateBuilder.interceptors(apiKeyHeaderInjector(apiKey)).build();
     this.createPaymentUri = URI.create(rootUrl + CREATE_URI);
+    log.info("GOV UK PAY api key: {}", apiKey.substring(0, Math.min(3, apiKey.length())));
   }
 
   /**

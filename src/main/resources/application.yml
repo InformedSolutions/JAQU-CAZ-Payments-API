@@ -17,6 +17,8 @@ spring:
     password: postgres
     hikari:
       maximum-pool-size: 1
+  profiles:
+    active: dev
 
 services:
   connection-timeout-seconds: 29
