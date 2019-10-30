@@ -1,0 +1,51 @@
+{
+  "amount": 4200,
+  "description": "Payment for #2827167e-fa0e-11e9-8c20-5705c5450e03",
+  "reference": "2827167e-fa0e-11e9-8c20-5705c5450e03",
+  "language": "en",
+  "state": {
+    "status": "created",
+    "finished": false
+  },
+  "payment_id": "kac1ksqi26f9t2h7q3henmlamc",
+  "payment_provider": "sandbox",
+  "created_date": "2019-10-29T05:37:13.748Z",
+  "refund_summary": {
+    "status": "pending",
+    "amount_available": 4200,
+    "amount_submitted": 0
+  },
+  "settlement_summary": {},
+  "delayed_capture": false,
+  "return_url": "http://localhost/return-url",
+  "_links": {
+    "self": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/kac1ksqi26f9t2h7q3henmlamc",
+      "method": "GET"
+    },
+    "next_url": {
+      "href": "https://www.payments.service.gov.uk/secure/ac944bbf-8fc9-4057-839f-3633ca679671",
+      "method": "GET"
+    },
+    "next_url_post": {
+      "type": "application/x-www-form-urlencoded",
+      "params": {
+        "chargeTokenId": "ac944bbf-8fc9-4057-839f-3633ca679671"
+      },
+      "href": "https://www.payments.service.gov.uk/secure",
+      "method": "POST"
+    },
+    "events": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/kac1ksqi26f9t2h7q3henmlamc/events",
+      "method": "GET"
+    },
+    "refunds": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/kac1ksqi26f9t2h7q3henmlamc/refunds",
+      "method": "GET"
+    },
+    "cancel": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/kac1ksqi26f9t2h7q3henmlamc/cancel",
+      "method": "POST"
+    }
+  }
+}

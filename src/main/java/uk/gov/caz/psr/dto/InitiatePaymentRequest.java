@@ -8,9 +8,11 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Value;
 
 @Value
+@Builder
 public class InitiatePaymentRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.clean-zone-id}")

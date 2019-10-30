@@ -6,3 +6,8 @@ spring:
 #    url: jdbc:postgresql://${postgres.url:localhost:5432}/caz-payments
     hikari:
       maximum-pool-size: 10
+
+services:
+  gov-uk-pay:
+    root-url: http://localhost:1080
+    api-key: P8P5tyxVL7Qb5
