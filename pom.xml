@@ -18,6 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <internal.libraries.version>1.6.1-SNAPSHOT</internal.libraries.version>
+    <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
     <codeCoverage.classMaxMissedCount>0</codeCoverage.classMaxMissedCount>
@@ -37,6 +38,18 @@
     <skipITs>${skipTests}</skipITs>
     <skipLocalContainersSetup>${skipTests}</skipLocalContainersSetup>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <!-- Internal libraries : begin -->
@@ -95,7 +108,10 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-aws-secrets-manager-config</artifactId>
+    </dependency>
     <!-- Spring-related : end -->
 
     <!-- swagger: begin -->
