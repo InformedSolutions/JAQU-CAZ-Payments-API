@@ -1,6 +1,11 @@
 package uk.gov.caz.psr.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
 import static uk.gov.caz.psr.controller.PaymentsController.BASE_PATH;
@@ -12,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,10 +24,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import uk.gov.caz.GlobalExceptionHandlerConfiguration;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.service.GetAndUpdatePaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
@@ -61,8 +65,9 @@ class PaymentsControllerTest {
         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
         .andExpect(status().isBadRequest())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.message")
+        .andExpect(jsonPath("$.message")
             .value("Missing request header 'X-Correlation-ID'"));
+    verify(initiatePaymentService, never()).createPayment(any(), any());
   }
 
   @Test
@@ -75,6 +80,7 @@ class PaymentsControllerTest {
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
+    verify(initiatePaymentService, never()).createPayment(any(), any());
   }
 
   @Test
@@ -87,6 +93,7 @@ class PaymentsControllerTest {
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
+    verify(initiatePaymentService, never()).createPayment(any(), any());
   }
 
   @Test
@@ -99,6 +106,7 @@ class PaymentsControllerTest {
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
+    verify(initiatePaymentService, never()).createPayment(any(), any());
   }
 
   @Test
@@ -111,24 +119,38 @@ class PaymentsControllerTest {
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
+    verify(initiatePaymentService, never()).createPayment(any(), any());
   }
 
   @Test
-  @Disabled
   public void shouldReturnValidResponse() throws Exception {
-    String payload = paymentRequest();
+    InitiatePaymentRequest requestParams = baseRequestBuilder().build();
+    String payload = toJsonString(requestParams);
+    Payment successfullyCreatedPayment = createdPayment(requestParams);
+
+    given(initiatePaymentService.createPayment(requestParams, ANY_CORRELATION_ID))
+        .willReturn(successfullyCreatedPayment);
 
     mockMvc.perform(post(BASE_PATH)
         .content(payload)
         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(status().isCreated());
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.paymentId").value(successfullyCreatedPayment.getId().toString()))
+        .andExpect(jsonPath("$.nextUrl").value(successfullyCreatedPayment.getNextUrl()));
+
+    verify(initiatePaymentService).createPayment(requestParams, ANY_CORRELATION_ID);
   }
 
-  private String paymentRequest() {
-    InitiatePaymentRequest requestParams = baseRequestBuilder().build();
-    return toJsonString(requestParams);
+  private Payment createdPayment(InitiatePaymentRequest requestParams) {
+    return Payment.builder()
+        .id(UUID.randomUUID())
+        .chargePaid(requestParams.getAmount())
+        .cleanZoneId(requestParams.getCleanAirZoneId())
+        .externalPaymentId("EXTERNAL_PAYMENT_ID")
+        .nextUrl("https://next.payment.url")
+        .build();
   }
 
   private String paymentRequestWithEmptyDays() {

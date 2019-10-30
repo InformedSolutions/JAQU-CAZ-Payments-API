@@ -530,7 +530,6 @@
                 <exclude>**/psr/dto/**/*.class</exclude>
                 <!-- TODO remove once CAZ-1304 is implemented -->
                 <exclude>**/psr/controller/PaymentsController.class</exclude>
-                <exclude>**/psr/service/InitiatePaymentService.class</exclude>
               </excludes>
               <rules>
                 <rule>
