@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.repository;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.net.URI;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,10 @@ import uk.gov.caz.psr.model.PaymentStatus;
 @Repository
 public class ExternalPaymentsRepository {
 
-  private static final String FIND_BY_ID_URI_TEMPLATE = "/v1/payments/{paymentId}";
-  private static final String CREATE_URI = "/v1/payments";
+  @VisibleForTesting
+  public static final String FIND_BY_ID_URI_TEMPLATE = "/v1/payments/{paymentId}";
+  @VisibleForTesting
+  public static final String CREATE_URI = "/v1/payments";
 
   private final RestTemplate restTemplate;
   private final String rootUrl;

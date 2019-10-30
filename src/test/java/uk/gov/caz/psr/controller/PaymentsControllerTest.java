@@ -5,13 +5,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
 import static uk.gov.caz.psr.controller.PaymentsController.BASE_PATH;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -126,35 +126,43 @@ class PaymentsControllerTest {
         .andExpect(status().isCreated());
   }
 
-  private String paymentRequest() throws JsonProcessingException {
-    InitiatePaymentRequest requestParams = new InitiatePaymentRequest(UUID.randomUUID(), days,
-        "TEST123", 1010, "https://example.return.url");
-    return objectMapper.writeValueAsString(requestParams);
+  private String paymentRequest() {
+    InitiatePaymentRequest requestParams = baseRequestBuilder().build();
+    return toJsonString(requestParams);
   }
 
-  private String paymentRequestWithEmptyDays() throws JsonProcessingException {
+  private String paymentRequestWithEmptyDays() {
     List<LocalDate> emptyDays = Collections.emptyList();
+    InitiatePaymentRequest requestParams = baseRequestBuilder().days(emptyDays).build();
+    return toJsonString(requestParams);
+  }
 
-    InitiatePaymentRequest requestParams = new InitiatePaymentRequest(UUID.randomUUID(), emptyDays,
-        "TEST123", 1050, "https://example.return.url");
+  private String paymentRequestWithVrn(String vrn) {
+    InitiatePaymentRequest requestParams = baseRequestBuilder().vrn(vrn).build();
+    return toJsonString(requestParams);
+  }
+
+  private String paymentRequestWithAmount(Integer amount) {
+    InitiatePaymentRequest requestParams = baseRequestBuilder().amount(amount).build();
+    return toJsonString(requestParams);
+  }
+
+  private String paymentRequestWithEmptyReturnUrl() {
+    InitiatePaymentRequest requestParams = baseRequestBuilder().returnUrl("").build();
+    return toJsonString(requestParams);
+  }
+
+  @SneakyThrows
+  private String toJsonString(InitiatePaymentRequest requestParams) {
     return objectMapper.writeValueAsString(requestParams);
   }
 
-  private String paymentRequestWithVrn(String vrn) throws JsonProcessingException {
-    InitiatePaymentRequest requestParams = new InitiatePaymentRequest(UUID.randomUUID(), days,
-        vrn, 1050, "https://example.return.url");
-    return objectMapper.writeValueAsString(requestParams);
-  }
-
-  private String paymentRequestWithAmount(Integer amount) throws JsonProcessingException {
-    InitiatePaymentRequest requestParams = new InitiatePaymentRequest(UUID.randomUUID(), days,
-        "TEST123", amount, "https://example.return.url");
-    return objectMapper.writeValueAsString(requestParams);
-  }
-
-  private String paymentRequestWithEmptyReturnUrl() throws JsonProcessingException {
-    InitiatePaymentRequest requestParams = new InitiatePaymentRequest(UUID.randomUUID(), days,
-        "TEST123", 1050, "");
-    return objectMapper.writeValueAsString(requestParams);
+  private InitiatePaymentRequest.InitiatePaymentRequestBuilder baseRequestBuilder() {
+    return InitiatePaymentRequest.builder()
+        .cleanAirZoneId(UUID.randomUUID())
+        .days(days)
+        .vrn("TEST123")
+        .amount(1050)
+        .returnUrl("https://example.return.url");
   }
 }
