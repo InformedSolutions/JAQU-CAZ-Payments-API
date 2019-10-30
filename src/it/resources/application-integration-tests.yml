@@ -10,4 +10,4 @@ spring:
 services:
   gov-uk-pay:
     root-url: http://localhost:1080
-    api-key: P8P5tyxVL7Qb5
+    api-key: dummy

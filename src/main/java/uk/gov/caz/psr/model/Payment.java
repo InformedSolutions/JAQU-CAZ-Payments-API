@@ -2,24 +2,23 @@ package uk.gov.caz.psr.model;
 
 import java.util.UUID;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
 
 /**
  * An entity which represents a row stored in the database in {@code PAYMENT} table.
  */
-@Data
+@Value
 @Builder(toBuilder = true)
 public class Payment {
   UUID id;
-  private final String externalPaymentId;
-  private final UUID userId;
-  private final UUID cleanZoneId;
-  private final PaymentStatus status;
-  private final String caseReference;
-  private final PaymentMethod paymentMethod;
-  private final Integer chargePaid;
-  private final String correlationId;
+  String externalPaymentId;
+  UUID cleanZoneId;
+  PaymentStatus status;
+  String caseReference;
+  PaymentMethod paymentMethod;
+  Integer chargePaid;
+  String correlationId;
 
   // transient field, not saved in the database
-  private final String nextUrl;
+  String nextUrl;
 }

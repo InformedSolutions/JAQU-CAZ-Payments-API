@@ -23,11 +23,12 @@ import uk.gov.caz.psr.model.PaymentStatus;
 public class PaymentRepository {
 
   private static final PaymentFindByIdMapper FIND_BY_ID_MAPPER = new PaymentFindByIdMapper();
+
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
 
   static final String SELECT_BY_ID_SQL = "SELECT payment_id, external_payment_id, status, "
-      + "case_reference, user_id, payment_method, charge_paid, caz_id "
+      + "case_reference, payment_method, charge_paid, caz_id "
       + "FROM payment "
       + "WHERE payment_id = ?";
 
@@ -113,21 +114,10 @@ public class PaymentRepository {
           .externalPaymentId(resultSet.getString("external_payment_id"))
           .status(PaymentStatus.valueOf(resultSet.getString("status")))
           .caseReference(resultSet.getString("case_reference"))
-          .userId(toUuidIfPresent(resultSet, "caz_id"))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
           .chargePaid(resultSet.getInt("charge_paid"))
           .cleanZoneId(UUID.fromString(resultSet.getString("caz_id")))
           .build();
     }
-
-    /**
-     * Converts object returned by {@link ResultSet#getString(String)} to {@link UUID} if it is not
-     * {@code null}, returns {@code null} otherwise.
-     */
-    private UUID toUuidIfPresent(ResultSet resultSet, String columnLabel) throws SQLException {
-      String value = resultSet.getString(columnLabel);
-      return value == null ? null : UUID.fromString(value);
-    }
   }
 }
-
