@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.dto.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Value;
 
 /**
@@ -8,6 +9,7 @@ import lombok.Value;
  * See https://govukpay-api-browser.cloudapps.digital/#tocscreatepaymentresult for reference.
  */
 @Value
+@Builder
 public class CreatePaymentResult {
   Integer amount;
 

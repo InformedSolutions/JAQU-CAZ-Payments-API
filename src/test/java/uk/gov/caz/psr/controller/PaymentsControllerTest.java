@@ -28,6 +28,8 @@ import uk.gov.caz.GlobalExceptionHandlerConfiguration;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.PaymentMethod;
+import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.service.GetAndUpdatePaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
@@ -150,6 +152,8 @@ class PaymentsControllerTest {
         .cleanZoneId(requestParams.getCleanAirZoneId())
         .externalPaymentId("EXTERNAL_PAYMENT_ID")
         .nextUrl("https://next.payment.url")
+        .status(PaymentStatus.CREATED)
+        .paymentMethod(PaymentMethod.CREDIT_CARD)
         .build();
   }
 

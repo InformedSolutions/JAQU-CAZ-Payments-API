@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 
 /**
@@ -16,7 +17,7 @@ import uk.gov.caz.psr.model.PaymentStatus;
 @Builder
 @Slf4j
 public class GetPaymentResult {
-  Integer amount;
+  int amount;
   String description;
   String reference;
   String language;
@@ -41,6 +42,8 @@ public class GetPaymentResult {
     return Payment.builder()
         .externalPaymentId(paymentId)
         .status(getPaymentStatus())
+        .paymentMethod(PaymentMethod.CREDIT_CARD)
+        .chargePaid(amount)
         .build();
   }
 

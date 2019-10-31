@@ -17,7 +17,7 @@ import uk.gov.caz.psr.service.InitiatePaymentService;
 @AllArgsConstructor
 public class PaymentsController implements PaymentsControllerApiSpec {
 
-  static final String BASE_PATH = "/v1/payments";
+  public static final String BASE_PATH = "/v1/payments";
 
   private final InitiatePaymentService initiatePaymentService;
   private final GetAndUpdatePaymentsService getAndUpdatePaymentsService;

@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.repository;
 
+import com.google.common.base.Preconditions;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -28,7 +29,7 @@ public class PaymentRepository {
   private final SimpleJdbcInsert simpleJdbcInsert;
 
   static final String SELECT_BY_ID_SQL = "SELECT payment_id, external_payment_id, status, "
-      + "case_reference, payment_method, charge_paid, caz_id "
+      + "case_reference, payment_method, charge_paid, caz_id, correlation_id "
       + "FROM payment "
       + "WHERE payment_id = ?";
 
@@ -56,8 +57,14 @@ public class PaymentRepository {
    *
    * @param payment An entity object which is supposed to be saved in the database.
    * @return An instance of {@link Payment} with its internal identifier set.
+   * @throws NullPointerException if {@code payment} or {@link Payment#getCorrelationId()} is null
+   * @throws IllegalArgumentException if {@link Payment#getId()} is not null
    */
   public Payment insert(Payment payment) {
+    Preconditions.checkNotNull(payment, "Payment cannot be null");
+    Preconditions.checkNotNull(payment.getCorrelationId(), "Correlation ID cannot be null");
+    Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
+
     SqlParameterSource parameters = new MapSqlParameterSource()
         .addValue("external_payment_id", payment.getExternalPaymentId())
         .addValue("status", payment.getStatus().name())
@@ -77,8 +84,11 @@ public class PaymentRepository {
    * Update {@code payment} in the database.
    *
    * @param payment An entity object which is supposed to be saved in the database.
+   * @throws NullPointerException if {@code payment} is null
    */
   public void update(Payment payment) {
+    Preconditions.checkNotNull(payment, "Payment cannot be null");
+
     jdbcTemplate.update(UPDATE_SQL, payment.getStatus().name(), payment.getExternalPaymentId(),
         payment.getId());
   }
@@ -89,8 +99,11 @@ public class PaymentRepository {
    * @param id An internal identifier of the payment.
    * @return An instance of {@link Payment} class wrapped in {@link Optional} if the payment is
    *     found, {@link Optional#empty()} otherwise.
+   * @throws NullPointerException if {@code id} is null
    */
   public Optional<Payment> findById(UUID id) {
+    Preconditions.checkNotNull(id, "ID cannot be null");
+
     List<Payment> results = jdbcTemplate.query(SELECT_BY_ID_SQL,
         preparedStatement -> preparedStatement.setObject(1, id),
         FIND_BY_ID_MAPPER
@@ -117,6 +130,7 @@ public class PaymentRepository {
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
           .chargePaid(resultSet.getInt("charge_paid"))
           .cleanZoneId(UUID.fromString(resultSet.getString("caz_id")))
+          .correlationId(resultSet.getString("correlation_id"))
           .build();
     }
   }

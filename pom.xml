@@ -26,9 +26,12 @@
 
     <sonar.coverage.exclusions>
       **/configuration/**/*.java,
-      **/PsrSpringConfig.java,
       **/amazonaws/StreamLambdaHandler.java,
-      **/util/AwsHelpers.java
+      **/psr/dto/**/*.java
+      <!-- TODO remove once ChargeSettlementController is implemented and tested -->
+      **/psr/controller/ChargeSettlementController.java
+      <!-- TODO remove once CAZ-1238 is implemented -->
+      **/psr/repository/VehicleEntranceRepository.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -522,14 +525,11 @@
                 <exclude>**/configuration/**/*.class</exclude>
                 <exclude>**/Application.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
-                <exclude>**/util/AwsHelpers.class</exclude>
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
                 <!-- TODO remove once CAZ-1238 is implemented -->
-                <exclude>**/psr/repository/*.class</exclude>
+                <exclude>**/psr/repository/VehicleEntranceRepository.class</exclude>
                 <exclude>**/psr/dto/**/*.class</exclude>
-                <!-- TODO remove once CAZ-1304 is implemented -->
-                <exclude>**/psr/controller/PaymentsController.class</exclude>
               </excludes>
               <rules>
                 <rule>
