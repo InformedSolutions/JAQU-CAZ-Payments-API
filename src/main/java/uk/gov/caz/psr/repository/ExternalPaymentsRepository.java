@@ -1,6 +1,8 @@
 package uk.gov.caz.psr.repository;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.net.URI;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +49,17 @@ public class ExternalPaymentsRepository {
     this.rootUrl = rootUrl;
     this.restTemplate = restTemplateBuilder.interceptors(apiKeyHeaderInjector(apiKey)).build();
     this.createPaymentUri = URI.create(rootUrl + CREATE_URI);
-    log.info("GOV UK PAY api key: {}", apiKey.substring(0, Math.min(3, apiKey.length())));
+    logMaskedApiKey(apiKey);
+  }
+
+  /**
+   * Logs first 3 characters of the api key.
+   */
+  private void logMaskedApiKey(String apiKey) {
+    int toReveal = Math.min(3, apiKey.length());
+    int toMask = apiKey.length() - toReveal;
+    log.info("GOV UK PAY api key: {}{}", apiKey.substring(0, toReveal), Strings.repeat("*",
+        toMask));
   }
 
   /**
@@ -57,8 +69,15 @@ public class ExternalPaymentsRepository {
    * @param returnUrl Url from the Fronted to redirect after payment in GOV.UK PAY.
    * @return An instance of {@link Payment} with {@code externalPaymentId} and {@code nextUrl}
    *     properties set.
+   * @throws NullPointerException if {@code payment} or {@link Payment#getId()} is null
+   * @throws IllegalArgumentException if {@code returnUrl} is null or empty
    */
   public Payment create(Payment payment, String returnUrl) {
+    Preconditions.checkNotNull(payment, "Payment cannot be null");
+    Preconditions.checkNotNull(payment.getId(),
+        "Payment must have set its internal identifier");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(returnUrl),
+        "Return url cannot be null or empty");
     try {
       log.info("Create the payment for {}: start", payment.getId());
       RequestEntity<CreateCardPaymentRequest> request = buildRequestEntityForCreate(
@@ -72,13 +91,17 @@ public class ExternalPaymentsRepository {
           .nextUrl(responseBody.getLinks().getNextUrl().getHref())
           .build();
     } catch (RestClientException e) {
-      log.error("Error while creating the payment for '{}'", payment.getId());
+      log.error("Error while creating the payment for '{}': {}", payment.getId(), e.getMessage());
       throw e;
     } finally {
       log.info("Create the payment for {}: finish", payment.getId());
     }
   }
 
+  /**
+   * Converts a status returned from the GOV UK Pay service to {@link PaymentStatus}. If the value
+   * does not match any existing one, {@link PaymentStatus#UNKNOWN} is returned.
+   */
   private PaymentStatus toModelStatus(String status) {
     try {
       return PaymentStatus.valueOf(status.toUpperCase());
@@ -94,8 +117,10 @@ public class ExternalPaymentsRepository {
    * @param id ID of the payment.
    * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist, {@link
    *     Optional#empty()} otherwise.
+   * @throws IllegalArgumentException if {@code id} is null or empty
    */
   public Optional<Payment> findById(String id) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "ID cannot be null or empty");
     try {
       log.info("Get payment by id '{}' : start", id);
       RequestEntity<Void> request = buildRequestEntityForFindById(id);

@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -15,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -30,6 +32,19 @@ class GetAndUpdatePaymentsServiceTest {
 
   @InjectMocks
   private GetAndUpdatePaymentsService getAndUpdatePaymentsService;
+
+  @Test
+  public void shouldThrowNullPointerExceptionWhenPassedNullValue() {
+    // given
+    UUID id = null;
+
+    // when
+    Throwable throwable = catchThrowable(() ->
+        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(id));
+
+    assertThat(throwable).isInstanceOf(NullPointerException.class)
+        .hasMessage("ID cannot be null");
+  }
 
   @Test
   public void shouldReturnEmptyOptionalIfPaymentIsNotFoundInDatabase() {
@@ -63,19 +78,21 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   @Test
-  public void shouldNotUpdatePaymentStatusIfExternalPaymentIsNotFound() {
+  public void shouldThrowIllegalStateExceptionWhenPaymentWithExtIdExistsButIsNotFoundExternally() {
     // given
-    UUID paymentId = UUID.fromString("24e004e7-b9eb-42f3-89fc-53369955407c");
-    String externalId = "external-id";
+    UUID paymentId = UUID.fromString("1ae108cc-fb9d-11e9-8483-67f1dfc0829d");
+    String externalId = "external-id-1";
     mockInternalPaymentWith(paymentId, externalId);
-    given(externalPaymentsRepository.findById(externalId)).willReturn(Optional.empty());
+    mockAbsenceOfExternalPayment(externalId);
 
     // when
-    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    Throwable throwable = catchThrowable(() ->
+        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId));
 
     // then
-    assertThat(result).isEmpty();
-    verify(internalPaymentsRepository, never()).update(any());
+    assertThat(throwable).isInstanceOf(IllegalStateException.class)
+        .hasMessage("External payment not found whereas the internal one with id '%s' "
+            + "and external id '%s' exists", paymentId, externalId);
   }
 
   @Test
@@ -96,6 +113,10 @@ class GetAndUpdatePaymentsServiceTest {
     verify(internalPaymentsRepository).update(internalPaymentWithExternalStatus);
   }
 
+  private void mockAbsenceOfExternalPayment(String externalId) {
+    given(externalPaymentsRepository.findById(externalId)).willReturn(Optional.empty());
+  }
+
   private Payment mockInternalPaymentWith(UUID paymentId, String externalId) {
     Payment payment = createPayment(paymentId, externalId);
     given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.of(payment));
@@ -103,7 +124,11 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   private Payment createPayment(UUID paymentId, String externalId) {
-    return Payment.builder().id(paymentId).externalPaymentId(externalId)
+    return Payment.builder()
+        .id(paymentId)
+        .chargePaid(100)
+        .paymentMethod(PaymentMethod.CREDIT_CARD)
+        .externalPaymentId(externalId)
         .status(PaymentStatus.STARTED).build();
   }
 

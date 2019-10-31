@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.service;
 
+import com.google.common.base.Preconditions;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -26,8 +27,12 @@ public class GetAndUpdatePaymentsService {
    * id, gets its external status and updates it in the database. Then the updated value is returned
    * to the caller. {@link Optional#empty()} is returned if the record is not found in the database
    * or it has {@code null} external identifier.
+   *
+   * @throws NullPointerException if {@code id} is null
    */
   public Optional<Payment> getExternalPaymentAndUpdateStatus(UUID id) {
+    Preconditions.checkNotNull(id, "ID cannot be null");
+
     Payment internalPayment = internalPaymentsRepository.findById(id).orElse(null);
 
     if (internalPayment == null) {
@@ -35,17 +40,22 @@ public class GetAndUpdatePaymentsService {
       return Optional.empty();
     }
 
-    Optional<Payment> externalPayment = Optional.ofNullable(internalPayment.getExternalPaymentId())
-        .flatMap(externalPaymentsRepository::findById)
-        .map(updateExternalPaymentWithInternalId(internalPayment.getId()));
+    String externalPaymentId = internalPayment.getExternalPaymentId();
+    if (externalPaymentId == null) {
+      log.info("Payment '{} does not have an external id and its status will not be updated", id);
+      return Optional.empty();
+    }
 
-    externalPayment.ifPresent(payment -> {
-      log.info("Found the external payment, updating its status to '{}' in the database",
-          payment.getStatus());
-      internalPaymentsRepository.update(payment);
-    });
+    Payment externalPayment = externalPaymentsRepository.findById(externalPaymentId)
+        .map(updateExternalPaymentWithInternalId(internalPayment.getId()))
+        .orElseThrow(() -> new IllegalStateException("External payment not found whereas the "
+            + "internal one with id '" + id + "' and external id '" + externalPaymentId + "' "
+            + "exists"));
 
-    return externalPayment;
+    log.info("Found the external payment, updating its status to '{}' in the database",
+        externalPayment.getStatus());
+    internalPaymentsRepository.update(externalPayment);
+    return Optional.of(externalPayment);
   }
 
   /**
