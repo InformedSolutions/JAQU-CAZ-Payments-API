@@ -64,7 +64,7 @@ swagger:
         payment-id: GOV.UK Pay unique payment identifier returned by the payment-status GET method
       vehicle-entrance:
         vrn: Vehicle registration number
-        date-of-entrance: ISO 8601 formatted date string that specifies the date on which the vehicle entered the CAZ
+        caz-entry-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
         clean-zone-id: Clean Air Zone identifier
       payment-initiate:
         vrn: Vehicle registration number

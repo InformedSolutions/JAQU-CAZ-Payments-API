@@ -1,7 +1,7 @@
 package uk.gov.caz.psr.dto;
 
 import io.swagger.annotations.ApiModelProperty;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -18,9 +18,9 @@ public class VehicleEntranceRequest {
   @NotNull
   UUID cleanZoneId;
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.date-of-entrance}")
+  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.caz-entry-timestamp}")
   @NotNull
-  LocalDate dateOfEntrance;
+  LocalDateTime cazEntryTimestamp;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.vrn}")
   @NotNull
@@ -35,7 +35,7 @@ public class VehicleEntranceRequest {
   public VehicleEntrance toVehicleEntrance() {
     return VehicleEntrance.builder()
         .cleanZoneId(cleanZoneId)
-        .dateOfEntrance(dateOfEntrance)
+        .cazEntryTimestamp(cazEntryTimestamp)
         .vrn(vrn)
         .build();
   }

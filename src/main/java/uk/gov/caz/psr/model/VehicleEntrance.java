@@ -1,6 +1,6 @@
 package uk.gov.caz.psr.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +13,6 @@ import lombok.Data;
 public class VehicleEntrance {
   UUID id;
   private final UUID cleanZoneId;
-  private final LocalDate dateOfEntrance;
+  private final LocalDateTime cazEntryTimestamp;
   private final String vrn;
 }
