@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.verify;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +43,7 @@ class VehicleEntranceServiceTest {
     UUID id = UUID.fromString("1ada0539-7528-456e-95eb-f14025792889");
     VehicleEntrance vehicleEntrance = VehicleEntrance.builder()
         .vrn("BW91HUN")
-        .dateOfEntrance(LocalDate.now())
+        .cazEntryTimestamp(LocalDateTime.now())
         .id(id)
         .cleanZoneId(UUID.randomUUID())
         .build();
@@ -62,7 +62,7 @@ class VehicleEntranceServiceTest {
     // given
     VehicleEntrance vehicleEntrance = VehicleEntrance.builder()
         .vrn("BW91HUN")
-        .dateOfEntrance(LocalDate.now())
+        .cazEntryTimestamp(LocalDateTime.now())
         .cleanZoneId(UUID.randomUUID())
         .build();
 

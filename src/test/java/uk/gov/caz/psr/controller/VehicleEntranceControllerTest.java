@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Nested;
@@ -136,7 +137,7 @@ class VehicleEntranceControllerTest {
     return objectMapper.writeValueAsString(request);
   }
 
-  private LocalDate today() {
-    return LocalDate.now();
+  private LocalDateTime today() {
+    return LocalDateTime.now();
   }
 }
