@@ -3,10 +3,10 @@ package uk.gov.caz.psr.service;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -40,21 +40,26 @@ public class GetAndUpdatePaymentsService {
       return Optional.empty();
     }
 
-    String externalPaymentId = internalPayment.getExternalPaymentId();
+    String externalPaymentId = internalPayment.getExternalId();
     if (externalPaymentId == null) {
       log.info("Payment '{} does not have an external id and its status will not be updated", id);
       return Optional.empty();
     }
 
     Payment externalPayment = externalPaymentsRepository.findById(externalPaymentId)
-        .map(updateExternalPaymentWithInternalId(internalPayment.getId()))
+        .map(getPaymentResult -> updateInternalPaymentWith(internalPayment, getPaymentResult))
         .orElseThrow(() -> new IllegalStateException("External payment not found whereas the "
             + "internal one with id '" + id + "' and external id '" + externalPaymentId + "' "
             + "exists"));
 
-    log.info("Found the external payment, updating its status to '{}' in the database",
-        externalPayment.getStatus());
-    internalPaymentsRepository.update(externalPayment);
+    if (internalPayment.getStatus() == externalPayment.getStatus()) {
+      log.info("External payment status is the same as the internal one and equal to '{}', "
+          + "skipping updating the database", internalPayment.getStatus());
+    } else {
+      log.info("Found the external payment, updating its status to '{}' in the database, "
+          + "current status '{}'", externalPayment.getStatus(), internalPayment.getStatus());
+      internalPaymentsRepository.update(externalPayment);
+    }
     return Optional.of(externalPayment);
   }
 
@@ -62,7 +67,9 @@ public class GetAndUpdatePaymentsService {
    * Creates a lambda expression that updates the passed instance of {@link Payment} with the {@code
    * id}.
    */
-  private Function<Payment, Payment> updateExternalPaymentWithInternalId(UUID id) {
-    return externalPayment -> externalPayment.toBuilder().id(id).build();
+  private Payment updateInternalPaymentWith(Payment payment, GetPaymentResult getPaymentResult) {
+    return payment.toBuilder()
+        .status(getPaymentResult.getPaymentStatus())
+        .build();
   }
 }

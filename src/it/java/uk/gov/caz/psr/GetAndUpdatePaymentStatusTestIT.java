@@ -18,9 +18,8 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.controller.PaymentsController;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.util.TestObjectFactory;
 
 @Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
@@ -73,14 +72,7 @@ public class GetAndUpdatePaymentStatusTestIT {
   }
 
   private UUID insertIntoDatabasePaymentWithoutExternalId() {
-    Payment withoutId = Payment.builder()
-        .status(PaymentStatus.INITIATED)
-        .externalPaymentId(null)
-        .cleanZoneId(UUID.fromString("beaab9e8-fb9e-11e9-8483-a34250e332d2"))
-        .paymentMethod(PaymentMethod.CREDIT_CARD)
-        .chargePaid(100)
-        .correlationId("c1c6049c-fb9f-11e9-8483-177e3dcaf3e9")
-        .build();
+    Payment withoutId = TestObjectFactory.Payments.forRandomDays();
     return paymentRepository.insert(withoutId).getId();
   }
 }

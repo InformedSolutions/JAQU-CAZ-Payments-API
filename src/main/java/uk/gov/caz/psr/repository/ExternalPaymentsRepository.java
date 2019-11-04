@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -86,7 +87,8 @@ public class ExternalPaymentsRepository {
           CreatePaymentResult.class);
       CreatePaymentResult responseBody = responseEntity.getBody();
       return payment.toBuilder()
-          .externalPaymentId(responseBody.getPaymentId())
+          .externalId(responseBody.getPaymentId())
+          .submittedTimestamp(LocalDateTime.now())
           .status(toModelStatus(responseBody.getState().getStatus()))
           .nextUrl(responseBody.getLinks().getNextUrl().getHref())
           .build();
@@ -119,14 +121,14 @@ public class ExternalPaymentsRepository {
    *     Optional#empty()} otherwise.
    * @throws IllegalArgumentException if {@code id} is null or empty
    */
-  public Optional<Payment> findById(String id) {
+  public Optional<GetPaymentResult> findById(String id) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "ID cannot be null or empty");
     try {
       log.info("Get payment by id '{}' : start", id);
       RequestEntity<Void> request = buildRequestEntityForFindById(id);
       ResponseEntity<GetPaymentResult> responseEntity = restTemplate.exchange(request,
           GetPaymentResult.class);
-      return Optional.of(responseEntity.getBody().toPayment());
+      return Optional.of(responseEntity.getBody());
     } catch (NotFound e) {
       log.error("Payment with id '{}' not found", id);
       return Optional.empty();
@@ -170,7 +172,7 @@ public class ExternalPaymentsRepository {
    */
   private CreateCardPaymentRequest buildCreateBody(Payment payment, String returnUrl) {
     return CreateCardPaymentRequest.builder()
-        .amount(payment.getChargePaid())
+        .amount(payment.getTotalPaid())
         .description("Payment for #" + payment.getId())
         .reference(payment.getId().toString())
         .returnUrl(returnUrl)

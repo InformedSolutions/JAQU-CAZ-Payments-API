@@ -3,80 +3,114 @@ package uk.gov.caz.psr.repository;
 import com.google.common.base.Preconditions;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.NonNull;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
 /**
  * A class which handles managing data in {@code PAYMENT} table.
  */
 @Repository
+@Slf4j
 public class PaymentRepository {
-
-  private static final PaymentFindByIdMapper FIND_BY_ID_MAPPER = new PaymentFindByIdMapper();
 
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
+  private final VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository;
 
-  static final String SELECT_BY_ID_SQL = "SELECT payment_id, external_payment_id, status, "
-      + "case_reference, payment_method, charge_paid, caz_id, correlation_id "
+  static final String SELECT_BY_ID_SQL = "SELECT payment_id, payment_method, payment_provider_id, "
+      + "total_paid, payment_submitted_timestamp, payment_authorised_timestamp "
       + "FROM payment "
       + "WHERE payment_id = ?";
 
   static final String UPDATE_SQL = "UPDATE payment "
-      + "SET status = ?, external_payment_id = ?, update_timestamp = CURRENT_TIMESTAMP "
+      + "SET payment_provider_id = ?, "
+      + "payment_submitted_timestamp = ?, "
+      + "payment_authorised_timestamp = ?, "
+      + "update_timestamp = CURRENT_TIMESTAMP "
       + "WHERE payment_id = ?";
 
   /**
    * Creates an instance of {@link PaymentRepository}.
    *
    * @param jdbcTemplate An instance of {@link JdbcTemplate}.
+   * @param vehicleEntrantPaymentRepository An instance of {@link VehicleEntrantPaymentRepository}.
    */
-  public PaymentRepository(JdbcTemplate jdbcTemplate) {
+  public PaymentRepository(JdbcTemplate jdbcTemplate,
+      VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository) {
     this.jdbcTemplate = jdbcTemplate;
     this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
         .withTableName("payment")
         .usingGeneratedKeyColumns("payment_id")
-        .usingColumns("external_payment_id", "status", "payment_method", "charge_paid", "caz_id",
-            "correlation_id");
+        .usingColumns("payment_method", "total_paid");
+    this.vehicleEntrantPaymentRepository = vehicleEntrantPaymentRepository;
   }
-
 
   /**
    * Inserts {@code payment} into database.
    *
    * @param payment An entity object which is supposed to be saved in the database.
    * @return An instance of {@link Payment} with its internal identifier set.
-   * @throws NullPointerException if {@code payment} or {@link Payment#getCorrelationId()} is null
+   * @throws NullPointerException if {@code payment} is null
    * @throws IllegalArgumentException if {@link Payment#getId()} is not null
    */
   public Payment insert(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
-    Preconditions.checkNotNull(payment.getCorrelationId(), "Correlation ID cannot be null");
+    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
+        "Vehicle entrant payments cannot be empty");
     Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
 
-    SqlParameterSource parameters = new MapSqlParameterSource()
-        .addValue("external_payment_id", payment.getExternalPaymentId())
-        .addValue("status", payment.getStatus().name())
-        .addValue("payment_method", payment.getPaymentMethod().name())
-        .addValue("charge_paid", payment.getChargePaid())
-        .addValue("caz_id", payment.getCleanZoneId())
-        .addValue("correlation_id", payment.getCorrelationId());
+    KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(toSqlParameters(payment));
 
-    KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(parameters);
+    UUID paymentId = (UUID) keyHolder.getKeys().get("payment_id");
+
+    List<VehicleEntrantPayment> vehicleEntrantPayments = payment.getVehicleEntrantPayments()
+        .stream()
+        .map(vehicleEntrantPayment -> updateWithPaymentId(vehicleEntrantPayment, paymentId))
+        .collect(Collectors.toList());
+
+    List<VehicleEntrantPayment> vehicleEntrantPaymentsWithIds = vehicleEntrantPaymentRepository
+        .insert(vehicleEntrantPayments);
 
     return payment.toBuilder()
-        .id((UUID) keyHolder.getKeys().get("payment_id"))
+        .id(paymentId)
+        .vehicleEntrantPayments(vehicleEntrantPaymentsWithIds)
+        .build();
+  }
+
+  /**
+   * Converts {@code payment} into a map of attributes which will be saved in the database.
+   */
+  private MapSqlParameterSource toSqlParameters(Payment payment) {
+    return new MapSqlParameterSource()
+        .addValue("payment_method", payment.getPaymentMethod().name())
+        .addValue("total_paid", payment.getTotalPaid())
+        .addValue("payment_method", payment.getPaymentMethod().name());
+  }
+
+  /**
+   * Creates a new instance of {@link VehicleEntrantPayment} with {@code
+   * VehicleEntrantPayment#paymentId} set to the passed {@code paymentId} value.
+   */
+  private VehicleEntrantPayment updateWithPaymentId(VehicleEntrantPayment vehicleEntrantPayment,
+      UUID paymentId) {
+    return vehicleEntrantPayment.toBuilder()
+        .paymentId(paymentId)
         .build();
   }
 
@@ -89,8 +123,17 @@ public class PaymentRepository {
   public void update(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
 
-    jdbcTemplate.update(UPDATE_SQL, payment.getStatus().name(), payment.getExternalPaymentId(),
-        payment.getId());
+    log.debug("Updating payment with attributes: {}", payment);
+
+    jdbcTemplate.update(UPDATE_SQL,
+        preparedStatementSetter -> {
+          preparedStatementSetter.setObject(1, payment.getExternalId());
+          preparedStatementSetter.setObject(2, payment.getSubmittedTimestamp());
+          preparedStatementSetter.setObject(3, payment.getAuthorisedTimestamp());
+          preparedStatementSetter.setObject(4, payment.getId());
+        }
+    );
+    vehicleEntrantPaymentRepository.update(payment.getVehicleEntrantPayments());
   }
 
   /**
@@ -104,34 +147,49 @@ public class PaymentRepository {
   public Optional<Payment> findById(UUID id) {
     Preconditions.checkNotNull(id, "ID cannot be null");
 
+    List<VehicleEntrantPayment> vehicleEntrantPayments = vehicleEntrantPaymentRepository
+        .findByPaymentId(id);
     List<Payment> results = jdbcTemplate.query(SELECT_BY_ID_SQL,
         preparedStatement -> preparedStatement.setObject(1, id),
-        FIND_BY_ID_MAPPER
+        new PaymentFindByIdMapper(vehicleEntrantPayments)
     );
     if (results.isEmpty()) {
       return Optional.empty();
     }
-    return Optional.of(results.iterator().next());
+    Payment payment = results.iterator().next();
+
+    return Optional.of(payment);
   }
 
   /**
    * A class which maps the results obtained from the database to instances of {@link Payment}
    * class.
    */
+  @Value
   private static class PaymentFindByIdMapper implements RowMapper<Payment> {
+
+    @NonNull
+    List<VehicleEntrantPayment> vehicleEntrantPayments;
 
     @Override
     public Payment mapRow(ResultSet resultSet, int i) throws SQLException {
       return Payment.builder()
           .id(UUID.fromString(resultSet.getString("payment_id")))
-          .externalPaymentId(resultSet.getString("external_payment_id"))
-          .status(PaymentStatus.valueOf(resultSet.getString("status")))
-          .caseReference(resultSet.getString("case_reference"))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
-          .chargePaid(resultSet.getInt("charge_paid"))
-          .cleanZoneId(UUID.fromString(resultSet.getString("caz_id")))
-          .correlationId(resultSet.getString("correlation_id"))
+          .externalId(resultSet.getString("payment_provider_id"))
+          .totalPaid(resultSet.getInt("total_paid"))
+          .submittedTimestamp(fromTimestampToLocalDateTime(resultSet,
+              "payment_submitted_timestamp"))
+          .authorisedTimestamp(fromTimestampToLocalDateTime(resultSet,
+              "payment_authorised_timestamp"))
+          .vehicleEntrantPayments(vehicleEntrantPayments)
           .build();
+    }
+
+    private LocalDateTime fromTimestampToLocalDateTime(ResultSet resultSet,
+        String columnLabel) throws SQLException {
+      Timestamp timestamp = resultSet.getTimestamp(columnLabel);
+      return timestamp == null ? null : timestamp.toLocalDateTime();
     }
   }
 }

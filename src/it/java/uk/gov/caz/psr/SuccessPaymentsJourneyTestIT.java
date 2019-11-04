@@ -5,11 +5,14 @@ import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.io.Resources;
 import io.restassured.RestAssured;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -85,6 +88,7 @@ public class SuccessPaymentsJourneyTestIT {
         .then()
         .paymentEntityIsCreatedInDatabase()
         .withExternalIdEqualTo(externalPaymentId)
+        .withNullPaymentAuthorisedTimestamp()
         .andResponseIsReturnedWithMatchingInternalId()
 
         .and()
@@ -92,6 +96,7 @@ public class SuccessPaymentsJourneyTestIT {
 
         .then()
         .paymentEntityStatusIsUpdatedTo(PaymentStatus.SUCCESS)
+        .withNonNullPaymentAuthorisedTimestamp()
         .andStatusResponseIsReturnedWithMatchinInternalId();
   }
 
@@ -148,7 +153,7 @@ public class SuccessPaymentsJourneyTestIT {
 
     public PaymentJourneyAssertion withExternalIdEqualTo(String externalPaymentId) {
       int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "external_payment_id = '" + externalPaymentId + "'");
+          "payment_provider_id = '" + externalPaymentId + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
@@ -186,17 +191,51 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     private void verifyThatPaymentEntityExistsWithStatus(PaymentStatus status) {
+      verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod();
+      verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(status);
+    }
+
+    private void verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(PaymentStatus status) {
+      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "vehicle_entrant_payment",
+          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
+              + "travel_date in (" + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
+              + "payment_status = '" + status.name() + "'");
+      assertThat(initiatePaymentRequest.getDays()).hasSize(vehicleEntrantPaymentsCount);
+    }
+
+    private void verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod() {
       int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "payment_method = '" + PaymentMethod.CREDIT_CARD.name() + "' AND " +
-              "charge_paid = " + initiatePaymentRequest.getAmount() + " AND " +
-              "status = '" + status.name() + "' AND " +
-              "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "'");
+              "payment_method = '" + PaymentMethod.CREDIT_DEBIT_CARD.name() + "' AND " +
+                  "total_paid = " + initiatePaymentRequest.getAmount());
       assertThat(paymentsCount).isEqualTo(1);
+    }
+
+    private String joinWithCommas(List<LocalDate> days) {
+      return Joiner.on(',').join(days
+          .stream()
+          .map(date -> "'" + date.toString() + "'")
+          .collect(Collectors.toList())
+      );
     }
 
     public PaymentJourneyAssertion andStatusResponseIsReturnedWithMatchinInternalId() {
       assertThat(getAndUpdatePaymentResponse.getPaymentId())
           .isEqualTo(initPaymentResponse.getPaymentId());
+      return this;
+    }
+
+    public PaymentJourneyAssertion withNullPaymentAuthorisedTimestamp() {
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
+          "payment_authorised_timestamp is null");
+      assertThat(paymentsCount).isEqualTo(1);
+      return this;
+    }
+
+    public PaymentJourneyAssertion withNonNullPaymentAuthorisedTimestamp() {
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
+          "payment_authorised_timestamp is not null");
+      assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
   }

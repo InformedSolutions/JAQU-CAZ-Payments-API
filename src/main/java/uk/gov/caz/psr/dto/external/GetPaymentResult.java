@@ -5,8 +5,6 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 
 /**
@@ -36,22 +34,10 @@ public class GetPaymentResult {
   PaymentState state;
 
   /**
-   * Converts this object to an instance of {@link Payment}.
-   */
-  public Payment toPayment() {
-    return Payment.builder()
-        .externalPaymentId(paymentId)
-        .status(getPaymentStatus())
-        .paymentMethod(PaymentMethod.CREDIT_CARD)
-        .chargePaid(amount)
-        .build();
-  }
-
-  /**
    * Converts the external status to its representation in model. If the status is not recognized,
    * {@link PaymentStatus#UNKNOWN} is returned.
    */
-  private PaymentStatus getPaymentStatus() {
+  public PaymentStatus getPaymentStatus() {
     String status = state.getStatus();
     try {
       return PaymentStatus.valueOf(status.toUpperCase());

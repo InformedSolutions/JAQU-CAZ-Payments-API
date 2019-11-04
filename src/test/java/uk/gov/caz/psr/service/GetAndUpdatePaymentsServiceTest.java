@@ -15,11 +15,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.caz.psr.dto.external.GetPaymentResult;
+import uk.gov.caz.psr.dto.external.PaymentState;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.util.TestObjectFactory;
 
 @ExtendWith(MockitoExtension.class)
 class GetAndUpdatePaymentsServiceTest {
@@ -113,6 +115,24 @@ class GetAndUpdatePaymentsServiceTest {
     verify(internalPaymentsRepository).update(internalPaymentWithExternalStatus);
   }
 
+  @Test
+  public void shouldNotUpdatePaymentIfExternalPaymentIsFoundAndItsStatusMatchesInternalOne() {
+    // given
+    UUID paymentId = UUID.fromString("744b3067-11aa-463f-b5d7-992196f959c6");
+    String externalId = "external-id";
+    PaymentStatus externalStatus = PaymentStatus.INITIATED;
+    Payment payment = mockInternalPaymentWith(paymentId, externalId);
+    mockExternalPaymentWithStatus(externalId, payment, externalStatus);
+
+    // when
+    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+
+    // then
+    Payment internalPaymentWithExternalStatus = payment.toBuilder().status(externalStatus).build();
+    assertThat(result).contains(internalPaymentWithExternalStatus);
+    verify(internalPaymentsRepository, never()).update(any());
+  }
+
   private void mockAbsenceOfExternalPayment(String externalId) {
     given(externalPaymentsRepository.findById(externalId)).willReturn(Optional.empty());
   }
@@ -124,26 +144,20 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   private Payment createPayment(UUID paymentId, String externalId) {
-    return Payment.builder()
-        .id(paymentId)
-        .chargePaid(100)
-        .paymentMethod(PaymentMethod.CREDIT_CARD)
-        .externalPaymentId(externalId)
-        .status(PaymentStatus.STARTED).build();
+    return TestObjectFactory.Payments.forRandomDaysWithId(paymentId, externalId);
   }
 
-  private Payment mockExternalPaymentWithStatus(String externalId, Payment payment,
+  private void mockExternalPaymentWithStatus(String externalId, Payment payment,
       PaymentStatus status) {
-    Payment externalPayment = toExternalPaymentWithStatus(payment, status);
+    GetPaymentResult externalPayment = toExternalPaymentWithStatus(payment, status);
     given(externalPaymentsRepository.findById(externalId)).willReturn(Optional.of(
         externalPayment));
-    return externalPayment;
   }
 
-  private Payment toExternalPaymentWithStatus(Payment payment, PaymentStatus status) {
-    return payment.toBuilder()
-        .id(null)
-        .status(status)
+  private GetPaymentResult toExternalPaymentWithStatus(Payment payment, PaymentStatus status) {
+    return GetPaymentResult.builder()
+        .paymentId(payment.getExternalId())
+        .state(PaymentState.builder().status(status.name().toLowerCase()).build())
         .build();
   }
 }

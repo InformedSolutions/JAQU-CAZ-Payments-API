@@ -3,6 +3,7 @@ package uk.gov.caz.psr.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentRepositoryTest {
@@ -43,11 +43,9 @@ class PaymentRepositoryTest {
     @Test
     public void shouldThrowIllegalArgumentExceptionWhenPaymentHasId() {
       // given
-      Payment payment = Payment.builder()
-          .id(UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150"))
-          .correlationId("1f9d3f20-fbb6-11e9-8965-5f4601819905")
-          .paymentMethod(PaymentMethod.CREDIT_CARD)
-          .status(PaymentStatus.INITIATED).chargePaid(10).build();
+      Payment payment = Payments.forRandomDaysWithId(
+          UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150")
+      );
 
       // when
       Throwable throwable = catchThrowable(() -> paymentRepository.insert(payment));
@@ -58,17 +56,19 @@ class PaymentRepositoryTest {
     }
 
     @Test
-    public void shouldThrowNullPointerExceptionWhenCorrelationIdIsNull() {
+    public void shouldThrowIllegalArgumentExceptionWhenPaymentHasEmptyVehicleEntrantPayments() {
       // given
-      Payment payment = Payment.builder().paymentMethod(PaymentMethod.CREDIT_CARD)
-          .status(PaymentStatus.INITIATED).chargePaid(10).build();
+      Payment payment = Payments.forRandomDays()
+          .toBuilder()
+          .vehicleEntrantPayments(Collections.emptyList())
+          .build();
 
       // when
       Throwable throwable = catchThrowable(() -> paymentRepository.insert(payment));
 
       // then
-      assertThat(throwable).isInstanceOf(NullPointerException.class)
-          .hasMessage("Correlation ID cannot be null");
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Vehicle entrant payments cannot be empty");
     }
   }
 

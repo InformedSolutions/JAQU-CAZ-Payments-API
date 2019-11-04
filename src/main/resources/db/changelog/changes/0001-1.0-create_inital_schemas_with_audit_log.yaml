@@ -26,18 +26,18 @@ databaseChangeLog:
       author: radoslaw.morytko
       changes:
         - createTable:
-            tableName: VEHICLE_ENTRANCE
+            tableName: VEHICLE_ENTRANT
             columns:
               - column:
-                  name: VEHICLE_ENTRANCE_ID
+                  name: VEHICLE_ENTRANT_ID
                   type: uuid
                   constraints:
                     primaryKey: true
                     nullable: false
-                    primaryKeyName: vehicle_entrance_vehicle_entrance_id_pkey
+                    primaryKeyName: vehicle_entrant_vehicle_entrant_id_pkey
               - column:
-                  name: DATE_OF_ENTRANCE
-                  type: date
+                  name: CAZ_ENTRY_TIMESTAMP
+                  type: datetime
                   constraints:
                     nullable: false
               - column:
@@ -56,10 +56,7 @@ databaseChangeLog:
                   defaultValueComputed: CURRENT_TIMESTAMP
                   constraints:
                     nullable: false
-        - addUniqueConstraint:
-            columnNames: DATE_OF_ENTRANCE,CAZ_ID,VRN
-            constraintName: date_of_entrance_caz_id_vrn_key
-            tableName: VEHICLE_ENTRANCE
+#  TODO add unique constraint for (TRAVEL_DATE,CAZ_ID,VRN) when TRAVEL_DATE's presence is confirmed
         - createTable:
             tableName: PAYMENT
             columns:
@@ -72,40 +69,42 @@ databaseChangeLog:
                     nullable: false
                     primaryKeyName: payment_payment_id_pkey
               - column:
-                  name: EXTERNAL_PAYMENT_ID
-                  type: varchar(255)
-                  constraints:
-                    nullable: true
-              - column:
-                  name: STATUS
-                  type: varchar(32)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: CASE_REFERENCE
-                  type: varchar(15)
-                  constraints:
-                    nullable: true
-              - column:
                   name: USER_ID
                   type: uuid
                   constraints:
                     nullable: true
+                  remarks: Contains the value of the AWS Cognito 'subject' field
               - column:
                   name: PAYMENT_METHOD
                   type: varchar(32)
                   constraints:
                     nullable: false
+                  remarks: Contains the value of an enumrated type [CREDIT_DEBIT_CARD, DIRECT_DEBIT]
               - column:
-                  name: CHARGE_PAID
+                  name: PAYMENT_PROVIDER_ID
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+                  remarks: GOV.UK Pay payment id
+              - column:
+                  name: TOTAL_PAID
                   type: integer
                   constraints:
                     nullable: false
               - column:
-                  name: CAZ_ID
-                  type: uuid
+                  name: PAYMENT_SUBMITTED_TIMESTAMP
+                  type: timestamp
                   constraints:
-                    nullable: false
+                    nullable: true
+                  remarks: Timestamp indicating the date/time on which a payment was submitted to GOV.UK for authorisation/processing
+              - column:
+                  name: PAYMENT_AUTHORISED_TIMESTAMP
+                  type: timestamp
+                  constraints:
+                    nullable: true
+                  remarks: >-
+                          Timestamp indicating the date/time on which a payment was authorised by GOV.UK Pay (SUCCESS response).
+                          The Vehicle_Entrant_Payment.payment_status field will only be assigned a status of 'paid' when this field is populated.
               - column:
                   name: INSERT_TIMESTAMP
                   type: timestamp
@@ -118,21 +117,26 @@ databaseChangeLog:
                   defaultValueComputed: CURRENT_TIMESTAMP
                   constraints:
                     nullable: false
-              - column:
-                  name: CORRELATION_ID
-                  type: varchar(256)
-                  constraints:
-                    nullable: false
         - createTable:
-            tableName: VEHICLE_ENTRANCE_PAYMENT
+            tableName: VEHICLE_ENTRANT_PAYMENT
             columns:
               - column:
-                  name: VEHICLE_ENTRANCE_PAYMENT_ID
+                  name: VEHICLE_ENTRANT_PAYMENT_ID
                   type: uuid
+                  defaultValueComputed: uuid_generate_v1mc()
                   constraints:
                     primaryKey: true
                     nullable: false
-                    primaryKeyName: vehicle_entrance_payment_vehicle_entrance_payment_id_pkey
+                    primaryKeyName: vehicle_entrant_payment_vehicle_entrant_payment_id_pkey
+              - column:
+                  name: VEHICLE_ENTRANT_ID
+                  type: uuid
+                  constraints:
+                    foreignKeyName: vehicle_entrant_vehicle_entrant_id_fkey
+                    references: VEHICLE_ENTRANT(VEHICLE_ENTRANT_ID)
+                    nullable: true
+                    unique: true
+                  remarks: This field is non-null when a matching row in VEHICLE_ENTRANT is found and payment is successful
               - column:
                   name: PAYMENT_ID
                   type: uuid
@@ -141,83 +145,35 @@ databaseChangeLog:
                     references: PAYMENT(PAYMENT_ID)
                     nullable: false
               - column:
-                  name: VEHICLE_ENTRANCE_ID
+                  name: VRN
+                  type: varchar(15)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: CAZ_ID
                   type: uuid
                   constraints:
-                    foreignKeyName: vehicle_entrance_vehicle_entrance_id_fkey
-                    references: VEHICLE_ENTRANCE(VEHICLE_ENTRANCE_ID)
-                    nullable: true
+                    nullable: false
               - column:
-                  name: DATE_OF_ENTRANCE
+                  name: TRAVEL_DATE
                   type: date
                   constraints:
                     nullable: false
               - column:
-                  name: VRN
-                  type: varchar(15)
+                  name: CHARGE_PAID
+                  type: integer
                   constraints:
                     nullable: false
               - column:
-                  name: INSERT_TIMESTAMP
-                  type: timestamp
-                  defaultValueComputed: CURRENT_TIMESTAMP
+                  name: PAYMENT_STATUS
+                  type: varchar(32)
                   constraints:
                     nullable: false
               - column:
-                  name: UPDATE_TIMESTAMP
-                  type: timestamp
-                  defaultValueComputed: CURRENT_TIMESTAMP
-                  constraints:
-                    nullable: false
-        - createTable:
-            tableName: FLEET
-            columns:
-              - column:
-                  name: FLEET_ID
-                  type: uuid
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-                    primaryKeyName: fleet_fleet_id_pkey
-              - column:
-                  name: COMPANY_NAME
+                  name: CASE_REFERENCE
                   type: varchar(255)
                   constraints:
-                    nullable: false
-              - column:
-                  name: INSERT_TIMESTAMP
-                  type: timestamp
-                  defaultValueComputed: CURRENT_TIMESTAMP
-                  constraints:
-                    nullable: false
-              - column:
-                  name: UPDATE_TIMESTAMP
-                  type: timestamp
-                  defaultValueComputed: CURRENT_TIMESTAMP
-                  constraints:
-                    nullable: false
-        - createTable:
-            tableName: FLEET_VEHICLE
-            columns:
-              - column:
-                  name: FLEET_VEHICLE_ID
-                  type: uuid
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-                    primaryKeyName: fleet_vehicle_fleet_vehicle_id_pkey
-              - column:
-                  name: FLEET_ID
-                  type: uuid
-                  constraints:
-                    foreignKeyName: fleet_fleet_id_fkey
-                    references: FLEET(FLEET_ID)
-                    nullable: false
-              - column:
-                  name: VRN
-                  type: varchar(15)
-                  constraints:
-                    nullable: false
+                    nullable: true
               - column:
                   name: INSERT_TIMESTAMP
                   type: timestamp
@@ -235,7 +191,7 @@ databaseChangeLog:
       author: radoslaw.morytko
       changes:
         - sql:
-            comment: Create Audit Trigger on PAYMENT, VEHICLE_ENTRANCE, VEHICLE_ENTRANCE_PAYMENT, FLEET and FLEET_VEHICLE
+            comment: Create Audit Trigger on PAYMENT, VEHICLE_ENTRANT and VEHICLE_ENTRANT_PAYMENT
             dbms: postgresql
             endDelimiter: ;GO
             splitStatements: true
@@ -243,19 +199,11 @@ databaseChangeLog:
               AFTER INSERT OR UPDATE OR DELETE ON PAYMENT
               FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();
 
-              CREATE TRIGGER VEHICLE_ENTRANCE_AUDIT
-              AFTER INSERT OR UPDATE OR DELETE ON VEHICLE_ENTRANCE
+              CREATE TRIGGER VEHICLE_ENTRANT_AUDIT
+              AFTER INSERT OR UPDATE OR DELETE ON VEHICLE_ENTRANT
               FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();
 
-              CREATE TRIGGER VEHICLE_ENTRANCE_PAYMENT_AUDIT
-              AFTER INSERT OR UPDATE OR DELETE ON VEHICLE_ENTRANCE_PAYMENT
-              FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();
-
-              CREATE TRIGGER FLEET_AUDIT
-              AFTER INSERT OR UPDATE OR DELETE ON FLEET
-              FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();
-
-              CREATE TRIGGER FLEET_VEHICLE_AUDIT
-              AFTER INSERT OR UPDATE OR DELETE ON FLEET_VEHICLE
+              CREATE TRIGGER VEHICLE_ENTRANT_PAYMENT_AUDIT
+              AFTER INSERT OR UPDATE OR DELETE ON VEHICLE_ENTRANT_PAYMENT
               FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();
             stripComments: true
