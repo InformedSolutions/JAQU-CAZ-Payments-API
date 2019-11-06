@@ -53,7 +53,7 @@ class VehicleEntranceControllerTest {
   class Validation {
     @Test
     public void shouldReturn400StatusCodeWhenCleanZoneIdIsNull() throws Exception {
-      String payload = toJson(new VehicleEntranceRequest(null, today(), ANY_VALID_VRN));
+      String payload = toJson(new VehicleEntranceRequest(null, todayDateTime(), ANY_VALID_VRN));
 
       mockMvc.perform(post(PATH)
           .content(payload)
@@ -68,7 +68,7 @@ class VehicleEntranceControllerTest {
     }
 
     @Test
-    public void shouldReturn400StatusCodeWhenDateOfEntranceIsNull() throws Exception {
+    public void shouldReturn400StatusCodeWhenCazEntryTimestampIsNull() throws Exception {
       String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, null, ANY_VALID_VRN));
 
       mockMvc.perform(post(PATH)
@@ -85,7 +85,7 @@ class VehicleEntranceControllerTest {
 
     @Test
     public void shouldReturn400StatusCodeWhenVrnIsNull() throws Exception {
-      String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, today(), null));
+      String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, todayDateTime(), null));
 
       mockMvc.perform(post(PATH)
           .content(payload)
@@ -102,7 +102,7 @@ class VehicleEntranceControllerTest {
     @ParameterizedTest
     @ValueSource(strings = {"", "aaaaaaaaaaaaaaaa"})
     public void shouldReturn400StatusCodeWhenVrnIsInvalid(String vrn) throws Exception {
-      String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, today(), vrn));
+      String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, todayDateTime(), vrn));
 
       mockMvc.perform(post(PATH)
           .content(payload)
@@ -119,7 +119,7 @@ class VehicleEntranceControllerTest {
 
   @Test
   public void shouldReturn200StatusCodeWhenRequestIsValid() throws Exception {
-    String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, today(), ANY_VALID_VRN));
+    String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, todayDateTime(), ANY_VALID_VRN));
 
     mockMvc.perform(post(PATH)
         .content(payload)
@@ -137,7 +137,7 @@ class VehicleEntranceControllerTest {
     return objectMapper.writeValueAsString(request);
   }
 
-  private LocalDateTime today() {
+  private LocalDateTime todayDateTime() {
     return LocalDateTime.now();
   }
 }

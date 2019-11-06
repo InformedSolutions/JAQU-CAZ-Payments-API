@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.util;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,7 @@ import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.VehicleEntrance;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
 public class TestObjectFactory {
@@ -181,6 +183,24 @@ public class TestObjectFactory {
               .map(VehicleEntrantPayment::getChargePaid)
               .reduce(0, Integer::sum))
           .vehicleEntrantPayments(vehicleEntrantPayments)
+          .build();
+    }
+  }
+
+  public static class VehicleEntrants {
+
+    public static VehicleEntrance SAMPLE_ENTRANT = VehicleEntrance.builder()
+        .vrn("BW91HUN")
+        .cazEntryTimestamp(LocalDateTime.now())
+        .cleanZoneId(UUID.randomUUID())
+        .build();
+
+    public static VehicleEntrance sampleEntrantWithId(UUID uuid) {
+      return VehicleEntrance.builder()
+          .vrn("BW91HUN")
+          .cazEntryTimestamp(LocalDateTime.now())
+          .id(UUID.fromString(uuid.toString()))
+          .cleanZoneId(UUID.randomUUID())
           .build();
     }
   }

@@ -31,6 +31,7 @@ databaseChangeLog:
               - column:
                   name: VEHICLE_ENTRANT_ID
                   type: uuid
+                  defaultValueComputed: uuid_generate_v1mc()
                   constraints:
                     primaryKey: true
                     nullable: false
@@ -51,11 +52,20 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: CAZ_ENTRY_DATE
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
                   name: INSERT_TIMESTAMP
                   type: timestamp
                   defaultValueComputed: CURRENT_TIMESTAMP
                   constraints:
                     nullable: false
+        - addUniqueConstraint:
+            columnNames: CAZ_ENTRY_DATE,CAZ_ID,VRN
+            constraintName: vehicle_entrant_caz_entry_date_caz_id_vrn_key
+            tableName: VEHICLE_ENTRANT
 #  TODO add unique constraint for (TRAVEL_DATE,CAZ_ID,VRN) when TRAVEL_DATE's presence is confirmed
         - createTable:
             tableName: PAYMENT
