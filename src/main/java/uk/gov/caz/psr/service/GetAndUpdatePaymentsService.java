@@ -21,6 +21,7 @@ public class GetAndUpdatePaymentsService {
 
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final PaymentRepository internalPaymentsRepository;
+  private final FinalizePaymentService finalizePaymentService;
 
   /**
    * Retrieves the payment by its internal identifier and, provided it exists and has an external
@@ -58,6 +59,7 @@ public class GetAndUpdatePaymentsService {
     } else {
       log.info("Found the external payment, updating its status to '{}' in the database, "
           + "current status '{}'", externalPayment.getStatus(), internalPayment.getStatus());
+      externalPayment = finalizePaymentService.connectExistingVehicleEntrants(externalPayment);
       internalPaymentsRepository.update(externalPayment);
     }
     return Optional.of(externalPayment);

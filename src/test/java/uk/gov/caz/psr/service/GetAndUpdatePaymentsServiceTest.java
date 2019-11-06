@@ -32,6 +32,9 @@ class GetAndUpdatePaymentsServiceTest {
   @Mock
   private PaymentRepository internalPaymentsRepository;
 
+  @Mock
+  private FinalizePaymentService finalizePaymentService;
+
   @InjectMocks
   private GetAndUpdatePaymentsService getAndUpdatePaymentsService;
 
@@ -55,7 +58,8 @@ class GetAndUpdatePaymentsServiceTest {
     given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.empty());
 
     // when
-    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    Optional<Payment> result = getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(paymentId);
 
     // then
     assertThat(result).isEmpty();
@@ -71,7 +75,8 @@ class GetAndUpdatePaymentsServiceTest {
     mockInternalPaymentWith(paymentId, externalId);
 
     // when
-    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    Optional<Payment> result = getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(paymentId);
 
     // then
     assertThat(result).isEmpty();
@@ -105,9 +110,11 @@ class GetAndUpdatePaymentsServiceTest {
     PaymentStatus externalStatus = PaymentStatus.FAILED;
     Payment payment = mockInternalPaymentWith(paymentId, externalId);
     mockExternalPaymentWithStatus(externalId, payment, externalStatus);
+    mockFinalizePayment(payment);
 
     // when
-    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    Optional<Payment> result = getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(paymentId);
 
     // then
     Payment internalPaymentWithExternalStatus = payment.toBuilder().status(externalStatus).build();
@@ -125,7 +132,8 @@ class GetAndUpdatePaymentsServiceTest {
     mockExternalPaymentWithStatus(externalId, payment, externalStatus);
 
     // when
-    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    Optional<Payment> result = getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(paymentId);
 
     // then
     Payment internalPaymentWithExternalStatus = payment.toBuilder().status(externalStatus).build();
@@ -152,6 +160,11 @@ class GetAndUpdatePaymentsServiceTest {
     GetPaymentResult externalPayment = toExternalPaymentWithStatus(payment, status);
     given(externalPaymentsRepository.findById(externalId)).willReturn(Optional.of(
         externalPayment));
+  }
+
+  private void mockFinalizePayment(Payment payment) {
+    given(finalizePaymentService.connectExistingVehicleEntrants(any()))
+        .willAnswer(i -> i.getArguments()[0]);
   }
 
   private GetPaymentResult toExternalPaymentWithStatus(Payment payment, PaymentStatus status) {
