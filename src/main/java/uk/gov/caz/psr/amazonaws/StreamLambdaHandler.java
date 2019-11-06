@@ -20,26 +20,23 @@ public class StreamLambdaHandler implements RequestStreamHandler {
 
   private static SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
 
+  private static final int INITIALIZATION_TIMEOUT_IN_MS = 25_000;
+
   static {
     long startTime = Instant.now().toEpochMilli();
     try {
       // For applications that take longer than 10 seconds to start, use the async builder:
       String listOfActiveSpringProfiles = System.getenv("SPRING_PROFILES_ACTIVE");
-      LambdaContainerHandler.getContainerConfig().setInitializationTimeout(20_000);
-      if (listOfActiveSpringProfiles != null) {
-        handler = new SpringBootProxyHandlerBuilder()
-            .defaultProxy()
-            .asyncInit(startTime)
-            .springBootApplication(Application.class)
-            .profiles(splitToArray(listOfActiveSpringProfiles))
-            .buildAndInitialize();
-      } else {
-        handler = new SpringBootProxyHandlerBuilder()
-            .defaultProxy()
-            .asyncInit(startTime)
-            .springBootApplication(Application.class)
-            .buildAndInitialize();
-      }
+      LambdaContainerHandler.getContainerConfig().setInitializationTimeout(
+          INITIALIZATION_TIMEOUT_IN_MS);
+      String[] springProfiles = listOfActiveSpringProfiles == null ? null
+          : splitToArray(listOfActiveSpringProfiles);
+      handler = new SpringBootProxyHandlerBuilder()
+          .defaultProxy()
+          .asyncInit(startTime)
+          .springBootApplication(Application.class)
+          .profiles(springProfiles)
+          .buildAndInitialize();
     } catch (ContainerInitializationException e) {
       // if we fail here. We re-throw the exception to force another cold start
       throw new RuntimeException("Could not initialize Spring Boot application", e);
