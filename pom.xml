@@ -27,11 +27,14 @@
     <sonar.coverage.exclusions>
       **/configuration/**/*.java,
       **/amazonaws/StreamLambdaHandler.java,
-      **/psr/dto/**/*.java
+      **/amazonaws/CleanupDanglingPaymentsHandler.java,
+      **/psr/dto/**/*.java,
       <!-- TODO remove once ChargeSettlementController is implemented and tested -->
-      **/psr/controller/ChargeSettlementController.java
+      **/psr/controller/ChargeSettlementController.java,
       <!-- TODO remove once CAZ-1238 is implemented -->
-      **/psr/repository/VehicleEntranceRepository.java
+      **/psr/repository/VehicleEntranceRepository.java,
+      <!-- TODO remove once CAZ-1232 is implemented -->
+      **/psr/service/CleanupDanglingPaymentsService.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -525,11 +528,14 @@
                 <exclude>**/configuration/**/*.class</exclude>
                 <exclude>**/Application.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
+                <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
+                <exclude>**/psr/dto/**/*.class</exclude>
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
                 <!-- TODO remove once CAZ-1238 is implemented -->
                 <exclude>**/psr/repository/VehicleEntranceRepository.class</exclude>
-                <exclude>**/psr/dto/**/*.class</exclude>
+                <!-- TODO remove once CAZ-1232 is implemented -->
+                <exclude>**/psr/service/CleanupDanglingPaymentsService.class</exclude>
               </excludes>
               <rules>
                 <rule>

@@ -20,7 +20,7 @@ public class StreamLambdaHandler implements RequestStreamHandler {
 
   private static SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
 
-  private static final int INITIALIZATION_TIMEOUT_IN_MS = 25_000;
+  private static final int INITIALIZATION_TIMEOUT_IN_MS = 60_000;
 
   static {
     long startTime = Instant.now().toEpochMilli();
