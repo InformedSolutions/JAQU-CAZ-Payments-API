@@ -9,7 +9,7 @@ import com.google.common.base.Joiner;
 import com.google.common.io.Resources;
 import io.restassured.RestAssured;
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,9 +40,11 @@ import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 
 @FullyRunningServerIntegrationTest
-@Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
+@Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
+    "classpath:data/sql/add-vehicle-entrants.sql"},
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
+@Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
+    "classpath:data/sql/clear-all-vehicle-entrants.sql"},
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 public class SuccessPaymentsJourneyTestIT {
 
@@ -60,6 +62,9 @@ public class SuccessPaymentsJourneyTestIT {
   private JdbcTemplate jdbcTemplate;
 
   private ClientAndServer mockServer;
+
+  private final LocalDate dateWithEntityInDB = LocalDate.of(2019, 11, 2);
+  private final LocalDate dateWithoutEntityInDB = LocalDate.of(2019, 11, 10);
 
   @BeforeEach
   public void startMockServer() {
@@ -82,7 +87,7 @@ public class SuccessPaymentsJourneyTestIT {
     andReturnsSuccessStatus();
 
     given()
-        .initiatePaymentRequest(initiatePaymentRequest())
+        .initiatePaymentRequest(initiatePaymentRequest(dateWithEntityInDB))
         .whenSubmitted()
 
         .then()
@@ -96,6 +101,8 @@ public class SuccessPaymentsJourneyTestIT {
 
         .then()
         .paymentEntityStatusIsUpdatedTo(PaymentStatus.SUCCESS)
+        .connectsEntityToPaymentIfEntityWasFound(dateWithEntityInDB)
+        .doesNotConnectEntityToPaymentIfEntityWasNotFound(dateWithoutEntityInDB)
         .withNonNullPaymentAuthorisedTimestamp()
         .andStatusResponseIsReturnedWithMatchinInternalId();
   }
@@ -106,6 +113,7 @@ public class SuccessPaymentsJourneyTestIT {
 
   @RequiredArgsConstructor
   static class PaymentJourneyAssertion {
+
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
 
@@ -190,6 +198,39 @@ public class SuccessPaymentsJourneyTestIT {
       return this;
     }
 
+    public PaymentJourneyAssertion doesNotConnectEntityToPaymentIfEntityWasNotFound(LocalDate date) {
+      verifyThatPaymentWasNotAssignedToEntity(date);
+      return this;
+    }
+
+    public void verifyThatPaymentWasNotAssignedToEntity(LocalDate date) {
+      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "vehicle_entrant_payment",
+          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
+              + "travel_date = '" + date.toString() + "' AND "
+              + "payment_id = '" + getAndUpdatePaymentResponse.getPaymentId() + "' AND "
+              + "vehicle_entrant_id is not NULL");
+
+      assertThat(vehicleEntrantPaymentsCount).isEqualTo(0);
+    }
+
+
+    public PaymentJourneyAssertion connectsEntityToPaymentIfEntityWasFound(LocalDate date) {
+      verifyThatPaymentWasAssignedToEntity(date);
+      return this;
+    }
+
+    public void verifyThatPaymentWasAssignedToEntity(LocalDate date) {
+      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "vehicle_entrant_payment",
+          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
+              + "travel_date = '" + date.toString() + "' AND "
+              + "payment_id = '" + getAndUpdatePaymentResponse.getPaymentId() + "' AND "
+              + "vehicle_entrant_id is not NULL");
+
+      assertThat(vehicleEntrantPaymentsCount).isEqualTo(1);
+    }
+
     private void verifyThatPaymentEntityExistsWithStatus(PaymentStatus status) {
       verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod();
       verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(status);
@@ -240,10 +281,10 @@ public class SuccessPaymentsJourneyTestIT {
     }
   }
 
-  private InitiatePaymentRequest initiatePaymentRequest() {
+  private InitiatePaymentRequest initiatePaymentRequest(LocalDate date) {
     return InitiatePaymentRequest.builder()
         .amount(4200)
-        .days(Collections.singletonList(LocalDate.now()))
+        .days(Arrays.asList(dateWithoutEntityInDB, dateWithEntityInDB))
         .cleanAirZoneId(UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4"))
         .returnUrl("http://localhost/return-url")
         .vrn("ND84VSX")
