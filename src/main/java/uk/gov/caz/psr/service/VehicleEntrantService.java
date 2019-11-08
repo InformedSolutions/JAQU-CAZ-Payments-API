@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.repository.VehicleEntrantRepository;
 
@@ -25,6 +26,7 @@ public class VehicleEntrantService {
    * @throws NullPointerException     if {@code vehicleEntrant} is {@code null}
    * @throws IllegalArgumentException if {@code vehicleEntrant#id} is {@code null}
    */
+  @Transactional
   public void registerVehicleEntrant(VehicleEntrant vehicleEntrant) {
     Preconditions.checkNotNull(vehicleEntrant, "Vehicle entrant cannot be null");
     Preconditions.checkArgument(vehicleEntrant.getId() == null,

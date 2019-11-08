@@ -10,16 +10,16 @@ import static org.mockito.Mockito.verify;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.repository.VehicleEntrantRepository;
+import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,12 +98,7 @@ public class FinalizePaymentServiceTest {
   }
 
   private Optional<VehicleEntrant> createVehicleEntrant() {
-    return Optional.ofNullable(VehicleEntrant.builder()
-        .id(UUID.randomUUID())
-        .cazEntryTimestamp(LocalDateTime.now())
-        .vrn("VRN123")
-        .cleanZoneId(UUID.randomUUID())
-        .build());
+    return Optional.of(TestObjectFactory.VehicleEntrants.anyWithId());
   }
 
   private void mockNotFoundVehicleEntrant() {

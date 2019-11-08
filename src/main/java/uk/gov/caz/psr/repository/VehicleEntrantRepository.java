@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,11 +24,14 @@ import uk.gov.caz.psr.model.VehicleEntrant;
 public class VehicleEntrantRepository {
 
   private static final FindByMapper FIND_BY_MAPPER = new FindByMapper();
+  private static final String SELECT_BY_SQL = "SELECT * FROM vehicle_entrant "
+      + "WHERE "
+      + "caz_id = ? AND "
+      + "vrn = ? AND "
+      + "caz_entry_date = ?";
+
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
-
-  static final String SELECT_BY_SQL = "SELECT * FROM vehicle_entrant "
-      + "WHERE caz_id = ? AND vrn = ? AND to_char(caz_entry_timestamp, 'YYYY-MM-DD') = ?";
 
   /**
    * Creates an instance of {@link VehicleEntrantRepository}.
@@ -66,18 +70,18 @@ public class VehicleEntrantRepository {
   /**
    * Gets {@code vehicleEntrant} from database if it exists.
    *
-   * @param cazEntryTimestamp provided cazEntryTimestamp.
-   * @param cleanZoneId       provided cleanZoneId.
-   * @param vrn               provided vrn.
+   * @param cazEntryDate provided date of vehicle's entry
+   * @param cleanZoneId  provided cleanZoneId.
+   * @param vrn          provided vrn.
    * @return An instance of {@link VehicleEntrant} class wrapped in {@link Optional} if the vehicle
    *     entrant is found, {@link Optional#empty()} otherwise.
    * @throws NullPointerException     if {@code cazEntryTimestamp} is null
    * @throws NullPointerException     if {@code cleanZoneId} is null
    * @throws IllegalArgumentException if {@code vrn} is empty.
    */
-  public Optional<VehicleEntrant> findBy(LocalDate cazEntryTimestamp, UUID cleanZoneId,
+  public Optional<VehicleEntrant> findBy(LocalDate cazEntryDate, UUID cleanZoneId,
       String vrn) {
-    Preconditions.checkNotNull(cazEntryTimestamp, "cazEntryTimestamp cannot be null");
+    Preconditions.checkNotNull(cazEntryDate, "cazEntryDate cannot be null");
     Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be null or empty");
 
@@ -85,7 +89,7 @@ public class VehicleEntrantRepository {
         preparedStatement -> {
           preparedStatement.setObject(1, cleanZoneId);
           preparedStatement.setString(2, vrn);
-          preparedStatement.setString(3, cazEntryTimestamp.toString());
+          preparedStatement.setObject(3, cazEntryDate);
         },
         FIND_BY_MAPPER
     );
@@ -103,7 +107,7 @@ public class VehicleEntrantRepository {
   private MapSqlParameterSource toSqlParameters(VehicleEntrant vehicleEntrant) {
     return new MapSqlParameterSource()
         .addValue("caz_entry_timestamp", vehicleEntrant.getCazEntryTimestamp())
-        .addValue("caz_entry_date", vehicleEntrant.getCazEntryTimestamp().toLocalDate())
+        .addValue("caz_entry_date", vehicleEntrant.getCazEntryDate())
         .addValue("caz_id", vehicleEntrant.getCleanZoneId())
         .addValue("vrn", vehicleEntrant.getVrn());
   }
@@ -120,7 +124,9 @@ public class VehicleEntrantRepository {
           .id(UUID.fromString(resultSet.getString("vehicle_entrant_id")))
           .cleanZoneId(UUID.fromString(resultSet.getString("caz_id")))
           .vrn(resultSet.getString("vrn"))
-          .cazEntryTimestamp(resultSet.getTimestamp("caz_entry_timestamp").toLocalDateTime())
+          .cazEntryTimestamp(
+              resultSet.getObject("caz_entry_timestamp", LocalDateTime.class))
+          .cazEntryDate(resultSet.getObject("caz_entry_date", LocalDate.class))
           .build();
     }
   }

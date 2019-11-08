@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
@@ -84,6 +85,7 @@ public class VehicleEntrantPaymentRepository {
    * @throws IllegalArgumentException if {@code vehicleEntrantPayments} contains at least one object
    *                                  whose payment id is null.
    */
+  @Transactional
   List<VehicleEntrantPayment> insert(List<VehicleEntrantPayment> vehicleEntrantPayments) {
     Preconditions.checkNotNull(vehicleEntrantPayments, "Vehicle entrant payments cannot be null");
     Preconditions.checkArgument(!vehicleEntrantPayments.isEmpty(), "Vehicle entrant payments "
@@ -135,6 +137,7 @@ public class VehicleEntrantPaymentRepository {
    * @throws NullPointerException if {@code vehicleEntrantPayments} is null
    * @throws IllegalArgumentException if {@code vehicleEntrantPayments} is empty
    */
+  @Transactional
   public void update(List<VehicleEntrantPayment> vehicleEntrantPayments) {
     Preconditions.checkNotNull(vehicleEntrantPayments, "Vehicle entrant payments cannot be null");
     Preconditions.checkArgument(!vehicleEntrantPayments.isEmpty(),
@@ -187,7 +190,7 @@ public class VehicleEntrantPaymentRepository {
    * status is equal to 'PAID'. If none is found, {@link Optional#empty()} is returned.
    *
    * @param vehicleEntrant provided VehicleEntrant object.
-   * @return An optional containing {@link VehicleEntrantPayment} entitity.
+   * @return An optional containing {@link VehicleEntrantPayment} entity.
    * @throws NullPointerException if {@code vehicleEntrant} is null.
    */
   public Optional<VehicleEntrantPayment> findSuccessfullyPaid(VehicleEntrant vehicleEntrant) {
@@ -195,7 +198,7 @@ public class VehicleEntrantPaymentRepository {
 
     List<VehicleEntrantPayment> results = jdbcTemplate.query(SELECT_PAID_SQL,
         preparedStatement -> {
-          preparedStatement.setObject(1, vehicleEntrant.getCazEntryTimestamp().toLocalDate());
+          preparedStatement.setObject(1, vehicleEntrant.getCazEntryDate());
           preparedStatement.setObject(2, vehicleEntrant.getCleanZoneId());
           preparedStatement.setString(3, vehicleEntrant.getVrn());
           preparedStatement.setString(4, InternalPaymentStatus.PAID.name());

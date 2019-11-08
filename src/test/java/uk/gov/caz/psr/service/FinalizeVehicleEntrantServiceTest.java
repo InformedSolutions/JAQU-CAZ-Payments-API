@@ -8,7 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -20,9 +19,10 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.VehicleEntrantPaymentRepository;
+import uk.gov.caz.psr.util.TestObjectFactory;
 
 @ExtendWith(MockitoExtension.class)
-public class FinalizeVehicleEntrantTest {
+public class FinalizeVehicleEntrantServiceTest {
 
   @Mock
   private VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository;
@@ -59,7 +59,7 @@ public class FinalizeVehicleEntrantTest {
 
     // then
     assertThat(throwable).isInstanceOf(IllegalStateException.class)
-        .hasMessage("Payment already assigned to Entrant.");
+        .hasMessageStartingWith("Payment already assigned to an entrant");
   }
 
   @Test
@@ -93,12 +93,7 @@ public class FinalizeVehicleEntrantTest {
   }
 
   private VehicleEntrant createVehicleEntrant() {
-    return VehicleEntrant.builder()
-        .id(UUID.randomUUID())
-        .cazEntryTimestamp(LocalDateTime.of(2019,11,7,22,40, 10))
-        .vrn("VRN123")
-        .cleanZoneId(UUID.randomUUID())
-        .build();
+    return TestObjectFactory.VehicleEntrants.forDay(LocalDate.of(2019,11,7));
   }
 
   private VehicleEntrantPayment createAlreadyAssignedVehicleEntrantPayment() {
@@ -118,5 +113,4 @@ public class FinalizeVehicleEntrantTest {
         .travelDate(LocalDate.of(2019,11,7))
         .build();
   }
-
 }

@@ -29,9 +29,8 @@
       **/psr/Application.java,
       **/amazonaws/StreamLambdaHandler.java,
       **/amazonaws/CleanupDanglingPaymentsHandler.java,
-      **/psr/dto/*.java,
-      **/psr/dto/external/*.java,
       <!-- TODO remove once ChargeSettlementController is implemented and tested -->
+      **/psr/dto/ChargeSettlementPaymentStatus.java,
       **/psr/controller/ChargeSettlementController.java,
       <!-- TODO remove once CAZ-1232 is implemented -->
       **/psr/service/CleanupDanglingPaymentsService.java
@@ -548,11 +547,9 @@
                 <exclude>**/Application.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
-                <exclude>**/psr/dto/**/*.class</exclude>
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
-                <exclude>**/psr/dto/*.class</exclude>
-                <exclude>**/psr/dto/external/*.class</exclude>
+                <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
                 <!-- TODO remove once CAZ-1232 is implemented -->
                 <exclude>**/psr/service/CleanupDanglingPaymentsService.class</exclude>
               </excludes>

@@ -18,11 +18,9 @@ class PaymentRepositoryTestIT {
   private PaymentRepository paymentRepository;
 
   @Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
-      "classpath:data/sql/clear-all-vehicle-entrants.sql",
       "classpath:data/sql/add-payment-with-null-external-id.sql"},
       executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
-  @Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
-      "classpath:data/sql/clear-all-vehicle-entrants.sql"},
+  @Sql(scripts = {"classpath:data/sql/clear-all-payments.sql"},
       executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
   @Test
   public void shouldFetchByIdPaymentWithNullExternalId() {

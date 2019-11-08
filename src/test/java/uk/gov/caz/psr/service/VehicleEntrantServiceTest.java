@@ -58,7 +58,7 @@ class VehicleEntrantServiceTest {
   @Test
   public void shouldCallRepositoryWhenVehicleEntrantIsValid() {
     // given
-    VehicleEntrant vehicleEntrant = VehicleEntrants.SAMPLE_ENTRANT;
+    VehicleEntrant vehicleEntrant = VehicleEntrants.anyWithoutId();
 
     // when
     vehicleEntrantService.registerVehicleEntrant(vehicleEntrant);

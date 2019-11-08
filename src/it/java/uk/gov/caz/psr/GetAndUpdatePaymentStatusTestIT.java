@@ -77,6 +77,6 @@ public class GetAndUpdatePaymentStatusTestIT {
         .toBuilder()
         .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
         .build();
-    return paymentRepository.insertExternal(withoutId).getId();
+    return paymentRepository.insertWithExternalStatus(withoutId).getId();
   }
 }

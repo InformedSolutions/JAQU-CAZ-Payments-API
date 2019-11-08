@@ -25,7 +25,8 @@ public class VehicleEntrantPayment {
   UUID vehicleEntrantId;
 
   /**
-   * A unique identifier of {@link Payment} entity.
+   * A unique identifier of {@link Payment} entity. Can be null for not persisted instances (e.g.
+   * when a payment object is created before being persisted).
    */
   UUID paymentId;
 

@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import uk.gov.caz.psr.model.VehicleEntrant;
+import uk.gov.caz.psr.util.TestObjectFactory;
 
 @ExtendWith(MockitoExtension.class)
 public class VehicleEntrantRepositoryTest {
@@ -27,18 +28,18 @@ public class VehicleEntrantRepositoryTest {
   class FindBy {
 
     @Test
-    public void shouldThrowNullPointerExceptionWhenCazEntryTimestampIsNull() {
+    public void shouldThrowNullPointerExceptionWhenCazEntryDateIsNull() {
       // given
-      LocalDate cazEntryTimestamp = null;
+      LocalDate cazEntryDate = null;
 
       // when
       Throwable throwable = catchThrowable(
-          () -> vehicleEntrantRepository.findBy(cazEntryTimestamp, UUID
+          () -> vehicleEntrantRepository.findBy(cazEntryDate, UUID
               .randomUUID(), "VRN123"));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
-          .hasMessage("cazEntryTimestamp cannot be null");
+          .hasMessage("cazEntryDate cannot be null");
     }
 
     @Test
@@ -102,9 +103,9 @@ public class VehicleEntrantRepositoryTest {
 
     @Test
     public void shouldThrowIllegalArgumentExceptionWhenVehicleEntrantHasId() {
-      VehicleEntrant vehicleEntrant = VehicleEntrant.builder()
-          .id(UUID.randomUUID())
-          .build();
+      // given
+      UUID id = UUID.fromString("e3b6292a-260a-4679-aeb5-7e43a05486cd");
+      VehicleEntrant vehicleEntrant = TestObjectFactory.VehicleEntrants.sampleEntrantWithId(id);
 
       // when
       Throwable throwable = catchThrowable(() -> vehicleEntrantRepository.insertIfNotExists(vehicleEntrant));

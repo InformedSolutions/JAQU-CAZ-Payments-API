@@ -66,15 +66,18 @@ public class PaymentRepository {
   }
 
   /**
-   * Inserts an external {@code payment} (with the external status set alongside the
-   * same status of vehicle entrant payments) into database.
+   * Inserts {@code payment} (with the external status set alongside the same status of vehicle
+   * entrant payments) into database.
    *
    * @param payment An entity object which is supposed to be saved in the database.
    * @return An instance of {@link Payment} with its internal identifier set.
    * @throws NullPointerException if {@code payment} is null
+   * @throws NullPointerException if {@link Payment#getExternalPaymentStatus()} is null
    * @throws IllegalArgumentException if {@link Payment#getId()} is not null
+   * @throws IllegalArgumentException if {@link Payment#getVehicleEntrantPayments()} ()} do not
+   *     have the same payment status.
    */
-  public Payment insertExternal(Payment payment) {
+  public Payment insertWithExternalStatus(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
     Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
     Preconditions.checkNotNull(payment.getExternalPaymentStatus(),

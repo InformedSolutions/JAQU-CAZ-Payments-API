@@ -8,6 +8,10 @@ import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.VehicleEntrantPaymentRepository;
 
+/**
+ * Class responsible for connecting a vehicle entrant record with the successful payment (if
+ * exists).
+ */
 @Service
 @AllArgsConstructor
 public class FinalizeVehicleEntrantService {
@@ -34,23 +38,23 @@ public class FinalizeVehicleEntrantService {
    * connected before.
    *
    * @param vehicleEntrantPayment found {@link VehicleEntrantPayment} object.
-   * @param vehicleEntrant        provided {@link VehicleEntrant} object
+   * @param vehicleEntrant provided {@link VehicleEntrant} object
    */
   private void updateVehicleEntrantPayment(VehicleEntrantPayment vehicleEntrantPayment,
       VehicleEntrant vehicleEntrant) {
-    if (vehicleEntrantPayment.getVehicleEntrantId() != null) {
-      throw new IllegalStateException("Payment already assigned to Entrant.");
-    }
+    Preconditions.checkState(vehicleEntrantPayment.getVehicleEntrantId() == null,
+        "Payment already assigned to an entrant with id '%s'",
+        vehicleEntrantPayment.getVehicleEntrantId());
 
-    vehicleEntrantPaymentRepository
-        .update(rebuildVehicleEntrantPayment(vehicleEntrantPayment, vehicleEntrant));
+    vehicleEntrantPaymentRepository.update(rebuildVehicleEntrantPayment(vehicleEntrantPayment,
+        vehicleEntrant));
   }
 
   /**
    * Builds new {@link VehicleEntrantPayment} object with updated {@code vehicleEntrant.id}.
    *
    * @param vehicleEntrantPayment found {@link VehicleEntrantPayment} object.
-   * @param vehicleEntrant        provided {@link VehicleEntrant} object
+   * @param vehicleEntrant provided {@link VehicleEntrant} object
    */
   private VehicleEntrantPayment rebuildVehicleEntrantPayment(
       VehicleEntrantPayment vehicleEntrantPayment, VehicleEntrant vehicleEntrant) {

@@ -39,7 +39,7 @@ class PaymentRepositoryTest {
       Payment payment = null;
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentRepository.insertExternal(payment));
+      Throwable throwable = catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -53,7 +53,7 @@ class PaymentRepositoryTest {
           UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150"));
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentRepository.insertExternal(payment));
+      Throwable throwable = catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -66,7 +66,7 @@ class PaymentRepositoryTest {
       Payment payment = paymentWithTwoDifferentVehicleEntrantStatuses();
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentRepository.insertExternal(payment));
+      Throwable throwable = catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)

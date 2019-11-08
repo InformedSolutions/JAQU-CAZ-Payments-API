@@ -23,6 +23,7 @@ import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
+import uk.gov.caz.psr.controller.VehicleEntrantController;
 import uk.gov.caz.psr.dto.VehicleEntrantRequest;
 
 @FullyRunningServerIntegrationTest
@@ -48,7 +49,8 @@ public class SuccessAddingVehicleEntrantIT {
     mockServer = startClientAndServer(1080);
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
-    RestAssured.basePath = "/v1/payments/vehicle-entrants";
+    RestAssured.basePath = VehicleEntrantController.BASE_PATH + "/" +
+        VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS;
   }
 
   @AfterEach
@@ -117,9 +119,7 @@ public class SuccessAddingVehicleEntrantIT {
           .post()
           .then()
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .statusCode(HttpStatus.OK.value())
-          .extract()
-          .response();
+          .statusCode(HttpStatus.OK.value());
       return this;
     }
 

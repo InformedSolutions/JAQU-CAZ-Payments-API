@@ -20,6 +20,8 @@ import uk.gov.caz.psr.model.VehicleEntrantPayment;
 public class TestObjectFactory {
 
   private static final Random random = new Random();
+  private static final UUID ANY_CLEAN_AIR_ZONE =
+      UUID.fromString("17e8e064-fcb9-11e9-995d-fb4ae3c787c6");
 
   private static String randomVrn() {
     char[] value = {
@@ -91,9 +93,7 @@ public class TestObjectFactory {
               .internalPaymentStatus(status)
               .chargePaid(charge)
               .travelDate(travelDate)
-              .cleanZoneId(cleanAirZoneId == null
-                  ? UUID.fromString("17e8e064-fcb9-11e9-995d-fb4ae3c787c6")
-                  : cleanAirZoneId)
+              .cleanZoneId(cleanAirZoneId == null ? ANY_CLEAN_AIR_ZONE : cleanAirZoneId)
               .vrn(vrn == null ? randomVrn() : vrn)
               .caseReference(null)
               .build()
@@ -191,19 +191,37 @@ public class TestObjectFactory {
 
   public static class VehicleEntrants {
 
-    public static VehicleEntrant SAMPLE_ENTRANT = VehicleEntrant.builder()
-        .vrn("BW91HUN")
-        .cazEntryTimestamp(LocalDateTime.now())
-        .cleanZoneId(UUID.randomUUID())
-        .build();
+    public static VehicleEntrant forDay(LocalDate entryDate) {
+      return basicBuilder()
+          .cazEntryDate(entryDate)
+          .cazEntryTimestamp(entryDate.atStartOfDay())
+          .build();
+    }
+
+    public static VehicleEntrant anyWithoutId() {
+      return basicBuilder().build();
+    }
+
+    public static VehicleEntrant anyWithId() {
+      return basicBuilder()
+          .id(UUID.randomUUID())
+          .build();
+    }
 
     public static VehicleEntrant sampleEntrantWithId(UUID uuid) {
-      return VehicleEntrant.builder()
-          .vrn("BW91HUN")
-          .cazEntryTimestamp(LocalDateTime.now())
-          .id(UUID.fromString(uuid.toString()))
-          .cleanZoneId(UUID.randomUUID())
+      return basicBuilder()
+          .id(uuid)
           .build();
+    }
+
+    private static VehicleEntrant.VehicleEntrantBuilder basicBuilder() {
+      LocalDateTime now = LocalDateTime.now();
+      return VehicleEntrant.builder()
+          .id(null)
+          .vrn("BW91HUN")
+          .cazEntryTimestamp(now)
+          .cazEntryDate(now.toLocalDate())
+          .cleanZoneId(ANY_CLEAN_AIR_ZONE);
     }
   }
 }

@@ -34,7 +34,7 @@ public class InitiatePaymentService {
    */
   public Payment createPayment(InitiatePaymentRequest request) {
     Payment payment = buildPayment(request);
-    Payment paymentWithInternalId = paymentRepository.insertExternal(payment);
+    Payment paymentWithInternalId = paymentRepository.insertWithExternalStatus(payment);
     Payment paymentWithExternalId = externalPaymentsRepository.create(paymentWithInternalId,
         request.getReturnUrl());
     paymentRepository.update(paymentWithExternalId);
