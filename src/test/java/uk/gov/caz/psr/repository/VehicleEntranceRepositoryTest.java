@@ -9,10 +9,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+import uk.gov.caz.psr.model.VehicleEntrance;
 
 @ExtendWith(MockitoExtension.class)
 public class VehicleEntranceRepositoryTest {
+
+  @Mock
+  private JdbcTemplate jdbcTemplate;
 
   @InjectMocks
   private VehicleEntranceRepository vehicleEntranceRepository;
@@ -75,6 +81,37 @@ public class VehicleEntranceRepositoryTest {
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("VRN cannot be null or empty");
+    }
+  }
+
+  @Nested
+  class InsertIfNotExists {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenVehicleEntranceIsNull() {
+      // given
+      VehicleEntrance vehicleEntrance = null;
+
+      // when
+      Throwable throwable = catchThrowable(() -> vehicleEntranceRepository.insertIfNotExists(vehicleEntrance));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Vehicle Entrance cannot be null");
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenVehicleEntranceHasId() {
+      VehicleEntrance vehicleEntrance = VehicleEntrance.builder()
+          .id(UUID.randomUUID())
+          .build();
+
+      // when
+      Throwable throwable = catchThrowable(() -> vehicleEntranceRepository.insertIfNotExists(vehicleEntrance));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Vehicle Entrance cannot have ID");
     }
   }
 }

@@ -33,8 +33,6 @@
       **/psr/dto/external/*.java,
       <!-- TODO remove once ChargeSettlementController is implemented and tested -->
       **/psr/controller/ChargeSettlementController.java,
-      <!-- TODO remove once CAZ-1238 is implemented -->
-      **/psr/repository/VehicleEntranceRepository.java,
       <!-- TODO remove once CAZ-1232 is implemented -->
       **/psr/service/CleanupDanglingPaymentsService.java
     </sonar.coverage.exclusions>
@@ -553,8 +551,6 @@
                 <exclude>**/psr/dto/**/*.class</exclude>
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
-                <!-- TODO remove once CAZ-1238 is implemented -->
-                <exclude>**/psr/repository/VehicleEntranceRepository.class</exclude>
                 <exclude>**/psr/dto/*.class</exclude>
                 <exclude>**/psr/dto/external/*.class</exclude>
                 <!-- TODO remove once CAZ-1232 is implemented -->

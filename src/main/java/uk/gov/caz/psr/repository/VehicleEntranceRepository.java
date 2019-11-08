@@ -27,13 +27,33 @@ public class VehicleEntranceRepository {
   static final String SELECT_BY_SQL = "SELECT * FROM vehicle_entrant "
       + "WHERE caz_id = ? AND vrn = ? AND to_char(caz_entry_timestamp, 'YYYY-MM-DD') = ?";
 
+  static final String INSERT_IF_NOT_EXISTS_SQL = "INSERT INTO vehicle_entrant "
+      + "(caz_entry_timestamp, caz_entry_date, caz_id, vrn) "
+      + "VALUES (?, ?, ?, ?) "
+      + "ON CONFLICT DO NOTHING";
+
   /**
    * Inserts {@code vehicleEntrance} into database unless it exists.
    *
    * @param vehicleEntrance An entity object which is supposed to be saved in the database.
+   * @throws NullPointerException if {@code vehicleEntrance} is null
+   * @throws IllegalArgumentException if {@link VehicleEntrance#getId()} is not null
    */
   public void insertIfNotExists(VehicleEntrance vehicleEntrance) {
-    // TODO to be implemented in CAZ-1238
+    Preconditions.checkNotNull(vehicleEntrance, "Vehicle Entrance cannot be null");
+    Preconditions.checkArgument(vehicleEntrance.getId() == null,
+            "Vehicle Entrance cannot have ID");
+
+    jdbcTemplate.update(
+        INSERT_IF_NOT_EXISTS_SQL,
+        preparedStatementSetter -> {
+          preparedStatementSetter.setObject(1, vehicleEntrance.getCazEntryTimestamp());
+          preparedStatementSetter.setObject(2,
+              vehicleEntrance.getCazEntryTimestamp().toLocalDate());
+          preparedStatementSetter.setObject(3, vehicleEntrance.getCleanZoneId());
+          preparedStatementSetter.setObject(4, vehicleEntrance.getVrn());
+        }
+    );
   }
 
   /**
