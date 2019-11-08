@@ -22,8 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import uk.gov.caz.psr.dto.external.CreateCardPaymentRequest;
 import uk.gov.caz.psr.dto.external.CreatePaymentResult;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentStatus;
 
 /**
  * REST http client for GOV UK PAY service.
@@ -86,10 +86,13 @@ public class ExternalPaymentsRepository {
       ResponseEntity<CreatePaymentResult> responseEntity = restTemplate.exchange(request,
           CreatePaymentResult.class);
       CreatePaymentResult responseBody = responseEntity.getBody();
+      ExternalPaymentStatus externalPaymentStatus = toModelStatus(
+          responseBody.getState().getStatus());
       return payment.toBuilder()
           .externalId(responseBody.getPaymentId())
           .submittedTimestamp(LocalDateTime.now())
-          .status(toModelStatus(responseBody.getState().getStatus()))
+          .externalPaymentStatus(externalPaymentStatus)
+          .submittedTimestamp(LocalDateTime.now())
           .nextUrl(responseBody.getLinks().getNextUrl().getHref())
           .build();
     } catch (RestClientException e) {
@@ -101,15 +104,17 @@ public class ExternalPaymentsRepository {
   }
 
   /**
-   * Converts a status returned from the GOV UK Pay service to {@link PaymentStatus}. If the value
-   * does not match any existing one, {@link PaymentStatus#UNKNOWN} is returned.
+   * Converts a status returned from the GOV UK Pay service to {@link
+   * ExternalPaymentStatus}. If the value does not match any existing one, {@link
+   * ExternalPaymentStatus#UNKNOWN} is returned.
    */
-  private PaymentStatus toModelStatus(String status) {
+  private ExternalPaymentStatus toModelStatus(String status) {
     try {
-      return PaymentStatus.valueOf(status.toUpperCase());
+      return ExternalPaymentStatus.valueOf(status.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.error("Unrecognized payment status '{}', returning {}", status, PaymentStatus.UNKNOWN);
-      return PaymentStatus.UNKNOWN;
+      log.error("Unrecognized external payment status '{}', returning {}", status,
+          ExternalPaymentStatus.UNKNOWN);
+      return ExternalPaymentStatus.UNKNOWN;
     }
   }
 

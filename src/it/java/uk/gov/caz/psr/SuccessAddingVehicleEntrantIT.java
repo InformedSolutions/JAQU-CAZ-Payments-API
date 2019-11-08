@@ -153,7 +153,7 @@ public class SuccessAddingVehicleEntrantIT {
           "caz_id = '" + vehicleEntrantRequest.getCleanZoneId().toString() + "' AND "
               + "travel_date = '" + vehicleEntrantRequest.getCazEntryTimestamp().toLocalDate() + " ' AND "
               + "vrn = '" + vehicleEntrantRequest.getVrn() + "' AND "
-              + "payment_status = 'SUCCESS' AND "
+              + "payment_status = 'PAID' AND "
               + "vehicle_entrant_id is not null");
       assertThat(vehicleEntrantPaymentCount).isEqualTo(0);
     }
@@ -169,7 +169,7 @@ public class SuccessAddingVehicleEntrantIT {
           "caz_id = '" + vehicleEntrantRequest.getCleanZoneId().toString() + "' AND "
               + "travel_date = '" + vehicleEntrantRequest.getCazEntryTimestamp().toLocalDate() + " ' AND "
               + "vrn = '" + vehicleEntrantRequest.getVrn() + "' AND "
-              + "payment_status = 'SUCCESS' AND "
+              + "payment_status = 'PAID' AND "
               + "vehicle_entrant_id is not null");
       assertThat(vehicleEntrantPaymentCount).isEqualTo(1);
     }

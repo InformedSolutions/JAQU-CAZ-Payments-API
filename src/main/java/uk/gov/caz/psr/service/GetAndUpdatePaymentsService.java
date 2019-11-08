@@ -1,12 +1,16 @@
 package uk.gov.caz.psr.service;
 
 import com.google.common.base.Preconditions;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -53,16 +57,31 @@ public class GetAndUpdatePaymentsService {
             + "internal one with id '" + id + "' and external id '" + externalPaymentId + "' "
             + "exists"));
 
-    if (internalPayment.getStatus() == externalPayment.getStatus()) {
-      log.info("External payment status is the same as the internal one and equal to '{}', "
-          + "skipping updating the database", internalPayment.getStatus());
-    } else {
-      log.info("Found the external payment, updating its status to '{}' in the database, "
-          + "current status '{}'", externalPayment.getStatus(), internalPayment.getStatus());
-      externalPayment = finalizePaymentService.connectExistingVehicleEntrants(externalPayment);
-      internalPaymentsRepository.update(externalPayment);
+    return Optional.of(finalizePaymentProcessing(internalPayment, externalPayment));
+  }
+
+  /**
+   * Updates payment's status in the database if changed and connects to an existing vehicle entrant
+   * record if payment has been successfully processed.
+   *
+   * @param internalPayment An instance of {@link Payment} with its internal identifier set.
+   * @param externalPayment An instance of {@link Payment} with its internal and external
+   *     identifiers set.
+   * @return An instance of {@link Payment} with vehicle entrants' ids set (if applicable).
+   */
+  private Payment finalizePaymentProcessing(Payment internalPayment, Payment externalPayment) {
+    if (internalPayment.getExternalPaymentStatus() == externalPayment.getExternalPaymentStatus()) {
+      log.info("External payment status is the same as the one from database and equal to '{}', "
+          + "skipping updating the database", internalPayment.getExternalPaymentStatus());
+      return externalPayment;
     }
-    return Optional.of(externalPayment);
+    log.info("Found the external payment, updating its status to '{}' in the database, "
+            + "current status: '{}'", externalPayment.getExternalPaymentStatus(),
+        internalPayment.getExternalPaymentStatus());
+    Payment paymentWithVehicleEntrantsIds = finalizePaymentService
+        .connectExistingVehicleEntrants(externalPayment);
+    internalPaymentsRepository.update(paymentWithVehicleEntrantsIds);
+    return paymentWithVehicleEntrantsIds;
   }
 
   /**
@@ -70,8 +89,19 @@ public class GetAndUpdatePaymentsService {
    * id}.
    */
   private Payment updateInternalPaymentWith(Payment payment, GetPaymentResult getPaymentResult) {
+    ExternalPaymentStatus newExternalStatus = getPaymentResult.getPaymentStatus();
+    LocalDateTime authorisedTimestamp = newExternalStatus == ExternalPaymentStatus.SUCCESS
+        ? LocalDateTime.now() : payment.getAuthorisedTimestamp();
     return payment.toBuilder()
-        .status(getPaymentResult.getPaymentStatus())
+        .externalPaymentStatus(newExternalStatus)
+        .authorisedTimestamp(authorisedTimestamp)
+        .vehicleEntrantPayments(payment.getVehicleEntrantPayments()
+            .stream()
+            .map(vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder()
+                .internalPaymentStatus(InternalPaymentStatus.from(newExternalStatus))
+                .build())
+            .collect(Collectors.toList())
+        )
         .build();
   }
 }

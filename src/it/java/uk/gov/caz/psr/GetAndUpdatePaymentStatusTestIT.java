@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.controller.PaymentsController;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.TestObjectFactory;
@@ -72,7 +73,10 @@ public class GetAndUpdatePaymentStatusTestIT {
   }
 
   private UUID insertIntoDatabasePaymentWithoutExternalId() {
-    Payment withoutId = TestObjectFactory.Payments.forRandomDays();
-    return paymentRepository.insert(withoutId).getId();
+    Payment withoutId = TestObjectFactory.Payments.forRandomDays()
+        .toBuilder()
+        .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
+        .build();
+    return paymentRepository.insertExternal(withoutId).getId();
   }
 }

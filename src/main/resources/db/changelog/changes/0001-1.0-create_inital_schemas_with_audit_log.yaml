@@ -66,7 +66,6 @@ databaseChangeLog:
             columnNames: CAZ_ENTRY_DATE,CAZ_ID,VRN
             constraintName: vehicle_entrant_caz_entry_date_caz_id_vrn_key
             tableName: VEHICLE_ENTRANT
-#  TODO add unique constraint for (TRAVEL_DATE,CAZ_ID,VRN) when TRAVEL_DATE's presence is confirmed
         - createTable:
             tableName: PAYMENT
             columns:
@@ -96,6 +95,12 @@ databaseChangeLog:
                   constraints:
                     nullable: true
                   remarks: GOV.UK Pay payment id
+              - column:
+                  name: PAYMENT_PROVIDER_STATUS
+                  type: varchar(64)
+                  constraints:
+                    nullable: true
+                  remarks: GOV.UK Pay payment_status (the result of a payment transaction assigned by GOV.UK Pay)
               - column:
                   name: TOTAL_PAID
                   type: integer
@@ -176,7 +181,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: PAYMENT_STATUS
-                  type: varchar(32)
+                  type: varchar(64)
                   constraints:
                     nullable: false
               - column:

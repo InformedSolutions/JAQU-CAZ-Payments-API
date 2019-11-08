@@ -17,7 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.repository.VehicleEntrantRepository;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -92,7 +92,8 @@ public class FinalizePaymentServiceTest {
 
   private Payment createSuccessPayment() {
     return Payments.existing().toBuilder()
-        .status(PaymentStatus.SUCCESS)
+        .externalPaymentStatus(ExternalPaymentStatus.SUCCESS)
+        .authorisedTimestamp(LocalDateTime.now())
         .build();
   }
 

@@ -32,7 +32,7 @@ import uk.gov.caz.psr.dto.external.Link;
 import uk.gov.caz.psr.dto.external.PaymentLinks;
 import uk.gov.caz.psr.dto.external.PaymentState;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -131,7 +131,7 @@ class ExternalPaymentsRepositoryTest {
 
       // then
       assertThat(result).isNotNull();
-      assertThat(result.getStatus()).isEqualTo(PaymentStatus.UNKNOWN);
+      assertThat(result.getExternalPaymentStatus()).isEqualTo(ExternalPaymentStatus.UNKNOWN);
     }
 
     private void mockRestTemplateResultWithUnrecognizedStatus() {

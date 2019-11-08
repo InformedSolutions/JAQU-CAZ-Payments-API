@@ -99,7 +99,6 @@ class AmountDivisibleByNumberOfDaysValidatorTest {
     assertThat(result).isFalse();
   }
 
-
   private InitiatePaymentRequest.InitiatePaymentRequestBuilder baseRequestBuilder() {
     return InitiatePaymentRequest.builder()
         .cleanAirZoneId(UUID.randomUUID())

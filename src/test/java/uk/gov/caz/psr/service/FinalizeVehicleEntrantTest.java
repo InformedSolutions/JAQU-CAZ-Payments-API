@@ -16,7 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.VehicleEntrantPaymentRepository;
@@ -111,7 +111,7 @@ public class FinalizeVehicleEntrantTest {
     return VehicleEntrantPayment.builder()
         .id(UUID.randomUUID())
         .vrn("VRN123")
-        .status(PaymentStatus.SUCCESS)
+        .internalPaymentStatus(InternalPaymentStatus.PAID)
         .paymentId(UUID.randomUUID())
         .chargePaid(100)
         .cleanZoneId(UUID.randomUUID())

@@ -7,9 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -33,7 +34,7 @@ public class InitiatePaymentService {
    */
   public Payment createPayment(InitiatePaymentRequest request) {
     Payment payment = buildPayment(request);
-    Payment paymentWithInternalId = paymentRepository.insert(payment);
+    Payment paymentWithInternalId = paymentRepository.insertExternal(payment);
     Payment paymentWithExternalId = externalPaymentsRepository.create(paymentWithInternalId,
         request.getReturnUrl());
     paymentRepository.update(paymentWithExternalId);
@@ -54,6 +55,7 @@ public class InitiatePaymentService {
         .collect(Collectors.toList());
 
     return Payment.builder()
+        .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
         .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
         .totalPaid(request.getAmount())
         .vehicleEntrantPayments(vehicleEntrantPayments)
@@ -71,7 +73,7 @@ public class InitiatePaymentService {
         .cleanZoneId(request.getCleanAirZoneId())
         .travelDate(travelDate)
         .chargePaid(chargePerDay)
-        .status(PaymentStatus.INITIATED)
+        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
         .build();
   }
 }

@@ -3,80 +3,186 @@ package uk.gov.caz.psr.model;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import java.time.LocalDate;
-import java.util.Arrays;
+import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentTest {
 
   @Nested
-  class CreatingWithStatus {
-    @Test
-    public void shouldThrowIllegalStateExceptionWhenVehicleEntrantPaymentsIsNull() {
-      // when
-      Throwable throwable = catchThrowable(() ->
-          Payment.builder().status(PaymentStatus.INITIATED));
+  class CreatingWithExternalId {
 
-      // then
-      assertThat(throwable).isInstanceOf(IllegalStateException.class)
-          .hasMessage("Vehicle entrant payments are empty or do not have one common status");
+    @Nested
+    class WhenExternalIdIsNotNull {
+
+      @Test
+      public void shouldThrowIllegalStateExceptionWhenExtPaymentStatusIsNull() {
+        // given
+        String externalId = "ext-id";
+        ExternalPaymentStatus status = null;
+
+        // when
+        Throwable throwable = catchThrowable(() ->
+            Payment.builder()
+                .externalId(externalId)
+                .externalPaymentStatus(status)
+                .build()
+        );
+
+        // then
+        assertThat(throwable).isInstanceOf(IllegalStateException.class)
+            .hasMessageStartingWith("Illegal values of external payment status and ext id");
+      }
+    }
+
+    @Nested
+    class WhenExternalIdIsNull {
+
+      @Test
+      public void shouldThrowIllegalStateExceptionWhenExtPaymentStatusIsNotNullAndNotInit() {
+        // given
+        ExternalPaymentStatus status = ExternalPaymentStatus.STARTED;
+
+        // when
+        Throwable throwable = catchThrowable(() ->
+            Payment.builder()
+                .externalId(null)
+                .externalPaymentStatus(status)
+                .build()
+        );
+
+        // then
+        assertThat(throwable).isInstanceOf(IllegalStateException.class)
+            .hasMessageStartingWith("Illegal values of external payment status and ext id");
+      }
+    }
+  }
+  @Nested
+  class CreatingWithAuthorisedTimestamp {
+
+    @Nested
+    class WhenAuthorisedTimestampIsNull {
+      @Test
+      public void shouldThrowIllegalStateExceptionWhenExtPaymentStatusIsSuccess() {
+        // given
+        String externalId = "ext-id";
+        ExternalPaymentStatus status = ExternalPaymentStatus.SUCCESS;
+
+        // when
+        Throwable throwable = catchThrowable(() ->
+            Payment.builder()
+                .externalId(externalId)
+                .externalPaymentStatus(status)
+                .authorisedTimestamp(null)
+                .build()
+        );
+
+        // then
+        assertThat(throwable).isInstanceOf(IllegalStateException.class)
+            .hasMessage("authorisedTimestamp is null and external payment status is not 'SUCCESS' "
+                + "or authorisedTimestamp is not null and external payment status is 'SUCCESS'");
+      }
+    }
+
+    @Nested
+    class WhenAuthorisedTimestampIsNotNull {
+      @Test
+      public void shouldThrowIllegalStateExceptionWhenExtPaymentStatusIsNotSuccess() {
+        // given
+        String externalId = "ext-id";
+        LocalDateTime authorisedTimestamp = LocalDateTime.now();
+        ExternalPaymentStatus status = ExternalPaymentStatus.INITIATED;
+
+        // when
+        Throwable throwable = catchThrowable(() ->
+            Payment.builder()
+                .externalId(externalId)
+                .externalPaymentStatus(status)
+                .authorisedTimestamp(authorisedTimestamp)
+                .build()
+        );
+
+        // then
+        assertThat(throwable).isInstanceOf(IllegalStateException.class)
+            .hasMessage("authorisedTimestamp is null and external payment status is not 'SUCCESS' "
+                + "or authorisedTimestamp is not null and external payment status is 'SUCCESS'");
+      }
     }
   }
 
-  @Nested
-  class GetStatus {
-    @Test
-    public void shouldThrowIllegalStateExceptionWhenVehicleEntrantPaymentsIsEmpty() {
-      // given
-      Payment payment = Payments.forRandomDays()
-          .toBuilder()
-          .vehicleEntrantPayments(Collections.emptyList())
-          .build();
 
-      // when
-      Throwable throwable = catchThrowable(payment::getStatus);
+  @Test
+  public void shouldThrowNullPointerExceptionWhenPaymentMethodIsNull() {
+    // given
+    PaymentMethod paymentMethod = null;
 
-      // then
-      assertThat(throwable).isInstanceOf(IllegalStateException.class)
-          .hasMessage("Vehicle entrant payments are empty or do not have one common status");
-    }
+    // when
+    Throwable throwable = catchThrowable(() ->
+        Payment.builder().paymentMethod(paymentMethod).build());
 
-    @Test
-    public void shouldThrowIllegalStateExceptionWhenVehicleEntrantPaymentsContainDifferentStatuses() {
-      // given
-      Payment payment = paymentWithTwoDifferentStatuses();
+    // then
+    assertThat(throwable).isInstanceOf(NullPointerException.class)
+        .hasMessage("paymentMethod is marked non-null but is null");
+  }
 
-      // when
-      Throwable throwable = catchThrowable(payment::getStatus);
+  @Test
+  public void shouldThrowNullPointerExceptionWhenTotalPaidIsNull() {
+    // given
+    Integer totalPaid = null;
 
-      // then
-      assertThat(throwable).isInstanceOf(IllegalStateException.class)
-          .hasMessage("Vehicle entrant payments are empty or do not have one common status");
-    }
+    // when
+    Throwable throwable = catchThrowable(() ->
+        Payment.builder()
+            .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+            .totalPaid(totalPaid)
+            .build()
+    );
 
-    private Payment paymentWithTwoDifferentStatuses() {
-      Payment payment = Payments.forDays(Arrays.asList(LocalDate.now(),
-          LocalDate.now().plusDays(1)), UUID.randomUUID());
-      Iterator<VehicleEntrantPayment> it = payment.getVehicleEntrantPayments().iterator();
-      List<VehicleEntrantPayment> updatedVehicleEntrantPayments = Arrays
-          .asList(PaymentStatus.SUCCESS, PaymentStatus.FAILED)
-          .stream()
-          .map(status -> it.next().toBuilder().status(status).build())
-          .collect(Collectors.toList());
+    // then
+    assertThat(throwable).isInstanceOf(NullPointerException.class)
+        .hasMessage("totalPaid is marked non-null but is null");
+  }
 
-      return payment.toBuilder()
-          .vehicleEntrantPayments(updatedVehicleEntrantPayments)
-          .build();
-    }
+  @Test
+  public void shouldThrowNullPointerExceptionWhenVehicleEntrantPaymentsIsNull() {
+    // given
+    List<VehicleEntrantPayment> vehicleEntrantPayments = null;
+
+    // when
+    Throwable throwable = catchThrowable(() ->
+        Payment.builder()
+            .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+            .totalPaid(100)
+            .vehicleEntrantPayments(vehicleEntrantPayments)
+            .build()
+    );
+
+    // then
+    assertThat(throwable).isInstanceOf(NullPointerException.class)
+        .hasMessage("vehicleEntrantPayments is marked non-null but is null");
+  }
+
+  @Test
+  public void shouldThrowNullPointerExceptionWhenVehicleEntrantPaymentsIsEmpty() {
+    // given
+    List<VehicleEntrantPayment> vehicleEntrantPayments = Collections.emptyList();
+
+    // when
+    Throwable throwable = catchThrowable(() ->
+        Payment.builder()
+            .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+            .totalPaid(100)
+            .vehicleEntrantPayments(vehicleEntrantPayments)
+            .build()
+    );
+
+    // then
+    assertThat(throwable).isInstanceOf(IllegalStateException.class)
+        .hasMessage("vehicleEntrantPayments cannot be empty");
   }
 }

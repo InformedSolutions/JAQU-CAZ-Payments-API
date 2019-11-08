@@ -57,7 +57,7 @@ public class VehicleEntrantPayment {
    * Status of the payment.
    */
   @NonNull
-  PaymentStatus status;
+  InternalPaymentStatus internalPaymentStatus;
 
   /**
    * A unique identifier that provides traceability between the central CAZ Service and Local

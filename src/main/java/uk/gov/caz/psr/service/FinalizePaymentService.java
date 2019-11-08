@@ -5,18 +5,23 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.VehicleEntrantRepository;
 
+/**
+ * Class responsible for connecting a successful payment with a vehicle entrant record if exists.
+ */
 @Service
 @AllArgsConstructor
+@Slf4j
 public class FinalizePaymentService {
 
-  private final VehicleEntrantRepository vehicleEntranRepository;
+  private final VehicleEntrantRepository vehicleEntrantRepository;
 
   /**
    * Adds {@code VehicleEntrantId} to each {@link VehicleEntrantPayment} if {@code Payment} status
@@ -28,7 +33,10 @@ public class FinalizePaymentService {
    */
   public Payment connectExistingVehicleEntrants(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
-    if (payment.getStatus() != PaymentStatus.SUCCESS) {
+    if (payment.getExternalPaymentStatus() != ExternalPaymentStatus.SUCCESS) {
+      log.info("Payment status is not equal to '{}', but '{}', hence not trying to connect it "
+              + "to an existing vehicle entrant", ExternalPaymentStatus.SUCCESS,
+          payment.getExternalPaymentStatus());
       return payment;
     }
 
@@ -36,8 +44,8 @@ public class FinalizePaymentService {
   }
 
   /**
-   * Rebuilds {@link Payment} to load {@code VehicleEntrantId} in each {@link
-   * VehicleEntrantPayment} which belongs to provided {@link Payment}.
+   * Rebuilds {@link Payment} to load {@code VehicleEntrantId} in each {@link VehicleEntrantPayment}
+   * which belongs to provided {@link Payment}.
    *
    * @param payment provided {@link Payment} object
    */
@@ -67,11 +75,9 @@ public class FinalizePaymentService {
    *
    * @param vehicleEntrantPayment single vehicleEntrantPayment object.
    */
-  private UUID loadVehicleEntrantId(
-      VehicleEntrantPayment vehicleEntrantPayment) {
-    return vehicleEntranRepository
-        .findBy(vehicleEntrantPayment.getTravelDate(), vehicleEntrantPayment.getCleanZoneId(),
-            vehicleEntrantPayment.getVrn())
+  private UUID loadVehicleEntrantId(VehicleEntrantPayment vehicleEntrantPayment) {
+    return vehicleEntrantRepository.findBy(vehicleEntrantPayment.getTravelDate(),
+        vehicleEntrantPayment.getCleanZoneId(), vehicleEntrantPayment.getVrn())
         .map(VehicleEntrant::getId)
         .orElse(null);
   }

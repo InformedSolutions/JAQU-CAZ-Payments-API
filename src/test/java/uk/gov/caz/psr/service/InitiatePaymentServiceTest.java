@@ -22,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestClientException;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -56,7 +56,7 @@ public class InitiatePaymentServiceTest {
 
     // then
     assertThat(result).isEqualTo(paymentWithExternalId);
-    verify(internalPaymentsRepository).insert(paymentWithoutInternalId);
+    verify(internalPaymentsRepository).insertExternal(paymentWithoutInternalId);
     verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository).update(paymentWithExternalId);
   }
@@ -75,7 +75,7 @@ public class InitiatePaymentServiceTest {
 
     // then
     assertThat(throwable).isInstanceOf(RestClientException.class);
-    verify(internalPaymentsRepository).insert(paymentWithoutInternalId);
+    verify(internalPaymentsRepository).insertExternal(paymentWithoutInternalId);
     verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository, never()).update(any());
   }
@@ -100,7 +100,7 @@ public class InitiatePaymentServiceTest {
   private Payment mockPaymentWithoutExternalDetails(Payment paymentWithoutId) {
     Payment paymentWithId = toPaymentWithId(paymentWithoutId);
 
-    given(internalPaymentsRepository.insert(paymentWithoutId)).willReturn(paymentWithId);
+    given(internalPaymentsRepository.insertExternal(paymentWithoutId)).willReturn(paymentWithId);
 
     return paymentWithId;
   }
@@ -134,7 +134,7 @@ public class InitiatePaymentServiceTest {
   private Payment toPaymentWithExternalPaymentDetails(Payment payment) {
     return payment.toBuilder()
         .externalId("ANY_EXTERNAL_ID")
-        .status(PaymentStatus.CREATED)
+        .externalPaymentStatus(ExternalPaymentStatus.CREATED)
         .build();
   }
 

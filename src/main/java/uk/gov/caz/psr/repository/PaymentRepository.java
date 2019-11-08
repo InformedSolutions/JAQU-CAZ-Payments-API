@@ -18,6 +18,8 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
@@ -34,13 +36,15 @@ public class PaymentRepository {
   private final VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository;
 
   static final String SELECT_BY_ID_SQL = "SELECT payment_id, payment_method, payment_provider_id, "
-      + "total_paid, payment_submitted_timestamp, payment_authorised_timestamp "
+      + "total_paid, payment_provider_status, payment_submitted_timestamp, "
+      + "payment_authorised_timestamp "
       + "FROM payment "
       + "WHERE payment_id = ?";
 
   static final String UPDATE_SQL = "UPDATE payment "
       + "SET payment_provider_id = ?, "
       + "payment_submitted_timestamp = ?, "
+      + "payment_provider_status = ?, "
       + "payment_authorised_timestamp = ?, "
       + "update_timestamp = CURRENT_TIMESTAMP "
       + "WHERE payment_id = ?";
@@ -57,25 +61,29 @@ public class PaymentRepository {
     this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
         .withTableName("payment")
         .usingGeneratedKeyColumns("payment_id")
-        .usingColumns("payment_method", "total_paid");
+        .usingColumns("payment_method", "total_paid", "payment_provider_status");
     this.vehicleEntrantPaymentRepository = vehicleEntrantPaymentRepository;
   }
 
   /**
-   * Inserts {@code payment} into database.
+   * Inserts an external {@code payment} (with the external status set alongside the
+   * same status of vehicle entrant payments) into database.
    *
    * @param payment An entity object which is supposed to be saved in the database.
    * @return An instance of {@link Payment} with its internal identifier set.
    * @throws NullPointerException if {@code payment} is null
    * @throws IllegalArgumentException if {@link Payment#getId()} is not null
    */
-  public Payment insert(Payment payment) {
+  public Payment insertExternal(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
-    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
-        "Vehicle entrant payments cannot be empty");
     Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
+    Preconditions.checkNotNull(payment.getExternalPaymentStatus(),
+        "External payment status cannot be null");
+    Preconditions.checkArgument(haveSameStatus(payment.getVehicleEntrantPayments()),
+        "Vehicle entrant payments do not have one common status");
 
-    KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(toSqlParameters(payment));
+    KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
+        toSqlParametersForExternalInsert(payment));
 
     UUID paymentId = (UUID) keyHolder.getKeys().get("payment_id");
 
@@ -94,12 +102,14 @@ public class PaymentRepository {
   }
 
   /**
-   * Converts {@code payment} into a map of attributes which will be saved in the database.
+   * Converts {@code payment} into a map of attributes which will be saved in the database for an
+   * external payment.
    */
-  private MapSqlParameterSource toSqlParameters(Payment payment) {
+  private MapSqlParameterSource toSqlParametersForExternalInsert(Payment payment) {
     return new MapSqlParameterSource()
-        .addValue("payment_method", payment.getPaymentMethod().name())
         .addValue("total_paid", payment.getTotalPaid())
+        .addValue("payment_provider_status",
+            payment.getExternalPaymentStatus().name())
         .addValue("payment_method", payment.getPaymentMethod().name());
   }
 
@@ -129,8 +139,10 @@ public class PaymentRepository {
         preparedStatementSetter -> {
           preparedStatementSetter.setObject(1, payment.getExternalId());
           preparedStatementSetter.setObject(2, payment.getSubmittedTimestamp());
-          preparedStatementSetter.setObject(3, payment.getAuthorisedTimestamp());
-          preparedStatementSetter.setObject(4, payment.getId());
+          preparedStatementSetter.setString(3, payment.getExternalPaymentStatus()
+              .name());
+          preparedStatementSetter.setObject(4, payment.getAuthorisedTimestamp());
+          preparedStatementSetter.setObject(5, payment.getId());
         }
     );
     vehicleEntrantPaymentRepository.update(payment.getVehicleEntrantPayments());
@@ -162,9 +174,25 @@ public class PaymentRepository {
   }
 
   /**
+   * Predicate which checks whether all vehicle entrant payments have the same status..
+   *
+   * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment}.
+   * @return true if {@code vehicleEntrantPayments} is not empty and all vehicle entrant payments
+   *     have the same status.
+   */
+  private boolean haveSameStatus(List<VehicleEntrantPayment> vehicleEntrantPayments) {
+    InternalPaymentStatus status = vehicleEntrantPayments.iterator().next()
+        .getInternalPaymentStatus();
+    return vehicleEntrantPayments.stream()
+        .map(VehicleEntrantPayment::getInternalPaymentStatus)
+        .allMatch(localStatus -> localStatus == status);
+  }
+
+  /**
    * A class which maps the results obtained from the database to instances of {@link Payment}
    * class.
    */
+
   @Value
   private static class PaymentFindByIdMapper implements RowMapper<Payment> {
 
@@ -173,10 +201,13 @@ public class PaymentRepository {
 
     @Override
     public Payment mapRow(ResultSet resultSet, int i) throws SQLException {
+      String externalStatus = resultSet.getString("payment_provider_status");
       return Payment.builder()
           .id(UUID.fromString(resultSet.getString("payment_id")))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
           .externalId(resultSet.getString("payment_provider_id"))
+          .externalPaymentStatus(externalStatus == null
+              ? null : ExternalPaymentStatus.valueOf(externalStatus))
           .totalPaid(resultSet.getInt("total_paid"))
           .submittedTimestamp(fromTimestampToLocalDateTime(resultSet,
               "payment_submitted_timestamp"))

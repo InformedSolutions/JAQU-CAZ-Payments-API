@@ -35,8 +35,9 @@ import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.dto.GetAndUpdatePaymentStatusResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 
 @FullyRunningServerIntegrationTest
@@ -100,7 +101,7 @@ public class SuccessPaymentsJourneyTestIT {
         .whenRequestedToGetAndUpdateStatus()
 
         .then()
-        .paymentEntityStatusIsUpdatedTo(PaymentStatus.SUCCESS)
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
         .connectsEntityToPaymentIfEntityWasFound(dateWithEntityInDB)
         .doesNotConnectEntityToPaymentIfEntityWasNotFound(dateWithoutEntityInDB)
         .withNonNullPaymentAuthorisedTimestamp()
@@ -155,7 +156,7 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion paymentEntityIsCreatedInDatabase() {
-      verifyThatPaymentEntityExistsWithStatus(PaymentStatus.CREATED);
+      verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus.CREATED);
       return this;
     }
 
@@ -193,7 +194,7 @@ public class SuccessPaymentsJourneyTestIT {
       return this;
     }
 
-    public PaymentJourneyAssertion paymentEntityStatusIsUpdatedTo(PaymentStatus status) {
+    public PaymentJourneyAssertion paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus status) {
       verifyThatPaymentEntityExistsWithStatus(status);
       return this;
     }
@@ -231,17 +232,18 @@ public class SuccessPaymentsJourneyTestIT {
       assertThat(vehicleEntrantPaymentsCount).isEqualTo(1);
     }
 
-    private void verifyThatPaymentEntityExistsWithStatus(PaymentStatus status) {
+    private void verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus status) {
       verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod();
       verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(status);
     }
 
-    private void verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(PaymentStatus status) {
+    private void verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(
+        ExternalPaymentStatus status) {
       int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "vehicle_entrant_payment",
           "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
               + "travel_date in (" + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
-              + "payment_status = '" + status.name() + "'");
+              + "payment_status = '" + InternalPaymentStatus.from(status).name() + "'");
       assertThat(initiatePaymentRequest.getDays()).hasSize(vehicleEntrantPaymentsCount);
     }
 

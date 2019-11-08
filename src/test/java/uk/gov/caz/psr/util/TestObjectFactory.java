@@ -10,9 +10,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
@@ -57,7 +58,7 @@ public class TestObjectFactory {
   private static class VehicleEntrantPaymentsBuilder {
     private final Collection<LocalDate> travelDates;
     private UUID paymentId;
-    private PaymentStatus status;
+    private InternalPaymentStatus status;
     private int amount;
     private boolean withId;
     private String vrn;
@@ -76,7 +77,7 @@ public class TestObjectFactory {
       return this;
     }
 
-    public VehicleEntrantPaymentsBuilder withStatus(PaymentStatus status) {
+    public VehicleEntrantPaymentsBuilder withStatus(InternalPaymentStatus status) {
       this.status = status;
       return this;
     }
@@ -87,7 +88,7 @@ public class TestObjectFactory {
           .map(travelDate -> VehicleEntrantPayment.builder()
               .id(withId ? UUID.randomUUID() : null)
               .paymentId(paymentId)
-              .status(status)
+              .internalPaymentStatus(status)
               .chargePaid(charge)
               .travelDate(travelDate)
               .cleanZoneId(cleanAirZoneId == null
@@ -154,7 +155,7 @@ public class TestObjectFactory {
               .withTotal(travelDates.size() * 800)
               .withPaymentId(paymentId)
               .withVrn(randomVrn())
-              .withStatus(PaymentStatus.INITIATED)
+              .withStatus(InternalPaymentStatus.NOT_PAID)
               .build();
 
       return createPaymentWith(vehicleEntrantPayments, paymentId, externalId);
@@ -166,7 +167,7 @@ public class TestObjectFactory {
               .withTotal(request.getAmount())
               .withPaymentId(null)
               .withVrn(request.getVrn())
-              .withStatus(PaymentStatus.INITIATED)
+              .withStatus(InternalPaymentStatus.NOT_PAID)
               .withCazId(request.getCleanAirZoneId())
               .build();
 
@@ -183,6 +184,7 @@ public class TestObjectFactory {
               .map(VehicleEntrantPayment::getChargePaid)
               .reduce(0, Integer::sum))
           .vehicleEntrantPayments(vehicleEntrantPayments)
+          .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
           .build();
     }
   }

@@ -15,7 +15,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
@@ -123,15 +123,16 @@ public class VehicleEntrantPaymentRepository {
         .addValue("caz_id", vehicleEntrantPayment.getCleanZoneId())
         .addValue("travel_date", vehicleEntrantPayment.getTravelDate())
         .addValue("charge_paid", vehicleEntrantPayment.getChargePaid())
-        .addValue("payment_status", vehicleEntrantPayment.getStatus().name());
+        .addValue("payment_status", vehicleEntrantPayment.getInternalPaymentStatus()
+            .name());
   }
 
   /**
    * Updates the database with the passed {@link VehicleEntrantPayment} instances.
    *
-   * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment} which are to be updated
-   *                               in the database.
-   * @throws NullPointerException     if {@code vehicleEntrantPayments} is null
+   * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment} which are to be
+   *     updated in the database.
+   * @throws NullPointerException if {@code vehicleEntrantPayments} is null
    * @throws IllegalArgumentException if {@code vehicleEntrantPayments} is empty
    */
   public void update(List<VehicleEntrantPayment> vehicleEntrantPayments) {
@@ -145,17 +146,19 @@ public class VehicleEntrantPaymentRepository {
   }
 
   /**
-   * Updates the database with the passed {@link VehicleEntrantPayment} instances.
+   * Updates the database with the passed {@link VehicleEntrantPayment} instance.
    *
-   * @param vehicleEntrantPayment A {@link VehicleEntrantPayment} to be updated in the database.
-   * @throws NullPointerException if {@code vehicleEntrantPayment} is null
+   * @param vehicleEntrantPayment An instance of {@link VehicleEntrantPayment} which is to be
+   *     updated in the database.
+   * @throws NullPointerException if {@code vehicleEntrantPayment} is null.
    */
   public void update(VehicleEntrantPayment vehicleEntrantPayment) {
     Preconditions.checkNotNull(vehicleEntrantPayment, "Vehicle entrant payments cannot be null");
 
     jdbcTemplate.update(UPDATE_SQL, preparedStatementSetter -> {
       preparedStatementSetter.setObject(1, vehicleEntrantPayment.getVehicleEntrantId());
-      preparedStatementSetter.setString(2, vehicleEntrantPayment.getStatus().name());
+      preparedStatementSetter.setString(2, vehicleEntrantPayment.getInternalPaymentStatus()
+          .name());
       preparedStatementSetter.setString(3, vehicleEntrantPayment.getCaseReference());
       preparedStatementSetter.setObject(4, vehicleEntrantPayment.getId());
     });
@@ -180,12 +183,12 @@ public class VehicleEntrantPaymentRepository {
   }
 
   /**
-   * Finds single {@link VehicleEntrantPayment} Success entity for the passed {@link
-   * VehicleEntrant}. If none is find, an empty list is returned.
+   * Finds single {@link VehicleEntrantPayment} entity for the passed {@link VehicleEntrant} whose
+   * status is equal to 'PAID'. If none is found, {@link Optional#empty()} is returned.
    *
-   * @param vehicleEntrant provided VehicleEntrant object
-   * @return A list of matching {@link VehicleEntrantPayment} entities.
-   * @throws NullPointerException if {@code vehicleEntrant} is null
+   * @param vehicleEntrant provided VehicleEntrant object.
+   * @return An optional containing {@link VehicleEntrantPayment} entitity.
+   * @throws NullPointerException if {@code vehicleEntrant} is null.
    */
   public Optional<VehicleEntrantPayment> findSuccessfullyPaid(VehicleEntrant vehicleEntrant) {
     Preconditions.checkNotNull(vehicleEntrant, "Vehicle Entrant cannot be null");
@@ -195,7 +198,7 @@ public class VehicleEntrantPaymentRepository {
           preparedStatement.setObject(1, vehicleEntrant.getCazEntryTimestamp().toLocalDate());
           preparedStatement.setObject(2, vehicleEntrant.getCleanZoneId());
           preparedStatement.setString(3, vehicleEntrant.getVrn());
-          preparedStatement.setString(4, PaymentStatus.SUCCESS.name());
+          preparedStatement.setString(4, InternalPaymentStatus.PAID.name());
         },
         ROW_MAPPER
     );
@@ -223,7 +226,8 @@ public class VehicleEntrantPaymentRepository {
           .cleanZoneId(UUID.fromString(resultSet.getString("caz_id")))
           .travelDate(LocalDate.parse(resultSet.getString("travel_date")))
           .chargePaid(resultSet.getInt("charge_paid"))
-          .status(PaymentStatus.valueOf(resultSet.getString("payment_status")))
+          .internalPaymentStatus(InternalPaymentStatus.valueOf(
+              resultSet.getString("payment_status")))
           .caseReference(resultSet.getString("case_reference"))
           .build();
     }

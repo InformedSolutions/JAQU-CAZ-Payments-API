@@ -1,6 +1,6 @@
 package uk.gov.caz.psr.model;
 
-public enum PaymentStatus {
+public enum ExternalPaymentStatus {
   INITIATED,
 
   CREATED,
