@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -15,6 +16,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
 /**
@@ -37,6 +39,18 @@ public class VehicleEntrantPaymentRepository {
       + "case_reference "
       + "FROM vehicle_entrant_payment "
       + "WHERE payment_id = ?";
+
+  private static final String SELECT_PAID_SQL = "SELECT "
+      + "payment_id, "
+      + "vehicle_entrant_payment_id, "
+      + "vrn, "
+      + "caz_id, "
+      + "travel_date, "
+      + "charge_paid, "
+      + "payment_status, "
+      + "case_reference "
+      + "FROM vehicle_entrant_payment "
+      + "WHERE travel_date = ? AND caz_id = ? AND vrn = ? AND payment_status = ?";
 
   private static final String UPDATE_SQL = "UPDATE vehicle_entrant_payment "
       + "SET vehicle_entrant_id = ?, "
@@ -65,10 +79,10 @@ public class VehicleEntrantPaymentRepository {
    *
    * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment} instances.
    * @return A list of {@link VehicleEntrantPayment} with their internal identifiers set.
-   * @throws NullPointerException if {@code vehicleEntrantPayments} is null.
+   * @throws NullPointerException     if {@code vehicleEntrantPayments} is null.
    * @throws IllegalArgumentException if {@code vehicleEntrantPayments} is empty.
-   * @throws IllegalArgumentException if {@code vehicleEntrantPayments} contains at least one
-   *     object whose payment id is null.
+   * @throws IllegalArgumentException if {@code vehicleEntrantPayments} contains at least one object
+   *                                  whose payment id is null.
    */
   List<VehicleEntrantPayment> insert(List<VehicleEntrantPayment> vehicleEntrantPayments) {
     Preconditions.checkNotNull(vehicleEntrantPayments, "Vehicle entrant payments cannot be null");
@@ -115,9 +129,9 @@ public class VehicleEntrantPaymentRepository {
   /**
    * Updates the database with the passed {@link VehicleEntrantPayment} instances.
    *
-   * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment} which are to be
-   *     updated in the database.
-   * @throws NullPointerException if {@code vehicleEntrantPayments} is null
+   * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment} which are to be updated
+   *                               in the database.
+   * @throws NullPointerException     if {@code vehicleEntrantPayments} is null
    * @throws IllegalArgumentException if {@code vehicleEntrantPayments} is empty
    */
   public void update(List<VehicleEntrantPayment> vehicleEntrantPayments) {
@@ -126,13 +140,25 @@ public class VehicleEntrantPaymentRepository {
         "Vehicle entrant payments cannot be empty");
 
     for (VehicleEntrantPayment vehicleEntrantPayment : vehicleEntrantPayments) {
-      jdbcTemplate.update(UPDATE_SQL, preparedStatementSetter -> {
-        preparedStatementSetter.setObject(1, vehicleEntrantPayment.getVehicleEntrantId());
-        preparedStatementSetter.setString(2, vehicleEntrantPayment.getStatus().name());
-        preparedStatementSetter.setString(3, vehicleEntrantPayment.getCaseReference());
-        preparedStatementSetter.setObject(4, vehicleEntrantPayment.getId());
-      });
+      update(vehicleEntrantPayment);
     }
+  }
+
+  /**
+   * Updates the database with the passed {@link VehicleEntrantPayment} instances.
+   *
+   * @param vehicleEntrantPayment A {@link VehicleEntrantPayment} to be updated in the database.
+   * @throws NullPointerException if {@code vehicleEntrantPayment} is null
+   */
+  public void update(VehicleEntrantPayment vehicleEntrantPayment) {
+    Preconditions.checkNotNull(vehicleEntrantPayment, "Vehicle entrant payments cannot be null");
+
+    jdbcTemplate.update(UPDATE_SQL, preparedStatementSetter -> {
+      preparedStatementSetter.setObject(1, vehicleEntrantPayment.getVehicleEntrantId());
+      preparedStatementSetter.setString(2, vehicleEntrantPayment.getStatus().name());
+      preparedStatementSetter.setString(3, vehicleEntrantPayment.getCaseReference());
+      preparedStatementSetter.setObject(4, vehicleEntrantPayment.getId());
+    });
   }
 
   /**
@@ -151,6 +177,32 @@ public class VehicleEntrantPaymentRepository {
         preparedStatement -> preparedStatement.setObject(1, paymentId),
         ROW_MAPPER
     );
+  }
+
+  /**
+   * Finds single {@link VehicleEntrantPayment} Success entity for the passed {@link
+   * VehicleEntrant}. If none is find, an empty list is returned.
+   *
+   * @param vehicleEntrant provided VehicleEntrant object
+   * @return A list of matching {@link VehicleEntrantPayment} entities.
+   * @throws NullPointerException if {@code vehicleEntrant} is null
+   */
+  public Optional<VehicleEntrantPayment> findSuccessfullyPaid(VehicleEntrant vehicleEntrant) {
+    Preconditions.checkNotNull(vehicleEntrant, "Vehicle Entrant cannot be null");
+
+    List<VehicleEntrantPayment> results = jdbcTemplate.query(SELECT_PAID_SQL,
+        preparedStatement -> {
+          preparedStatement.setObject(1, vehicleEntrant.getCazEntryTimestamp().toLocalDate());
+          preparedStatement.setObject(2, vehicleEntrant.getCleanZoneId());
+          preparedStatement.setString(3, vehicleEntrant.getVrn());
+          preparedStatement.setString(4, PaymentStatus.SUCCESS.name());
+        },
+        ROW_MAPPER
+    );
+    if (results.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(results.iterator().next());
   }
 
   /**

@@ -13,7 +13,7 @@ import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
-import uk.gov.caz.psr.model.VehicleEntrance;
+import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
 public class TestObjectFactory {
@@ -189,14 +189,14 @@ public class TestObjectFactory {
 
   public static class VehicleEntrants {
 
-    public static VehicleEntrance SAMPLE_ENTRANT = VehicleEntrance.builder()
+    public static VehicleEntrant SAMPLE_ENTRANT = VehicleEntrant.builder()
         .vrn("BW91HUN")
         .cazEntryTimestamp(LocalDateTime.now())
         .cleanZoneId(UUID.randomUUID())
         .build();
 
-    public static VehicleEntrance sampleEntrantWithId(UUID uuid) {
-      return VehicleEntrance.builder()
+    public static VehicleEntrant sampleEntrantWithId(UUID uuid) {
+      return VehicleEntrant.builder()
           .vrn("BW91HUN")
           .cazEntryTimestamp(LocalDateTime.now())
           .id(UUID.fromString(uuid.toString()))

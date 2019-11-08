@@ -5,24 +5,26 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Value;
-import uk.gov.caz.psr.model.VehicleEntrance;
+import uk.gov.caz.psr.model.VehicleEntrant;
 
 /**
  * A class that represents a request from VCCS that a vehicle entered the CAZ.
  */
 @Value
-public class VehicleEntranceRequest {
+@Builder
+public class VehicleEntrantRequest {
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.clean-zone-id}")
+  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrant.clean-zone-id}")
   @NotNull
   UUID cleanZoneId;
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.caz-entry-timestamp}")
+  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrant.caz-entry-timestamp}")
   @NotNull
   LocalDateTime cazEntryTimestamp;
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.vrn}")
+  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrant.vrn}")
   @NotNull
   @Size(min = 1, max = 15)
   String vrn;
@@ -30,10 +32,10 @@ public class VehicleEntranceRequest {
   /**
    * Maps this value object to an instance of the model.
    *
-   * @return An instance of {@link VehicleEntrance} whose parameters comes from this object.
+   * @return An instance of {@link VehicleEntrant} whose parameters comes from this object.
    */
-  public VehicleEntrance toVehicleEntrance() {
-    return VehicleEntrance.builder()
+  public VehicleEntrant toVehicleEntrant() {
+    return VehicleEntrant.builder()
         .cleanZoneId(cleanZoneId)
         .cazEntryTimestamp(cazEntryTimestamp)
         .vrn(vrn)

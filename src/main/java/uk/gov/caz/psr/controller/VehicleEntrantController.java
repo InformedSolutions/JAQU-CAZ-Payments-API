@@ -1,0 +1,25 @@
+package uk.gov.caz.psr.controller;
+
+import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.RestController;
+import uk.gov.caz.psr.dto.VehicleEntrantRequest;
+import uk.gov.caz.psr.service.VehicleEntrantService;
+
+/**
+ * A controller which deals with requests that informs about a vehicle entering a CAZ.
+ */
+@RestController
+@AllArgsConstructor
+public class VehicleEntrantController implements VehicleEntrantControllerApiSpec {
+
+  static final String BASE_PATH = "/v1/payments";
+  static final String CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS = "vehicle-entrants";
+
+  private final VehicleEntrantService vehicleEntrantService;
+
+  @Override
+  public void createVehicleEntrantAndGetPaymentDetails(
+      VehicleEntrantRequest request) {
+    vehicleEntrantService.registerVehicleEntrant(request.toVehicleEntrant());
+  }
+}

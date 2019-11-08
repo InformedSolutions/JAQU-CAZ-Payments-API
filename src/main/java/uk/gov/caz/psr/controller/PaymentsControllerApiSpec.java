@@ -36,7 +36,7 @@ public interface PaymentsControllerApiSpec {
    * @return {@link PaymentStatusResponse} wrapped in {@link ResponseEntity}.
    */
   @ApiOperation(
-      value = "${swagger.operations.payments.create-vehicle-entrance.description}"
+      value = "${swagger.operations.payments.create-vehicle-entrant.description}"
   )
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
