@@ -20,7 +20,7 @@ public class VehicleEntrantPayment {
   UUID id;
 
   /**
-   * A unique identifier of {@link VehicleEntrance} entity.
+   * A unique identifier of {@link VehicleEntrant} entity.
    */
   UUID vehicleEntrantId;
 

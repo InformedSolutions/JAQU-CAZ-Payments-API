@@ -18,15 +18,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentStatus;
-import uk.gov.caz.psr.model.VehicleEntrance;
-import uk.gov.caz.psr.repository.VehicleEntranceRepository;
+import uk.gov.caz.psr.model.VehicleEntrant;
+import uk.gov.caz.psr.repository.VehicleEntrantRepository;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
 public class FinalizePaymentServiceTest {
 
   @Mock
-  private VehicleEntranceRepository vehicleEntranceRepository;
+  private VehicleEntrantRepository vehicleEntrantRepository;
 
   @InjectMocks
   private FinalizePaymentService finalizePaymentService;
@@ -55,14 +55,14 @@ public class FinalizePaymentServiceTest {
 
     // then
     assertThat(result).isEqualTo(payment);
-    verify(vehicleEntranceRepository, never()).findBy(any(), any(), any());
+    verify(vehicleEntrantRepository, never()).findBy(any(), any(), any());
   }
 
   @Test
   public void shouldReturnProvidedPaymentWhenStatusSuccessButNoEntrantsFound() {
     // given
     Payment payment = createSuccessPayment();
-    mockNotFoundVehicleEntrance();
+    mockNotFoundVehicleEntrant();
 
     // when
     Payment result = finalizePaymentService.connectExistingVehicleEntrants(payment);
@@ -70,7 +70,7 @@ public class FinalizePaymentServiceTest {
     // then
     assertThat(result).isEqualTo(payment);
     assertThat(result.getVehicleEntrantPayments().get(1).getVehicleEntrantId()).isNull();
-    verify(vehicleEntranceRepository, times(payment.getVehicleEntrantPayments().size()))
+    verify(vehicleEntrantRepository, times(payment.getVehicleEntrantPayments().size()))
         .findBy(any(), any(), any());
   }
 
@@ -78,7 +78,7 @@ public class FinalizePaymentServiceTest {
   public void shouldReturnUpdatedPaymentWhenStatusSuccessAndEntrantsFound() {
     // given
     Payment payment = createSuccessPayment();
-    mockFoundVehicleEntrance();
+    mockFoundVehicleEntrant();
 
     // when
     Payment result = finalizePaymentService.connectExistingVehicleEntrants(payment);
@@ -86,7 +86,7 @@ public class FinalizePaymentServiceTest {
     // then
     assertThat(result).isNotEqualTo(payment);
     assertThat(result.getVehicleEntrantPayments().get(1).getVehicleEntrantId()).isNotNull();
-    verify(vehicleEntranceRepository, times(payment.getVehicleEntrantPayments().size()))
+    verify(vehicleEntrantRepository, times(payment.getVehicleEntrantPayments().size()))
         .findBy(any(), any(), any());
   }
 
@@ -96,8 +96,8 @@ public class FinalizePaymentServiceTest {
         .build();
   }
 
-  private Optional<VehicleEntrance> createVehicleEntrance() {
-    return Optional.ofNullable(VehicleEntrance.builder()
+  private Optional<VehicleEntrant> createVehicleEntrant() {
+    return Optional.ofNullable(VehicleEntrant.builder()
         .id(UUID.randomUUID())
         .cazEntryTimestamp(LocalDateTime.now())
         .vrn("VRN123")
@@ -105,13 +105,13 @@ public class FinalizePaymentServiceTest {
         .build());
   }
 
-  private void mockNotFoundVehicleEntrance() {
-    given(vehicleEntranceRepository.findBy(any(), any(), any())).willReturn(Optional.empty());
+  private void mockNotFoundVehicleEntrant() {
+    given(vehicleEntrantRepository.findBy(any(), any(), any())).willReturn(Optional.empty());
   }
 
-  private void mockFoundVehicleEntrance() {
-    given(vehicleEntranceRepository.findBy(any(), any(), any())).willReturn(
-        createVehicleEntrance()
+  private void mockFoundVehicleEntrant() {
+    given(vehicleEntrantRepository.findBy(any(), any(), any())).willReturn(
+        createVehicleEntrant()
     );
   }
 }

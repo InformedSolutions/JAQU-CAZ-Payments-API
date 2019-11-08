@@ -12,11 +12,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
 class VehicleEntrantPaymentRepositoryTest {
+
   @Mock
   private JdbcTemplate jdbcTemplate;
 
@@ -67,7 +69,7 @@ class VehicleEntrantPaymentRepositoryTest {
   }
 
   @Nested
-  class Update {
+  class UpdateList {
 
     @Test
     public void shouldThrowNullPointerExceptionWhenListIsNull() {
@@ -93,6 +95,41 @@ class VehicleEntrantPaymentRepositoryTest {
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("Vehicle entrant payments cannot be empty");
+    }
+  }
+  @Nested
+
+  class Update {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenvVhicleEntrantPaymentIsNull() {
+      // given
+      VehicleEntrantPayment vehicleEntrantPayment = null;
+
+      // when
+      Throwable throwable = catchThrowable(() -> vehicleEntrantPaymentRepository.update(vehicleEntrantPayment));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Vehicle entrant payments cannot be null");
+    }
+  }
+
+  @Nested
+  class FindSuccessfullyPaid {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenVehicleEntrantIsNull() {
+      // given
+      VehicleEntrant vehicleEntrant = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> vehicleEntrantPaymentRepository.findSuccessfullyPaid(vehicleEntrant));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Vehicle Entrant cannot be null");
     }
   }
 }

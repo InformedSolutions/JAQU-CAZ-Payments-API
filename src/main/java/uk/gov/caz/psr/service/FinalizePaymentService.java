@@ -8,15 +8,15 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentStatus;
-import uk.gov.caz.psr.model.VehicleEntrance;
+import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
-import uk.gov.caz.psr.repository.VehicleEntranceRepository;
+import uk.gov.caz.psr.repository.VehicleEntrantRepository;
 
 @Service
 @AllArgsConstructor
 public class FinalizePaymentService {
 
-  private final VehicleEntranceRepository vehicleEntranceRepository;
+  private final VehicleEntrantRepository vehicleEntranRepository;
 
   /**
    * Adds {@code VehicleEntrantId} to each {@link VehicleEntrantPayment} if {@code Payment} status
@@ -36,7 +36,7 @@ public class FinalizePaymentService {
   }
 
   /**
-   * Rebuilds {@link Payment} to load {@code VehicleEntranceId} in each {@link
+   * Rebuilds {@link Payment} to load {@code VehicleEntrantId} in each {@link
    * VehicleEntrantPayment} which belongs to provided {@link Payment}.
    *
    * @param payment provided {@link Payment} object
@@ -48,7 +48,7 @@ public class FinalizePaymentService {
   }
 
   /**
-   * Rebuilds List of {@link VehicleEntrantPayment} to load {@code VehicleEntranceId} in each {@link
+   * Rebuilds List of {@link VehicleEntrantPayment} to load {@code VehicleEntrantId} in each {@link
    * VehicleEntrantPayment}.
    *
    * @param vehicleEntrantPayments provided list of {@link VehicleEntrantPayment}
@@ -63,16 +63,16 @@ public class FinalizePaymentService {
   }
 
   /**
-   * Loads instance of {@link VehicleEntrance} from the database and returns {@code id} if present.
+   * Loads instance of {@link VehicleEntrant} from the database and returns {@code id} if present.
    *
    * @param vehicleEntrantPayment single vehicleEntrantPayment object.
    */
   private UUID loadVehicleEntrantId(
       VehicleEntrantPayment vehicleEntrantPayment) {
-    return vehicleEntranceRepository
+    return vehicleEntranRepository
         .findBy(vehicleEntrantPayment.getTravelDate(), vehicleEntrantPayment.getCleanZoneId(),
             vehicleEntrantPayment.getVrn())
-        .map(VehicleEntrance::getId)
+        .map(VehicleEntrant::getId)
         .orElse(null);
   }
 }

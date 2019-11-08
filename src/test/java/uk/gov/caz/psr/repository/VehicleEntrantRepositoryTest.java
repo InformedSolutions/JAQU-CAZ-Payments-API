@@ -12,33 +12,33 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import uk.gov.caz.psr.model.VehicleEntrance;
+import uk.gov.caz.psr.model.VehicleEntrant;
 
 @ExtendWith(MockitoExtension.class)
-public class VehicleEntranceRepositoryTest {
+public class VehicleEntrantRepositoryTest {
 
   @Mock
   private JdbcTemplate jdbcTemplate;
 
   @InjectMocks
-  private VehicleEntranceRepository vehicleEntranceRepository;
+  private VehicleEntrantRepository vehicleEntrantRepository;
 
   @Nested
   class FindBy {
 
     @Test
-    public void shouldThrowNullPointerExceptionWhenDateOfEntranceIsNull() {
+    public void shouldThrowNullPointerExceptionWhenCazEntryTimestampIsNull() {
       // given
-      LocalDate dateOfEntrance = null;
+      LocalDate cazEntryTimestamp = null;
 
       // when
       Throwable throwable = catchThrowable(
-          () -> vehicleEntranceRepository.findBy(dateOfEntrance, UUID
+          () -> vehicleEntrantRepository.findBy(cazEntryTimestamp, UUID
               .randomUUID(), "VRN123"));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
-          .hasMessage("dayOfEntrance cannot be null");
+          .hasMessage("cazEntryTimestamp cannot be null");
     }
 
     @Test
@@ -48,7 +48,7 @@ public class VehicleEntranceRepositoryTest {
 
       // when
       Throwable throwable = catchThrowable(
-          () -> vehicleEntranceRepository.findBy(LocalDate.now(), cleanZoneId, "VRN123"));
+          () -> vehicleEntrantRepository.findBy(LocalDate.now(), cleanZoneId, "VRN123"));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -62,7 +62,7 @@ public class VehicleEntranceRepositoryTest {
 
       // when
       Throwable throwable = catchThrowable(
-          () -> vehicleEntranceRepository.findBy(LocalDate.now(), UUID.randomUUID(), vrn));
+          () -> vehicleEntrantRepository.findBy(LocalDate.now(), UUID.randomUUID(), vrn));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -76,7 +76,7 @@ public class VehicleEntranceRepositoryTest {
 
       // when
       Throwable throwable = catchThrowable(
-          () -> vehicleEntranceRepository.findBy(LocalDate.now(), UUID.randomUUID(), vrn));
+          () -> vehicleEntrantRepository.findBy(LocalDate.now(), UUID.randomUUID(), vrn));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -88,30 +88,30 @@ public class VehicleEntranceRepositoryTest {
   class InsertIfNotExists {
 
     @Test
-    public void shouldThrowNullPointerExceptionWhenVehicleEntranceIsNull() {
+    public void shouldThrowNullPointerExceptionWhenVehicleEntrantIsNull() {
       // given
-      VehicleEntrance vehicleEntrance = null;
+      VehicleEntrant vehicleEntrant = null;
 
       // when
-      Throwable throwable = catchThrowable(() -> vehicleEntranceRepository.insertIfNotExists(vehicleEntrance));
+      Throwable throwable = catchThrowable(() -> vehicleEntrantRepository.insertIfNotExists(vehicleEntrant));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
-          .hasMessage("Vehicle Entrance cannot be null");
+          .hasMessage("Vehicle Entrant cannot be null");
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenVehicleEntranceHasId() {
-      VehicleEntrance vehicleEntrance = VehicleEntrance.builder()
+    public void shouldThrowIllegalArgumentExceptionWhenVehicleEntrantHasId() {
+      VehicleEntrant vehicleEntrant = VehicleEntrant.builder()
           .id(UUID.randomUUID())
           .build();
 
       // when
-      Throwable throwable = catchThrowable(() -> vehicleEntranceRepository.insertIfNotExists(vehicleEntrance));
+      Throwable throwable = catchThrowable(() -> vehicleEntrantRepository.insertIfNotExists(vehicleEntrant));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-          .hasMessage("Vehicle Entrance cannot have ID");
+          .hasMessage("Vehicle Entrant cannot have ID");
     }
   }
 }

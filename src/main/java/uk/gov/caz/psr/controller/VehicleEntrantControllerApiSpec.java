@@ -13,25 +13,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import uk.gov.caz.correlationid.Constants;
-import uk.gov.caz.psr.dto.VehicleEntranceRequest;
+import uk.gov.caz.psr.dto.VehicleEntrantRequest;
 
 /**
  * API specification (swagger) for a controller which deals with requests that informs about
  * a vehicle entering a CAZ.
  */
 @RequestMapping(
-    value = VehicleEntranceController.BASE_PATH,
+    value = VehicleEntrantController.BASE_PATH,
     produces = MediaType.APPLICATION_JSON_UTF8_VALUE
 )
-public interface VehicleEntranceControllerApiSpec {
+public interface VehicleEntrantControllerApiSpec {
 
   /**
    * Allows Vehicle Compliance Checker to create (unless it already exists) an entry in the database
-   * that represents an entrance of a vehicle into a CAZ. Upon completion of this operation the
+   * that represents an entrant of a vehicle into a CAZ. Upon completion of this operation the
    * status of the payment associated with the entry is returned.
    */
   @ApiOperation(
-      value = "${swagger.operations.payments.create-vehicle-entrance.description}"
+      value = "${swagger.operations.payments.create-vehicle-entrant.description}"
   )
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
@@ -46,8 +46,8 @@ public interface VehicleEntranceControllerApiSpec {
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header")
   })
-  @PostMapping(VehicleEntranceController.CREATE_VEHICLE_ENTRANCE_PATH_AND_GET_PAYMENT_DETAILS)
+  @PostMapping(VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS)
   @ResponseStatus(HttpStatus.OK)
-  void createVehicleEntranceAndGetPaymentDetails(
-      @Valid @RequestBody VehicleEntranceRequest request);
+  void createVehicleEntrantAndGetPaymentDetails(
+      @Valid @RequestBody VehicleEntrantRequest request);
 }
