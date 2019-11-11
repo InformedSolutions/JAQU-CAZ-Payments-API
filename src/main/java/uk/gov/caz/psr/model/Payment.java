@@ -40,7 +40,8 @@ public class Payment {
   Integer totalPaid;
 
   /**
-   * A list of {@link VehicleEntrantPayment} instances associated with this object.
+   * A list of {@link VehicleEntrantPayment} instances associated with this object. It can be empty
+   * in cases when we don't want to eagerly fetch all associated entities with this payment.
    */
   @NonNull
   List<VehicleEntrantPayment> vehicleEntrantPayments;
@@ -83,11 +84,9 @@ public class Payment {
           "Illegal values of external payment status and ext id: (%s, %s)",
           externalPaymentStatus, externalId);
       Preconditions.checkState(
-          authorisedTimestamp == null ^ externalPaymentStatus == ExternalPaymentStatus.SUCCESS,
+          (authorisedTimestamp == null) ^ (externalPaymentStatus == ExternalPaymentStatus.SUCCESS),
           "authorisedTimestamp is null and external payment status is not 'SUCCESS' or "
               + "authorisedTimestamp is not null and external payment status is 'SUCCESS'");
-      Preconditions.checkState(!vehicleEntrantPayments.isEmpty(),
-          "vehicleEntrantPayments cannot be empty");
 
       return new Payment(id, externalId, paymentMethod, totalPaid, vehicleEntrantPayments,
           externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl);
