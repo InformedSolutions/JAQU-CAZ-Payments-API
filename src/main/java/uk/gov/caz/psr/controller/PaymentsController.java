@@ -23,9 +23,8 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   private final GetAndUpdatePaymentsService getAndUpdatePaymentsService;
 
   @Override
-  public ResponseEntity<InitiatePaymentResponse> initiatePayment(InitiatePaymentRequest request,
-      String correlationId) {
-    Payment payment = initiatePaymentService.createPayment(request, correlationId);
+  public ResponseEntity<InitiatePaymentResponse> initiatePayment(InitiatePaymentRequest request) {
+    Payment payment = initiatePaymentService.createPayment(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(InitiatePaymentResponse.from(payment));
   }
 

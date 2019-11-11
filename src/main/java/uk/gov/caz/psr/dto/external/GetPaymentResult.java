@@ -5,9 +5,7 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 
 /**
  * Value object representing a response from gov-uk pay. See https://govukpay-api-browser.cloudapps.digital/#tocsgetpaymentresult
@@ -36,28 +34,17 @@ public class GetPaymentResult {
   PaymentState state;
 
   /**
-   * Converts this object to an instance of {@link Payment}.
-   */
-  public Payment toPayment() {
-    return Payment.builder()
-        .externalPaymentId(paymentId)
-        .status(getPaymentStatus())
-        .paymentMethod(PaymentMethod.CREDIT_CARD)
-        .chargePaid(amount)
-        .build();
-  }
-
-  /**
    * Converts the external status to its representation in model. If the status is not recognized,
-   * {@link PaymentStatus#UNKNOWN} is returned.
+   * {@link ExternalPaymentStatus#UNKNOWN} is returned.
    */
-  private PaymentStatus getPaymentStatus() {
+  public ExternalPaymentStatus getPaymentStatus() {
     String status = state.getStatus();
     try {
-      return PaymentStatus.valueOf(status.toUpperCase());
+      return ExternalPaymentStatus.valueOf(status.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.error("Unrecognized payment status '{}', returning {}", status, PaymentStatus.UNKNOWN);
-      return PaymentStatus.UNKNOWN;
+      log.error("Unrecognized payment status '{}', returning {}", status,
+          ExternalPaymentStatus.UNKNOWN);
+      return ExternalPaymentStatus.UNKNOWN;
     }
   }
 }

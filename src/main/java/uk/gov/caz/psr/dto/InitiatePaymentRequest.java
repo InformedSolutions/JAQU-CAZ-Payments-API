@@ -10,9 +10,11 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
+import uk.gov.caz.psr.dto.validation.constraint.AmountDivisibleByNumberOfDays;
 
 @Value
 @Builder
+@AmountDivisibleByNumberOfDays
 public class InitiatePaymentRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.clean-zone-id}")

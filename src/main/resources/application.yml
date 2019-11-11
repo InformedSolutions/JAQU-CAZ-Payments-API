@@ -62,7 +62,7 @@ swagger:
         payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
         case-reference: A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
         payment-id: GOV.UK Pay unique payment identifier returned by the payment-status GET method
-      vehicle-entrance:
+      vehicle-entrant:
         vrn: Vehicle registration number
         caz-entry-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
         clean-zone-id: Clean Air Zone identifier
@@ -76,8 +76,8 @@ swagger:
 
   operations:
     payments:
-      create-vehicle-entrance:
-        description: Creates (unless it exists) an entry in the database that represents an entrance of a vehicle into a CAZ. Upon completion of this operation the status of the payment associated with the entry is returned
+      create-vehicle-entrant:
+        description: Creates (unless it exists) an entry in the database that represents an entrant of a vehicle into a CAZ. Upon completion of this operation the status of the payment associated with the entry is returned
     charge-settlement:
       payment-status-update:
         description: Allows Local Authorities to update the status of one or more paid CAZ charges to reflect any action that is being taken with the payment (e.g. such as the processing of a refund or chargeback)

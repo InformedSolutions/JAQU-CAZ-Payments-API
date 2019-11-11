@@ -21,6 +21,6 @@ public class GetAndUpdatePaymentStatusResponse {
    */
   public static GetAndUpdatePaymentStatusResponse from(Payment payment) {
     return new GetAndUpdatePaymentStatusResponse(payment.getId(),
-        SuccessFailurePaymentStatus.from(payment.getStatus()));
+        SuccessFailurePaymentStatus.from(payment.getExternalPaymentStatus()));
   }
 }

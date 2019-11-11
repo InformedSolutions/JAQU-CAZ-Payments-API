@@ -28,11 +28,10 @@ import uk.gov.caz.GlobalExceptionHandlerConfiguration;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.service.GetAndUpdatePaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
+import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class, Configuration.class,
     PaymentsController.class})
@@ -69,7 +68,7 @@ class PaymentsControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message")
             .value("Missing request header 'X-Correlation-ID'"));
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
@@ -82,7 +81,7 @@ class PaymentsControllerTest {
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
@@ -95,7 +94,7 @@ class PaymentsControllerTest {
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
@@ -108,7 +107,7 @@ class PaymentsControllerTest {
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
@@ -121,16 +120,29 @@ class PaymentsControllerTest {
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
+  }
+
+  @Test
+  public void amountNotDivisibleByNumberOfDaysShouldResultIn400() throws Exception {
+    String payload = paymentRequestWithAmountNotDivisibleByNumberOfDays();
+
+    mockMvc.perform(post(BASE_PATH)
+        .content(payload)
+        .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .andExpect(status().isBadRequest());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
   public void shouldReturnValidResponse() throws Exception {
     InitiatePaymentRequest requestParams = baseRequestBuilder().build();
     String payload = toJsonString(requestParams);
-    Payment successfullyCreatedPayment = createdPayment(requestParams);
+    Payment successfullyCreatedPayment = Payments.existing();
 
-    given(initiatePaymentService.createPayment(requestParams, ANY_CORRELATION_ID))
+    given(initiatePaymentService.createPayment(requestParams))
         .willReturn(successfullyCreatedPayment);
 
     mockMvc.perform(post(BASE_PATH)
@@ -142,19 +154,7 @@ class PaymentsControllerTest {
         .andExpect(jsonPath("$.paymentId").value(successfullyCreatedPayment.getId().toString()))
         .andExpect(jsonPath("$.nextUrl").value(successfullyCreatedPayment.getNextUrl()));
 
-    verify(initiatePaymentService).createPayment(requestParams, ANY_CORRELATION_ID);
-  }
-
-  private Payment createdPayment(InitiatePaymentRequest requestParams) {
-    return Payment.builder()
-        .id(UUID.randomUUID())
-        .chargePaid(requestParams.getAmount())
-        .cleanZoneId(requestParams.getCleanAirZoneId())
-        .externalPaymentId("EXTERNAL_PAYMENT_ID")
-        .nextUrl("https://next.payment.url")
-        .status(PaymentStatus.CREATED)
-        .paymentMethod(PaymentMethod.CREDIT_CARD)
-        .build();
+    verify(initiatePaymentService).createPayment(requestParams);
   }
 
   private String paymentRequestWithEmptyDays() {
@@ -175,6 +175,12 @@ class PaymentsControllerTest {
 
   private String paymentRequestWithEmptyReturnUrl() {
     InitiatePaymentRequest requestParams = baseRequestBuilder().returnUrl("").build();
+    return toJsonString(requestParams);
+  }
+
+  private String paymentRequestWithAmountNotDivisibleByNumberOfDays() {
+    // amount should be an odd number
+    InitiatePaymentRequest requestParams = baseRequestBuilder().amount(501).build();
     return toJsonString(requestParams);
   }
 

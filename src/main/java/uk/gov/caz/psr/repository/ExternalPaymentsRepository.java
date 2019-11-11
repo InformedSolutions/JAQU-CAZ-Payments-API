@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import uk.gov.caz.psr.dto.external.CreateCardPaymentRequest;
 import uk.gov.caz.psr.dto.external.CreatePaymentResult;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentStatus;
 
 /**
  * REST http client for GOV UK PAY service.
@@ -85,9 +86,13 @@ public class ExternalPaymentsRepository {
       ResponseEntity<CreatePaymentResult> responseEntity = restTemplate.exchange(request,
           CreatePaymentResult.class);
       CreatePaymentResult responseBody = responseEntity.getBody();
+      ExternalPaymentStatus externalPaymentStatus = toModelStatus(
+          responseBody.getState().getStatus());
       return payment.toBuilder()
-          .externalPaymentId(responseBody.getPaymentId())
-          .status(toModelStatus(responseBody.getState().getStatus()))
+          .externalId(responseBody.getPaymentId())
+          .submittedTimestamp(LocalDateTime.now())
+          .externalPaymentStatus(externalPaymentStatus)
+          .submittedTimestamp(LocalDateTime.now())
           .nextUrl(responseBody.getLinks().getNextUrl().getHref())
           .build();
     } catch (RestClientException e) {
@@ -99,15 +104,17 @@ public class ExternalPaymentsRepository {
   }
 
   /**
-   * Converts a status returned from the GOV UK Pay service to {@link PaymentStatus}. If the value
-   * does not match any existing one, {@link PaymentStatus#UNKNOWN} is returned.
+   * Converts a status returned from the GOV UK Pay service to {@link
+   * ExternalPaymentStatus}. If the value does not match any existing one, {@link
+   * ExternalPaymentStatus#UNKNOWN} is returned.
    */
-  private PaymentStatus toModelStatus(String status) {
+  private ExternalPaymentStatus toModelStatus(String status) {
     try {
-      return PaymentStatus.valueOf(status.toUpperCase());
+      return ExternalPaymentStatus.valueOf(status.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.error("Unrecognized payment status '{}', returning {}", status, PaymentStatus.UNKNOWN);
-      return PaymentStatus.UNKNOWN;
+      log.error("Unrecognized external payment status '{}', returning {}", status,
+          ExternalPaymentStatus.UNKNOWN);
+      return ExternalPaymentStatus.UNKNOWN;
     }
   }
 
@@ -119,14 +126,14 @@ public class ExternalPaymentsRepository {
    *     Optional#empty()} otherwise.
    * @throws IllegalArgumentException if {@code id} is null or empty
    */
-  public Optional<Payment> findById(String id) {
+  public Optional<GetPaymentResult> findById(String id) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "ID cannot be null or empty");
     try {
       log.info("Get payment by id '{}' : start", id);
       RequestEntity<Void> request = buildRequestEntityForFindById(id);
       ResponseEntity<GetPaymentResult> responseEntity = restTemplate.exchange(request,
           GetPaymentResult.class);
-      return Optional.of(responseEntity.getBody().toPayment());
+      return Optional.of(responseEntity.getBody());
     } catch (NotFound e) {
       log.error("Payment with id '{}' not found", id);
       return Optional.empty();
@@ -170,7 +177,7 @@ public class ExternalPaymentsRepository {
    */
   private CreateCardPaymentRequest buildCreateBody(Payment payment, String returnUrl) {
     return CreateCardPaymentRequest.builder()
-        .amount(payment.getChargePaid())
+        .amount(payment.getTotalPaid())
         .description("Payment for #" + payment.getId())
         .reference(payment.getId().toString())
         .returnUrl(returnUrl)

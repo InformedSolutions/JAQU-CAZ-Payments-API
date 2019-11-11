@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.SneakyThrows;
@@ -24,16 +23,16 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.correlationid.Constants;
-import uk.gov.caz.psr.dto.VehicleEntranceRequest;
-import uk.gov.caz.psr.service.VehicleEntranceService;
+import uk.gov.caz.psr.dto.VehicleEntrantRequest;
+import uk.gov.caz.psr.service.VehicleEntrantService;
 
 @ContextConfiguration(classes = {Configuration.class,
-    VehicleEntranceController.class})
+    VehicleEntrantController.class})
 @WebMvcTest
-class VehicleEntranceControllerTest {
+class VehicleEntrantControllerTest {
 
   @MockBean
-  private VehicleEntranceService vehicleEntranceService;
+  private VehicleEntrantService vehicleEntrantService;
 
   @Autowired
   private MockMvc mockMvc;
@@ -46,14 +45,14 @@ class VehicleEntranceControllerTest {
       "e41d36a6-fcd6-4467-9368-af75201dcae2");
   private static final String ANY_VALID_VRN = "DL76MWX";
 
-  private static final String PATH = VehicleEntranceController.BASE_PATH
-      + "/" + VehicleEntranceController.CREATE_VEHICLE_ENTRANCE_PATH_AND_GET_PAYMENT_DETAILS;
+  private static final String PATH = VehicleEntrantController.BASE_PATH
+      + "/" + VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS;
 
   @Nested
   class Validation {
     @Test
     public void shouldReturn400StatusCodeWhenCleanZoneIdIsNull() throws Exception {
-      String payload = toJson(new VehicleEntranceRequest(null, today(), ANY_VALID_VRN));
+      String payload = requestWithCleanZoneId(null);
 
       mockMvc.perform(post(PATH)
           .content(payload)
@@ -64,12 +63,12 @@ class VehicleEntranceControllerTest {
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
 
-      verify(vehicleEntranceService, never()).registerVehicleEntrance(any());
+      verify(vehicleEntrantService, never()).registerVehicleEntrant(any());
     }
 
     @Test
-    public void shouldReturn400StatusCodeWhenDateOfEntranceIsNull() throws Exception {
-      String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, null, ANY_VALID_VRN));
+    public void shouldReturn400StatusCodeWhenCazEntryTimestampIsNull() throws Exception {
+      String payload = requestWithCazEntryTimestamp(null);
 
       mockMvc.perform(post(PATH)
           .content(payload)
@@ -80,12 +79,12 @@ class VehicleEntranceControllerTest {
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
 
-      verify(vehicleEntranceService, never()).registerVehicleEntrance(any());
+      verify(vehicleEntrantService, never()).registerVehicleEntrant(any());
     }
 
     @Test
     public void shouldReturn400StatusCodeWhenVrnIsNull() throws Exception {
-      String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, today(), null));
+      String payload = requestWithVrn(null);
 
       mockMvc.perform(post(PATH)
           .content(payload)
@@ -96,13 +95,13 @@ class VehicleEntranceControllerTest {
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
 
-      verify(vehicleEntranceService, never()).registerVehicleEntrance(any());
+      verify(vehicleEntrantService, never()).registerVehicleEntrant(any());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"", "aaaaaaaaaaaaaaaa"})
     public void shouldReturn400StatusCodeWhenVrnIsInvalid(String vrn) throws Exception {
-      String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, today(), vrn));
+      String payload = requestWithVrn(vrn);
 
       mockMvc.perform(post(PATH)
           .content(payload)
@@ -113,13 +112,13 @@ class VehicleEntranceControllerTest {
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
 
-      verify(vehicleEntranceService, never()).registerVehicleEntrance(any());
+      verify(vehicleEntrantService, never()).registerVehicleEntrant(any());
     }
   }
 
   @Test
   public void shouldReturn200StatusCodeWhenRequestIsValid() throws Exception {
-    String payload = toJson(new VehicleEntranceRequest(ANY_CLEAN_ZONE_ID, today(), ANY_VALID_VRN));
+    String payload = requestWithValidBody();
 
     mockMvc.perform(post(PATH)
         .content(payload)
@@ -129,15 +128,42 @@ class VehicleEntranceControllerTest {
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
 
-    verify(vehicleEntranceService).registerVehicleEntrance(any());
+    verify(vehicleEntrantService).registerVehicleEntrant(any());
   }
 
   @SneakyThrows
-  private String toJson(VehicleEntranceRequest request) {
+  private String toJson(VehicleEntrantRequest request) {
     return objectMapper.writeValueAsString(request);
   }
 
-  private LocalDateTime today() {
+  private LocalDateTime todayDateTime() {
     return LocalDateTime.now();
+  }
+
+  private  String requestWithCleanZoneId(UUID cleanZoneId) {
+    VehicleEntrantRequest request = baseRequestBuilder().cleanZoneId(cleanZoneId).build();
+    return toJson(request);
+  }
+
+  private String requestWithCazEntryTimestamp(LocalDateTime cazEntryTimestamp) {
+    VehicleEntrantRequest request = baseRequestBuilder().cazEntryTimestamp(cazEntryTimestamp).build();
+    return toJson(request);
+  }
+
+  private String requestWithVrn(String vrn) {
+    VehicleEntrantRequest request = baseRequestBuilder().vrn(vrn).build();
+    return toJson(request);
+  }
+
+  private String requestWithValidBody() {
+    VehicleEntrantRequest request = baseRequestBuilder().build();
+    return toJson(request);
+  }
+
+  private VehicleEntrantRequest.VehicleEntrantRequestBuilder baseRequestBuilder() {
+    return VehicleEntrantRequest.builder()
+        .cleanZoneId(ANY_CLEAN_ZONE_ID)
+        .vrn(ANY_VALID_VRN)
+        .cazEntryTimestamp(todayDateTime());
   }
 }
