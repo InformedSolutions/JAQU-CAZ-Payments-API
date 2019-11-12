@@ -13,8 +13,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
+import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.VehicleEntrantRepository;
+import uk.gov.caz.psr.util.TestObjectFactory.VehicleEntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.VehicleEntrants;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,15 +62,32 @@ class VehicleEntrantServiceTest {
   }
 
   @Test
-  public void shouldCallRepositoryAndServiceWhenVehicleEntrantIsValidAndExistsInDatabase() {
+  public void shouldCallRepositoryAndReturnNotPaidPaymentStatusWhenVehicleEntrantExitingInDBIsValidButNotPaid() {
     // given
     VehicleEntrant vehicleEntrant = VehicleEntrants.anyWithoutId();
     mockExistingVehicleEntrantInDatabase(vehicleEntrant);
+    mockNotPaidVehicleEntrantPayment(vehicleEntrant);
 
     // when
-    vehicleEntrantService.registerVehicleEntrant(vehicleEntrant);
+    InternalPaymentStatus response = vehicleEntrantService.registerVehicleEntrant(vehicleEntrant);
 
     // then
+    assertThat(response).isEqualTo(InternalPaymentStatus.NOT_PAID);
+    verify(vehicleEntrantRepository).insertIfNotExists(vehicleEntrant);
+  }
+
+  @Test
+  public void shouldCallRepositoryAndReturnNotPaidPaymentStatusWhenVehicleEntrantIsValidAndPaid() {
+    // given
+    VehicleEntrant vehicleEntrant = VehicleEntrants.anyWithoutId();
+    mockAbsenceOfVehicleEntrantInDatabase(vehicleEntrant);
+    mockPaidVehicleEntrantPayment(vehicleEntrant);
+
+    // when
+    InternalPaymentStatus response = vehicleEntrantService.registerVehicleEntrant(vehicleEntrant);
+
+    // then
+    assertThat(response).isEqualTo(InternalPaymentStatus.PAID);
     verify(vehicleEntrantRepository).insertIfNotExists(vehicleEntrant);
     verify(finalizeVehicleEntrantService).connectExistingVehicleEntrantPayment(vehicleEntrant);
   }
@@ -99,6 +119,20 @@ class VehicleEntrantServiceTest {
     // then
     assertThat(throwable).isInstanceOf(IllegalStateException.class)
         .hasMessageStartingWith("Cannot find the existing");
+  }
+
+  private void mockPaidVehicleEntrantPayment(VehicleEntrant vehicleEntrant) {
+    Optional<VehicleEntrantPayment> foundVehicleEntrantPayment = Optional
+        .of(VehicleEntrantPayments.anyPaid());
+    given(finalizeVehicleEntrantService.connectExistingVehicleEntrantPayment(vehicleEntrant))
+        .willReturn(foundVehicleEntrantPayment);
+  }
+
+  private void mockNotPaidVehicleEntrantPayment(VehicleEntrant vehicleEntrant) {
+    Optional<VehicleEntrantPayment> foundVehicleEntrantPayment = Optional
+        .of(VehicleEntrantPayments.anyNotPaid());
+    given(finalizeVehicleEntrantService.connectExistingVehicleEntrantPayment(vehicleEntrant))
+        .willReturn(foundVehicleEntrantPayment);
   }
 
   private void mockAbsenceOfVehicleEntrantInDatabase(VehicleEntrant vehicleEntrant) {

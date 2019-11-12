@@ -1,10 +1,12 @@
 package uk.gov.caz.psr.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +26,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.VehicleEntrantRequest;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.service.VehicleEntrantService;
+import uk.gov.caz.psr.util.TestObjectFactory.VehicleEntrantPayments;
 
 @ContextConfiguration(classes = {Configuration.class,
     VehicleEntrantController.class})
@@ -50,6 +55,7 @@ class VehicleEntrantControllerTest {
 
   @Nested
   class Validation {
+
     @Test
     public void shouldReturn400StatusCodeWhenCleanZoneIdIsNull() throws Exception {
       String payload = requestWithCleanZoneId(null);
@@ -117,8 +123,11 @@ class VehicleEntrantControllerTest {
   }
 
   @Test
-  public void shouldReturn200StatusCodeWhenRequestIsValid() throws Exception {
+  public void shouldReturn200StatusCodeAndPaymentStatusNotPaidWhenNotPaid() throws Exception {
     String payload = requestWithValidBody();
+    VehicleEntrantPayment foundVehicleEntrantPayment = VehicleEntrantPayments.anyNotPaid();
+    given(vehicleEntrantService.registerVehicleEntrant(any()))
+        .willReturn(foundVehicleEntrantPayment.getInternalPaymentStatus());
 
     mockMvc.perform(post(PATH)
         .content(payload)
@@ -126,7 +135,27 @@ class VehicleEntrantControllerTest {
         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
         .andExpect(status().isOk())
-        .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
+        .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .andExpect(jsonPath("$.status").value(InternalPaymentStatus.NOT_PAID.name()));
+
+    verify(vehicleEntrantService).registerVehicleEntrant(any());
+  }
+
+  @Test
+  public void shouldReturn200StatusCodeAndPaymentStatusNotPaidWhenPaidPayment() throws Exception {
+    String payload = requestWithValidBody();
+    VehicleEntrantPayment foundVehicleEntrantPayment = VehicleEntrantPayments.anyPaid();
+    given(vehicleEntrantService.registerVehicleEntrant(any()))
+        .willReturn(foundVehicleEntrantPayment.getInternalPaymentStatus());
+
+    mockMvc.perform(post(PATH)
+        .content(payload)
+        .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+        .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .andExpect(status().isOk())
+        .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .andExpect(jsonPath("$.status").value(InternalPaymentStatus.PAID.name()));
 
     verify(vehicleEntrantService).registerVehicleEntrant(any());
   }
@@ -140,13 +169,14 @@ class VehicleEntrantControllerTest {
     return LocalDateTime.now();
   }
 
-  private  String requestWithCleanZoneId(UUID cleanZoneId) {
+  private String requestWithCleanZoneId(UUID cleanZoneId) {
     VehicleEntrantRequest request = baseRequestBuilder().cleanZoneId(cleanZoneId).build();
     return toJson(request);
   }
 
   private String requestWithCazEntryTimestamp(LocalDateTime cazEntryTimestamp) {
-    VehicleEntrantRequest request = baseRequestBuilder().cazEntryTimestamp(cazEntryTimestamp).build();
+    VehicleEntrantRequest request = baseRequestBuilder().cazEntryTimestamp(cazEntryTimestamp)
+        .build();
     return toJson(request);
   }
 

@@ -2,8 +2,11 @@ package uk.gov.caz.psr.controller;
 
 import com.google.common.annotations.VisibleForTesting;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.dto.VehicleEntrantRequest;
+import uk.gov.caz.psr.dto.VehicleEntrantResponse;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.service.VehicleEntrantService;
 
 /**
@@ -22,7 +25,10 @@ public class VehicleEntrantController implements VehicleEntrantControllerApiSpec
   private final VehicleEntrantService vehicleEntrantService;
 
   @Override
-  public void createVehicleEntrantAndGetPaymentDetails(VehicleEntrantRequest request) {
-    vehicleEntrantService.registerVehicleEntrant(request.toVehicleEntrant());
+  public ResponseEntity<VehicleEntrantResponse> createVehicleEntrantAndGetPaymentDetails(
+      VehicleEntrantRequest request) {
+    InternalPaymentStatus paymentStatus = vehicleEntrantService
+        .registerVehicleEntrant(request.toVehicleEntrant());
+    return ResponseEntity.ok(VehicleEntrantResponse.from(paymentStatus));
   }
 }
