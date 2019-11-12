@@ -2,8 +2,11 @@ package uk.gov.caz.psr.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,14 +59,64 @@ class VehicleEntrantServiceTest {
   }
 
   @Test
-  public void shouldCallRepositoryWhenVehicleEntrantIsValid() {
+  public void shouldCallRepositoryAndServiceWhenVehicleEntrantIsValidAndExistsInDatabase() {
     // given
     VehicleEntrant vehicleEntrant = VehicleEntrants.anyWithoutId();
+    mockExistingVehicleEntrantInDatabase(vehicleEntrant);
 
     // when
     vehicleEntrantService.registerVehicleEntrant(vehicleEntrant);
 
     // then
     verify(vehicleEntrantRepository).insertIfNotExists(vehicleEntrant);
+    verify(finalizeVehicleEntrantService).connectExistingVehicleEntrantPayment(vehicleEntrant);
+  }
+
+  @Test
+  public void shouldCallRepositoryAndServiceWhenVehicleEntrantIsValidAndNotExistInDatabase() {
+    // given
+    VehicleEntrant vehicleEntrant = VehicleEntrants.anyWithoutId();
+    mockAbsenceOfVehicleEntrantInDatabase(vehicleEntrant);
+
+    // when
+    vehicleEntrantService.registerVehicleEntrant(vehicleEntrant);
+
+    // then
+    verify(vehicleEntrantRepository).insertIfNotExists(vehicleEntrant);
+    verify(finalizeVehicleEntrantService).connectExistingVehicleEntrantPayment(vehicleEntrant);
+  }
+
+  @Test
+  public void shouldThrowIllegalStateExceptionWhenVehicleEntrantIsNotFoundAndCannotBeInserted() {
+    // given
+    VehicleEntrant vehicleEntrant = VehicleEntrants.anyWithoutId();
+    mockIllegalStateWhenBothDbOperationsFails();
+
+    // when
+    Throwable throwable = catchThrowable(() ->
+        vehicleEntrantService.registerVehicleEntrant(vehicleEntrant));
+
+    // then
+    assertThat(throwable).isInstanceOf(IllegalStateException.class)
+        .hasMessageStartingWith("Cannot find the existing");
+  }
+
+  private void mockAbsenceOfVehicleEntrantInDatabase(VehicleEntrant vehicleEntrant) {
+    given(vehicleEntrantRepository.insertIfNotExists(vehicleEntrant))
+        .willReturn(Optional.of(vehicleEntrant));
+  }
+
+  private void mockIllegalStateWhenBothDbOperationsFails() {
+    given(vehicleEntrantRepository.insertIfNotExists(any())).willReturn(Optional.empty());
+    given(vehicleEntrantRepository.findBy(any(), any(), any())).willReturn(Optional.empty());
+  }
+
+  private void mockExistingVehicleEntrantInDatabase(VehicleEntrant vehicleEntrant) {
+    given(vehicleEntrantRepository.insertIfNotExists(vehicleEntrant)).willReturn(Optional.empty());
+    given(vehicleEntrantRepository.findBy(
+        vehicleEntrant.getCazEntryDate(),
+        vehicleEntrant.getCleanZoneId(),
+        vehicleEntrant.getVrn())
+    ).willReturn(Optional.of(vehicleEntrant));
   }
 }

@@ -59,6 +59,14 @@ public class SuccessAddingVehicleEntrantIT {
         .vehicleEntrantIsCreatedInDatabase()
         .vehicleEntrantIsNotConnectedToVehicleEntrantPayments();
 
+    // a request for the same day, vrn and CAZ is made again
+    given()
+        .vehicleEntrantRequest(vehicleEntrantRequest(notPaidDay))
+        .whenSubmitted()
+        .then()
+        .vehicleEntrantIsFoundInDatabase()
+        .vehicleEntrantIsNotConnectedToVehicleEntrantPayments();
+
     given()
         .vehicleEntrantRequest(vehicleEntrantRequest(paidDay))
         .whenSubmitted()
@@ -161,6 +169,10 @@ public class SuccessAddingVehicleEntrantIT {
               + "payment_status = 'PAID' AND "
               + "vehicle_entrant_id is not null");
       assertThat(vehicleEntrantPaymentCount).isEqualTo(1);
+    }
+
+    public VehicleEntrantJourneyAssertion vehicleEntrantIsFoundInDatabase() {
+      return vehicleEntrantIsCreatedInDatabase();
     }
   }
 }
