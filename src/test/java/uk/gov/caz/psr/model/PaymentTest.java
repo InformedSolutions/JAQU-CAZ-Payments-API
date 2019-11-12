@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -167,22 +166,4 @@ class PaymentTest {
         .hasMessage("vehicleEntrantPayments is marked non-null but is null");
   }
 
-  @Test
-  public void shouldThrowNullPointerExceptionWhenVehicleEntrantPaymentsIsEmpty() {
-    // given
-    List<VehicleEntrantPayment> vehicleEntrantPayments = Collections.emptyList();
-
-    // when
-    Throwable throwable = catchThrowable(() ->
-        Payment.builder()
-            .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
-            .totalPaid(100)
-            .vehicleEntrantPayments(vehicleEntrantPayments)
-            .build()
-    );
-
-    // then
-    assertThat(throwable).isInstanceOf(IllegalStateException.class)
-        .hasMessage("vehicleEntrantPayments cannot be empty");
-  }
 }

@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,7 @@ public class GetAndUpdatePaymentsService {
   private final FinalizePaymentService finalizePaymentService;
   private final PaymentRepository internalPaymentsRepository;
   private final MessagingClient messagingClient;
+  private final UpdatePaymentWithExternalDataService updatePaymentWithExternalDataService;
 
   @Value("${services.sqs.template-id}")
   String templateId;
@@ -44,11 +48,14 @@ public class GetAndUpdatePaymentsService {
       ExternalPaymentsRepository externalPaymentsRepository,
       FinalizePaymentService finalizePaymentService,
       PaymentRepository internalPaymentsRepository,
-      MessagingClient messagingClient) {
+      MessagingClient messagingClient,
+      UpdatePaymentWithExternalDataService updatePaymentWithExternalDataService) {
     this.externalPaymentsRepository = externalPaymentsRepository;
     this.finalizePaymentService = finalizePaymentService;
     this.internalPaymentsRepository = internalPaymentsRepository;
     this.messagingClient = messagingClient;
+    this.updatePaymentWithExternalDataService =
+        updatePaymentWithExternalDataService;
   }
 
   /**
@@ -79,109 +86,7 @@ public class GetAndUpdatePaymentsService {
       return Optional.empty();
     }
 
-    Payment externalPayment =
-        externalPaymentsRepository.findById(externalPaymentId)
-            .map(getPaymentResult -> handleExternalResponse(internalPayment,
-                getPaymentResult))
-            .orElseThrow(() -> new IllegalStateException(
-                "External payment not found whereas the "
-                    + "internal one with id '" + id + "' and external id '"
-                    + externalPaymentId + "' " + "exists"));
-
-    return Optional
-        .of(finalizePaymentProcessing(internalPayment, externalPayment));
-  }
-
-  /**
-   * Handles the information received from the response of the external payment
-   * provider.
-   */
-  private Payment handleExternalResponse(Payment internalPayment,
-      GetPaymentResult getPaymentResult) {
-    if (getPaymentResult.getPaymentStatus()
-        .equals(ExternalPaymentStatus.SUCCESS)) {
-      sendPaymentReceipt(getPaymentResult.getEmail(),
-          getPaymentResult.getAmount());
-    }
-    return updateInternalPaymentWith(internalPayment, getPaymentResult);
-  }
-
-  /**
-   * Creates a SendEmailRequest object and submits it to the messaging client.
-   * 
-   * @param email  the recipient of the email
-   * @param amount the total cost of their CAZ charge
-   */
-  private void sendPaymentReceipt(String email, int amount) {
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, String> personalisationMap = new HashMap<String, String>();
-    personalisationMap.put("amount", Integer.toString(amount));
-
-    String personalisation;
-    try {
-      personalisation = objectMapper.writeValueAsString(personalisationMap);
-    } catch (JsonProcessingException e) {
-      log.error(e.getMessage());
-      personalisation = "{}";
-    }
-    SendEmailRequest sendEmailRequest = new SendEmailRequest(this.templateId,
-        email, personalisation, UUID.randomUUID().toString());
-
-    messagingClient.publishMessage(sendEmailRequest);
-  }
-
-  /**
-   * Updates payment's status in the database if changed and connects to an
-   * existing vehicle entrant record if payment has been successfully processed.
-   *
-   * @param  internalPayment An instance of {@link Payment} with its internal
-   *                           identifier set.
-   * @param  externalPayment An instance of {@link Payment} with its internal
-   *                           and external identifiers set.
-   * @return                 An instance of {@link Payment} with vehicle
-   *                         entrants' ids set (if applicable).
-   */
-  private Payment finalizePaymentProcessing(Payment internalPayment,
-      Payment externalPayment) {
-    if (internalPayment.getExternalPaymentStatus() == externalPayment
-        .getExternalPaymentStatus()) {
-      log.info(
-          "External payment status is the same as the one from database and equal to '{}', "
-              + "skipping updating the database",
-          internalPayment.getExternalPaymentStatus());
-      return externalPayment;
-    }
-    log.info(
-        "Found the external payment, updating its status to '{}' in the database, "
-            + "current status: '{}'",
-        externalPayment.getExternalPaymentStatus(),
-        internalPayment.getExternalPaymentStatus());
-    Payment paymentWithVehicleEntrantsIds =
-        finalizePaymentService.connectExistingVehicleEntrants(externalPayment);
-    internalPaymentsRepository.update(paymentWithVehicleEntrantsIds);
-    return paymentWithVehicleEntrantsIds;
-  }
-
-  /**
-   * Creates a lambda expression that updates the passed instance of
-   * {@link Payment} with the {@code
-   * id}.
-   */
-  private Payment updateInternalPaymentWith(Payment payment,
-      GetPaymentResult getPaymentResult) {
-    ExternalPaymentStatus newExternalStatus =
-        getPaymentResult.getPaymentStatus();
-    LocalDateTime authorisedTimestamp =
-        newExternalStatus == ExternalPaymentStatus.SUCCESS ? LocalDateTime.now()
-            : payment.getAuthorisedTimestamp();
-    return payment.toBuilder().externalPaymentStatus(newExternalStatus)
-        .authorisedTimestamp(authorisedTimestamp)
-        .vehicleEntrantPayments(payment.getVehicleEntrantPayments().stream()
-            .map(vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder()
-                .internalPaymentStatus(
-                    InternalPaymentStatus.from(newExternalStatus))
-                .build())
-            .collect(Collectors.toList()))
-        .build();
+    return Optional.of(updatePaymentWithExternalDataService
+        .updatePaymentWithExternalData(internalPayment));
   }
 }

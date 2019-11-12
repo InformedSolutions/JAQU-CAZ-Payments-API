@@ -1,7 +1,6 @@
 package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
@@ -9,10 +8,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockserver.integration.ClientAndServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
@@ -42,20 +39,12 @@ public class SuccessAddingVehicleEntrantIT {
   @Autowired
   private JdbcTemplate jdbcTemplate;
 
-  private ClientAndServer mockServer;
-
   @BeforeEach
   public void startMockServer() {
-    mockServer = startClientAndServer(1080);
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = VehicleEntrantController.BASE_PATH + "/" +
         VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS;
-  }
-
-  @AfterEach
-  public void stopMockServer() {
-    mockServer.stop();
   }
 
   @Test
@@ -68,6 +57,14 @@ public class SuccessAddingVehicleEntrantIT {
         .whenSubmitted()
         .then()
         .vehicleEntrantIsCreatedInDatabase()
+        .vehicleEntrantIsNotConnectedToVehicleEntrantPayments();
+
+    // a request for the same day, vrn and CAZ is made again
+    given()
+        .vehicleEntrantRequest(vehicleEntrantRequest(notPaidDay))
+        .whenSubmitted()
+        .then()
+        .vehicleEntrantIsFoundInDatabase()
         .vehicleEntrantIsNotConnectedToVehicleEntrantPayments();
 
     given()
@@ -172,6 +169,10 @@ public class SuccessAddingVehicleEntrantIT {
               + "payment_status = 'PAID' AND "
               + "vehicle_entrant_id is not null");
       assertThat(vehicleEntrantPaymentCount).isEqualTo(1);
+    }
+
+    public VehicleEntrantJourneyAssertion vehicleEntrantIsFoundInDatabase() {
+      return vehicleEntrantIsCreatedInDatabase();
     }
   }
 }

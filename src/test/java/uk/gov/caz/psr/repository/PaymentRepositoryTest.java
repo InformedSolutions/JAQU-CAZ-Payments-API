@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -61,6 +62,19 @@ class PaymentRepositoryTest {
     }
 
     @Test
+    public void shouldThrowIllegalArgumentExceptionWhenPaymentHasEmptyVehicleEntrantPayments() {
+      // given
+      Payment payment = paymentWithEmptyVehicleEntrantPayments();
+
+      // when
+      Throwable throwable = catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Vehicle entrant payments cannot be empty");
+    }
+
+    @Test
     public void shouldThrowIllegalStateExceptionWhenVehicleEntrantPaymentsContainDifferentStatuses() {
       // given
       Payment payment = paymentWithTwoDifferentVehicleEntrantStatuses();
@@ -71,6 +85,12 @@ class PaymentRepositoryTest {
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("Vehicle entrant payments do not have one common status");
+    }
+
+    private Payment paymentWithEmptyVehicleEntrantPayments() {
+      return Payments.forRandomDays().toBuilder()
+          .vehicleEntrantPayments(Collections.emptyList())
+          .build();
     }
 
     private Payment paymentWithTwoDifferentVehicleEntrantStatuses() {

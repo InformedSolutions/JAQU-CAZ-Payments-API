@@ -33,8 +33,6 @@
       <!-- TODO remove once ChargeSettlementController is implemented and tested -->
       **/psr/dto/ChargeSettlementPaymentStatus.java,
       **/psr/controller/ChargeSettlementController.java,
-      <!-- TODO remove once CAZ-1232 is implemented -->
-      **/psr/service/CleanupDanglingPaymentsService.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -562,8 +560,6 @@
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
                 <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
-                <!-- TODO remove once CAZ-1232 is implemented -->
-                <exclude>**/psr/service/CleanupDanglingPaymentsService.class</exclude>
               </excludes>
               <rules>
                 <rule>

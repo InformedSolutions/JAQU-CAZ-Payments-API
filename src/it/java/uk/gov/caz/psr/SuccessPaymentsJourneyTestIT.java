@@ -39,9 +39,9 @@ import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.dto.GetAndUpdatePaymentStatusResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 
 @FullyRunningServerIntegrationTest
@@ -325,12 +325,11 @@ public class SuccessPaymentsJourneyTestIT {
     mockServer
         .when(HttpRequest.request().withMethod("GET")
             .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
+
             .withPath("/v1/payments/.*"))
-        .respond(
-            HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
-                .withHeader("Content-type",
-                    MediaType.APPLICATION_JSON.toString())
-                .withBody(readFile("get-payment-response.json")));
+        .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
+            .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
+            .withBody(readFile("get-payment-response.json")));
   }
 
   /// ----- utility methods

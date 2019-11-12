@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,11 +14,13 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
@@ -31,23 +34,12 @@ import uk.gov.caz.psr.model.VehicleEntrantPayment;
 @Slf4j
 public class PaymentRepository {
 
+  private static final PaymentFindByIdMapper DANGLING_PAYMENT_ROW_MAPPER =
+      new PaymentFindByIdMapper(Collections.emptyList());
+
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
   private final VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository;
-
-  static final String SELECT_BY_ID_SQL = "SELECT payment_id, payment_method, payment_provider_id, "
-      + "total_paid, payment_provider_status, payment_submitted_timestamp, "
-      + "payment_authorised_timestamp "
-      + "FROM payment "
-      + "WHERE payment_id = ?";
-
-  static final String UPDATE_SQL = "UPDATE payment "
-      + "SET payment_provider_id = ?, "
-      + "payment_submitted_timestamp = ?, "
-      + "payment_provider_status = ?, "
-      + "payment_authorised_timestamp = ?, "
-      + "update_timestamp = CURRENT_TIMESTAMP "
-      + "WHERE payment_id = ?";
 
   /**
    * Creates an instance of {@link PaymentRepository}.
@@ -82,6 +74,8 @@ public class PaymentRepository {
     Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
     Preconditions.checkNotNull(payment.getExternalPaymentStatus(),
         "External payment status cannot be null");
+    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(), "Vehicle entrant "
+        + "payments cannot be empty");
     Preconditions.checkArgument(haveSameStatus(payment.getVehicleEntrantPayments()),
         "Vehicle entrant payments do not have one common status");
 
@@ -105,40 +99,18 @@ public class PaymentRepository {
   }
 
   /**
-   * Converts {@code payment} into a map of attributes which will be saved in the database for an
-   * external payment.
-   */
-  private MapSqlParameterSource toSqlParametersForExternalInsert(Payment payment) {
-    return new MapSqlParameterSource()
-        .addValue("total_paid", payment.getTotalPaid())
-        .addValue("payment_provider_status",
-            payment.getExternalPaymentStatus().name())
-        .addValue("payment_method", payment.getPaymentMethod().name());
-  }
-
-  /**
-   * Creates a new instance of {@link VehicleEntrantPayment} with {@code
-   * VehicleEntrantPayment#paymentId} set to the passed {@code paymentId} value.
-   */
-  private VehicleEntrantPayment updateWithPaymentId(VehicleEntrantPayment vehicleEntrantPayment,
-      UUID paymentId) {
-    return vehicleEntrantPayment.toBuilder()
-        .paymentId(paymentId)
-        .build();
-  }
-
-  /**
    * Update {@code payment} in the database.
    *
    * @param payment An entity object which is supposed to be saved in the database.
    * @throws NullPointerException if {@code payment} is null
    */
+  @Transactional
   public void update(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
 
     log.debug("Updating payment with attributes: {}", payment);
 
-    jdbcTemplate.update(UPDATE_SQL,
+    jdbcTemplate.update(Sql.UPDATE,
         preparedStatementSetter -> {
           preparedStatementSetter.setObject(1, payment.getExternalId());
           preparedStatementSetter.setObject(2, payment.getSubmittedTimestamp());
@@ -164,7 +136,7 @@ public class PaymentRepository {
 
     List<VehicleEntrantPayment> vehicleEntrantPayments = vehicleEntrantPaymentRepository
         .findByPaymentId(id);
-    List<Payment> results = jdbcTemplate.query(SELECT_BY_ID_SQL,
+    List<Payment> results = jdbcTemplate.query(Sql.SELECT_BY_ID,
         preparedStatement -> preparedStatement.setObject(1, id),
         new PaymentFindByIdMapper(vehicleEntrantPayments)
     );
@@ -174,6 +146,30 @@ public class PaymentRepository {
     Payment payment = results.iterator().next();
 
     return Optional.of(payment);
+  }
+
+  /**
+   * Finds all unfinished payments done in GOV UK Pay service.
+   *
+   * @return A list of {@link Payment} which were done in GOV UK Pay service, but were not finished.
+   */
+  public List<Payment> findDanglingPayments() {
+    return jdbcTemplate.query(Sql.SELECT_DANGLING_PAYMENTS,
+        (PreparedStatementSetter) null,
+        DANGLING_PAYMENT_ROW_MAPPER
+    );
+  }
+
+  /**
+   * Converts {@code payment} into a map of attributes which will be saved in the database for an
+   * external payment.
+   */
+  private MapSqlParameterSource toSqlParametersForExternalInsert(Payment payment) {
+    return new MapSqlParameterSource()
+        .addValue("total_paid", payment.getTotalPaid())
+        .addValue("payment_provider_status",
+            payment.getExternalPaymentStatus().name())
+        .addValue("payment_method", payment.getPaymentMethod().name());
   }
 
   /**
@@ -192,10 +188,53 @@ public class PaymentRepository {
   }
 
   /**
+   * Creates a new instance of {@link VehicleEntrantPayment} with {@code
+   * VehicleEntrantPayment#paymentId} set to the passed {@code paymentId} value.
+   */
+  private VehicleEntrantPayment updateWithPaymentId(VehicleEntrantPayment vehicleEntrantPayment,
+      UUID paymentId) {
+    return vehicleEntrantPayment.toBuilder()
+        .paymentId(paymentId)
+        .build();
+  }
+
+  /**
+   * An inner static class that acts as a 'container' for SQL queries/statements.
+   */
+  private static class Sql {
+
+    static final String UPDATE = "UPDATE payment "
+        + "SET payment_provider_id = ?, "
+        + "payment_submitted_timestamp = ?, "
+        + "payment_provider_status = ?, "
+        + "payment_authorised_timestamp = ?, "
+        + "update_timestamp = CURRENT_TIMESTAMP "
+        + "WHERE payment_id = ?";
+
+    private static final String ALL_PAYMENT_ATTRIBUTES =
+        "payment_id, payment_method, payment_provider_id, total_paid, payment_provider_status, "
+            + "payment_submitted_timestamp, payment_authorised_timestamp ";
+
+    static final String SELECT_DANGLING_PAYMENTS = "SELECT " + ALL_PAYMENT_ATTRIBUTES
+        + "FROM payment "
+        + "WHERE "
+        // only GOV UK Pay payment
+        + "payment_provider_id IS NOT NULL "
+        // only the one which is submitted more than 90 minutes ago; if payment_submitted_timestamp
+        // is NULL, the record is not included
+        + "AND payment_submitted_timestamp + INTERVAL '90 minutes' < NOW() "
+        // only the one whose status is not 'final'
+        + "AND payment_provider_status NOT IN ('SUCCESS', 'FAILED', 'CANCELLED', 'ERROR')";
+
+    static final String SELECT_BY_ID = "SELECT " + ALL_PAYMENT_ATTRIBUTES
+        + "FROM payment "
+        + "WHERE payment_id = ?";
+  }
+
+  /**
    * A class which maps the results obtained from the database to instances of {@link Payment}
    * class.
    */
-
   @Value
   private static class PaymentFindByIdMapper implements RowMapper<Payment> {
 

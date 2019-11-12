@@ -83,19 +83,6 @@ class VehicleEntrantPaymentRepositoryTest {
       assertThat(throwable).isInstanceOf(NullPointerException.class)
           .hasMessage("Vehicle entrant payments cannot be null");
     }
-
-    @Test
-    public void shouldThrowIllegalArgumentExceptionWhenListIsEmpty() {
-      // given
-      List<VehicleEntrantPayment> input = Collections.emptyList();
-
-      // when
-      Throwable throwable = catchThrowable(() -> vehicleEntrantPaymentRepository.update(input));
-
-      // then
-      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-          .hasMessage("Vehicle entrant payments cannot be empty");
-    }
   }
   @Nested
 
