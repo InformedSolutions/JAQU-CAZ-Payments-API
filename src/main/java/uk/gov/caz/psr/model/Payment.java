@@ -6,7 +6,8 @@ import lombok.NonNull;
 import lombok.Value;
 
 /**
- * An entity which represents a row stored in the database in {@code PAYMENT} table.
+ * An entity which represents a row stored in the database in {@code PAYMENT}
+ * table.
  */
 @Value
 @Builder(toBuilder = true)
@@ -16,7 +17,9 @@ public class Payment {
 
   String externalPaymentId;
 
-  UUID cleanZoneId;
+  UUID cleanAirZoneId;
+
+  String cleanAirZoneName;
 
   @NonNull
   PaymentStatus status;

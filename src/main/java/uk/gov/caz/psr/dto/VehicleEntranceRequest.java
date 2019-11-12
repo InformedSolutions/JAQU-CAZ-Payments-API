@@ -14,15 +14,18 @@ import uk.gov.caz.psr.model.VehicleEntrance;
 @Value
 public class VehicleEntranceRequest {
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.clean-zone-id}")
+  @ApiModelProperty(
+      value = "${swagger.model.descriptions.vehicle-entrance.clean-zone-id}")
   @NotNull
-  UUID cleanZoneId;
+  UUID cleanAirZoneId;
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.caz-entry-timestamp}")
+  @ApiModelProperty(
+      value = "${swagger.model.descriptions.vehicle-entrance.caz-entry-timestamp}")
   @NotNull
   LocalDateTime cazEntryTimestamp;
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrance.vrn}")
+  @ApiModelProperty(
+      value = "${swagger.model.descriptions.vehicle-entrance.vrn}")
   @NotNull
   @Size(min = 1, max = 15)
   String vrn;
@@ -30,13 +33,11 @@ public class VehicleEntranceRequest {
   /**
    * Maps this value object to an instance of the model.
    *
-   * @return An instance of {@link VehicleEntrance} whose parameters comes from this object.
+   * @return An instance of {@link VehicleEntrance} whose parameters comes from
+   *         this object.
    */
   public VehicleEntrance toVehicleEntrance() {
-    return VehicleEntrance.builder()
-        .cleanZoneId(cleanZoneId)
-        .cazEntryTimestamp(cazEntryTimestamp)
-        .vrn(vrn)
-        .build();
+    return VehicleEntrance.builder().cleanAirZoneId(cleanAirZoneId)
+        .cazEntryTimestamp(cazEntryTimestamp).vrn(vrn).build();
   }
 }

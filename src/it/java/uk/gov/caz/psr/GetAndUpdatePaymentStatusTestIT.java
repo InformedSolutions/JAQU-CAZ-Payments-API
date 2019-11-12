@@ -3,7 +3,6 @@ package uk.gov.caz.psr;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,7 +29,8 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 @AutoConfigureMockMvc
 public class GetAndUpdatePaymentStatusTestIT {
 
-  private static final String URL_TEMPLATE = PaymentsController.BASE_PATH + "/{id}";
+  private static final String URL_TEMPLATE =
+      PaymentsController.BASE_PATH + "/{id}";
   @Autowired
   private MockMvc mockMvc;
 
@@ -39,48 +39,55 @@ public class GetAndUpdatePaymentStatusTestIT {
 
   @ParameterizedTest
   @ValueSource(strings = {"a", "1111", "a-1-b-2"})
-  public void shouldReturn400StatusWhenIdHasInvalidFormat(String id) throws Exception {
+  public void shouldReturn400StatusWhenIdHasInvalidFormat(String id)
+      throws Exception {
     String correlationId = "31f69f26-fb99-11e9-8483-9fcf0b2b434f";
-    mockMvc.perform(get(URL_TEMPLATE, id)
-        .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-        .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
+    mockMvc
+        .perform(get(URL_TEMPLATE, id)
+            .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .andExpect(
+            header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isBadRequest());
   }
 
   @Test
-  public void shouldReturn404StatusWhenPaymentDoesNotExistInDatabase() throws Exception {
-    UUID notExistingId = UUID.fromString("8916a4e0-fb9e-11e9-8483-b3fce09a0a00");
+  public void shouldReturn404StatusWhenPaymentDoesNotExistInDatabase()
+      throws Exception {
+    UUID notExistingId =
+        UUID.fromString("8916a4e0-fb9e-11e9-8483-b3fce09a0a00");
 
     String correlationId = "542de1b5-4aab-45eb-bccc-6ec91f1d6d51";
-    mockMvc.perform(get(URL_TEMPLATE, notExistingId)
-        .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-        .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
+    mockMvc
+        .perform(get(URL_TEMPLATE, notExistingId)
+            .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .andExpect(
+            header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  public void shouldReturn404StatusWhenPaymentWithoutExtIdExistInDatabase() throws Exception {
+  public void shouldReturn404StatusWhenPaymentWithoutExtIdExistInDatabase()
+      throws Exception {
     UUID paymentId = insertIntoDatabasePaymentWithoutExternalId();
 
     String correlationId = "939898b0-fb9e-11e9-8483-cb50ccd05275";
-    mockMvc.perform(get(URL_TEMPLATE, paymentId)
-        .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-        .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
+    mockMvc
+        .perform(get(URL_TEMPLATE, paymentId)
+            .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .andExpect(
+            header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
   }
 
   private UUID insertIntoDatabasePaymentWithoutExternalId() {
-    Payment withoutId = Payment.builder()
-        .status(PaymentStatus.INITIATED)
+    Payment withoutId = Payment.builder().status(PaymentStatus.INITIATED)
         .externalPaymentId(null)
-        .cleanZoneId(UUID.fromString("beaab9e8-fb9e-11e9-8483-a34250e332d2"))
-        .paymentMethod(PaymentMethod.CREDIT_CARD)
-        .chargePaid(100)
-        .correlationId("c1c6049c-fb9f-11e9-8483-177e3dcaf3e9")
-        .build();
+        .cleanAirZoneId(UUID.fromString("beaab9e8-fb9e-11e9-8483-a34250e332d2"))
+        .paymentMethod(PaymentMethod.CREDIT_CARD).chargePaid(100)
+        .correlationId("c1c6049c-fb9f-11e9-8483-177e3dcaf3e9").build();
     return paymentRepository.insert(withoutId).getId();
   }
 }

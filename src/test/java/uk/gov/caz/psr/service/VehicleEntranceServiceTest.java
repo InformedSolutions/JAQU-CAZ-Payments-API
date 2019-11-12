@@ -3,7 +3,6 @@ package uk.gov.caz.psr.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.verify;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -41,12 +40,9 @@ class VehicleEntranceServiceTest {
   public void shouldThrowNullPointerExceptionWhenVehicleEntranceIdIsNotNull() {
     // given
     UUID id = UUID.fromString("1ada0539-7528-456e-95eb-f14025792889");
-    VehicleEntrance vehicleEntrance = VehicleEntrance.builder()
-        .vrn("BW91HUN")
-        .cazEntryTimestamp(LocalDateTime.now())
-        .id(id)
-        .cleanZoneId(UUID.randomUUID())
-        .build();
+    VehicleEntrance vehicleEntrance = VehicleEntrance.builder().vrn("BW91HUN")
+        .cazEntryTimestamp(LocalDateTime.now()).id(id)
+        .cleanAirZoneId(UUID.randomUUID()).build();
 
     // when
     Throwable throwable = catchThrowable(
@@ -60,11 +56,9 @@ class VehicleEntranceServiceTest {
   @Test
   public void shouldCallRepositoryWhenVehicleEntranceIsValid() {
     // given
-    VehicleEntrance vehicleEntrance = VehicleEntrance.builder()
-        .vrn("BW91HUN")
+    VehicleEntrance vehicleEntrance = VehicleEntrance.builder().vrn("BW91HUN")
         .cazEntryTimestamp(LocalDateTime.now())
-        .cleanZoneId(UUID.randomUUID())
-        .build();
+        .cleanAirZoneId(UUID.randomUUID()).build();
 
     // when
     vehicleEntranceService.registerVehicleEntrance(vehicleEntrance);

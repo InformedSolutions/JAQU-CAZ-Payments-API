@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,12 +49,14 @@ class ExternalPaymentsRepositoryTest {
 
   @BeforeEach
   public void setUp() {
-    when(restTemplateBuilder.interceptors(any(ClientHttpRequestInterceptor.class)))
-        .thenReturn(restTemplateBuilder);
+    when(restTemplateBuilder
+        .interceptors(any(ClientHttpRequestInterceptor.class)))
+            .thenReturn(restTemplateBuilder);
     when(restTemplateBuilder.build()).thenReturn(restTemplate);
 
-    paymentsRepository = new ExternalPaymentsRepository(ANY_ROOT_URL, ANY_API_KEY,
-        restTemplateBuilder);
+    paymentsRepository =
+        new ExternalPaymentsRepository(ANY_ROOT_URL, restTemplateBuilder);
+    paymentsRepository.setApiKey(ANY_API_KEY);
   }
 
   @Nested
@@ -67,8 +68,8 @@ class ExternalPaymentsRepositoryTest {
       Payment payment = null;
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, ANY_RETURN_URL));
+      Throwable throwable = catchThrowable(
+          () -> paymentsRepository.create(payment, ANY_RETURN_URL));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -81,8 +82,8 @@ class ExternalPaymentsRepositoryTest {
       Payment payment = createPayment(null);
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, ANY_RETURN_URL));
+      Throwable throwable = catchThrowable(
+          () -> paymentsRepository.create(payment, ANY_RETURN_URL));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -92,11 +93,12 @@ class ExternalPaymentsRepositoryTest {
     @Test
     public void shouldThrowIllegalArgumentExceptionWhenReturnUrlIsNull() {
       // given
-      Payment payment = createPayment(UUID.fromString("26ca3b2a-fba9-11e9-9334-1fbaf36c3aee"));
+      Payment payment = createPayment(
+          UUID.fromString("26ca3b2a-fba9-11e9-9334-1fbaf36c3aee"));
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, null));
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.create(payment, null));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -106,11 +108,12 @@ class ExternalPaymentsRepositoryTest {
     @Test
     public void shouldThrowIllegalArgumentExceptionWhenReturnUrlIsEmpty() {
       // given
-      Payment payment = createPayment(UUID.fromString("5b793d4e-fba9-11e9-9334-6b0964eb9a87"));
+      Payment payment = createPayment(
+          UUID.fromString("5b793d4e-fba9-11e9-9334-6b0964eb9a87"));
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, ""));
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.create(payment, ""));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -133,41 +136,36 @@ class ExternalPaymentsRepositoryTest {
     }
 
     private void mockRestTemplateResultWithUnrecognizedStatus() {
-      given(restTemplate.exchange(any(), eq(CreatePaymentResult.class))).willReturn(
-          ResponseEntity.ok(
-              CreatePaymentResult.builder()
-                  .paymentId("ex-pay-id")
-                  .amount(100)
-                  .links(PaymentLinks.builder()
-                      .nextUrl(new Link("http://some-address.com", "GET"))
-                      .build())
-                  .state(PaymentState.builder().status("not-recognized").build())
-                  .build()
-          )
-      );
+      given(restTemplate.exchange(any(), eq(CreatePaymentResult.class)))
+          .willReturn(ResponseEntity.ok(CreatePaymentResult.builder()
+              .paymentId("ex-pay-id").amount(100)
+              .links(PaymentLinks.builder()
+                  .nextUrl(new Link("http://some-address.com", "GET")).build())
+              .state(PaymentState.builder().status("not-recognized").build())
+              .build()));
     }
 
 
     @Test
     public void shouldRethrowExceptionWhenCallFails() {
       // given
-      Payment payment = createPayment(UUID.fromString("ef1aad78-fba7-11e9-9334-4b9678d9f25f"));
-      given(restTemplate.exchange(any(), eq(CreatePaymentResult.class))).willThrow(
-          HttpClientErrorException
-              .create(HttpStatus.INTERNAL_SERVER_ERROR, "", new HttpHeaders(), null, null));
+      Payment payment = createPayment(
+          UUID.fromString("ef1aad78-fba7-11e9-9334-4b9678d9f25f"));
+      given(restTemplate.exchange(any(), eq(CreatePaymentResult.class)))
+          .willThrow(
+              HttpClientErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR,
+                  "", new HttpHeaders(), null, null));
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, ANY_RETURN_URL));
+      Throwable throwable = catchThrowable(
+          () -> paymentsRepository.create(payment, ANY_RETURN_URL));
 
       // then
       assertThat(throwable).isInstanceOf(RestClientException.class);
     }
 
     private Payment createPayment(UUID paymentId) {
-      return Payment.builder()
-          .id(paymentId)
-          .chargePaid(100)
+      return Payment.builder().id(paymentId).chargePaid(100)
           .paymentMethod(PaymentMethod.CREDIT_CARD)
           .status(PaymentStatus.STARTED).build();
     }
@@ -182,7 +180,8 @@ class ExternalPaymentsRepositoryTest {
       String id = null;
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentsRepository.findById(id));
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.findById(id));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -195,7 +194,8 @@ class ExternalPaymentsRepositoryTest {
       String id = "";
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentsRepository.findById(id));
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.findById(id));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -205,8 +205,9 @@ class ExternalPaymentsRepositoryTest {
     @Test
     public void shouldReturnEmptyOptionalWhen404StatusCodeIsReturned() {
       // given
-      given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willThrow(
-          HttpClientErrorException.create(HttpStatus.NOT_FOUND, "", new HttpHeaders(), null, null));
+      given(restTemplate.exchange(any(), eq(GetPaymentResult.class)))
+          .willThrow(HttpClientErrorException.create(HttpStatus.NOT_FOUND, "",
+              new HttpHeaders(), null, null));
       String id = "payment id";
 
       // when
@@ -220,12 +221,13 @@ class ExternalPaymentsRepositoryTest {
     public void shouldRethrowExceptionWhenCallFails() {
       // given
       given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willThrow(
-          HttpClientErrorException
-              .create(HttpStatus.INTERNAL_SERVER_ERROR, "", new HttpHeaders(), null, null));
+          HttpClientErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR, "",
+              new HttpHeaders(), null, null));
       String id = "payment id";
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentsRepository.findById(id));
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.findById(id));
 
       // then
       assertThat(throwable).isInstanceOf(RestClientException.class);
@@ -246,14 +248,10 @@ class ExternalPaymentsRepositoryTest {
     }
 
     private void mockRestTemplateResult() {
-      given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willReturn(
-          new ResponseEntity<>(
-              GetPaymentResult.builder()
-                  .state(PaymentState.builder().status("success").build())
-                  .build(),
-              HttpStatus.OK
-          )
-      );
+      given(restTemplate.exchange(any(), eq(GetPaymentResult.class)))
+          .willReturn(new ResponseEntity<>(GetPaymentResult.builder()
+              .state(PaymentState.builder().status("success").build()).build(),
+              HttpStatus.OK));
     }
   }
 }

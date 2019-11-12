@@ -4,6 +4,7 @@ aws:
     defaultContext: payments
     profileSeparator: .
     name: payments
+    environment: dev
     failFast: true
     enabled: true
 

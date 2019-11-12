@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.caz.psr.domain.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
@@ -30,6 +30,9 @@ class GetAndUpdatePaymentsServiceTest {
   @Mock
   private PaymentRepository internalPaymentsRepository;
 
+  @Mock
+  private CredentialRetrievalManager credentialRetrievalManager;
+
   @InjectMocks
   private GetAndUpdatePaymentsService getAndUpdatePaymentsService;
 
@@ -39,8 +42,8 @@ class GetAndUpdatePaymentsServiceTest {
     UUID id = null;
 
     // when
-    Throwable throwable = catchThrowable(() ->
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(id));
+    Throwable throwable = catchThrowable(() -> getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(id));
 
     assertThat(throwable).isInstanceOf(NullPointerException.class)
         .hasMessage("ID cannot be null");
@@ -50,10 +53,12 @@ class GetAndUpdatePaymentsServiceTest {
   public void shouldReturnEmptyOptionalIfPaymentIsNotFoundInDatabase() {
     // given
     UUID paymentId = UUID.fromString("a80d2cc8-f97a-11e9-9272-1b75c20437eb");
-    given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.empty());
+    given(internalPaymentsRepository.findById(paymentId))
+        .willReturn(Optional.empty());
 
     // when
-    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    Optional<Payment> result = getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(paymentId);
 
     // then
     assertThat(result).isEmpty();
@@ -66,10 +71,12 @@ class GetAndUpdatePaymentsServiceTest {
     // given
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     String externalId = null;
-    mockInternalPaymentWith(paymentId, externalId);
+    String cleanAirZoneName = null;
+    mockInternalPaymentWith(paymentId, externalId, cleanAirZoneName);
 
     // when
-    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    Optional<Payment> result = getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(paymentId);
 
     // then
     assertThat(result).isEmpty();
@@ -81,69 +88,83 @@ class GetAndUpdatePaymentsServiceTest {
   public void shouldThrowIllegalStateExceptionWhenPaymentWithExtIdExistsButIsNotFoundExternally() {
     // given
     UUID paymentId = UUID.fromString("1ae108cc-fb9d-11e9-8483-67f1dfc0829d");
+    String cleanAirZoneName = "test";
     String externalId = "external-id-1";
-    mockInternalPaymentWith(paymentId, externalId);
+    mockInternalPaymentWith(paymentId, externalId, cleanAirZoneName);
     mockAbsenceOfExternalPayment(externalId);
+    mockApiKeyRetrieval(cleanAirZoneName);
 
     // when
-    Throwable throwable = catchThrowable(() ->
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId));
+    Throwable throwable = catchThrowable(() -> getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(paymentId));
 
     // then
-    assertThat(throwable).isInstanceOf(IllegalStateException.class)
-        .hasMessage("External payment not found whereas the internal one with id '%s' "
-            + "and external id '%s' exists", paymentId, externalId);
+    assertThat(throwable).isInstanceOf(IllegalStateException.class).hasMessage(
+        "External payment not found whereas the internal one with id '%s' "
+            + "and external id '%s' exists",
+        paymentId, externalId);
   }
 
   @Test
   public void shouldUpdatePaymentStatusIfExternalPaymentIsFound() {
     // given
     UUID paymentId = UUID.fromString("744b3067-11aa-463f-b5d7-992196f959c6");
+    String cleanAirZoneName = "test";
     String externalId = "external-id";
     PaymentStatus externalStatus = PaymentStatus.FAILED;
-    Payment payment = mockInternalPaymentWith(paymentId, externalId);
+    Payment payment =
+        mockInternalPaymentWith(paymentId, externalId, cleanAirZoneName);
     mockExternalPaymentWithStatus(externalId, payment, externalStatus);
+    mockApiKeyRetrieval(cleanAirZoneName);
 
     // when
-    Optional<Payment> result = getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    Optional<Payment> result = getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(paymentId);
 
     // then
-    Payment internalPaymentWithExternalStatus = payment.toBuilder().status(externalStatus).build();
+    Payment internalPaymentWithExternalStatus =
+        payment.toBuilder().status(externalStatus).build();
     assertThat(result).contains(internalPaymentWithExternalStatus);
-    verify(internalPaymentsRepository).update(internalPaymentWithExternalStatus);
+    verify(internalPaymentsRepository)
+        .update(internalPaymentWithExternalStatus);
   }
 
   private void mockAbsenceOfExternalPayment(String externalId) {
-    given(externalPaymentsRepository.findById(externalId)).willReturn(Optional.empty());
+    given(externalPaymentsRepository.findById(externalId))
+        .willReturn(Optional.empty());
   }
 
-  private Payment mockInternalPaymentWith(UUID paymentId, String externalId) {
-    Payment payment = createPayment(paymentId, externalId);
-    given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.of(payment));
+  private String mockApiKeyRetrieval(String cleanAirZoneName) {
+    given(credentialRetrievalManager.getApiKey(cleanAirZoneName))
+        .willReturn(Optional.of("test-api-key"));
+    return "test-api-key";
+  }
+
+  private Payment mockInternalPaymentWith(UUID paymentId, String externalId,
+      String cleanAirZoneName) {
+    Payment payment = createPayment(paymentId, externalId, cleanAirZoneName);
+    given(internalPaymentsRepository.findById(paymentId))
+        .willReturn(Optional.of(payment));
     return payment;
   }
 
-  private Payment createPayment(UUID paymentId, String externalId) {
-    return Payment.builder()
-        .id(paymentId)
-        .chargePaid(100)
-        .paymentMethod(PaymentMethod.CREDIT_CARD)
-        .externalPaymentId(externalId)
-        .status(PaymentStatus.STARTED).build();
+  private Payment createPayment(UUID paymentId, String externalId,
+      String cleanAirZoneName) {
+    return Payment.builder().id(paymentId).cleanAirZoneName(cleanAirZoneName)
+        .chargePaid(100).paymentMethod(PaymentMethod.CREDIT_CARD)
+        .externalPaymentId(externalId).status(PaymentStatus.STARTED).build();
   }
 
-  private Payment mockExternalPaymentWithStatus(String externalId, Payment payment,
-      PaymentStatus status) {
+  private Payment mockExternalPaymentWithStatus(String externalId,
+      Payment payment, PaymentStatus status) {
     Payment externalPayment = toExternalPaymentWithStatus(payment, status);
-    given(externalPaymentsRepository.findById(externalId)).willReturn(Optional.of(
-        externalPayment));
+    given(externalPaymentsRepository.findById(externalId))
+        .willReturn(Optional.of(externalPayment));
     return externalPayment;
   }
 
-  private Payment toExternalPaymentWithStatus(Payment payment, PaymentStatus status) {
-    return payment.toBuilder()
-        .id(null)
-        .status(status)
-        .build();
+  private Payment toExternalPaymentWithStatus(Payment payment,
+      PaymentStatus status) {
+    return payment.toBuilder().id(null).status(status).build();
   }
 }

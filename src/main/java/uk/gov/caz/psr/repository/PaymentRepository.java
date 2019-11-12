@@ -23,15 +23,16 @@ import uk.gov.caz.psr.model.PaymentStatus;
 @Repository
 public class PaymentRepository {
 
-  private static final PaymentFindByIdMapper FIND_BY_ID_MAPPER = new PaymentFindByIdMapper();
+  private static final PaymentFindByIdMapper FIND_BY_ID_MAPPER =
+      new PaymentFindByIdMapper();
 
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
 
-  static final String SELECT_BY_ID_SQL = "SELECT payment_id, external_payment_id, status, "
-      + "case_reference, payment_method, charge_paid, caz_id, correlation_id "
-      + "FROM payment "
-      + "WHERE payment_id = ?";
+  static final String SELECT_BY_ID_SQL =
+      "SELECT payment_id, external_payment_id, status, "
+          + "case_reference, payment_method, charge_paid, caz_id, correlation_id "
+          + "FROM payment " + "WHERE payment_id = ?";
 
   static final String UPDATE_SQL = "UPDATE payment "
       + "SET status = ?, external_payment_id = ?, update_timestamp = CURRENT_TIMESTAMP "
@@ -45,60 +46,67 @@ public class PaymentRepository {
   public PaymentRepository(JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
     this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-        .withTableName("payment")
-        .usingGeneratedKeyColumns("payment_id")
-        .usingColumns("external_payment_id", "status", "payment_method", "charge_paid", "caz_id",
-            "correlation_id");
+        .withTableName("payment").usingGeneratedKeyColumns("payment_id")
+        .usingColumns("external_payment_id", "status", "payment_method",
+            "charge_paid", "caz_id", "correlation_id");
   }
 
 
   /**
    * Inserts {@code payment} into database.
    *
-   * @param payment An entity object which is supposed to be saved in the database.
-   * @return An instance of {@link Payment} with its internal identifier set.
-   * @throws NullPointerException if {@code payment} or {@link Payment#getCorrelationId()} is null
+   * @param  payment                  An entity object which is supposed to be
+   *                                    saved in the database.
+   * @return                          An instance of {@link Payment} with its
+   *                                  internal identifier set.
+   * @throws NullPointerException     if {@code payment} or
+   *                                    {@link Payment#getCorrelationId()} is
+   *                                    null
    * @throws IllegalArgumentException if {@link Payment#getId()} is not null
    */
   public Payment insert(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
-    Preconditions.checkNotNull(payment.getCorrelationId(), "Correlation ID cannot be null");
-    Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
+    Preconditions.checkNotNull(payment.getCorrelationId(),
+        "Correlation ID cannot be null");
+    Preconditions.checkArgument(payment.getId() == null,
+        "Payment cannot have ID");
 
     SqlParameterSource parameters = new MapSqlParameterSource()
         .addValue("external_payment_id", payment.getExternalPaymentId())
         .addValue("status", payment.getStatus().name())
         .addValue("payment_method", payment.getPaymentMethod().name())
         .addValue("charge_paid", payment.getChargePaid())
-        .addValue("caz_id", payment.getCleanZoneId())
+        .addValue("caz_id", payment.getCleanAirZoneId())
         .addValue("correlation_id", payment.getCorrelationId());
 
-    KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(parameters);
+    KeyHolder keyHolder =
+        simpleJdbcInsert.executeAndReturnKeyHolder(parameters);
 
-    return payment.toBuilder()
-        .id((UUID) keyHolder.getKeys().get("payment_id"))
+    return payment.toBuilder().id((UUID) keyHolder.getKeys().get("payment_id"))
         .build();
   }
 
   /**
    * Update {@code payment} in the database.
    *
-   * @param payment An entity object which is supposed to be saved in the database.
+   * @param  payment              An entity object which is supposed to be saved
+   *                                in the database.
    * @throws NullPointerException if {@code payment} is null
    */
   public void update(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
 
-    jdbcTemplate.update(UPDATE_SQL, payment.getStatus().name(), payment.getExternalPaymentId(),
-        payment.getId());
+    jdbcTemplate.update(UPDATE_SQL, payment.getStatus().name(),
+        payment.getExternalPaymentId(), payment.getId());
   }
 
   /**
    * Finds a given payment by its internal identifier passed as {@code id}.
    *
-   * @param id An internal identifier of the payment.
-   * @return An instance of {@link Payment} class wrapped in {@link Optional} if the payment is
-   *     found, {@link Optional#empty()} otherwise.
+   * @param  id                   An internal identifier of the payment.
+   * @return                      An instance of {@link Payment} class wrapped
+   *                              in {@link Optional} if the payment is found,
+   *                              {@link Optional#empty()} otherwise.
    * @throws NullPointerException if {@code id} is null
    */
   public Optional<Payment> findById(UUID id) {
@@ -106,8 +114,7 @@ public class PaymentRepository {
 
     List<Payment> results = jdbcTemplate.query(SELECT_BY_ID_SQL,
         preparedStatement -> preparedStatement.setObject(1, id),
-        FIND_BY_ID_MAPPER
-    );
+        FIND_BY_ID_MAPPER);
     if (results.isEmpty()) {
       return Optional.empty();
     }
@@ -115,8 +122,8 @@ public class PaymentRepository {
   }
 
   /**
-   * A class which maps the results obtained from the database to instances of {@link Payment}
-   * class.
+   * A class which maps the results obtained from the database to instances of
+   * {@link Payment} class.
    */
   private static class PaymentFindByIdMapper implements RowMapper<Payment> {
 
@@ -127,11 +134,11 @@ public class PaymentRepository {
           .externalPaymentId(resultSet.getString("external_payment_id"))
           .status(PaymentStatus.valueOf(resultSet.getString("status")))
           .caseReference(resultSet.getString("case_reference"))
-          .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
+          .paymentMethod(
+              PaymentMethod.valueOf(resultSet.getString("payment_method")))
           .chargePaid(resultSet.getInt("charge_paid"))
-          .cleanZoneId(UUID.fromString(resultSet.getString("caz_id")))
-          .correlationId(resultSet.getString("correlation_id"))
-          .build();
+          .cleanAirZoneId(UUID.fromString(resultSet.getString("caz_id")))
+          .correlationId(resultSet.getString("correlation_id")).build();
     }
   }
 }
