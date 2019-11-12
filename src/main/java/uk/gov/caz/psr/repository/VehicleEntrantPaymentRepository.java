@@ -86,7 +86,7 @@ public class VehicleEntrantPaymentRepository {
    *                                  whose payment id is null.
    */
   @Transactional
-  List<VehicleEntrantPayment> insert(List<VehicleEntrantPayment> vehicleEntrantPayments) {
+  public List<VehicleEntrantPayment> insert(List<VehicleEntrantPayment> vehicleEntrantPayments) {
     Preconditions.checkNotNull(vehicleEntrantPayments, "Vehicle entrant payments cannot be null");
     Preconditions.checkArgument(!vehicleEntrantPayments.isEmpty(), "Vehicle entrant payments "
         + "cannot be empty");
@@ -135,13 +135,10 @@ public class VehicleEntrantPaymentRepository {
    * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment} which are to be
    *     updated in the database.
    * @throws NullPointerException if {@code vehicleEntrantPayments} is null
-   * @throws IllegalArgumentException if {@code vehicleEntrantPayments} is empty
    */
   @Transactional
   public void update(List<VehicleEntrantPayment> vehicleEntrantPayments) {
     Preconditions.checkNotNull(vehicleEntrantPayments, "Vehicle entrant payments cannot be null");
-    Preconditions.checkArgument(!vehicleEntrantPayments.isEmpty(),
-        "Vehicle entrant payments cannot be empty");
 
     for (VehicleEntrantPayment vehicleEntrantPayment : vehicleEntrantPayments) {
       update(vehicleEntrantPayment);
