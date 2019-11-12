@@ -1,27 +1,12 @@
 package uk.gov.caz.psr.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.dto.SendEmailRequest;
-import uk.gov.caz.psr.dto.external.GetPaymentResult;
-import uk.gov.caz.psr.messaging.MessagingClient;
-import uk.gov.caz.psr.model.ExternalPaymentStatus;
-import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 
 /**
@@ -29,34 +14,12 @@ import uk.gov.caz.psr.repository.PaymentRepository;
  * database.
  */
 @Service
+@AllArgsConstructor
 @Slf4j
 public class GetAndUpdatePaymentsService {
 
-  private final ExternalPaymentsRepository externalPaymentsRepository;
-  private final FinalizePaymentService finalizePaymentService;
   private final PaymentRepository internalPaymentsRepository;
-  private final MessagingClient messagingClient;
   private final UpdatePaymentWithExternalDataService updatePaymentWithExternalDataService;
-
-  @Value("${services.sqs.template-id}")
-  String templateId;
-
-  /**
-   * Constructor.
-   */
-  public GetAndUpdatePaymentsService(
-      ExternalPaymentsRepository externalPaymentsRepository,
-      FinalizePaymentService finalizePaymentService,
-      PaymentRepository internalPaymentsRepository,
-      MessagingClient messagingClient,
-      UpdatePaymentWithExternalDataService updatePaymentWithExternalDataService) {
-    this.externalPaymentsRepository = externalPaymentsRepository;
-    this.finalizePaymentService = finalizePaymentService;
-    this.internalPaymentsRepository = internalPaymentsRepository;
-    this.messagingClient = messagingClient;
-    this.updatePaymentWithExternalDataService =
-        updatePaymentWithExternalDataService;
-  }
 
   /**
    * Retrieves the payment by its internal identifier and, provided it exists

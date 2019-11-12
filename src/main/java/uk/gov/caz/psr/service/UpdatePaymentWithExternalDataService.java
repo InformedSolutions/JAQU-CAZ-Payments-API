@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,6 @@ import uk.gov.caz.psr.repository.PaymentRepository;
  */
 @Service
 @Slf4j
-@AllArgsConstructor
 public class UpdatePaymentWithExternalDataService {
 
   private final ExternalPaymentsRepository externalPaymentsRepository;
@@ -68,7 +66,7 @@ public class UpdatePaymentWithExternalDataService {
     String externalPaymentId = payment.getExternalId();
     Payment externalPayment = externalPaymentsRepository
         .findById(externalPaymentId)
-        .map(getPaymentResult -> handleExternalResponse(internalPayment,
+        .map(getPaymentResult -> handleExternalResponse(payment,
             getPaymentResult))
         .orElseThrow(() -> new IllegalStateException(
             "External payment not found whereas the " + "internal one with id '"
