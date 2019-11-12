@@ -72,9 +72,12 @@ public class FinalizeVehicleEntrantServiceTest {
         vehicleEntrantPayment);
 
     // when
-    finalizeVehicleEntrantService.connectExistingVehicleEntrantPayment(vehicleEntrant);
+    Optional<VehicleEntrantPayment> result = finalizeVehicleEntrantService
+        .connectExistingVehicleEntrantPayment(vehicleEntrant);
 
     // then
+    assertThat(result).isNotNull();
+    assertThat(result.get().getInternalPaymentStatus()).isEqualTo(InternalPaymentStatus.PAID);
     verify(vehicleEntrantPaymentRepository).update(any(VehicleEntrantPayment.class));
   }
 
@@ -86,14 +89,16 @@ public class FinalizeVehicleEntrantServiceTest {
         Optional.empty());
 
     // when
-    finalizeVehicleEntrantService.connectExistingVehicleEntrantPayment(vehicleEntrant);
+    Optional<VehicleEntrantPayment> response = finalizeVehicleEntrantService
+        .connectExistingVehicleEntrantPayment(vehicleEntrant);
 
     // then
+    assertThat(response).isEqualTo(Optional.empty());
     verify(vehicleEntrantPaymentRepository, never()).update(any(VehicleEntrantPayment.class));
   }
 
   private VehicleEntrant createVehicleEntrant() {
-    return TestObjectFactory.VehicleEntrants.forDay(LocalDate.of(2019,11,7));
+    return TestObjectFactory.VehicleEntrants.forDay(LocalDate.of(2019, 11, 7));
   }
 
   private VehicleEntrantPayment createAlreadyAssignedVehicleEntrantPayment() {
@@ -110,7 +115,7 @@ public class FinalizeVehicleEntrantServiceTest {
         .paymentId(UUID.randomUUID())
         .chargePaid(100)
         .cleanZoneId(UUID.randomUUID())
-        .travelDate(LocalDate.of(2019,11,7))
+        .travelDate(LocalDate.of(2019, 11, 7))
         .build();
   }
 }

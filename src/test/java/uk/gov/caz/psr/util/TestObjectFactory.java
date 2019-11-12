@@ -58,6 +58,7 @@ public class TestObjectFactory {
   }
 
   private static class VehicleEntrantPaymentsBuilder {
+
     private final Collection<LocalDate> travelDates;
     private UUID paymentId;
     private InternalPaymentStatus status;
@@ -138,7 +139,7 @@ public class TestObjectFactory {
       int daysSize = 5;
       LocalDate today = LocalDate.now();
       Set<LocalDate> localDates = new HashSet<>();
-      while(localDates.size() != daysSize) {
+      while (localDates.size() != daysSize) {
         localDates.add(today.plusDays(random.nextInt(7)));
       }
       return forDays(localDates, paymentId, externalId);
@@ -185,6 +186,28 @@ public class TestObjectFactory {
               .reduce(0, Integer::sum))
           .vehicleEntrantPayments(vehicleEntrantPayments)
           .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
+          .build();
+    }
+  }
+
+  public static class VehicleEntrantPayments {
+    public static VehicleEntrantPayment anyNotPaid() {
+      return VehicleEntrantPayment.builder()
+          .chargePaid(100)
+          .travelDate(LocalDate.now())
+          .cleanZoneId(UUID.randomUUID())
+          .vrn("VRN123")
+          .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
+          .build();
+    }
+
+    public static VehicleEntrantPayment anyPaid() {
+      return VehicleEntrantPayment.builder()
+          .chargePaid(100)
+          .travelDate(LocalDate.now())
+          .cleanZoneId(UUID.randomUUID())
+          .vrn("VRN123")
+          .internalPaymentStatus(InternalPaymentStatus.PAID)
           .build();
     }
   }

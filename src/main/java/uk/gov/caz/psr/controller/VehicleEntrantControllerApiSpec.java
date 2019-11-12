@@ -8,12 +8,14 @@ import io.swagger.annotations.ApiResponses;
 import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.VehicleEntrantRequest;
+import uk.gov.caz.psr.dto.VehicleEntrantResponse;
 
 /**
  * API specification (swagger) for a controller which deals with requests that informs about
@@ -31,7 +33,8 @@ public interface VehicleEntrantControllerApiSpec {
    * status of the payment associated with the entry is returned.
    */
   @ApiOperation(
-      value = "${swagger.operations.payments.create-vehicle-entrant.description}"
+      value = "${swagger.operations.payments.create-vehicle-entrant.description}",
+      response = VehicleEntrantResponse.class
   )
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
@@ -48,6 +51,6 @@ public interface VehicleEntrantControllerApiSpec {
   })
   @PostMapping(VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS)
   @ResponseStatus(HttpStatus.OK)
-  void createVehicleEntrantAndGetPaymentDetails(
+  ResponseEntity<VehicleEntrantResponse> createVehicleEntrantAndGetPaymentDetails(
       @Valid @RequestBody VehicleEntrantRequest request);
 }

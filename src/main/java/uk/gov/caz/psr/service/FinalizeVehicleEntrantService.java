@@ -23,14 +23,18 @@ public class FinalizeVehicleEntrantService {
    * SUCCESS.
    *
    * @param vehicleEntrant provided {@link VehicleEntrant} object
+   * @return Optional of vehicleEntrantPayment if found for provided VehicleEntrant or
+   *     Optional.empty() if vehicleEntrantPayment was not found.
    */
-  public void connectExistingVehicleEntrantPayment(VehicleEntrant vehicleEntrant) {
+  public Optional<VehicleEntrantPayment> connectExistingVehicleEntrantPayment(
+      VehicleEntrant vehicleEntrant) {
     Preconditions.checkNotNull(vehicleEntrant, "Vehicle Entrant cannot be null");
     Optional<VehicleEntrantPayment> foundVehicleEntrantPayment = vehicleEntrantPaymentRepository
         .findSuccessfullyPaid(vehicleEntrant);
     foundVehicleEntrantPayment.ifPresent(
         vehicleEntrantPayment -> updateVehicleEntrantPayment(vehicleEntrantPayment,
             vehicleEntrant));
+    return foundVehicleEntrantPayment;
   }
 
   /**
