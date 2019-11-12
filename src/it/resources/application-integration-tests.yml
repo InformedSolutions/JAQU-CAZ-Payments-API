@@ -7,7 +7,14 @@ spring:
     hikari:
       maximum-pool-size: 10
 
+aws:
+  sqs:
+    endpoint: http://${aws.sqs.url:localhost:4576}
+
 services:
   gov-uk-pay:
     root-url: http://localhost:1080
     api-key: dummy
+  sqs:
+    message-group-id-payments: TEST_RECEIPT
+    new-queue-name: test-queue.fifo

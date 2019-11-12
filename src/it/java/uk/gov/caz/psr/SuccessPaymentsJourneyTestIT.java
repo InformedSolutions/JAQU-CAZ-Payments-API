@@ -2,7 +2,10 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-
+import com.amazonaws.services.sqs.AmazonSQSAsync;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.CreateQueueResult;
+import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -15,6 +18,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,18 +45,23 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 
 @FullyRunningServerIntegrationTest
-@Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
-    "classpath:data/sql/add-vehicle-entrants.sql"},
+@Sql(
+    scripts = {"classpath:data/sql/clear-all-payments.sql",
+        "classpath:data/sql/add-vehicle-entrants.sql"},
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
-    "classpath:data/sql/clear-all-vehicle-entrants.sql"},
+@Sql(
+    scripts = {"classpath:data/sql/clear-all-payments.sql",
+        "classpath:data/sql/clear-all-vehicle-entrants.sql"},
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
+@Slf4j
 public class SuccessPaymentsJourneyTestIT {
 
   @Value("${services.gov-uk-pay.root-url}")
   private String rootUrl;
   @Value("${services.gov-uk-pay.api-key}")
   private String apiKey;
+  @Value("${services.sqs.new-queue-name}")
+  private String queueName;
 
   @LocalServerPort
   int randomServerPort;
@@ -61,6 +70,8 @@ public class SuccessPaymentsJourneyTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private JdbcTemplate jdbcTemplate;
+  @Autowired
+  private AmazonSQSAsync client;
 
   private ClientAndServer mockServer;
 
@@ -73,11 +84,18 @@ public class SuccessPaymentsJourneyTestIT {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = "/v1/payments";
+    CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
+    createQueueRequest.addAttributesEntry("FifoQueue", "true");
+    CreateQueueResult createQueueResponse =
+        client.createQueue(createQueueRequest);
+    log.info(createQueueResponse.getQueueUrl());
   }
 
   @AfterEach
   public void stopMockServer() {
     mockServer.stop();
+    GetQueueUrlResult queueUrlResult = client.getQueueUrl(queueName);
+    client.deleteQueue(queueUrlResult.getQueueUrl());
   }
 
   @Test
@@ -87,21 +105,17 @@ public class SuccessPaymentsJourneyTestIT {
     externalPaymentServiceCreatesPaymentWithId(externalPaymentId);
     andReturnsSuccessStatus();
 
-    given()
-        .initiatePaymentRequest(initiatePaymentRequest(dateWithEntityInDB))
+    given().initiatePaymentRequest(initiatePaymentRequest(dateWithEntityInDB))
         .whenSubmitted()
 
-        .then()
-        .paymentEntityIsCreatedInDatabase()
+        .then().paymentEntityIsCreatedInDatabase()
         .withExternalIdEqualTo(externalPaymentId)
         .withNullPaymentAuthorisedTimestamp()
         .andResponseIsReturnedWithMatchingInternalId()
 
-        .and()
-        .whenRequestedToGetAndUpdateStatus()
+        .and().whenRequestedToGetAndUpdateStatus()
 
-        .then()
-        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .then().paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
         .connectsEntityToPaymentIfEntityWasFound(dateWithEntityInDB)
         .doesNotConnectEntityToPaymentIfEntityWasNotFound(dateWithoutEntityInDB)
         .withNonNullPaymentAuthorisedTimestamp()
@@ -122,7 +136,8 @@ public class SuccessPaymentsJourneyTestIT {
     private InitiatePaymentResponse initPaymentResponse;
     private GetAndUpdatePaymentStatusResponse getAndUpdatePaymentResponse;
 
-    public PaymentJourneyAssertion initiatePaymentRequest(InitiatePaymentRequest request) {
+    public PaymentJourneyAssertion initiatePaymentRequest(
+        InitiatePaymentRequest request) {
       this.initiatePaymentRequest = request;
       return this;
     }
@@ -133,20 +148,14 @@ public class SuccessPaymentsJourneyTestIT {
 
     public PaymentJourneyAssertion whenSubmitted() {
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
-      this.initPaymentResponse = RestAssured
-          .given()
-          .accept(MediaType.APPLICATION_JSON.toString())
-          .contentType(MediaType.APPLICATION_JSON.toString())
-          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .body(toJsonString(initiatePaymentRequest))
-          .when()
-          .post()
-          .then()
-          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .statusCode(HttpStatus.CREATED.value())
-          .extract()
-          .response()
-          .as(InitiatePaymentResponse.class);
+      this.initPaymentResponse =
+          RestAssured.given().accept(MediaType.APPLICATION_JSON.toString())
+              .contentType(MediaType.APPLICATION_JSON.toString())
+              .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+              .body(toJsonString(initiatePaymentRequest)).when().post().then()
+              .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+              .statusCode(HttpStatus.CREATED.value()).extract().response()
+              .as(InitiatePaymentResponse.class);
       return this;
     }
 
@@ -160,16 +169,18 @@ public class SuccessPaymentsJourneyTestIT {
       return this;
     }
 
-    public PaymentJourneyAssertion withExternalIdEqualTo(String externalPaymentId) {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "payment_provider_id = '" + externalPaymentId + "'");
+    public PaymentJourneyAssertion withExternalIdEqualTo(
+        String externalPaymentId) {
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "payment", "payment_provider_id = '" + externalPaymentId + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
 
     public PaymentJourneyAssertion andResponseIsReturnedWithMatchingInternalId() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "payment_id = '" + initPaymentResponse.getPaymentId().toString() + "'");
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "payment", "payment_id = '"
+              + initPaymentResponse.getPaymentId().toString() + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
@@ -180,86 +191,90 @@ public class SuccessPaymentsJourneyTestIT {
 
     public PaymentJourneyAssertion whenRequestedToGetAndUpdateStatus() {
       String correlationId = "e879d028-2882-4f0b-b3b3-06d7fbcd8537";
-      this.getAndUpdatePaymentResponse = RestAssured
-          .given()
-          .accept(MediaType.APPLICATION_JSON.toString())
-          .contentType(MediaType.APPLICATION_JSON.toString())
-          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .when()
-          .get(initPaymentResponse.getPaymentId().toString())
-          .then()
-          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .statusCode(HttpStatus.OK.value())
-          .extract().as(GetAndUpdatePaymentStatusResponse.class);
+      this.getAndUpdatePaymentResponse =
+          RestAssured.given().accept(MediaType.APPLICATION_JSON.toString())
+              .contentType(MediaType.APPLICATION_JSON.toString())
+              .header(Constants.X_CORRELATION_ID_HEADER, correlationId).when()
+              .get(initPaymentResponse.getPaymentId().toString()).then()
+              .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+              .statusCode(HttpStatus.OK.value()).extract()
+              .as(GetAndUpdatePaymentStatusResponse.class);
       return this;
     }
 
-    public PaymentJourneyAssertion paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus status) {
+    public PaymentJourneyAssertion paymentEntityStatusIsUpdatedTo(
+        ExternalPaymentStatus status) {
       verifyThatPaymentEntityExistsWithStatus(status);
       return this;
     }
 
-    public PaymentJourneyAssertion doesNotConnectEntityToPaymentIfEntityWasNotFound(LocalDate date) {
+    public PaymentJourneyAssertion doesNotConnectEntityToPaymentIfEntityWasNotFound(
+        LocalDate date) {
       verifyThatPaymentWasNotAssignedToEntity(date);
       return this;
     }
 
     public void verifyThatPaymentWasNotAssignedToEntity(LocalDate date) {
-      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
-              + "travel_date = '" + date.toString() + "' AND "
-              + "payment_id = '" + getAndUpdatePaymentResponse.getPaymentId() + "' AND "
-              + "vehicle_entrant_id is not NULL");
+      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(
+          jdbcTemplate, "vehicle_entrant_payment",
+          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString()
+              + "' AND " + "travel_date = '" + date.toString() + "' AND "
+              + "payment_id = '" + getAndUpdatePaymentResponse.getPaymentId()
+              + "' AND " + "vehicle_entrant_id is not NULL");
 
       assertThat(vehicleEntrantPaymentsCount).isEqualTo(0);
     }
 
 
-    public PaymentJourneyAssertion connectsEntityToPaymentIfEntityWasFound(LocalDate date) {
+    public PaymentJourneyAssertion connectsEntityToPaymentIfEntityWasFound(
+        LocalDate date) {
       verifyThatPaymentWasAssignedToEntity(date);
       return this;
     }
 
     public void verifyThatPaymentWasAssignedToEntity(LocalDate date) {
-      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
-              + "travel_date = '" + date.toString() + "' AND "
-              + "payment_id = '" + getAndUpdatePaymentResponse.getPaymentId() + "' AND "
-              + "vehicle_entrant_id is not NULL");
+      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(
+          jdbcTemplate, "vehicle_entrant_payment",
+          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString()
+              + "' AND " + "travel_date = '" + date.toString() + "' AND "
+              + "payment_id = '" + getAndUpdatePaymentResponse.getPaymentId()
+              + "' AND " + "vehicle_entrant_id is not NULL");
 
       assertThat(vehicleEntrantPaymentsCount).isEqualTo(1);
     }
 
-    private void verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus status) {
+    private void verifyThatPaymentEntityExistsWithStatus(
+        ExternalPaymentStatus status) {
       verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod();
       verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(status);
     }
 
     private void verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(
         ExternalPaymentStatus status) {
-      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
-              + "travel_date in (" + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
-              + "payment_status = '" + InternalPaymentStatus.from(status).name() + "'");
-      assertThat(initiatePaymentRequest.getDays()).hasSize(vehicleEntrantPaymentsCount);
+      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(
+          jdbcTemplate, "vehicle_entrant_payment",
+          "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString()
+              + "' AND " + "travel_date in ("
+              + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
+              + "payment_status = '" + InternalPaymentStatus.from(status).name()
+              + "'");
+      assertThat(initiatePaymentRequest.getDays())
+          .hasSize(vehicleEntrantPaymentsCount);
     }
 
     private void verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-              "payment_method = '" + PaymentMethod.CREDIT_DEBIT_CARD.name() + "' AND " +
-                  "total_paid = " + initiatePaymentRequest.getAmount());
+      int paymentsCount =
+          JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
+              "payment_method = '" + PaymentMethod.CREDIT_DEBIT_CARD.name()
+                  + "' AND " + "total_paid = "
+                  + initiatePaymentRequest.getAmount());
       assertThat(paymentsCount).isEqualTo(1);
     }
 
     private String joinWithCommas(List<LocalDate> days) {
-      return Joiner.on(',').join(days
-          .stream()
-          .map(date -> "'" + date.toString() + "'")
-          .collect(Collectors.toList())
-      );
+      return Joiner.on(',')
+          .join(days.stream().map(date -> "'" + date.toString() + "'")
+              .collect(Collectors.toList()));
     }
 
     public PaymentJourneyAssertion andStatusResponseIsReturnedWithMatchinInternalId() {
@@ -269,64 +284,60 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion withNullPaymentAuthorisedTimestamp() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "payment_authorised_timestamp is null");
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "payment", "payment_authorised_timestamp is null");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
 
     public PaymentJourneyAssertion withNonNullPaymentAuthorisedTimestamp() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "payment_authorised_timestamp is not null");
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "payment", "payment_authorised_timestamp is not null");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
   }
 
   private InitiatePaymentRequest initiatePaymentRequest(LocalDate date) {
-    return InitiatePaymentRequest.builder()
-        .amount(4200)
+    return InitiatePaymentRequest.builder().amount(4200)
         .days(Arrays.asList(dateWithoutEntityInDB, dateWithEntityInDB))
         .cleanAirZoneId(UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4"))
-        .returnUrl("http://localhost/return-url")
-        .vrn("ND84VSX")
-        .build();
+        .returnUrl("http://localhost/return-url").vrn("ND84VSX").build();
   }
 
-  private void externalPaymentServiceCreatesPaymentWithId(String externalPaymentId) {
-    // externalPaymentId - not used, its value is set in data/external/create-payment-response.json
-    mockServer.when(
-        HttpRequest.request()
-            .withMethod("POST")
+  private void externalPaymentServiceCreatesPaymentWithId(
+      String externalPaymentId) {
+    // externalPaymentId - not used, its value is set in
+    // data/external/create-payment-response.json
+    mockServer
+        .when(HttpRequest.request().withMethod("POST")
             .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
-            .withPath(ExternalPaymentsRepository.CREATE_URI)
-    ).respond(
-        HttpResponse.response()
-            .withStatusCode(HttpStatus.CREATED.value())
-            .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readFile("create-payment-response.json"))
-    );
+            .withPath(ExternalPaymentsRepository.CREATE_URI))
+        .respond(
+            HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
+                .withHeader("Content-type",
+                    MediaType.APPLICATION_JSON.toString())
+                .withBody(readFile("create-payment-response.json")));
   }
 
   private void andReturnsSuccessStatus() {
-    mockServer.when(
-        HttpRequest.request()
-            .withMethod("GET")
+    mockServer
+        .when(HttpRequest.request().withMethod("GET")
             .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-            .withPath("/v1/payments/.*")
-    ).respond(
-        HttpResponse.response()
-            .withStatusCode(HttpStatus.CREATED.value())
-            .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readFile("get-payment-response.json"))
-    );
+            .withPath("/v1/payments/.*"))
+        .respond(
+            HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
+                .withHeader("Content-type",
+                    MediaType.APPLICATION_JSON.toString())
+                .withBody(readFile("get-payment-response.json")));
   }
 
   /// ----- utility methods
 
   @SneakyThrows
   private String readFile(String filename) {
-    return Resources.toString(Resources.getResource("data/external/" + filename), Charsets.UTF_8);
+    return Resources.toString(
+        Resources.getResource("data/external/" + filename), Charsets.UTF_8);
   }
 }

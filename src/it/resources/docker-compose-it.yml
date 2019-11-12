@@ -10,3 +10,14 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: caz-payments
+
+  localstack-it:
+    image: localstack/localstack:0.10.2
+    ports:
+      - "4576:4576"
+    environment:
+      - SERVICES=sqs
+    volumes:
+      - "~/tmp/localstack:/tmp/localstack"
+    networks:
+      - localstack_network
