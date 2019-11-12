@@ -10,6 +10,11 @@ import org.springframework.cloud.aws.messaging.core.SqsMessageHeaders;
 import org.springframework.stereotype.Component;
 import uk.gov.caz.psr.dto.SendEmailRequest;
 
+/**
+ * A wrapper class for an external queuing system with the ability to publish
+ * messages to the queue.
+ *
+ */
 @Component
 @Slf4j
 public class MessagingClient {
@@ -39,7 +44,7 @@ public class MessagingClient {
     headers.put(SqsMessageHeaders.SQS_GROUP_ID_HEADER, messageGroupId);
     headers.put(SqsMessageHeaders.SQS_DEDUPLICATION_ID_HEADER,
         UUID.randomUUID().toString());
-    // headers.put("contentType", "application/json");
+    headers.put("contentType", "application/json");
 
     log.info("Queue is: {}", newQueue);
     log.info("Message is: {}", message.toString());

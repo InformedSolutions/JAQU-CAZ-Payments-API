@@ -37,9 +37,6 @@ public class UpdatePaymentWithExternalDataService {
   @Value("${services.sqs.template-id}")
   String templateId;
 
-  /**
-   * Constructor.
-   */
   public UpdatePaymentWithExternalDataService(
       ExternalPaymentsRepository externalPaymentsRepository,
       FinalizePaymentService finalizePaymentService,
@@ -84,8 +81,15 @@ public class UpdatePaymentWithExternalDataService {
       GetPaymentResult getPaymentResult) {
     if (getPaymentResult.getPaymentStatus()
         .equals(ExternalPaymentStatus.SUCCESS)) {
-      sendPaymentReceipt(getPaymentResult.getEmail(),
-          getPaymentResult.getAmount());
+      try {
+        sendPaymentReceipt(getPaymentResult.getEmail(),
+            getPaymentResult.getAmount());
+      } catch (JsonProcessingException e) {
+        // will only occur if amount is invalid
+        log.error(e.getMessage());
+        log.warn("Email receipt not sent for payment: {}",
+            internalPayment.getId());
+      }
     }
     return updateInternalPaymentWith(internalPayment, getPaymentResult);
   }
@@ -93,21 +97,18 @@ public class UpdatePaymentWithExternalDataService {
   /**
    * Creates a SendEmailRequest object and submits it to the messaging client.
    * 
-   * @param email  the recipient of the email
-   * @param amount the total cost of their CAZ charge
+   * @param  email                   the recipient of the email
+   * @param  amount                  the total cost of their CAZ charge
+   * @throws JsonProcessingException
    */
-  private void sendPaymentReceipt(String email, int amount) {
+  private void sendPaymentReceipt(String email, int amount)
+      throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
     Map<String, String> personalisationMap = new HashMap<String, String>();
     personalisationMap.put("amount", Integer.toString(amount));
 
-    String personalisation;
-    try {
-      personalisation = objectMapper.writeValueAsString(personalisationMap);
-    } catch (JsonProcessingException e) {
-      log.error(e.getMessage());
-      personalisation = "{}";
-    }
+    String personalisation =
+        objectMapper.writeValueAsString(personalisationMap);
     SendEmailRequest sendEmailRequest = new SendEmailRequest(this.templateId,
         email, personalisation, UUID.randomUUID().toString());
 

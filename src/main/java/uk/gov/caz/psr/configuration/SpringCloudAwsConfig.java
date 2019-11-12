@@ -22,8 +22,6 @@ public class SpringCloudAwsConfig {
   @Value("${cloud.aws.region.static}")
   private String region;
 
-  public static final String DUMMY = "dummy";
-
   /**
    * Returns an instance of {@link AmazonSQSAsync} which is used to send a
    * message to a SQS queue mocked by Localstack.
@@ -48,7 +46,6 @@ public class SpringCloudAwsConfig {
 
     log.info("Using '{}' as SQS Endpoint", sqsEndpoint);
 
-
     AmazonSQSAsyncClientBuilder builder =
         AmazonSQSAsyncClientBuilder.standard();
     EndpointConfiguration endpointConfiguration =
@@ -67,7 +64,6 @@ public class SpringCloudAwsConfig {
   @Bean
   @Profile("!integration-tests & !localstack")
   public AmazonSQSAsync amazonSqs() {
-
     AmazonSQSAsyncClientBuilder builder =
         AmazonSQSAsyncClientBuilder.standard();
     builder.withRegion(region);
