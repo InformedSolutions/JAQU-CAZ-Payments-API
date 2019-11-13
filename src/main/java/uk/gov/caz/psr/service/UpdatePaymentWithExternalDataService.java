@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import uk.gov.caz.psr.repository.PaymentRepository;
  * payment, updating it in the database and, if applicable, connecting it to an
  * existing vehicle entrant entity.
  */
+@RequiredArgsConstructor
 @Service
 @Slf4j
 public class UpdatePaymentWithExternalDataService {
@@ -36,17 +38,6 @@ public class UpdatePaymentWithExternalDataService {
 
   @Value("${services.sqs.template-id}")
   String templateId;
-
-  public UpdatePaymentWithExternalDataService(
-      ExternalPaymentsRepository externalPaymentsRepository,
-      FinalizePaymentService finalizePaymentService,
-      PaymentRepository internalPaymentsRepository,
-      MessagingClient messagingClient) {
-    this.externalPaymentsRepository = externalPaymentsRepository;
-    this.finalizePaymentService = finalizePaymentService;
-    this.internalPaymentsRepository = internalPaymentsRepository;
-    this.messagingClient = messagingClient;
-  }
 
   /**
    * Gets an external status of {@code payment}, updates it in the database and,
@@ -99,7 +90,8 @@ public class UpdatePaymentWithExternalDataService {
    * 
    * @param  email                   the recipient of the email
    * @param  amount                  the total cost of their CAZ charge
-   * @throws JsonProcessingException
+   * @throws JsonProcessingException if the amount cannot be serialized into a
+   *                                   json string
    */
   private void sendPaymentReceipt(String email, int amount)
       throws JsonProcessingException {
