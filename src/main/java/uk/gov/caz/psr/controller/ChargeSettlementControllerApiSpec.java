@@ -142,5 +142,6 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @PutMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
-  PaymentUpdateSuccessResponse updatePaymentStatus(@RequestBody PaymentStatusUpdateRequest request);
+  PaymentUpdateSuccessResponse updatePaymentStatus(
+      @Valid @RequestBody PaymentStatusUpdateRequest request);
 }

@@ -47,6 +47,6 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public PaymentUpdateSuccessResponse updatePaymentStatus(PaymentStatusUpdateRequest request) {
-    throw new UnsupportedOperationException();
+    return new PaymentUpdateSuccessResponse();
   }
 }

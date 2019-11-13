@@ -9,7 +9,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
@@ -245,6 +247,16 @@ public class TestObjectFactory {
           .cazEntryTimestamp(now)
           .cazEntryDate(now.toLocalDate())
           .cleanZoneId(ANY_CLEAN_AIR_ZONE);
+    }
+  }
+  public static class PaymentStatusUpdateDetailsFactory {
+    public static PaymentStatusUpdateDetails anyWithStatus(ChargeSettlementPaymentStatus status) {
+      return PaymentStatusUpdateDetails.builder()
+          .caseReference("Test case Reference")
+          .chargeSettlementPaymentStatus(status)
+          .dateOfCazEntry(LocalDate.now())
+          .paymentId("TestPaymentId")
+          .build();
     }
   }
 }
