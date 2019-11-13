@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.dto;
 
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
@@ -13,6 +14,7 @@ public class PaymentStatusResponse {
   ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-id}")
+  @Max(255)
   String paymentId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.case-reference}")
