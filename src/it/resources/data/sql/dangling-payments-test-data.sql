@@ -81,11 +81,12 @@ values
 
 -------------- dangling ones
 
-insert into PAYMENT (payment_method, payment_provider_id,
+insert into PAYMENT (payment_id, payment_method, payment_provider_id,
                      payment_provider_status, total_paid, payment_submitted_timestamp,
                      payment_authorised_timestamp)
 values
-('CREDIT_DEBIT_CARD',
+('88c1b316-06b3-11ea-a9f4-2b3d49d48bfd',
+ 'CREDIT_DEBIT_CARD',
  'cancelled-payment-id',
  'CREATED',
  1000,
@@ -93,11 +94,25 @@ values
  null
 );
 
-insert into PAYMENT (payment_method, payment_provider_id,
+insert into vehicle_entrant_payment (payment_id, vrn, caz_id, travel_date, charge_paid, payment_status)
+values
+(
+    '88c1b316-06b3-11ea-a9f4-2b3d49d48bfd',
+    'DS98UDG',
+    '53e03a28-0627-11ea-9511-ffaaee87e375',
+    now(),
+    1000,
+    'NOT_PAID'
+);
+
+----
+
+insert into PAYMENT (payment_id, payment_method, payment_provider_id,
                      payment_provider_status, total_paid, payment_submitted_timestamp,
                      payment_authorised_timestamp)
 values
-('CREDIT_DEBIT_CARD',
+('6ff12efa-0615-11ea-9511-2771b85b976f',
+ 'CREDIT_DEBIT_CARD',
  'expired-payment-id',
  'INITIATED',
  1000,
@@ -105,3 +120,50 @@ values
  null
 );
 
+insert into vehicle_entrant_payment (payment_id, vrn, caz_id, travel_date, charge_paid, payment_status)
+values
+(
+    '6ff12efa-0615-11ea-9511-2771b85b976f',
+    'OI64EFO',
+    '53e03a28-0627-11ea-9511-ffaaee87e375',
+    now(),
+    1000,
+    'NOT_PAID'
+);
+----
+
+---- payment which was finished successfully on GOV UK side, but not on ours -- begin
+insert into PAYMENT (payment_id, payment_method, payment_provider_id,
+                     payment_provider_status, total_paid, payment_submitted_timestamp,
+                     payment_authorised_timestamp)
+values
+('3cefd184-0627-11ea-9511-87ff6d6f54ab',
+ 'CREDIT_DEBIT_CARD',
+ 'success-payment-id',
+ 'CREATED',
+ 1000,
+ now() - interval '92 minutes',
+ null
+);
+
+insert into vehicle_entrant_payment (payment_id, vrn, caz_id, travel_date, charge_paid, payment_status)
+values
+(
+    '3cefd184-0627-11ea-9511-87ff6d6f54ab',
+    'LE35LMK',
+    '53e03a28-0627-11ea-9511-ffaaee87e375',
+    now(),
+    1000,
+    'NOT_PAID'
+);
+
+insert into vehicle_entrant (vehicle_entrant_id, caz_entry_timestamp, caz_id, vrn, caz_entry_date)
+values
+(
+    '6e8c947a-0627-11ea-9511-27edb54b6c81',
+    now(),
+    '53e03a28-0627-11ea-9511-ffaaee87e375',
+    'LE35LMK',
+    now()
+);
+---- payment which was finished successfully on GOV UK side, but not on ours -- end

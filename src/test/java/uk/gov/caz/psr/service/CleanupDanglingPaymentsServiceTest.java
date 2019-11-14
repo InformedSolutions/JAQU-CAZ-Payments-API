@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,7 +28,7 @@ class CleanupDanglingPaymentsServiceTest {
   private PaymentRepository paymentRepository;
 
   @Mock
-  private UpdatePaymentWithExternalDataService updatePaymentWithExternalDataService;
+  private CleanupDanglingPaymentService cleanupDanglingPaymentService;
 
   @InjectMocks
   private CleanupDanglingPaymentsService service;
@@ -41,7 +42,7 @@ class CleanupDanglingPaymentsServiceTest {
     service.updateStatusesOfDanglingPayments();
 
     // then
-    verify(updatePaymentWithExternalDataService, never()).updatePaymentWithExternalData(any());
+    verify(cleanupDanglingPaymentService, never()).processDanglingPayment(any());
   }
 
   @Test
@@ -53,8 +54,8 @@ class CleanupDanglingPaymentsServiceTest {
     service.updateStatusesOfDanglingPayments();
 
     // then
-    verify(updatePaymentWithExternalDataService, times(danglingPayments.size()))
-        .updatePaymentWithExternalData(any());
+    verify(cleanupDanglingPaymentService, times(danglingPayments.size()))
+        .processDanglingPayment(any());
   }
 
   @Test
@@ -68,15 +69,15 @@ class CleanupDanglingPaymentsServiceTest {
 
     // then
     assertThat(throwable).isNull();
-    verify(updatePaymentWithExternalDataService, times(danglingPayments.size()))
-        .updatePaymentWithExternalData(any());
+    verify(cleanupDanglingPaymentService, times(danglingPayments.size()))
+        .processDanglingPayment(any());
   }
 
   private void mockProcessingFailureOnSecondCall() {
-    given(updatePaymentWithExternalDataService.updatePaymentWithExternalData(any()))
-        .willAnswer(answer -> answer.getArgument(0))
+    willDoNothing()
         .willThrow(new RuntimeException(""))
-        .willAnswer(answer -> answer.getArgument(0));
+        .willDoNothing()
+        .given(cleanupDanglingPaymentService).processDanglingPayment(any());
   }
 
   private List<Payment> thereAreDanglingPayments() {

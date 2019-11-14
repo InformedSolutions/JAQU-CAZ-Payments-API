@@ -2,10 +2,12 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
-import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -13,6 +15,7 @@ import com.google.common.io.Resources;
 import io.restassured.RestAssured;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -61,9 +64,7 @@ public class SuccessPaymentsJourneyTestIT {
   @Value("${services.gov-uk-pay.api-key}")
   private String apiKey;
   @Value("${services.sqs.new-queue-name}")
-  private String queueName;
-  @Value("${aws.sqs.endpoint}")
-  private String sqsEndpoint;
+  private String emailSqsQueueName;
 
   @LocalServerPort
   int randomServerPort;
@@ -73,7 +74,7 @@ public class SuccessPaymentsJourneyTestIT {
   @Autowired
   private JdbcTemplate jdbcTemplate;
   @Autowired
-  private AmazonSQS client;
+  private AmazonSQS sqsClient;
 
   private ClientAndServer mockServer;
 
@@ -86,20 +87,24 @@ public class SuccessPaymentsJourneyTestIT {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = "/v1/payments";
-    log.info(queueName);
-    log.info("client: {}", client);
-    log.info("sqs endpoint: {}", sqsEndpoint);
-    CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-    createQueueRequest.addAttributesEntry("FifoQueue", "true");
-    CreateQueueResult createQueueResult = client.createQueue(createQueueRequest);
-    log.info(createQueueResult.getQueueUrl());
+  }
+
+  @BeforeEach
+  public void createEmailQueue() {
+    CreateQueueRequest createQueueRequest = new CreateQueueRequest(emailSqsQueueName)
+        .withAttributes(Collections.singletonMap("FifoQueue", "true"));
+    sqsClient.createQueue(createQueueRequest);
   }
 
   @AfterEach
   public void stopMockServer() {
     mockServer.stop();
-    GetQueueUrlResult queueUrlResult = client.getQueueUrl(queueName);
-    client.deleteQueue(queueUrlResult.getQueueUrl());
+  }
+
+  @AfterEach
+  public void deleteQueue() {
+    GetQueueUrlResult queueUrlResult = sqsClient.getQueueUrl(emailSqsQueueName);
+    sqsClient.deleteQueue(queueUrlResult.getQueueUrl());
   }
 
   @Test
@@ -111,19 +116,26 @@ public class SuccessPaymentsJourneyTestIT {
 
     given().initiatePaymentRequest(initiatePaymentRequest(dateWithEntityInDB)).whenSubmitted()
 
-        .then().paymentEntityIsCreatedInDatabase().withExternalIdEqualTo(externalPaymentId)
-        .withNullPaymentAuthorisedTimestamp().andResponseIsReturnedWithMatchingInternalId()
+        .then()
+        .paymentEntityIsCreatedInDatabase()
+        .withExternalIdEqualTo(externalPaymentId)
+        .withNullPaymentAuthorisedTimestamp()
+        .andResponseIsReturnedWithMatchingInternalId()
 
-        .and().whenRequestedToGetAndUpdateStatus()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
 
-        .then().paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
         .connectsEntityToPaymentIfEntityWasFound(dateWithEntityInDB)
         .doesNotConnectEntityToPaymentIfEntityWasNotFound(dateWithoutEntityInDB)
-        .withNonNullPaymentAuthorisedTimestamp().andStatusResponseIsReturnedWithMatchinInternalId();
+        .withNonNullPaymentAuthorisedTimestamp()
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptIsSent();
   }
 
   private PaymentJourneyAssertion given() {
-    return new PaymentJourneyAssertion(objectMapper, jdbcTemplate);
+    return new PaymentJourneyAssertion(objectMapper, jdbcTemplate, sqsClient, emailSqsQueueName);
   }
 
   @RequiredArgsConstructor
@@ -131,6 +143,8 @@ public class SuccessPaymentsJourneyTestIT {
 
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
+    private final AmazonSQS sqsClient;
+    private final String emailSqsQueueName;
 
     private InitiatePaymentRequest initiatePaymentRequest;
     private InitiatePaymentResponse initPaymentResponse;
@@ -281,6 +295,18 @@ public class SuccessPaymentsJourneyTestIT {
           "payment_authorised_timestamp is not null");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
+    }
+
+    public void andPaymentReceiptIsSent() {
+      List<Message> messages = receiveSqsMessages();
+      assertThat(messages).isNotEmpty();
+    }
+
+    private List<Message> receiveSqsMessages() {
+      GetQueueUrlResult queueUrlResult = sqsClient.getQueueUrl(emailSqsQueueName);
+      ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(
+          queueUrlResult.getQueueUrl());
+      return receiveMessageResult.getMessages();
     }
   }
 
