@@ -13,6 +13,7 @@ services:
 
   localstack-it:
     image: localstack/localstack:0.10.2
+    name: localstack
     ports:
       - "4576:4576"
     environment:
