@@ -1,17 +1,16 @@
 package uk.gov.caz.psr.dto;
 
-import lombok.AllArgsConstructor;
+import java.util.UUID;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
+@Builder
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class SendEmailRequest {
+  public final String reference = UUID.randomUUID().toString();
 
   public String templateId;
   public String emailAddress;
   public String personalisation;
-  public String reference;
 
 }

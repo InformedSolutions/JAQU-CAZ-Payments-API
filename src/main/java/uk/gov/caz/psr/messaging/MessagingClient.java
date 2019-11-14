@@ -11,8 +11,7 @@ import org.springframework.stereotype.Component;
 import uk.gov.caz.psr.dto.SendEmailRequest;
 
 /**
- * A wrapper class for an external queuing system with the ability to publish
- * messages to the queue.
+ * A wrapper class for an external queuing system with the ability to publish messages to the queue.
  *
  */
 @Component
@@ -37,13 +36,11 @@ public class MessagingClient {
    * @param message the message to be published
    */
   public void publishMessage(SendEmailRequest message) {
-    log.info("Publishing message with reference number: {}",
-        message.getReference());
+    log.info("Publishing message with reference number: {}", message.getReference());
 
     Map<String, Object> headers = new HashMap<String, Object>();
     headers.put(SqsMessageHeaders.SQS_GROUP_ID_HEADER, messageGroupId);
-    headers.put(SqsMessageHeaders.SQS_DEDUPLICATION_ID_HEADER,
-        UUID.randomUUID().toString());
+    headers.put(SqsMessageHeaders.SQS_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString());
     headers.put("contentType", "application/json");
 
     log.info("Queue is: {}", newQueue);

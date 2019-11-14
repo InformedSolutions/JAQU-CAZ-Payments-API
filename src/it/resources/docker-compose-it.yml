@@ -21,3 +21,6 @@ services:
       - "~/tmp/localstack:/tmp/localstack"
     networks:
       - localstack_network
+      
+networks:
+  localstack_network:

@@ -38,17 +38,8 @@ public class MessagingClientTest {
 
   @BeforeEach
   void init() throws JsonProcessingException {
-    sendEmailRequest = new SendEmailRequest();
-    templateId = UUID.randomUUID().toString();
-    reference = UUID.randomUUID().toString();
-    emailAddress = "test@test.com";
-    personalisation = "{}";
-
-    sendEmailRequest.emailAddress = emailAddress;
-    sendEmailRequest.templateId = templateId;
-    sendEmailRequest.personalisation = personalisation;
-    sendEmailRequest.reference = reference;
-
+    sendEmailRequest = SendEmailRequest.builder().emailAddress("test@test.com")
+        .personalisation("{}").templateId("test-template-id").build();
     ReflectionTestUtils.setField(messagingClient, "newQueue", "new");
   }
 
@@ -56,9 +47,8 @@ public class MessagingClientTest {
   void canPublishMessage() {
     messagingClient.publishMessage(sendEmailRequest);
 
-    Mockito.verify(messagingTemplate, times(1)).convertAndSend(
-        ArgumentMatchers.eq("new"), ArgumentMatchers.eq(sendEmailRequest),
-        Mockito.anyMap());
+    Mockito.verify(messagingTemplate, times(1)).convertAndSend(ArgumentMatchers.eq("new"),
+        ArgumentMatchers.eq(sendEmailRequest), Mockito.anyMap());
   }
 
 }
