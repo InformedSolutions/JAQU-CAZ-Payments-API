@@ -9,7 +9,7 @@ spring:
 
 aws:
   sqs:
-    endpoint: http://${aws.sqs.url:localhost:4576}
+    endpoint: http://localhost:4576
 
 services:
   gov-uk-pay:
