@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import javax.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
+import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
@@ -100,7 +102,7 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @GetMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
-  ResponseEntity<PaymentStatusResponse> getPaymentStatus();
+  ResponseEntity<PaymentStatusResponse> getPaymentStatus(@Valid PaymentStatusRequest request);
 
   /**
    * Allows Local Authorities to update the status of one or more paid CAZ charges to reflect any

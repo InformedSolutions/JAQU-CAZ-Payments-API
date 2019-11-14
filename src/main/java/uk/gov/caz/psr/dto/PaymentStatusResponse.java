@@ -2,9 +2,11 @@ package uk.gov.caz.psr.dto;
 
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Value;
 
 @Value
+@Builder
 public class PaymentStatusResponse {
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-status}")
   @NotNull
