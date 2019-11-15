@@ -48,7 +48,9 @@ public class SpringCloudAwsConfig {
     AmazonSQSAsyncClientBuilder builder =
         AmazonSQSAsyncClientBuilder.standard().withCredentials(dummyCredentialsProvider())
             .withEndpointConfiguration(new EndpointConfiguration(sqsEndpoint, region));
-    return builder.build();
+    AmazonSQSAsync build = builder.build();
+    log.info("client: {}", build);
+    return build;
   }
 
   private AWSStaticCredentialsProvider dummyCredentialsProvider() {

@@ -2,6 +2,7 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.CreateQueueResult;
@@ -62,6 +63,10 @@ public class SuccessPaymentsJourneyTestIT {
   private String apiKey;
   @Value("${services.sqs.new-queue-name}")
   private String queueName;
+  @Value("${services.sqs.new-queue-url}")
+  private String queueUrl;
+  @Value("${aws.sqs.endpoint}")
+  private String sqsEndpoint;
 
   @LocalServerPort
   int randomServerPort;
@@ -85,6 +90,9 @@ public class SuccessPaymentsJourneyTestIT {
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = "/v1/payments";
     log.info(queueName);
+    log.info("new queue url: {}", queueUrl);
+    log.info("client: {}", client);
+    log.info("sqs endpoint: {}", sqsEndpoint);
     CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
     createQueueRequest.addAttributesEntry("FifoQueue", "true");
     CreateQueueResult createQueueResult = client.createQueue(createQueueRequest);
