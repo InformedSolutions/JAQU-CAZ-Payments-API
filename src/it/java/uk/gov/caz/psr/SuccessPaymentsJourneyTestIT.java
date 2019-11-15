@@ -84,10 +84,11 @@ public class SuccessPaymentsJourneyTestIT {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = "/v1/payments";
+    log.info(queueName);
     CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
     createQueueRequest.addAttributesEntry("FifoQueue", "true");
-    CreateQueueResult createQueueResponse = client.createQueue(createQueueRequest);
-    log.info(createQueueResponse.getQueueUrl());
+    CreateQueueResult createQueueResult = client.createQueue(createQueueRequest);
+    log.info(createQueueResult.getQueueUrl());
   }
 
   @AfterEach

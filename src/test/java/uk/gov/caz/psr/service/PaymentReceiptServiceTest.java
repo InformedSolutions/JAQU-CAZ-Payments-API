@@ -2,39 +2,36 @@ package uk.gov.caz.psr.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.caz.psr.dto.SendEmailRequest;
-import uk.gov.caz.psr.messaging.MessagingClient;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentReceiptServiceTest {
 
-  @Autowired
-  MessagingClient msgClient;
-
-  @InjectMocks
   PaymentReceiptService paymentReceiptService;
+  String templateId = "test-template-id";
 
-  @Mock
-  MessagingClient messagingClient;
+  @BeforeEach
+  void init() {
+    paymentReceiptService = new PaymentReceiptService(templateId, new ObjectMapper());
+  }
 
   @Test
   void canInstantiatePaymentReceiptService() {
-    PaymentReceiptService paymentReceiptService = new PaymentReceiptService();
+    PaymentReceiptService paymentReceiptService =
+        new PaymentReceiptService("test", new ObjectMapper());
     assertNotNull(paymentReceiptService);
   }
 
   @Test
   void canSendPaymentReceipt() throws JsonProcessingException {
     String testEmail = "test@test.com";
-    String templateId = "test-template-id";
     ReflectionTestUtils.setField(paymentReceiptService, "templateId", templateId);
     SendEmailRequest request = paymentReceiptService.buildSendEmailRequest(testEmail, 1);
     assertNotNull(request);

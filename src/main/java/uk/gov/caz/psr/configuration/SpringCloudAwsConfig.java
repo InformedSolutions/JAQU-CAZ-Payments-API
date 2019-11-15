@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.configuration;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
@@ -23,56 +25,53 @@ public class SpringCloudAwsConfig {
   private String region;
 
   /**
-   * Returns an instance of {@link AmazonSQSAsync} which is used to send a
-   * message to a SQS queue mocked by Localstack.
+   * Returns an instance of {@link AmazonSQSAsync} which is used to send a message to a SQS queue
+   * mocked by Localstack.
    *
-   * @param  sqsEndpoint           An endpoint of mocked SQS. Cannot be empty or
-   *                                 {@code null}
-   * @return                       An instance of {@link AmazonSQSAsync}
+   * @param sqsEndpoint An endpoint of mocked SQS. Cannot be empty or {@code null}
+   * @return An instance of {@link AmazonSQSAsync}
    * @throws IllegalStateException if {@code sqsEndpoint} is null or empty
    */
   @Bean
   @Primary
   @Profile({"integration-tests", "localstack"})
-  public AmazonSQSAsync sqsLocalstackClient(
-      @Value("${aws.sqs.endpoint:}") String sqsEndpoint) {
+  public AmazonSQSAsync sqsLocalstackClient(@Value("${aws.sqs.endpoint:}") String sqsEndpoint) {
     log.info("Running Spring-Boot app locally using Localstack. ");
 
     if (Strings.isNullOrEmpty(sqsEndpoint)) {
-      throw new IllegalStateException(
-          "SQS endpoint must be overridden when running with "
-              + "Localstack! Please set in 'aws.sqs.endpoint' property");
+      throw new IllegalStateException("SQS endpoint must be overridden when running with "
+          + "Localstack! Please set in 'aws.sqs.endpoint' property");
     }
 
     log.info("Using '{}' as SQS Endpoint", sqsEndpoint);
 
-    AmazonSQSAsyncClientBuilder builder =
-        AmazonSQSAsyncClientBuilder.standard();
-    EndpointConfiguration endpointConfiguration =
-        new EndpointConfiguration(sqsEndpoint, region);
-    builder.setEndpointConfiguration(endpointConfiguration);
+    AmazonSQSAsyncClientBuilder builder = AmazonSQSAsyncClientBuilder.standard();
+    builder.withCredentials(dummyCredentialsProvider())
+        .setEndpointConfiguration(new EndpointConfiguration(sqsEndpoint, region));
     return builder.build();
   }
 
+  private AWSStaticCredentialsProvider dummyCredentialsProvider() {
+    return new AWSStaticCredentialsProvider(
+        new BasicAWSCredentials("dummy-access-key", "dummy-secret-key"));
+  }
+
   /**
-   * Creates the AmazonSqsAsync Bean. Overriding the default SQS Client Bean
-   * config because AmazonSqsBufferedAsyncClient is not currently supported by
-   * FIFO queues.
+   * Creates the AmazonSqsAsync Bean. Overriding the default SQS Client Bean config because
+   * AmazonSqsBufferedAsyncClient is not currently supported by FIFO queues.
    * 
    * @return the AmazonSqsAsync Bean
    */
   @Bean
   @Profile("!integration-tests & !localstack")
   public AmazonSQSAsync amazonSqs() {
-    AmazonSQSAsyncClientBuilder builder =
-        AmazonSQSAsyncClientBuilder.standard();
+    AmazonSQSAsyncClientBuilder builder = AmazonSQSAsyncClientBuilder.standard();
     builder.withRegion(region);
     return builder.build();
   }
 
   @Bean
-  public QueueMessagingTemplate queueMessagingTemplate(
-      AmazonSQSAsync amazonSqs) {
+  public QueueMessagingTemplate queueMessagingTemplate(AmazonSQSAsync amazonSqs) {
     return new QueueMessagingTemplate(amazonSqs);
   }
 

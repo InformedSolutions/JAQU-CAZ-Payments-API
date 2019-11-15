@@ -2,9 +2,8 @@ package uk.gov.caz.psr.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.SendEmailRequest;
@@ -13,11 +12,16 @@ import uk.gov.caz.psr.dto.SendEmailRequest;
  * Service class to handle SendEmailRequest objects.
  */
 @Service
-@NoArgsConstructor
 public class PaymentReceiptService {
 
-  @Value("${services.sqs.template-id}")
-  String templateId;
+  private final String templateId;
+  private final ObjectMapper objectMapper;
+
+  public PaymentReceiptService(@Value("${services.sqs.template-id}") String templateId,
+      ObjectMapper objectMapper) {
+    this.templateId = templateId;
+    this.objectMapper = objectMapper;
+  }
 
   /**
    * Creates a SendEmailRequest object.
@@ -29,13 +33,14 @@ public class PaymentReceiptService {
    */
   public SendEmailRequest buildSendEmailRequest(String email, int amount)
       throws JsonProcessingException {
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, String> personalisationMap = new HashMap<String, String>();
-    personalisationMap.put("amount", Integer.toString(amount));
+    return SendEmailRequest.builder().emailAddress(email)
+        .personalisation(createPersonalisationPayload(amount)).templateId(templateId).build();
 
-    String personalisation = objectMapper.writeValueAsString(personalisationMap);
-    return SendEmailRequest.builder().emailAddress(email).personalisation(personalisation)
-        .templateId(templateId).build();
+  }
 
+  private String createPersonalisationPayload(int amount) throws JsonProcessingException {
+    Map<String, String> personalisationMap =
+        Collections.singletonMap("amount", Integer.toString(amount));
+    return objectMapper.writeValueAsString(personalisationMap);
   }
 }

@@ -11,7 +11,7 @@ import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.events.SendEmailEvent;
+import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 
@@ -89,7 +89,8 @@ public class UpdatePaymentWithExternalDataService {
     Payment paymentWithVehicleEntrantsIds =
         finalizePaymentService.connectExistingVehicleEntrants(externalPayment);
     internalPaymentsRepository.update(paymentWithVehicleEntrantsIds);
-    SendEmailEvent event = new SendEmailEvent(this, paymentWithVehicleEntrantsIds);
+    PaymentStatusUpdatedEvent event =
+        new PaymentStatusUpdatedEvent(this, paymentWithVehicleEntrantsIds);
     applicationEventPublisher.publishEvent(event);
     return paymentWithVehicleEntrantsIds;
   }
