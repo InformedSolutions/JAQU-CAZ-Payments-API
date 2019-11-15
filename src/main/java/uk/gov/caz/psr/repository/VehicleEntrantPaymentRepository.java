@@ -1,6 +1,8 @@
 package uk.gov.caz.psr.repository;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -52,6 +54,36 @@ public class VehicleEntrantPaymentRepository {
       + "case_reference "
       + "FROM vehicle_entrant_payment "
       + "WHERE travel_date = ? AND caz_id = ? AND vrn = ? AND payment_status = ?";
+
+  @VisibleForTesting
+  static final String SELECT_BY_VRN_CAZ_ENTRY_DATE_AND_STATUS_SQL = "SELECT "
+      + "payment_id, "
+      + "vehicle_entrant_payment_id, "
+      + "vrn, "
+      + "caz_id, "
+      + "travel_date, "
+      + "charge_paid, "
+      + "payment_status, "
+      + "case_reference "
+      + "FROM vehicle_entrant_payment "
+      + "WHERE caz_id = ? AND vrn = ? AND travel_date = ? AND payment_status = ?";
+
+  @VisibleForTesting
+  static final String SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL = "SELECT "
+      + "vehicle_entrant_payment.payment_id, "
+      + "vehicle_entrant_payment.vehicle_entrant_payment_id, "
+      + "vehicle_entrant_payment.vrn, "
+      + "vehicle_entrant_payment.caz_id, "
+      + "vehicle_entrant_payment.travel_date, "
+      + "vehicle_entrant_payment.charge_paid, "
+      + "vehicle_entrant_payment.payment_status, "
+      + "vehicle_entrant_payment.case_reference "
+      + "FROM vehicle_entrant_payment "
+      + "INNER JOIN payment ON vehicle_entrant_payment.payment_id = payment.payment_id "
+      + "WHERE vehicle_entrant_payment.caz_id = ? AND "
+      + "vehicle_entrant_payment.travel_date = ? AND "
+      + "vehicle_entrant_payment.payment_status = ? AND "
+      + "payment.payment_provider_id = ?";
 
   private static final String UPDATE_SQL = "UPDATE vehicle_entrant_payment "
       + "SET vehicle_entrant_id = ?, "
@@ -132,8 +164,8 @@ public class VehicleEntrantPaymentRepository {
   /**
    * Updates the database with the passed {@link VehicleEntrantPayment} instances.
    *
-   * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment} which are to be
-   *     updated in the database.
+   * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment} which are to be updated
+   *                               in the database.
    * @throws NullPointerException if {@code vehicleEntrantPayments} is null
    */
   @Transactional
@@ -149,7 +181,7 @@ public class VehicleEntrantPaymentRepository {
    * Updates the database with the passed {@link VehicleEntrantPayment} instance.
    *
    * @param vehicleEntrantPayment An instance of {@link VehicleEntrantPayment} which is to be
-   *     updated in the database.
+   *                              updated in the database.
    * @throws NullPointerException if {@code vehicleEntrantPayment} is null.
    */
   public void update(VehicleEntrantPayment vehicleEntrantPayment) {
@@ -209,10 +241,87 @@ public class VehicleEntrantPaymentRepository {
   }
 
   /**
+   * Finds single of {@link VehicleEntrantPayment} entity for the passed params. If none is found,
+   * {@link Optional#empty()} is returned. If more then one found throws {@code RuntimeException}.
+   *
+   * @param cleanZoneId  provided Clean Air Zone ID.
+   * @param vrn          provided VRN number
+   * @param cazEntryDate Date of entry to provided CAZ
+   * @return list of found {@link VehicleEntrantPayment}.
+   * @throws NullPointerException     if {@code cleanZoneId} is null.
+   * @throws NullPointerException     if {@code cazEntryDate} is null.
+   * @throws IllegalArgumentException if {@code vrn} is empty.
+   * @throws IllegalStateException    if method found more than one VehicleEntrantPayment.
+   */
+  public Optional<VehicleEntrantPayment> findOnePaidByVrnAndCazEntryDate(UUID cleanZoneId,
+      String vrn, LocalDate cazEntryDate) {
+    Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
+    Preconditions.checkNotNull(cazEntryDate, "cazEntryDate cannot be null");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
+
+    List<VehicleEntrantPayment> results = jdbcTemplate
+        .query(SELECT_BY_VRN_CAZ_ENTRY_DATE_AND_STATUS_SQL,
+            preparedStatement -> {
+              preparedStatement.setObject(1, cleanZoneId);
+              preparedStatement.setString(2, vrn);
+              preparedStatement.setObject(3, cazEntryDate);
+              preparedStatement.setString(4, InternalPaymentStatus.PAID.name());
+            },
+            ROW_MAPPER
+        );
+    if (results.size() > 1) {
+      throw new IllegalStateException("More than one VehicleEntrantPayment found");
+    }
+    if (results.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(results.iterator().next());
+  }
+
+  /**
+   * Finds single of {@link VehicleEntrantPayment} entity for the passed params. If none is found,
+   * {@link Optional#empty()} is returned. If more then one found throws {@code RuntimeException}.
+   *
+   * @param cleanZoneId       provided Clean Air Zone ID
+   * @param cazEntryDate      Date of entry to provided CAZ
+   * @param externalPaymentId Payment Id from GOV.UK PAY
+   * @return list of found {@link VehicleEntrantPayment}.
+   * @throws NullPointerException     if {@code cleanZoneId} is null.
+   * @throws NullPointerException     if {@code cazEntryDate} is null.
+   * @throws IllegalArgumentException if {@code vrn} is empty.
+   * @throws IllegalStateException    if method found more than one VehicleEntrantPayment.
+   */
+  public Optional<VehicleEntrantPayment> findOnePaidByCazEntryDateAndExternalPaymentId(
+      UUID cleanZoneId, LocalDate cazEntryDate, String externalPaymentId) {
+    Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
+    Preconditions.checkNotNull(cazEntryDate, "cazEntryDate cannot be null");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(externalPaymentId),
+        "externalPaymentId cannot be empty");
+
+    List<VehicleEntrantPayment> results = jdbcTemplate
+        .query(SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL,
+            preparedStatement -> {
+              preparedStatement.setObject(1, cleanZoneId);
+              preparedStatement.setObject(2, cazEntryDate);
+              preparedStatement.setString(3, InternalPaymentStatus.PAID.name());
+              preparedStatement.setString(4, externalPaymentId);
+            },
+            ROW_MAPPER
+        );
+    if (results.size() > 1) {
+      throw new IllegalStateException("More than one VehicleEntrantPayment found");
+    }
+    if (results.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(results.iterator().next());
+  }
+
+  /**
    * A class that maps the row returned from the database to an instance of {@link
    * VehicleEntrantPayment}.
    */
-  private static class VehicleEntrantPaymentRowMapper implements RowMapper<VehicleEntrantPayment> {
+  static class VehicleEntrantPaymentRowMapper implements RowMapper<VehicleEntrantPayment> {
 
     /**
      * Maps {@link ResultSet} to {@link VehicleEntrantPayment}.
