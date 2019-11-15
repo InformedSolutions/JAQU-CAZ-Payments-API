@@ -18,8 +18,8 @@ import uk.gov.caz.psr.dto.SendEmailRequest;
 @Slf4j
 public class MessagingClient {
 
-  @Value("${services.sqs.new-queue-url}")
-  String newQueueUrl;
+  @Value("${services.sqs.new-queue-name}")
+  String newQueueName;
 
   @Value("${services.sqs.message-group-id-payments}")
   String messageGroupId;
@@ -31,15 +31,15 @@ public class MessagingClient {
    * A dependency injection constructor for MessagingClient.
    * 
    * @param messageGroupId the identifier for messages of this type
-   * @param newQueueUrl the unique locator of the "new" queue
+   * @param newQueueName the name of the "new" queue
    * @param client the client to interface with Amazon SQS (external messaging provider)
    * @param objectMapper a mapper to convert SendEmailRequest objects to strings
    */
   public MessagingClient(@Value("${services.sqs.message-group-id-payments}") String messageGroupId,
-      @Value("${services.sqs.new-queue-url}") String newQueueUrl, AmazonSQSAsync client,
+      @Value("${services.sqs.new-queue-name}") String newQueueName, AmazonSQSAsync client,
       ObjectMapper objectMapper) {
     this.messageGroupId = messageGroupId;
-    this.newQueueUrl = newQueueUrl;
+    this.newQueueName = newQueueName;
     this.client = client;
     this.objectMapper = objectMapper;
   }
@@ -55,14 +55,14 @@ public class MessagingClient {
     SendMessageRequest sendMessageRequest = new SendMessageRequest();
     UUID messageDeduplicationId = UUID.randomUUID();
 
-    sendMessageRequest.setQueueUrl(newQueueUrl);
+    sendMessageRequest.setQueueUrl(client.getQueueUrl(newQueueName).getQueueUrl());
     sendMessageRequest.setMessageBody(objectMapper.writeValueAsString(message));
     sendMessageRequest.setMessageGroupId(messageGroupId);
     sendMessageRequest.setMessageDeduplicationId(messageDeduplicationId.toString());
     sendMessageRequest.putCustomRequestHeader("contentType", "application/json");
 
-    log.info("Sending email message object to SQS with de-duplication ID: {}",
-        messageDeduplicationId);
+    log.info("Sending email message object to SQS queue {} with de-duplication ID: {}",
+        newQueueName, messageDeduplicationId);
     client.sendMessage(sendMessageRequest);
   }
 

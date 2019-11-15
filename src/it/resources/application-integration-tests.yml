@@ -10,6 +10,7 @@ spring:
 aws:
   sqs:
     endpoint: http://${aws.sqs.url:localhost:4576}
+    url: localstack:4576
 
 services:
   gov-uk-pay:
@@ -18,5 +19,4 @@ services:
   sqs:
     message-group-id-payments: TEST_RECEIPT
     new-queue-name: testqueue.fifo
-    new-queue-url: http://localhost:4576/queue/testqueue.fifo
     template-id: test-template-id
