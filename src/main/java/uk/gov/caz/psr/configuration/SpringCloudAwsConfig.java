@@ -45,9 +45,9 @@ public class SpringCloudAwsConfig {
 
     log.info("Using '{}' as SQS Endpoint", sqsEndpoint);
 
-    AmazonSQSAsyncClientBuilder builder = AmazonSQSAsyncClientBuilder.standard();
-    builder.withCredentials(dummyCredentialsProvider())
-        .setEndpointConfiguration(new EndpointConfiguration(sqsEndpoint, region));
+    AmazonSQSAsyncClientBuilder builder =
+        AmazonSQSAsyncClientBuilder.standard().withCredentials(dummyCredentialsProvider())
+            .withEndpointConfiguration(new EndpointConfiguration(sqsEndpoint, region));
     return builder.build();
   }
 
