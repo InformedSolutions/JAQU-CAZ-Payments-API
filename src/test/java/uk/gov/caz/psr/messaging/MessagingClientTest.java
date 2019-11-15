@@ -2,6 +2,7 @@ package uk.gov.caz.psr.messaging;
 
 import static org.mockito.Mockito.times;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
+import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,11 +38,15 @@ public class MessagingClientTest {
     messagingClient = new MessagingClient("testId", "testQueue", client, new ObjectMapper());
     sendEmailRequest = SendEmailRequest.builder().emailAddress("test@test.com")
         .personalisation("{}").templateId("test-template-id").build();
-    ReflectionTestUtils.setField(messagingClient, "newQueueUrl", "new");
+    ReflectionTestUtils.setField(messagingClient, "newQueueName", "new");
   }
 
   @Test
   void canPublishMessage() throws JsonProcessingException {
+    GetQueueUrlResult result = new GetQueueUrlResult();
+    result.setQueueUrl("newUrl");
+    Mockito.when(client.getQueueUrl("new")).thenReturn(result);
+
     messagingClient.publishMessage(sendEmailRequest);
 
     Mockito.verify(client, times(1)).sendMessage(ArgumentMatchers.any(SendMessageRequest.class));
