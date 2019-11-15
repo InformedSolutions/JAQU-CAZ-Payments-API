@@ -563,6 +563,7 @@
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
                 <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
+                <exclude>**/psr/repository/VehicleEntrantPaymentRepository.class</exclude>
               </excludes>
               <rules>
                 <rule>
