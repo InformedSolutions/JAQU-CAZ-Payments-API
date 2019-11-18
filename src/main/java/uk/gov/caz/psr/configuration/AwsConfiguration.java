@@ -64,6 +64,7 @@ public class AwsConfiguration {
    * @return the AmazonSqsAsync Bean
    */
   @Bean
+  @Primary
   @Profile("!integration-tests & !localstack")
   public AmazonSQS amazonSqs() {
     AmazonSQSClientBuilder builder = AmazonSQSClientBuilder.standard();
