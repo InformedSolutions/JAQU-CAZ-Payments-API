@@ -2,7 +2,7 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
@@ -73,7 +73,7 @@ public class SuccessPaymentsJourneyTestIT {
   @Autowired
   private JdbcTemplate jdbcTemplate;
   @Autowired
-  private AmazonSQSAsync client;
+  private AmazonSQS client;
 
   private ClientAndServer mockServer;
 

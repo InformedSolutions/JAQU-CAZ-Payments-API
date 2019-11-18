@@ -1,6 +1,6 @@
 package uk.gov.caz.psr.messaging;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +24,7 @@ public class MessagingClient {
   @Value("${services.sqs.message-group-id-payments}")
   String messageGroupId;
 
-  private final AmazonSQSAsync client;
+  private final AmazonSQS client;
   private final ObjectMapper objectMapper;
 
   /**
@@ -36,7 +36,7 @@ public class MessagingClient {
    * @param objectMapper a mapper to convert SendEmailRequest objects to strings
    */
   public MessagingClient(@Value("${services.sqs.message-group-id-payments}") String messageGroupId,
-      @Value("${services.sqs.new-queue-name}") String newQueueName, AmazonSQSAsync client,
+      @Value("${services.sqs.new-queue-name}") String newQueueName, AmazonSQS client,
       ObjectMapper objectMapper) {
     this.messageGroupId = messageGroupId;
     this.newQueueName = newQueueName;

@@ -1,7 +1,7 @@
 package uk.gov.caz.psr.messaging;
 
 import static org.mockito.Mockito.times;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,7 +23,7 @@ public class MessagingClientTest {
   MessagingClient messagingClient;
 
   @Mock
-  AmazonSQSAsync client;
+  AmazonSQS client;
 
   Map<String, Object> headers;
   String message;
