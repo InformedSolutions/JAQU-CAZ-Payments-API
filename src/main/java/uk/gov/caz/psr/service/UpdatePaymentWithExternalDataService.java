@@ -3,13 +3,15 @@ package uk.gov.caz.psr.service;
 import com.google.common.base.Preconditions;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 
@@ -17,14 +19,15 @@ import uk.gov.caz.psr.repository.PaymentRepository;
  * A class which is responsible for getting an external status of a given payment, updating it in
  * the database and, if applicable, connecting it to an existing vehicle entrant entity.
  */
+@RequiredArgsConstructor
 @Service
 @Slf4j
-@AllArgsConstructor
 public class UpdatePaymentWithExternalDataService {
 
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final FinalizePaymentService finalizePaymentService;
   private final PaymentRepository internalPaymentsRepository;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   /**
    * Gets an external status of {@code payment}, updates it in the database and, if applicable,
@@ -38,11 +41,12 @@ public class UpdatePaymentWithExternalDataService {
     Preconditions.checkNotNull(payment.getExternalId(), "External id cannot be null");
 
     String externalPaymentId = payment.getExternalId();
-    Payment externalPayment = externalPaymentsRepository.findById(externalPaymentId)
-        .map(getPaymentResult -> updateInternalPaymentWith(payment, getPaymentResult))
-        .orElseThrow(() -> new IllegalStateException("External payment not found whereas the "
-            + "internal one with id '" + payment.getId() + "' and external id "
-            + "'" + externalPaymentId + "' exists"));
+    Payment externalPayment =
+        externalPaymentsRepository.findById(externalPaymentId)
+            .map(getPaymentResult -> updateInternalPaymentWith(payment, getPaymentResult))
+            .orElseThrow(() -> new IllegalStateException("External payment not found whereas the "
+                + "internal one with id '" + payment.getId() + "' and external id " + "'"
+                + externalPaymentId + "' exists"));
 
     return finalizePaymentProcessing(payment, externalPayment);
   }
@@ -53,17 +57,14 @@ public class UpdatePaymentWithExternalDataService {
    */
   private Payment updateInternalPaymentWith(Payment payment, GetPaymentResult paymentInfo) {
     ExternalPaymentStatus newStatus = paymentInfo.getPaymentStatus();
-    return payment.toBuilder()
-        .externalPaymentStatus(newStatus)
+    String emailAddress = paymentInfo.getEmail();
+    return payment.toBuilder().externalPaymentStatus(newStatus)
         .authorisedTimestamp(getAuthorisedTimestamp(payment, newStatus))
-        .vehicleEntrantPayments(payment.getVehicleEntrantPayments()
-            .stream()
+        .vehicleEntrantPayments(payment.getVehicleEntrantPayments().stream()
             .map(vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder()
-                .internalPaymentStatus(InternalPaymentStatus.from(newStatus))
-                .build())
-            .collect(Collectors.toList())
-        )
-        .build();
+                .internalPaymentStatus(InternalPaymentStatus.from(newStatus)).build())
+            .collect(Collectors.toList()))
+        .emailAddress(emailAddress).build();
   }
 
   /**
@@ -72,7 +73,7 @@ public class UpdatePaymentWithExternalDataService {
    *
    * @param internalPayment An instance of {@link Payment} with its internal identifier set.
    * @param externalPayment An instance of {@link Payment} with its internal and external
-   *     identifiers set.
+   *        identifiers set.
    * @return An instance of {@link Payment} with vehicle entrants' ids set (if applicable).
    */
   private Payment finalizePaymentProcessing(Payment internalPayment, Payment externalPayment) {
@@ -81,12 +82,16 @@ public class UpdatePaymentWithExternalDataService {
           + "skipping updating the database", internalPayment.getExternalPaymentStatus());
       return externalPayment;
     }
-    log.info("Found the external payment, updating its status to '{}' in the database, "
-            + "current status: '{}'", externalPayment.getExternalPaymentStatus(),
-        internalPayment.getExternalPaymentStatus());
-    Payment paymentWithVehicleEntrantsIds = finalizePaymentService
-        .connectExistingVehicleEntrants(externalPayment);
+    log.info(
+        "Found the external payment, updating its status to '{}' in the database, "
+            + "current status: '{}'",
+        externalPayment.getExternalPaymentStatus(), internalPayment.getExternalPaymentStatus());
+    Payment paymentWithVehicleEntrantsIds =
+        finalizePaymentService.connectExistingVehicleEntrants(externalPayment);
     internalPaymentsRepository.update(paymentWithVehicleEntrantsIds);
+    PaymentStatusUpdatedEvent event =
+        new PaymentStatusUpdatedEvent(this, paymentWithVehicleEntrantsIds);
+    applicationEventPublisher.publishEvent(event);
     return paymentWithVehicleEntrantsIds;
   }
 

@@ -33,6 +33,13 @@ services:
       POSTGRES_DB: caz_payments
     ports:
       - 5432
+  - name: localstack
+    image: localstack/localstack:0.10.2
+    environment:
+      SERVICES: sqs
+      HOSTNAME_EXTERNAL: localstack
+    ports:
+      - 4576
 
 steps:
 
@@ -91,6 +98,7 @@ steps:
         from_secret: nexus_username
       JAQU_NEXUS_PASSWORD:
         from_secret: nexus_password
+      AWS_SQS_URL: localstack:4576
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 

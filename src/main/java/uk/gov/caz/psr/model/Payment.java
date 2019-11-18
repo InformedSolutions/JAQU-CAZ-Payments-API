@@ -7,14 +7,12 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * An entity which represents a row stored in the database in {@code PAYMENT} table.
  */
 @Value
 @Builder(toBuilder = true)
-@Slf4j
 public class Payment {
 
   /**
@@ -70,6 +68,12 @@ public class Payment {
   String nextUrl;
 
   /**
+   * The email address which is returned from the GOV UK Pay service to send a receipt of the
+   * payment. A transient field, not saved in the database.
+   */
+  String emailAddress;
+
+  /**
    * An overridden lombok's builder.
    */
   public static class PaymentBuilder {
@@ -81,15 +85,15 @@ public class Payment {
      */
     public Payment build() {
       Preconditions.checkState(externalStatusMatchesExternalPaymentId(),
-          "Illegal values of external payment status and ext id: (%s, %s)",
-          externalPaymentStatus, externalId);
+          "Illegal values of external payment status and ext id: (%s, %s)", externalPaymentStatus,
+          externalId);
       Preconditions.checkState(
           (authorisedTimestamp == null) ^ (externalPaymentStatus == ExternalPaymentStatus.SUCCESS),
           "authorisedTimestamp is null and external payment status is not 'SUCCESS' or "
               + "authorisedTimestamp is not null and external payment status is 'SUCCESS'");
 
       return new Payment(id, externalId, paymentMethod, totalPaid, vehicleEntrantPayments,
-          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl);
+          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl, emailAddress);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

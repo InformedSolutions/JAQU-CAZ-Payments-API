@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -38,8 +37,8 @@ class GetAndUpdatePaymentsServiceTest {
     UUID id = null;
 
     // when
-    Throwable throwable = catchThrowable(() ->
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(id));
+    Throwable throwable = catchThrowable(() -> getAndUpdatePaymentsService
+        .getExternalPaymentAndUpdateStatus(id));
 
     assertThat(throwable).isInstanceOf(NullPointerException.class)
         .hasMessage("ID cannot be null");
@@ -49,7 +48,8 @@ class GetAndUpdatePaymentsServiceTest {
   public void shouldReturnEmptyOptionalIfPaymentIsNotFoundInDatabase() {
     // given
     UUID paymentId = UUID.fromString("a80d2cc8-f97a-11e9-9272-1b75c20437eb");
-    given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.empty());
+    given(internalPaymentsRepository.findById(paymentId))
+        .willReturn(Optional.empty());
 
     // when
     Optional<Payment> result = getAndUpdatePaymentsService
@@ -79,8 +79,10 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   private Payment mockInternalPaymentWith(UUID paymentId, String externalId) {
-    Payment payment = TestObjectFactory.Payments.forRandomDaysWithId(paymentId, externalId);
-    given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.of(payment));
+    Payment payment =
+        TestObjectFactory.Payments.forRandomDaysWithId(paymentId, externalId);
+    given(internalPaymentsRepository.findById(paymentId))
+        .willReturn(Optional.of(payment));
     return payment;
   }
 }
