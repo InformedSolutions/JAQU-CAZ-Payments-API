@@ -25,16 +25,16 @@ class PaymentStatusRepositoryTestIT {
   @Test
   public void shouldReturnNonEmptyCollection() {
     // given
-      LocalDate dateOfCazEntry = LocalDate.of(2019, 11, 04);
-      String vrn = "ND84VSX";
-      UUID cazId = UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4");
+    LocalDate dateOfCazEntry = LocalDate.of(2019, 11, 04);
+    String vrn = "ND84VSX";
+    UUID cazId = UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4");
 
     // when
-      Collection<PaymentStatus> results = repository
-          .findByCazIdAndVrnAndEntryDate(cazId, vrn, dateOfCazEntry);
+    Collection<PaymentStatus> results = repository
+        .findByCazIdAndVrnAndEntryDate(cazId, vrn, dateOfCazEntry);
 
     // then
-     assertThat(results).isNotEmpty();
+    assertThat(results).isNotEmpty();
   }
 }
 

@@ -104,3 +104,6 @@ docker-rm:
 	docker rm `docker ps -a -q`
 
 docker-clean: docker-stop docker-rm
+
+sonar:
+	./mvnw sonar:sonar

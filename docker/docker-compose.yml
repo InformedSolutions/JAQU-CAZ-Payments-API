@@ -10,3 +10,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: caz-payments
+
+  sonarqube:
+    image: sonarqube
+    container_name: sonarqube.docker
+    ports:
+      - 9000:9000
