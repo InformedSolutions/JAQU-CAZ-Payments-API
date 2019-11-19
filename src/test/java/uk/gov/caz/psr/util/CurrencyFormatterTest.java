@@ -17,7 +17,5 @@ public class CurrencyFormatterTest {
     double totalAmountInPounds = currencyFormatter.parsePennies(totalAmount);
 
     assertEquals(expectedAmount, totalAmountInPounds);
-
   }
-
 }

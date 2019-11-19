@@ -8,7 +8,4 @@ public class CurrencyFormatter {
   public double parsePennies(int totalAmount) {
     return (double) totalAmount / 100;
   }
-
-
-
 }
