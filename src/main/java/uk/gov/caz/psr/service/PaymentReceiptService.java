@@ -31,16 +31,15 @@ public class PaymentReceiptService {
    * @return SendEmailRequest
    * @throws JsonProcessingException if the amount cannot be serialized into a json string
    */
-  public SendEmailRequest buildSendEmailRequest(String email, int amount)
+  public SendEmailRequest buildSendEmailRequest(String email, double amount)
       throws JsonProcessingException {
     return SendEmailRequest.builder().emailAddress(email)
         .personalisation(createPersonalisationPayload(amount)).templateId(templateId).build();
-
   }
 
-  private String createPersonalisationPayload(int amount) throws JsonProcessingException {
+  private String createPersonalisationPayload(double amount) throws JsonProcessingException {
     Map<String, String> personalisationMap =
-        Collections.singletonMap("amount", Integer.toString(amount));
+        Collections.singletonMap("amount", String.format("%.2f", amount));
     return objectMapper.writeValueAsString(personalisationMap);
   }
 }

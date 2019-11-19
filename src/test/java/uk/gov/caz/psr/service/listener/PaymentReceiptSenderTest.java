@@ -7,7 +7,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import java.util.Collections;
@@ -23,17 +22,19 @@ import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.service.PaymentReceiptService;
+import uk.gov.caz.psr.util.CurrencyFormatter;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentReceiptSenderTest {
 
   private static final String ANY_VALID_EMAIL = "test@test.com";
-  private static final int ANY_AMOUNT = 20;
+  private static final int ANY_AMOUNT = 800;
   private static final Payment ANY_PAYMENT = Payment.builder().id(UUID.randomUUID())
-      .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
-      .totalPaid(ANY_AMOUNT)
-      .vehicleEntrantPayments(Collections.emptyList())
-      .emailAddress(ANY_VALID_EMAIL).build();
+      .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD).totalPaid(ANY_AMOUNT)
+      .vehicleEntrantPayments(Collections.emptyList()).emailAddress(ANY_VALID_EMAIL).build();
+
+  @Mock
+  CurrencyFormatter currencyFormatter;
 
   @Mock
   MessagingClient messagingClient;
@@ -75,7 +76,8 @@ public class PaymentReceiptSenderTest {
     // given
     SendEmailRequest sendEmailRequest = anyValidRequest();
     PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
-    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT))
+    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(8.0);
+    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, 8.0))
         .thenReturn(sendEmailRequest);
 
     // when
@@ -115,11 +117,8 @@ public class PaymentReceiptSenderTest {
   }
 
   private SendEmailRequest anyValidRequest() {
-    return SendEmailRequest.builder()
-        .templateId("test-template-id")
-        .emailAddress(ANY_VALID_EMAIL)
-        .personalisation("{\"amount\":" + ANY_AMOUNT + "}")
-        .build();
+    return SendEmailRequest.builder().templateId("test-template-id").emailAddress(ANY_VALID_EMAIL)
+        .personalisation("{\"amount\":" + ANY_AMOUNT + "}").build();
   }
 
   private PaymentStatusUpdatedEvent eventWithNullEmail() {
