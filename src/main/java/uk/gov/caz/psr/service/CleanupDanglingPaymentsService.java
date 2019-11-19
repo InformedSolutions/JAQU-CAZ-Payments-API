@@ -18,7 +18,7 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 public class CleanupDanglingPaymentsService {
 
   private final PaymentRepository paymentRepository;
-  private final UpdatePaymentWithExternalDataService updatePaymentWithExternalDataService;
+  private final CleanupDanglingPaymentService cleanupDanglingPaymentService;
 
   /**
    * Finds old and unfinished payments in the database, checks their statuses in the gov uk pay
@@ -38,20 +38,12 @@ public class CleanupDanglingPaymentsService {
         stopwatch.elapsed(TimeUnit.MILLISECONDS));
   }
 
-  /**
-   * Processes (gets an external status and updates it in the database) the passed {@code
-   * danglingPayment}.
-   */
   private void processDanglingPayment(Payment danglingPayment) {
-    Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      updatePaymentWithExternalDataService.updatePaymentWithExternalData(danglingPayment);
+      cleanupDanglingPaymentService.processDanglingPayment(danglingPayment);
     } catch (Exception e) {
       log.error("Error while processing the dangling payment with id '{}'", danglingPayment.getId(),
           e);
-    } finally {
-      long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-      log.info("Processing the dangling payment '{}' took {}ms", danglingPayment.getId(), elapsed);
     }
   }
 }

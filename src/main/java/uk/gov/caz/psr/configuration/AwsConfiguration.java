@@ -44,12 +44,10 @@ public class AwsConfiguration {
 
     log.info("Using '{}' as SQS Endpoint", sqsEndpoint);
 
-    AmazonSQSClientBuilder builder =
-        AmazonSQSClientBuilder.standard().withCredentials(dummyCredentialsProvider())
-            .withEndpointConfiguration(new EndpointConfiguration(sqsEndpoint, region));
-    AmazonSQS build = builder.build();
-    log.info("client: {}", build);
-    return build;
+    return AmazonSQSClientBuilder.standard()
+        .withCredentials(dummyCredentialsProvider())
+        .withEndpointConfiguration(new EndpointConfiguration(sqsEndpoint, region))
+        .build();
   }
 
   private AWSStaticCredentialsProvider dummyCredentialsProvider() {
@@ -67,9 +65,9 @@ public class AwsConfiguration {
   @Primary
   @Profile("!integration-tests & !localstack")
   public AmazonSQS amazonSqs() {
-    AmazonSQSClientBuilder builder = AmazonSQSClientBuilder.standard();
-    builder.withRegion(region);
-    return builder.build();
+    return AmazonSQSClientBuilder.standard()
+        .withRegion(region)
+        .build();
   }
 
 }

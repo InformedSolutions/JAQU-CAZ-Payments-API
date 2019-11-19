@@ -1,32 +1,39 @@
 package uk.gov.caz.psr.service.listener;
 
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
-import java.util.ArrayList;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import java.util.Collections;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import uk.gov.caz.psr.dto.SendEmailRequest;
 import uk.gov.caz.psr.messaging.MessagingClient;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.service.PaymentReceiptService;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentReceiptSenderTest {
 
-  @InjectMocks
-  PaymentReceiptSender paymentReceiptSender;
+  private static final String ANY_VALID_EMAIL = "test@test.com";
+  private static final int ANY_AMOUNT = 20;
+  private static final Payment ANY_PAYMENT = Payment.builder().id(UUID.randomUUID())
+      .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+      .totalPaid(ANY_AMOUNT)
+      .vehicleEntrantPayments(Collections.emptyList())
+      .emailAddress(ANY_VALID_EMAIL).build();
 
   @Mock
   MessagingClient messagingClient;
@@ -34,56 +41,96 @@ public class PaymentReceiptSenderTest {
   @Mock
   PaymentReceiptService paymentReceiptService;
 
-  PaymentStatusUpdatedEvent paymentStatusUpdatedEvent;
+  @InjectMocks
+  PaymentReceiptSender paymentReceiptSender;
 
-  String email = "test@test.com";
-  int amount = 20;
+  @Test
+  public void shouldThrowIllegalArgumentExceptionWhenEmailIsNull() {
+    // given
+    PaymentStatusUpdatedEvent event = eventWithNullEmail();
 
-  @BeforeEach
-  void init() {
-    Payment payment = Payment.builder().id(UUID.randomUUID())
-        .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD).totalPaid(amount)
-        .vehicleEntrantPayments(new ArrayList<VehicleEntrantPayment>()).emailAddress(email).build();
-    paymentStatusUpdatedEvent = mock(PaymentStatusUpdatedEvent.class);
-    Mockito.when(paymentStatusUpdatedEvent.getPayment()).thenReturn(payment);
+    // when
+    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
+
+    // then
+    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Email address cannot be null or empty");
   }
 
   @Test
-  void handleCorrectPaymentObject() throws JsonProcessingException {
+  public void shouldThrowIllegalArgumentExceptionWhenEmailIsEmpty() {
+    // given
+    PaymentStatusUpdatedEvent event = eventWithEmptyEmail();
 
-    SendEmailRequest sendEmailRequest = SendEmailRequest.builder().templateId("test-template-id")
-        .emailAddress(email).personalisation("{\"amount\":20}").build();
+    // when
+    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
 
-    Mockito.when(paymentReceiptService.buildSendEmailRequest(email, amount))
+    // then
+    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Email address cannot be null or empty");
+  }
+
+  @Test
+  void shouldHandleCorrectPaymentObject() throws JsonProcessingException {
+    // given
+    SendEmailRequest sendEmailRequest = anyValidRequest();
+    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
+    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT))
         .thenReturn(sendEmailRequest);
 
-    paymentReceiptSender.onPaymentStatusUpdated(paymentStatusUpdatedEvent);
+    // when
+    paymentReceiptSender.onPaymentStatusUpdated(event);
 
-    Mockito.verify(messagingClient, times(1)).publishMessage(sendEmailRequest);
+    // then
+    verify(messagingClient, times(1)).publishMessage(sendEmailRequest);
   }
 
   @Test
-  void cannotBuildAmountIntoPersonalisationJson() throws JsonProcessingException {
-    Mockito.when(paymentReceiptService.buildSendEmailRequest(email, amount))
+  void shouldNotPropagateExceptionUponSerializationError() throws JsonProcessingException {
+    // given
+    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
+    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT))
         .thenThrow(new JsonMappingException(null, "test exception"));
 
-    paymentReceiptSender.onPaymentStatusUpdated(paymentStatusUpdatedEvent);
+    // when
+    paymentReceiptSender.onPaymentStatusUpdated(event);
 
+    // then
+    verify(messagingClient, never()).publishMessage(any());
   }
 
   @Test
-  void cannotWriteMessageBodyToString() throws JsonProcessingException {
-
-    SendEmailRequest sendEmailRequest = SendEmailRequest.builder().templateId("test-template-id")
-        .emailAddress(email).personalisation("{\"amount\":20}").build();
-
-    Mockito.when(paymentReceiptService.buildSendEmailRequest(email, amount))
+  void shouldNotPropagateExceptionUponMessagePublicationError() throws JsonProcessingException {
+    // given
+    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
+    SendEmailRequest sendEmailRequest = anyValidRequest();
+    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT))
         .thenReturn(sendEmailRequest);
 
-    Mockito.doThrow(new JsonParseException(null, "test exception")).when(messagingClient)
-        .publishMessage(sendEmailRequest);
+    // when
+    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
 
-    paymentReceiptSender.onPaymentStatusUpdated(paymentStatusUpdatedEvent);
+    // then
+    assertThat(throwable).isNull();
+  }
 
+  private SendEmailRequest anyValidRequest() {
+    return SendEmailRequest.builder()
+        .templateId("test-template-id")
+        .emailAddress(ANY_VALID_EMAIL)
+        .personalisation("{\"amount\":" + ANY_AMOUNT + "}")
+        .build();
+  }
+
+  private PaymentStatusUpdatedEvent eventWithNullEmail() {
+    return new PaymentStatusUpdatedEvent(this, buildPaymentWithEmail(null));
+  }
+
+  private PaymentStatusUpdatedEvent eventWithEmptyEmail() {
+    return new PaymentStatusUpdatedEvent(this, buildPaymentWithEmail(""));
+  }
+
+  private Payment buildPaymentWithEmail(String s) {
+    return ANY_PAYMENT.toBuilder().emailAddress(s).build();
   }
 }

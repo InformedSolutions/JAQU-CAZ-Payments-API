@@ -1,0 +1,56 @@
+{
+  "amount": 3200,
+  "description": "Payment for #343ef20e-0541-11ea-aff3-6bd124c3a586",
+  "reference": "343ef20e-0541-11ea-aff3-6bd124c3a586",
+  "language": "en",
+  "email": "success-payment@informed.com",
+  "state": {
+    "status": "success",
+    "finished": true
+  },
+  "payment_id": "success-payment-id",
+  "payment_provider": "sandbox",
+  "created_date": "2019-11-12T11:40:19.922Z",
+  "refund_summary": {
+    "status": "available",
+    "amount_available": 3200,
+    "amount_submitted": 0
+  },
+  "settlement_summary": {
+    "capture_submit_time": "2019-11-12T11:40:42.539Z",
+    "captured_date": "2019-11-12"
+  },
+  "card_details": {
+    "last_digits_card_number": "5556",
+    "first_digits_card_number": "400005",
+    "cardholder_name": "Radek test",
+    "expiry_date": "12/22",
+    "billing_address": {
+      "line1": "a",
+      "line2": "b",
+      "postcode": "SW1W 0NY",
+      "city": "Leeds",
+      "country": "GB"
+    },
+    "card_brand": "Visa",
+    "card_type": "debit"
+  },
+  "delayed_capture": false,
+  "provider_id": "816fd33d-9b85-47e1-a3d6-e2d2c5575ad0",
+  "return_url": "https://payments-alb-dev-1894331684.eu-west-2.elb.amazonaws.com/payments",
+  "card_brand": "Visa",
+  "_links": {
+    "self": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/success-payment-id",
+      "method": "GET"
+    },
+    "events": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/success-payment-id/events",
+      "method": "GET"
+    },
+    "refunds": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/success-payment-id/refunds",
+      "method": "GET"
+    }
+  }
+}

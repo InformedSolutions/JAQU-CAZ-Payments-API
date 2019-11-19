@@ -23,13 +23,13 @@ import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
-public class FinalizePaymentServiceTest {
+public class TransientVehicleEntrantsLinkerTest {
 
   @Mock
   private VehicleEntrantRepository vehicleEntrantRepository;
 
   @InjectMocks
-  private FinalizePaymentService finalizePaymentService;
+  private TransientVehicleEntrantsLinker transientVehicleEntrantsLinker;
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
@@ -38,7 +38,7 @@ public class FinalizePaymentServiceTest {
 
     // when
     Throwable throwable = catchThrowable(
-        () -> finalizePaymentService.connectExistingVehicleEntrants(payment));
+        () -> transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(payment));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -51,7 +51,7 @@ public class FinalizePaymentServiceTest {
     Payment payment = Payments.existing();
 
     // when
-    Payment result = finalizePaymentService.connectExistingVehicleEntrants(payment);
+    Payment result = transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(payment);
 
     // then
     assertThat(result).isEqualTo(payment);
@@ -65,7 +65,7 @@ public class FinalizePaymentServiceTest {
     mockNotFoundVehicleEntrant();
 
     // when
-    Payment result = finalizePaymentService.connectExistingVehicleEntrants(payment);
+    Payment result = transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(payment);
 
     // then
     assertThat(result).isEqualTo(payment);
@@ -81,7 +81,7 @@ public class FinalizePaymentServiceTest {
     mockFoundVehicleEntrant();
 
     // when
-    Payment result = finalizePaymentService.connectExistingVehicleEntrants(payment);
+    Payment result = transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(payment);
 
     // then
     assertThat(result).isNotEqualTo(payment);

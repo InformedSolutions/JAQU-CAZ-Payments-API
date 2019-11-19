@@ -15,11 +15,12 @@ import uk.gov.caz.psr.repository.VehicleEntrantRepository;
 
 /**
  * Class responsible for connecting a successful payment with a vehicle entrant record if exists.
+ * The change is NOT persisted in the database.
  */
 @Service
 @AllArgsConstructor
 @Slf4j
-public class FinalizePaymentService {
+public class TransientVehicleEntrantsLinker {
 
   private final VehicleEntrantRepository vehicleEntrantRepository;
 
@@ -31,7 +32,7 @@ public class FinalizePaymentService {
    * @return {@link Payment} with added VehicleEntrantId if Payment status is SUCCESS
    * @throws NullPointerException if {@code payment} is null
    */
-  public Payment connectExistingVehicleEntrants(Payment payment) {
+  public Payment associateExistingVehicleEntrantsWith(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
     if (payment.getExternalPaymentStatus() != ExternalPaymentStatus.SUCCESS) {
       log.info("Payment status is not equal to '{}', but '{}', hence not trying to connect it "
