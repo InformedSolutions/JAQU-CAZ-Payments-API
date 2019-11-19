@@ -23,10 +23,12 @@ public class VehicleEntrantPaymentChargeCalculator {
     Preconditions.checkArgument(total > 0, "Expecting 'total' (%s) to be a positive number", total);
     Preconditions.checkArgument(numberOfDays > 0, "Expecting 'numberOfDays' (%s) to "
         + "be a positive number", numberOfDays);
-    Preconditions.checkArgument(total % numberOfDays == 0, "'total' / 'numberOfDays' (%s / %s) "
-        + "must produce a natural number, current value: %s", total, numberOfDays,
-        (double) total / numberOfDays);
 
+    if (total % numberOfDays != 0) {
+      log.warn("'total' / 'numberOfDays' ({}/{}) is not a natural number, this should only happen "
+              + "for discounted entrants. Current value: {}", total, numberOfDays,
+          (double) total / numberOfDays);
+    }
     return total / numberOfDays;
   }
 }

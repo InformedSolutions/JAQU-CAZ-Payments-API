@@ -62,18 +62,16 @@ class VehicleEntrantPaymentChargeCalculatorTest {
   }
 
   @Test
-  public void shouldThrowIllegalArgumentExceptionIfTotalIsNotDivisibleByNumberOfDays() {
+  public void shouldAcceptTotalNotDivisibleByNumberOfDays() {
     // given
     int total = 24;
     int numberOfDays = 5;
 
     // when
-    Throwable throwable = catchThrowable(() ->
-        chargeCalculator.calculateCharge(total, numberOfDays));
+    int result = chargeCalculator.calculateCharge(total, numberOfDays);
 
     // then
-    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-        .hasMessageStartingWith("'total' / 'numberOfDays'");
+    assertThat(result).isEqualTo(4);
   }
 
   static Stream<Arguments> totalDivisibleByNumberOfDays() {
