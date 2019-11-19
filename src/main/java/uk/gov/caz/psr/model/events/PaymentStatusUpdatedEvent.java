@@ -16,5 +16,4 @@ public class PaymentStatusUpdatedEvent extends ApplicationEvent {
     super(source);
     this.payment = payment;
   }
-
 }

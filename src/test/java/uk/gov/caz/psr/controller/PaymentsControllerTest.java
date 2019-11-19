@@ -124,19 +124,6 @@ class PaymentsControllerTest {
   }
 
   @Test
-  public void amountNotDivisibleByNumberOfDaysShouldResultIn400() throws Exception {
-    String payload = paymentRequestWithAmountNotDivisibleByNumberOfDays();
-
-    mockMvc.perform(post(BASE_PATH)
-        .content(payload)
-        .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any());
-  }
-
-  @Test
   public void shouldReturnValidResponse() throws Exception {
     InitiatePaymentRequest requestParams = baseRequestBuilder().build();
     String payload = toJsonString(requestParams);
@@ -175,12 +162,6 @@ class PaymentsControllerTest {
 
   private String paymentRequestWithEmptyReturnUrl() {
     InitiatePaymentRequest requestParams = baseRequestBuilder().returnUrl("").build();
-    return toJsonString(requestParams);
-  }
-
-  private String paymentRequestWithAmountNotDivisibleByNumberOfDays() {
-    // amount should be an odd number
-    InitiatePaymentRequest requestParams = baseRequestBuilder().amount(501).build();
     return toJsonString(requestParams);
   }
 
