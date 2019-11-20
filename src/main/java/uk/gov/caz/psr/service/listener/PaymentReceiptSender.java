@@ -11,6 +11,7 @@ import uk.gov.caz.psr.messaging.MessagingClient;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.service.PaymentReceiptService;
+import uk.gov.caz.psr.util.CurrencyFormatter;
 
 /**
  * Listener to pick up email events and use messaging client to build and send an email.
@@ -20,6 +21,7 @@ import uk.gov.caz.psr.service.PaymentReceiptService;
 @RequiredArgsConstructor
 public class PaymentReceiptSender {
 
+  private final CurrencyFormatter currencyFormatter;
   private final MessagingClient messagingClient;
   private final PaymentReceiptService paymentReceiptService;
 
@@ -32,12 +34,13 @@ public class PaymentReceiptSender {
   public void onPaymentStatusUpdated(PaymentStatusUpdatedEvent event) {
     checkPreconditions(event);
     Payment payment = event.getPayment();
+    double totalAmount = currencyFormatter.parsePennies(payment.getTotalPaid());
 
     log.info("Processing email event for payment with ID: {}", payment.getId());
 
     try {
-      SendEmailRequest sendEmailRequest = paymentReceiptService.buildSendEmailRequest(
-          payment.getEmailAddress(), payment.getTotalPaid());
+      SendEmailRequest sendEmailRequest =
+          paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount);
       messagingClient.publishMessage(sendEmailRequest);
     } catch (Exception e) {
       log.error("Payment receipt not sent to recipient with payment ID: {}", payment.getId(), e);
@@ -46,7 +49,7 @@ public class PaymentReceiptSender {
 
   private void checkPreconditions(PaymentStatusUpdatedEvent event) {
     Payment payment = event.getPayment();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(payment.getEmailAddress()), "Email address "
-        + "cannot be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(payment.getEmailAddress()),
+        "Email address " + "cannot be null or empty");
   }
 }

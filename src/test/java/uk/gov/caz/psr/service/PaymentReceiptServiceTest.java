@@ -33,10 +33,10 @@ public class PaymentReceiptServiceTest {
   void canSendPaymentReceipt() throws JsonProcessingException {
     String testEmail = "test@test.com";
     ReflectionTestUtils.setField(paymentReceiptService, "templateId", templateId);
-    SendEmailRequest request = paymentReceiptService.buildSendEmailRequest(testEmail, 1);
+    SendEmailRequest request = paymentReceiptService.buildSendEmailRequest(testEmail, 1.0);
     assertNotNull(request);
     assertEquals(testEmail, request.getEmailAddress());
-    assertEquals("{\"amount\":\"1\"}", request.getPersonalisation());
+    assertEquals("{\"amount\":\"1.00\"}", request.getPersonalisation());
     assertEquals(templateId, request.getTemplateId());
   }
 
