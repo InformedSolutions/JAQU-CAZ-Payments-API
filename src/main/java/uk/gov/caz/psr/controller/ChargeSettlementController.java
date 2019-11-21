@@ -35,16 +35,10 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public ResponseEntity<PaymentStatusResponse> getPaymentStatus(PaymentStatusRequest request) {
-    /* TODO: Fetch:
-     *    paymentStatus from VEHICLE_ENTRANT_PAYMENT table
-     *    paymentId from PAYMENT table
-     *    paymentStatus from VEHICLE_ENTRANT_PAYMENT table
-     *
-     **/
     log.info("Received request: {}", request);
 
     PaymentStatusResponse fakeResponse = PaymentStatusResponse.builder()
-        .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.PAID)
+        .paymentStatus(ChargeSettlementPaymentStatus.PAID)
         .paymentId("350be6da-10f1-41fe-9840-98c738ec763e")
         .caseReference("sample-case-reference")
         .build();

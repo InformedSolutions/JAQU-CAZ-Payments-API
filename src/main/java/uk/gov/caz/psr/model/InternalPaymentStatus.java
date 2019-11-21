@@ -10,7 +10,7 @@ public enum InternalPaymentStatus {
   CHARGEBACK;
 
   /**
-   * Maps {@link ExternalPaymentStatus} to {@link ExternalPaymentStatus}.
+   * Maps {@link ExternalPaymentStatus} to {@link InternalPaymentStatus}.
    */
   public static InternalPaymentStatus from(ExternalPaymentStatus externalPaymentStatus) {
     if (externalPaymentStatus ==  ExternalPaymentStatus.SUCCESS) {
