@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
+import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
@@ -22,7 +23,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
   static final String PAYMENT_STATUS_PATH = "/payment-status";
 
   @Override
-  public ResponseEntity<PaymentInfoResponse> getPaymentInfo() {
+  public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest paymentInfoRequest) {
     throw new UnsupportedOperationException();
   }
 
