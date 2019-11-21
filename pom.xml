@@ -18,7 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <rest-assured.version>4.0.0</rest-assured.version>
-    <internal.libraries.version>1.8.0-SNAPSHOT</internal.libraries.version>
+    <internal.libraries.version>2.0-SNAPSHOT</internal.libraries.version>
     <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
@@ -563,7 +563,6 @@
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
                 <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
-                <exclude>**/psr/repository/VehicleEntrantPaymentRepository.class</exclude>
               </excludes>
               <rules>
                 <rule>

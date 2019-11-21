@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -191,7 +192,21 @@ class VehicleEntrantPaymentRepositoryTest {
       assertThat(throwable).isInstanceOf(IllegalStateException.class)
           .hasMessage("More than one VehicleEntrantPayment found");
     }
+
+    @Test
+    public void shouldReturnOptionalEmptyWhenNoVehicleEntrantPaymentFound() {
+      // given
+      mockNoItemsFoundInDatabaseForFindOneWithVrn();
+
+      // when
+      Optional<VehicleEntrantPayment> response = vehicleEntrantPaymentRepository
+          .findOnePaidByVrnAndCazEntryDate(UUID.randomUUID(), "VRN", LocalDate.now());
+
+      // then
+      assertThat(response).isEqualTo(Optional.empty());
+    }
   }
+
   @Nested
   class FindOnePaidByCazEntryDateAndExternalPaymentId {
 
@@ -229,9 +244,6 @@ class VehicleEntrantPaymentRepositoryTest {
 
     @Test
     public void shouldThrowNIllegalArgumentExceptionWhenExternalPaymentIsEmpty() {
-      // given
-      String vrn = null;
-
       // when
       Throwable throwable = catchThrowable(
           () -> vehicleEntrantPaymentRepository
@@ -251,11 +263,26 @@ class VehicleEntrantPaymentRepositoryTest {
       // when
       Throwable throwable = catchThrowable(
           () -> vehicleEntrantPaymentRepository
-              .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), LocalDate.now(), "test"));
+              .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), LocalDate.now(),
+                  "test"));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalStateException.class)
           .hasMessage("More than one VehicleEntrantPayment found");
+    }
+
+    @Test
+    public void shouldReturnOptionalEmptyWhenNoVehicleEntrantPaymentFound() {
+      // given
+      mockNoItemsFoundInDatabaseForFindOneWithExternalPayment();
+
+      // when
+      Optional<VehicleEntrantPayment> response = vehicleEntrantPaymentRepository
+          .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), LocalDate.now(),
+              "test");
+
+      // then
+      assertThat(response).isEqualTo(Optional.empty());
     }
   }
 
@@ -277,5 +304,21 @@ class VehicleEntrantPaymentRepositoryTest {
         any(PreparedStatementSetter.class),
         any(VehicleEntrantPaymentRowMapper.class)
     )).thenReturn(vehicleEntrantPayments);
+  }
+
+  private void mockNoItemsFoundInDatabaseForFindOneWithExternalPayment() {
+    when(jdbcTemplate.query(
+        eq(VehicleEntrantPaymentRepository.SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL),
+        any(PreparedStatementSetter.class),
+        any(VehicleEntrantPaymentRowMapper.class)
+    )).thenReturn(Collections.emptyList());
+  }
+
+  private void mockNoItemsFoundInDatabaseForFindOneWithVrn() {
+    when(jdbcTemplate.query(
+        eq(VehicleEntrantPaymentRepository.SELECT_BY_VRN_CAZ_ENTRY_DATE_AND_STATUS_SQL),
+        any(PreparedStatementSetter.class),
+        any(VehicleEntrantPaymentRowMapper.class)
+    )).thenReturn(Collections.emptyList());
   }
 }

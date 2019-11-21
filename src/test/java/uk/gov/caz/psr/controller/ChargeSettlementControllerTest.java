@@ -21,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,6 +31,7 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
+import uk.gov.caz.psr.service.PaymentStatusUpdateService;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
 
 @ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class, Configuration.class,
@@ -42,6 +44,9 @@ class ChargeSettlementControllerTest {
 
   @Autowired
   private ObjectMapper objectMapper;
+
+  @MockBean
+  private PaymentStatusUpdateService paymentStatusUpdateService;
 
   private static final String ANY_VALID_VRN = "DL76MWX";
   private static final String ANY_VALID_DATE_STRING = LocalDate.now().toString();
@@ -168,7 +173,8 @@ class ChargeSettlementControllerTest {
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
           .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isOk());
     }
 
