@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.caz.correlationid.Constants;
+import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
@@ -62,7 +63,7 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @GetMapping(ChargeSettlementController.PAYMENT_INFO_PATH)
-  ResponseEntity<PaymentInfoResponse> getPaymentInfo();
+  ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest);
 
   /**
    * Allows LAs to query and retrieve data that enables them to determine whether a vehicle that has
