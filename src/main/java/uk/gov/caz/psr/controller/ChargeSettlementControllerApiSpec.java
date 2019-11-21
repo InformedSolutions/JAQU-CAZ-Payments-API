@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
@@ -53,7 +54,7 @@ public interface ChargeSettlementControllerApiSpec {
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "x-api-key",
+      @ApiImplicitParam(name = Headers.X_API_KEY,
           required = true, value = "API key used to access the service",
           paramType = "header"),
       @ApiImplicitParam(name = "Authorization",
@@ -93,7 +94,7 @@ public interface ChargeSettlementControllerApiSpec {
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "x-api-key",
+      @ApiImplicitParam(name = Headers.X_API_KEY,
           required = true, value = "API key used to access the service",
           paramType = "header"),
       @ApiImplicitParam(name = "Authorization",
@@ -133,7 +134,7 @@ public interface ChargeSettlementControllerApiSpec {
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "x-api-key",
+      @ApiImplicitParam(name = Headers.X_API_KEY,
           required = true, value = "API key used to access the service",
           paramType = "header"),
       @ApiImplicitParam(name = "Authorization",
@@ -143,5 +144,6 @@ public interface ChargeSettlementControllerApiSpec {
   })
   @PutMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
   PaymentUpdateSuccessResponse updatePaymentStatus(
-      @Valid @RequestBody PaymentStatusUpdateRequest request);
+      @Valid @RequestBody PaymentStatusUpdateRequest request,
+      @RequestHeader(Headers.X_API_KEY) String apiKey);
 }

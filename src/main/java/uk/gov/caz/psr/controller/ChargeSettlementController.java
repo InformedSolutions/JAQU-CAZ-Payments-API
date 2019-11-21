@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.controller;
 
+import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,17 +11,21 @@ import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
+import uk.gov.caz.psr.service.PaymentStatusUpdateService;
 
 /**
  * A controller which exposes endpoints dealing with charge settlement.
  */
 @RestController
+@AllArgsConstructor
 @Slf4j
 public class ChargeSettlementController implements ChargeSettlementControllerApiSpec {
 
-  static final String BASE_PATH = "/v1/charge-settlement";
-  static final String PAYMENT_INFO_PATH = "/payment-info";
-  static final String PAYMENT_STATUS_PATH = "/payment-status";
+  public static final String BASE_PATH = "/v1/charge-settlement";
+  public static final String PAYMENT_INFO_PATH = "/payment-info";
+  public static final String PAYMENT_STATUS_PATH = "/payment-status";
+
+  private PaymentStatusUpdateService paymentStatusUpdateService;
 
   @Override
   public ResponseEntity<PaymentInfoResponse> getPaymentInfo() {
@@ -46,7 +52,11 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
   }
 
   @Override
-  public PaymentUpdateSuccessResponse updatePaymentStatus(PaymentStatusUpdateRequest request) {
+  public PaymentUpdateSuccessResponse updatePaymentStatus(PaymentStatusUpdateRequest request,
+      String apiKey) {
+    UUID cleanAirZoneId = UUID.fromString(apiKey);
+    paymentStatusUpdateService
+        .processUpdate(request.toVehicleEntrantPaymentStatusUpdates(cleanAirZoneId));
     return new PaymentUpdateSuccessResponse();
   }
 }
