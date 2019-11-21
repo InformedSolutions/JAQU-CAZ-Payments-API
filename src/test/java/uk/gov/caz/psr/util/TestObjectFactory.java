@@ -18,6 +18,7 @@ import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
+import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 
 public class TestObjectFactory {
 
@@ -193,6 +194,7 @@ public class TestObjectFactory {
   }
 
   public static class VehicleEntrantPayments {
+
     public static VehicleEntrantPayment anyNotPaid() {
       return VehicleEntrantPayment.builder()
           .chargePaid(100)
@@ -262,13 +264,46 @@ public class TestObjectFactory {
           .cleanZoneId(ANY_CLEAN_AIR_ZONE);
     }
   }
+
   public static class PaymentStatusUpdateDetailsFactory {
+
     public static PaymentStatusUpdateDetails anyWithStatus(ChargeSettlementPaymentStatus status) {
       return PaymentStatusUpdateDetails.builder()
           .caseReference("Test case Reference")
           .chargeSettlementPaymentStatus(status)
           .dateOfCazEntry(LocalDate.now())
           .paymentId("TestPaymentId")
+          .build();
+    }
+
+    public static PaymentStatusUpdateDetails refundedWithDateOfCazEntry(LocalDate date) {
+      return PaymentStatusUpdateDetails.builder()
+          .caseReference("Test case Reference")
+          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .dateOfCazEntry(date)
+          .build();
+    }
+
+    public static PaymentStatusUpdateDetails refundedWithDateOfCazEntryAndPaymentId(
+        LocalDate date, String paymentID) {
+      return PaymentStatusUpdateDetails.builder()
+          .caseReference("Test case Reference")
+          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentId(paymentID)
+          .dateOfCazEntry(date)
+          .build();
+    }
+  }
+
+  public static class VehicleEntrantPaymentStatusUpdates {
+    public static VehicleEntrantPaymentStatusUpdate any() {
+      return VehicleEntrantPaymentStatusUpdate.builder()
+          .caseReference("Test case Reference")
+          .externalPaymentId("test payment id")
+          .paymentStatus(InternalPaymentStatus.REFUNDED)
+          .vrn("VRN123")
+          .dateOfCazEntry(LocalDate.now())
+          .cleanAirZoneId(UUID.randomUUID())
           .build();
     }
   }
