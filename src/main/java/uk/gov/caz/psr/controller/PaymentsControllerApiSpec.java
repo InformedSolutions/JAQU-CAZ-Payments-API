@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import uk.gov.caz.psr.dto.GetAndUpdatePaymentStatusResponse;
@@ -37,7 +36,7 @@ public interface PaymentsControllerApiSpec {
    * @return {@link PaymentStatusResponse} wrapped in {@link ResponseEntity}.
    */
   @ApiOperation(
-      value = "${swagger.operations.payments.create-vehicle-entrance.description}"
+      value = "${swagger.operations.payments.create-vehicle-entrant.description}"
   )
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
@@ -53,8 +52,7 @@ public interface PaymentsControllerApiSpec {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   ResponseEntity<InitiatePaymentResponse> initiatePayment(
-      @Valid @RequestBody InitiatePaymentRequest request,
-      @RequestHeader(X_CORRELATION_ID_HEADER) String correlationId);
+      @Valid @RequestBody InitiatePaymentRequest request);
 
   @GetMapping("/{id}")
   ResponseEntity<GetAndUpdatePaymentStatusResponse> getExternalPaymentAndUpdateStatus(

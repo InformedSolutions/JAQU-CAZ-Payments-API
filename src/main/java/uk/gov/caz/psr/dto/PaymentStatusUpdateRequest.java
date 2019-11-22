@@ -1,45 +1,58 @@
 package uk.gov.caz.psr.dto;
 
 import io.swagger.annotations.ApiModelProperty;
-import java.time.LocalDate;
 import java.util.List;
-import javax.validation.constraints.Max;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Value;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 
 /**
  * A value object which is used as a request for updating payment status.
  */
 @Value
+@Builder
 public class PaymentStatusUpdateRequest {
+
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.vrn}")
   @NotBlank
-  @Max(9)
+  @Size(min = 1, max = 15)
   String vrn;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.status-updates}")
   @NotEmpty
   List<PaymentStatusUpdateDetails> statusUpdates;
 
-  @Value
-  private static class PaymentStatusUpdateDetails {
+  /**
+   * Maps this value object to list of the models.
+   *
+   * @param cleanAirZoneId Id of Clean Air Zone.
+   * @return An list of {@link VehicleEntrantPaymentStatusUpdate} whose parameters comes from this
+   *     object.
+   */
+  public List<VehicleEntrantPaymentStatusUpdate> toVehicleEntrantPaymentStatusUpdates(
+      UUID cleanAirZoneId) {
+    return statusUpdates.stream()
+        .map(singlePaymentDetails -> prepareVehicleEntrantPaymentStatusUpdate(cleanAirZoneId,
+            singlePaymentDetails))
+        .collect(Collectors.toList());
+  }
 
-    @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.date-caz-entry}")
-    @NotNull
-    LocalDate dateOfCazEntry;
-
-    @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.payment-status}")
-    @NotNull
-    ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
-
-    @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.case-reference}")
-    @NotBlank
-    @Max(15)
-    String caseReference;
-
-    @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.payment-id}")
-    String paymentId;
+  private VehicleEntrantPaymentStatusUpdate prepareVehicleEntrantPaymentStatusUpdate(
+      UUID cleanAirZoneId, PaymentStatusUpdateDetails paymentStatusUpdateDetail) {
+    return VehicleEntrantPaymentStatusUpdate.builder()
+        .cleanAirZoneId(cleanAirZoneId)
+        .vrn(vrn)
+        .dateOfCazEntry(paymentStatusUpdateDetail.getDateOfCazEntry())
+        .paymentStatus(InternalPaymentStatus
+            .valueOf(paymentStatusUpdateDetail.getChargeSettlementPaymentStatus().name()))
+        .externalPaymentId(paymentStatusUpdateDetail.getPaymentId())
+        .caseReference(paymentStatusUpdateDetail.getCaseReference())
+        .build();
   }
 }

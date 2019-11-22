@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import uk.gov.caz.psr.dto.external.CreateCardPaymentRequest;
 import uk.gov.caz.psr.dto.external.CreatePaymentResult;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentStatus;
 
 /**
  * REST http client for GOV UK PAY service.
@@ -32,8 +33,7 @@ import uk.gov.caz.psr.model.PaymentStatus;
 public class ExternalPaymentsRepository {
 
   @VisibleForTesting
-  public static final String FIND_BY_ID_URI_TEMPLATE =
-      "/v1/payments/{paymentId}";
+  public static final String FIND_BY_ID_URI_TEMPLATE = "/v1/payments/{paymentId}";
   @VisibleForTesting
   public static final String CREATE_URI = "/v1/payments";
 
@@ -45,8 +45,7 @@ public class ExternalPaymentsRepository {
   /**
    * Constructor for {@link ExternalPaymentsRepository}.
    */
-  public ExternalPaymentsRepository(
-      @Value("${services.gov-uk-pay.root-url}") String rootUrl,
+  public ExternalPaymentsRepository(@Value("${services.gov-uk-pay.root-url}") String rootUrl,
       RestTemplateBuilder restTemplateBuilder) {
     this.rootUrl = rootUrl;
     this.createPaymentUri = URI.create(rootUrl + CREATE_URI);
@@ -57,8 +56,7 @@ public class ExternalPaymentsRepository {
    * Set API key and build Rest Template.
    */
   public void setApiKey(String apiKey) {
-    this.restTemplate = this.restTemplateBuilder
-        .interceptors(apiKeyHeaderInjector(apiKey)).build();
+    this.restTemplate = this.restTemplateBuilder.interceptors(apiKeyHeaderInjector(apiKey)).build();
     logMaskedApiKey(apiKey);
 
   }
@@ -74,23 +72,18 @@ public class ExternalPaymentsRepository {
   }
 
   /**
-   * Creates a payment in the external service for the provided {@code payment}
-   * entity.
+   * Creates a payment in the external service for the provided {@code payment} entity.
    *
-   * @param  payment                  Object of the internal payment.
-   * @param  returnUrl                Url from the Fronted to redirect after
-   *                                    payment in GOV.UK PAY.
-   * @return                          An instance of {@link Payment} with
-   *                                  {@code externalPaymentId} and
-   *                                  {@code nextUrl} properties set.
-   * @throws NullPointerException     if {@code payment} or
-   *                                    {@link Payment#getId()} is null
+   * @param payment Object of the internal payment.
+   * @param returnUrl Url from the Fronted to redirect after payment in GOV.UK PAY.
+   * @return An instance of {@link Payment} with {@code externalPaymentId} and {@code nextUrl}
+   *         properties set.
+   * @throws NullPointerException if {@code payment} or {@link Payment#getId()} is null
    * @throws IllegalArgumentException if {@code returnUrl} is null or empty
    */
   public Payment create(Payment payment, String returnUrl) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
-    Preconditions.checkNotNull(payment.getId(),
-        "Payment must have set its internal identifier");
+    Preconditions.checkNotNull(payment.getId(), "Payment must have set its internal identifier");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(returnUrl),
         "Return url cannot be null or empty");
     try {
@@ -100,12 +93,14 @@ public class ExternalPaymentsRepository {
       ResponseEntity<CreatePaymentResult> responseEntity =
           restTemplate.exchange(request, CreatePaymentResult.class);
       CreatePaymentResult responseBody = responseEntity.getBody();
-      return payment.toBuilder().externalPaymentId(responseBody.getPaymentId())
-          .status(toModelStatus(responseBody.getState().getStatus()))
+      ExternalPaymentStatus externalPaymentStatus =
+          toModelStatus(responseBody.getState().getStatus());
+      return payment.toBuilder().externalId(responseBody.getPaymentId())
+          .submittedTimestamp(LocalDateTime.now()).externalPaymentStatus(externalPaymentStatus)
+          .submittedTimestamp(LocalDateTime.now())
           .nextUrl(responseBody.getLinks().getNextUrl().getHref()).build();
     } catch (RestClientException e) {
-      log.error("Error while creating the payment for '{}': {}",
-          payment.getId(), e.getMessage());
+      log.error("Error while creating the payment for '{}': {}", payment.getId(), e.getMessage());
       throw e;
     } finally {
       log.info("Create the payment for {}: finish", payment.getId());
@@ -113,38 +108,39 @@ public class ExternalPaymentsRepository {
   }
 
   /**
-   * Converts a status returned from the GOV UK Pay service to
-   * {@link PaymentStatus}. If the value does not match any existing one,
-   * {@link PaymentStatus#UNKNOWN} is returned.
+   * <<<<<<< HEAD Converts a status returned from the GOV UK Pay service to {@link PaymentStatus}.
+   * If the value does not match any existing one, {@link PaymentStatus#UNKNOWN} is returned.
+   * ======= Converts a status returned from the GOV UK Pay service to
+   * {@link ExternalPaymentStatus}. If the value does not match any existing one,
+   * {@link ExternalPaymentStatus#UNKNOWN} is returned. >>>>>>>
+   * 0b3427216898cdca1b2a03074aed4b81f521254a
    */
-  private PaymentStatus toModelStatus(String status) {
+  private ExternalPaymentStatus toModelStatus(String status) {
     try {
-      return PaymentStatus.valueOf(status.toUpperCase());
+      return ExternalPaymentStatus.valueOf(status.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.error("Unrecognized payment status '{}', returning {}", status,
-          PaymentStatus.UNKNOWN);
-      return PaymentStatus.UNKNOWN;
+      log.error("Unrecognized external payment status '{}', returning {}", status,
+          ExternalPaymentStatus.UNKNOWN);
+      return ExternalPaymentStatus.UNKNOWN;
     }
   }
 
   /**
    * Gets payment details by its identifier.
    *
-   * @param  id                       ID of the payment.
-   * @return                          {@link GetPaymentResult} wrapped in
-   *                                  {@link Optional} if the payment exist,
-   *                                  {@link Optional#empty()} otherwise.
+   * @param id ID of the payment.
+   * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist,
+   *         {@link Optional#empty()} otherwise.
    * @throws IllegalArgumentException if {@code id} is null or empty
    */
-  public Optional<Payment> findById(String id) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(id),
-        "ID cannot be null or empty");
+  public Optional<GetPaymentResult> findById(String id) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "ID cannot be null or empty");
     try {
       log.info("Get payment by id '{}' : start", id);
       RequestEntity<Void> request = buildRequestEntityForFindById(id);
       ResponseEntity<GetPaymentResult> responseEntity =
           restTemplate.exchange(request, GetPaymentResult.class);
-      return Optional.of(responseEntity.getBody().toPayment());
+      return Optional.of(responseEntity.getBody());
     } catch (NotFound e) {
       log.error("Payment with id '{}' not found", id);
       return Optional.empty();
@@ -160,16 +156,14 @@ public class ExternalPaymentsRepository {
    * Creates a request entity for {@code findBy} operation.
    */
   private RequestEntity<Void> buildRequestEntityForFindById(String id) {
-    return RequestEntity.get(buildFindByUri(id))
-        .accept(MediaType.APPLICATION_JSON).build();
+    return RequestEntity.get(buildFindByUri(id)).accept(MediaType.APPLICATION_JSON).build();
   }
 
   /**
    * Creates {@link URI} for {@code findBy} operation.
    */
   private URI buildFindByUri(String id) {
-    return UriComponentsBuilder.fromUriString(rootUrl + FIND_BY_ID_URI_TEMPLATE)
-        .build(id);
+    return UriComponentsBuilder.fromUriString(rootUrl + FIND_BY_ID_URI_TEMPLATE).build(id);
   }
 
   /**
@@ -177,24 +171,22 @@ public class ExternalPaymentsRepository {
    */
   private RequestEntity<CreateCardPaymentRequest> buildRequestEntityForCreate(
       CreateCardPaymentRequest body) {
-    return RequestEntity.post(createPaymentUri)
-        .accept(MediaType.APPLICATION_JSON)
+    return RequestEntity.post(createPaymentUri).accept(MediaType.APPLICATION_JSON)
         .contentType(MediaType.APPLICATION_JSON).body(body);
   }
 
   /**
    * Creates {@link URI} for {@code create} operation.
    */
-  private CreateCardPaymentRequest buildCreateBody(Payment payment,
-      String returnUrl) {
-    return CreateCardPaymentRequest.builder().amount(payment.getChargePaid())
-        .description("Payment for #" + payment.getId())
-        .reference(payment.getId().toString()).returnUrl(returnUrl).build();
+  private CreateCardPaymentRequest buildCreateBody(Payment payment, String returnUrl) {
+    return CreateCardPaymentRequest.builder().amount(payment.getTotalPaid())
+        .description("Payment for #" + payment.getId()).reference(payment.getId().toString())
+        .returnUrl(returnUrl).build();
   }
 
   /**
-   * Creates {@link ClientHttpRequestInterceptor} which injects authorization
-   * header in an automatic fashion for every request.
+   * Creates {@link ClientHttpRequestInterceptor} which injects authorization header in an automatic
+   * fashion for every request.
    */
   private ClientHttpRequestInterceptor apiKeyHeaderInjector(String apiKey) {
     return (request, payload, execution) -> {

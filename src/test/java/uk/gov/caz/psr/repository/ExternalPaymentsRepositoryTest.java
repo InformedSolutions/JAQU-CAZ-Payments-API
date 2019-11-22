@@ -7,6 +7,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+<<<<<<< HEAD
+=======
+
+import java.time.LocalDate;
+import java.util.Arrays;
+>>>>>>> 0b3427216898cdca1b2a03074aed4b81f521254a
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,8 +35,8 @@ import uk.gov.caz.psr.dto.external.Link;
 import uk.gov.caz.psr.dto.external.PaymentLinks;
 import uk.gov.caz.psr.dto.external.PaymentState;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
 class ExternalPaymentsRepositoryTest {
@@ -132,7 +138,7 @@ class ExternalPaymentsRepositoryTest {
 
       // then
       assertThat(result).isNotNull();
-      assertThat(result.getStatus()).isEqualTo(PaymentStatus.UNKNOWN);
+      assertThat(result.getExternalPaymentStatus()).isEqualTo(ExternalPaymentStatus.UNKNOWN);
     }
 
     private void mockRestTemplateResultWithUnrecognizedStatus() {
@@ -165,9 +171,16 @@ class ExternalPaymentsRepositoryTest {
     }
 
     private Payment createPayment(UUID paymentId) {
+<<<<<<< HEAD
       return Payment.builder().id(paymentId).chargePaid(100)
           .paymentMethod(PaymentMethod.CREDIT_CARD)
           .status(PaymentStatus.STARTED).build();
+=======
+      return Payments.forDays(
+          Arrays.asList(LocalDate.now(), LocalDate.now().plusDays(1)),
+          paymentId
+      );
+>>>>>>> 0b3427216898cdca1b2a03074aed4b81f521254a
     }
   }
 
@@ -211,7 +224,7 @@ class ExternalPaymentsRepositoryTest {
       String id = "payment id";
 
       // when
-      Optional<Payment> result = paymentsRepository.findById(id);
+      Optional<GetPaymentResult> result = paymentsRepository.findById(id);
 
       // then
       assertThat(result).isEmpty();
@@ -240,7 +253,7 @@ class ExternalPaymentsRepositoryTest {
       String id = "payment id";
 
       // when
-      Optional<Payment> result = paymentsRepository.findById(id);
+      Optional<GetPaymentResult> result = paymentsRepository.findById(id);
 
       // then
       assertThat(result).isNotEmpty();

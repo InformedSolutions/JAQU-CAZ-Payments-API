@@ -27,11 +27,10 @@ import uk.gov.caz.GlobalExceptionHandlerConfiguration;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.service.GetAndUpdatePaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
+import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class,
     Configuration.class, PaymentsController.class})
@@ -68,7 +67,7 @@ class PaymentsControllerTest {
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
         .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
             .value("Missing request header 'X-Correlation-ID'"));
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
@@ -81,7 +80,7 @@ class PaymentsControllerTest {
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
@@ -94,7 +93,7 @@ class PaymentsControllerTest {
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
@@ -107,7 +106,7 @@ class PaymentsControllerTest {
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
@@ -120,18 +119,23 @@ class PaymentsControllerTest {
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any(), any());
+    verify(initiatePaymentService, never()).createPayment(any());
   }
 
   @Test
   public void shouldReturnValidResponse() throws Exception {
     InitiatePaymentRequest requestParams = baseRequestBuilder().build();
     String payload = toJsonString(requestParams);
-    Payment successfullyCreatedPayment = createdPayment(requestParams);
+    Payment successfullyCreatedPayment = Payments.existing();
 
+<<<<<<< HEAD
     given(
         initiatePaymentService.createPayment(requestParams, ANY_CORRELATION_ID))
             .willReturn(successfullyCreatedPayment);
+=======
+    given(initiatePaymentService.createPayment(requestParams))
+        .willReturn(successfullyCreatedPayment);
+>>>>>>> 0b3427216898cdca1b2a03074aed4b81f521254a
 
     mockMvc
         .perform(post(BASE_PATH).content(payload)
@@ -144,6 +148,7 @@ class PaymentsControllerTest {
         .andExpect(jsonPath("$.nextUrl")
             .value(successfullyCreatedPayment.getNextUrl()));
 
+<<<<<<< HEAD
     verify(initiatePaymentService).createPayment(requestParams,
         ANY_CORRELATION_ID);
   }
@@ -155,6 +160,9 @@ class PaymentsControllerTest {
         .externalPaymentId("EXTERNAL_PAYMENT_ID")
         .nextUrl("https://next.payment.url").status(PaymentStatus.CREATED)
         .paymentMethod(PaymentMethod.CREDIT_CARD).build();
+=======
+    verify(initiatePaymentService).createPayment(requestParams);
+>>>>>>> 0b3427216898cdca1b2a03074aed4b81f521254a
   }
 
   private String paymentRequestWithEmptyDays() {

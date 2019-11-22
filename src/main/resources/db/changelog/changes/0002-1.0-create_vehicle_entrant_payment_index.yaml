@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0002.1-1.0
+      author: dawid.ratka
+      changes:
+        - createIndex:
+            indexName: VEHICLE_ENTRANT_PAYMENT_SEARCH_INDEX
+            tableName: VEHICLE_ENTRANT_PAYMENT
+            columns:
+              - column:
+                  name: CAZ_ID
+              - column:
+                  name: VRN
+              - column:
+                  name: TRAVEL_DATE

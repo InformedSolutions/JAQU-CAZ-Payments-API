@@ -5,14 +5,18 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import javax.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.caz.correlationid.Constants;
+import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
+import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
@@ -51,7 +55,7 @@ public interface ChargeSettlementControllerApiSpec {
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "x-api-key",
+      @ApiImplicitParam(name = Headers.X_API_KEY,
           required = true, value = "API key used to access the service",
           paramType = "header"),
       @ApiImplicitParam(name = "Authorization",
@@ -60,7 +64,7 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @GetMapping(ChargeSettlementController.PAYMENT_INFO_PATH)
-  ResponseEntity<PaymentInfoResponse> getPaymentInfo();
+  ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest);
 
   /**
    * Allows LAs to query and retrieve data that enables them to determine whether a vehicle that has
@@ -91,7 +95,7 @@ public interface ChargeSettlementControllerApiSpec {
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "x-api-key",
+      @ApiImplicitParam(name = Headers.X_API_KEY,
           required = true, value = "API key used to access the service",
           paramType = "header"),
       @ApiImplicitParam(name = "Authorization",
@@ -100,7 +104,7 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @GetMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
-  ResponseEntity<PaymentStatusResponse> getPaymentStatus();
+  ResponseEntity<PaymentStatusResponse> getPaymentStatus(@Valid PaymentStatusRequest request);
 
   /**
    * Allows Local Authorities to update the status of one or more paid CAZ charges to reflect any
@@ -131,7 +135,7 @@ public interface ChargeSettlementControllerApiSpec {
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "x-api-key",
+      @ApiImplicitParam(name = Headers.X_API_KEY,
           required = true, value = "API key used to access the service",
           paramType = "header"),
       @ApiImplicitParam(name = "Authorization",
@@ -140,5 +144,7 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @PutMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
-  PaymentUpdateSuccessResponse updatePaymentStatus(@RequestBody PaymentStatusUpdateRequest request);
+  PaymentUpdateSuccessResponse updatePaymentStatus(
+      @Valid @RequestBody PaymentStatusUpdateRequest request,
+      @RequestHeader(Headers.X_API_KEY) String apiKey);
 }

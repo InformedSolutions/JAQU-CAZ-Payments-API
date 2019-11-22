@@ -18,7 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <rest-assured.version>4.0.0</rest-assured.version>
-    <internal.libraries.version>1.6.1-SNAPSHOT</internal.libraries.version>
+    <internal.libraries.version>2.0-SNAPSHOT</internal.libraries.version>
     <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
@@ -26,19 +26,35 @@
 
     <sonar.coverage.exclusions>
       **/configuration/**/*.java,
+      **/psr/Application.java,
       **/amazonaws/StreamLambdaHandler.java,
       **/amazonaws/CleanupDanglingPaymentsHandler.java,
-      **/psr/dto/**/*.java,
       <!-- TODO remove once ChargeSettlementController is implemented and tested -->
+      **/psr/dto/ChargeSettlementPaymentStatus.java,
       **/psr/controller/ChargeSettlementController.java,
-      <!-- TODO remove once CAZ-1238 is implemented -->
-      **/psr/repository/VehicleEntranceRepository.java,
-      <!-- TODO remove once CAZ-1232 is implemented -->
-      **/psr/service/CleanupDanglingPaymentsService.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
     </sonar.coverage.jacoco.xmlReportPaths>
+
+    <!-- Sonar rule exclusions - begin -->
+    <sonar.issue.ignore.multicriteria>j1,j2</sonar.issue.ignore.multicriteria>
+    <!-- Ignore 'URIs should not be hardcoded' rule -->
+    <sonar.issue.ignore.multicriteria.j1.ruleKey>
+      squid:S1075
+    </sonar.issue.ignore.multicriteria.j1.ruleKey>
+    <sonar.issue.ignore.multicriteria.j1.resourceKey>
+      **/*.java
+    </sonar.issue.ignore.multicriteria.j1.resourceKey>
+
+    <!-- Ignore 'String literals should not be duplicated' in repositories -->
+    <sonar.issue.ignore.multicriteria.j2.ruleKey>
+      squid:S1192
+    </sonar.issue.ignore.multicriteria.j2.ruleKey>
+    <sonar.issue.ignore.multicriteria.j2.resourceKey>
+      **/psr/repository/*.java
+    </sonar.issue.ignore.multicriteria.j2.resourceKey>
+    <!-- Sonar rule exclusions - end -->
 
     <!-- to enable running only integration tests without unit tests -->
     <skipUnitTests>${skipTests}</skipUnitTests>
@@ -80,6 +96,11 @@
       <artifactId>global-exception-mapper</artifactId>
       <version>${internal.libraries.version}</version>
     </dependency>
+    <dependency>
+      <groupId>uk.gov.caz</groupId>
+      <artifactId>security</artifactId>
+      <version>${internal.libraries.version}</version>
+    </dependency>
     <!-- Internal libraries : end -->
 
     <dependency>
@@ -99,7 +120,17 @@
       <groupId>com.amazonaws.secretsmanager</groupId>
       <artifactId>aws-secretsmanager-jdbc</artifactId>
       <version>1.0.2</version>
-    </dependency>
+    </dependency>    
+    <dependency>
+	    <groupId>com.amazonaws</groupId>
+	    <artifactId>amazon-sqs-java-messaging-lib</artifactId>
+	    <version>1.0.8</version>
+	  </dependency>
+	  
+	<dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-aws-messaging</artifactId>
+	</dependency>
     <!-- aws-related : end-->
 
     <!-- Spring-related : begin -->
@@ -529,13 +560,9 @@
                 <exclude>**/Application.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
-                <exclude>**/psr/dto/**/*.class</exclude>
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
-                <!-- TODO remove once CAZ-1238 is implemented -->
-                <exclude>**/psr/repository/VehicleEntranceRepository.class</exclude>
-                <!-- TODO remove once CAZ-1232 is implemented -->
-                <exclude>**/psr/service/CleanupDanglingPaymentsService.class</exclude>
+                <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
               </excludes>
               <rules>
                 <rule>

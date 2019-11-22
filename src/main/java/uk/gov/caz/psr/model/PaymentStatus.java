@@ -1,16 +1,29 @@
 package uk.gov.caz.psr.model;
 
-public enum PaymentStatus {
-  INITIATED,
+import lombok.Builder;
+import lombok.Value;
 
-  CREATED,
-  STARTED,
-  SUBMITTED,
+/**
+ * An entity which represents a compound response from DB from {@code PAYMENT}
+ * and {@code VEHICLE_ENTRANT_PAYMENT} tables.
+ */
+@Value
+@Builder
+public class PaymentStatus {
 
-  SUCCESS,
-  FAILED,
-  CANCELLED,
-  ERROR,
+  /**
+   * The unique payment ID coming from GOV UK Pay services.
+   */
+  String externalId;
 
-  UNKNOWN,
+  /**
+   * Status of the payment.
+   */
+  InternalPaymentStatus status;
+
+  /**
+   * A unique identifier that provides traceability between the central CAZ Service
+   * and Local Authority.
+   */
+  String caseReference;
 }
