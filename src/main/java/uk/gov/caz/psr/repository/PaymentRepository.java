@@ -149,6 +149,17 @@ public class PaymentRepository {
   }
 
   /**
+   * Finds a given payment by its external identifier.
+   *
+   * @param id An external identifier of the payment.
+   * @return An instance of {@link Payment} class wrapped in {@link Optional} if the payment is
+   *     found, {@link Optional#empty()} otherwise.
+   */
+  public Optional<Payment> findByExternalId(String id) {
+    return Optional.empty();
+  }
+
+  /**
    * Finds all unfinished payments done in GOV UK Pay service.
    *
    * @return A list of {@link Payment} which were done in GOV UK Pay service, but were not finished.
