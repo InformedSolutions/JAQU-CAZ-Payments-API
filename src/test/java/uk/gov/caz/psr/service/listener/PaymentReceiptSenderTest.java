@@ -106,7 +106,8 @@ public class PaymentReceiptSenderTest {
     // given
     PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
     SendEmailRequest sendEmailRequest = anyValidRequest();
-    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT))
+    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(8.0);
+    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, 8.0))
         .thenReturn(sendEmailRequest);
 
     // when

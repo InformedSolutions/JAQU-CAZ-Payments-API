@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
@@ -326,6 +327,22 @@ public class TestObjectFactory {
           .caseReference(caseReference)
           .status(internalPaymentStatus)
           .externalId(externalId)
+          .build();
+    }
+  }
+
+  public static class ExternalPaymentDetailsFactory {
+    public static ExternalPaymentDetails any() {
+      return ExternalPaymentDetails.builder()
+          .email("example@email.com")
+          .externalPaymentStatus(ExternalPaymentStatus.SUCCESS)
+          .build();
+    }
+
+    public static ExternalPaymentDetails anyWithStatus(ExternalPaymentStatus externalPaymentStatus) {
+      return ExternalPaymentDetails.builder()
+          .email("example@email.com")
+          .externalPaymentStatus(externalPaymentStatus)
           .build();
     }
   }
