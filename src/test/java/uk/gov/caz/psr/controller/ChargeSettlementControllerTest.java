@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -31,7 +33,11 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.service.ChargeSettlementService;
 import uk.gov.caz.psr.service.PaymentStatusUpdateService;
+import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
 
 @ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class, Configuration.class,
@@ -47,6 +53,8 @@ class ChargeSettlementControllerTest {
 
   @MockBean
   private PaymentStatusUpdateService paymentStatusUpdateService;
+  @MockBean
+  private ChargeSettlementService chargeSettlementService;
 
   private static final String ANY_VALID_VRN = "DL76MWX";
   private static final String ANY_VALID_DATE_STRING = LocalDate.now().toString();
@@ -55,7 +63,7 @@ class ChargeSettlementControllerTest {
   private static final String PAYMENT_STATUS_PUT_PATH = BASE_PATH + PAYMENT_STATUS_PATH;
 
   @Nested
-  class PaymentStatus {
+  class GetPaymentStatus {
 
     @Test
     public void missingCorrelationIdShouldResultIn400AndValidMessage() throws Exception {
@@ -104,8 +112,16 @@ class ChargeSettlementControllerTest {
 
     @Test
     public void shouldReturn200StatusCodeWhenRequestIsValid() throws Exception {
+      UUID xApiKey = UUID.randomUUID();
+      PaymentStatus paymentStatusStub = PaymentStatusFactory
+          .anyWithStatus(InternalPaymentStatus.PAID);
+
+      given(chargeSettlementService.findChargeSettlement(any(), any(), any()))
+          .willReturn(paymentStatusStub);
+
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, UUID.randomUUID())
           .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
           .accept(MediaType.APPLICATION_JSON_UTF8)
           .param("vrn", ANY_VALID_VRN)
