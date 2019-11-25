@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
@@ -15,17 +16,20 @@ import uk.gov.caz.psr.model.VehicleEntrantPayment;
  * one in associated vehicle entrant payments.
  */
 @Service
-public class PaymentWithExternalStatusBuilder {
+public class PaymentWithExternalPaymentDetailsBuilder {
 
   /**
    * Creates a new instance of {@link Payment} based on the passed {@code payment} with {@code
    * newStatus} set and mapped internal one in associated vehicle entrant payments.
    */
-  public Payment buildPaymentWithStatus(Payment payment, ExternalPaymentStatus newStatus) {
-    checkPreconditions(payment, newStatus);
+  public Payment buildPaymentWithExternalPaymentDetails(Payment payment,
+      ExternalPaymentDetails externalPaymentDetails) {
+    checkPreconditions(payment, externalPaymentDetails);
+    ExternalPaymentStatus newStatus = externalPaymentDetails.getExternalPaymentStatus();
 
     return payment.toBuilder()
         .externalPaymentStatus(newStatus)
+        .emailAddress(externalPaymentDetails.getEmail())
         .authorisedTimestamp(getAuthorisedTimestamp(payment, newStatus))
         .vehicleEntrantPayments(buildVehicleEntrantPaymentsWith(newStatus,
             payment.getVehicleEntrantPayments())
@@ -35,15 +39,16 @@ public class PaymentWithExternalStatusBuilder {
 
   /**
    * Verifies whether passed {@code payment} and {@status} are in valid state when calling {@link
-   * PaymentWithExternalStatusBuilder#buildPaymentWithStatus(uk.gov.caz.psr.model.Payment,
-   * uk.gov.caz.psr.model.ExternalPaymentStatus)}.
+   * PaymentWithExternalPaymentDetailsBuilder#buildPaymentWithExternalPaymentDetails(
+   * uk.gov.caz.psr.model.Payment, uk.gov.caz.psr.model.ExternalPaymentDetails)}.
    */
-  private void checkPreconditions(Payment payment, ExternalPaymentStatus newStatus) {
+  private void checkPreconditions(Payment payment, ExternalPaymentDetails externalPaymentDetails) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
-    Preconditions.checkNotNull(newStatus, "newStatus cannot be null");
-    Preconditions.checkArgument(newStatus != payment.getExternalPaymentStatus(),
+    Preconditions.checkNotNull(externalPaymentDetails, "externalPaymentDetails cannot be null");
+    Preconditions.checkArgument(
+        externalPaymentDetails.getExternalPaymentStatus() != payment.getExternalPaymentStatus(),
         "Status cannot be equal to the existing status ('%s' != '%s')",
-        newStatus, payment.getExternalPaymentStatus());
+        externalPaymentDetails.getExternalPaymentStatus(), payment.getExternalPaymentStatus());
   }
 
   /**

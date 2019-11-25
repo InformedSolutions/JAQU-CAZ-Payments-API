@@ -3,7 +3,6 @@ package uk.gov.caz.psr.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -18,14 +17,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.dto.external.PaymentState;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.util.GetPaymentResultConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
+import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
 
 @ExtendWith(MockitoExtension.class)
 class GetAndUpdatePaymentsServiceTest {
+
   @Mock
   private PaymentRepository internalPaymentsRepository;
 
@@ -34,6 +37,9 @@ class GetAndUpdatePaymentsServiceTest {
 
   @Mock
   private PaymentStatusUpdater paymentStatusUpdater;
+
+  @Mock
+  private GetPaymentResultConverter getPaymentResultConverter;
 
   @InjectMocks
   private GetAndUpdatePaymentsService getAndUpdatePaymentsService;
@@ -81,7 +87,7 @@ class GetAndUpdatePaymentsServiceTest {
     // then
     assertThat(result).isEmpty();
     verify(externalPaymentsRepository, never()).findById(any());
-    verify(paymentStatusUpdater, never()).updateWithStatus(any(), any(), any());
+    verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
   }
 
   @Test
@@ -98,7 +104,7 @@ class GetAndUpdatePaymentsServiceTest {
     // then
     assertThat(result).isEmpty();
     verify(externalPaymentsRepository, never()).findById(any());
-    verify(paymentStatusUpdater, never()).updateWithStatus(any(), any(), any());
+    verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
   }
 
   @Test
@@ -108,6 +114,7 @@ class GetAndUpdatePaymentsServiceTest {
     String externalId = "ext-id";
     Payment payment = mockInternalPaymentWith(paymentId, externalId);
     mockSameExternalStatusFor(payment);
+    mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
 
     // when
     Optional<Payment> result = getAndUpdatePaymentsService
@@ -115,34 +122,39 @@ class GetAndUpdatePaymentsServiceTest {
 
     // then
     assertThat(result).contains(payment);
-    verify(paymentStatusUpdater, never()).updateWithStatus(any(), any(), any());
+    verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
   }
 
   @Test
   public void shouldUpdatePaymentStatusIfExternalPaymentStatusChanged() {
     // given
-    ExternalPaymentStatus initialStatus = ExternalPaymentStatus.CREATED;
-    ExternalPaymentStatus newStatus = ExternalPaymentStatus.SUCCESS;
-    String email = "a@b.com";
+    ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.CREATED);
+    ExternalPaymentDetails newExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.SUCCESS);
+
+    String email = "example@email.com";
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
-    Payment payment = mockInternalPaymentWith(paymentId, "ext-id", initialStatus);
+    Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
+        initExternalPaymentDetails.getExternalPaymentStatus());
+    Payment paymentWithEmail = payment.toBuilder().emailAddress(email).build();
     mockSuccessStatusFor(payment, email);
-    mockSuccessStatusUpdater(payment);
+    mockStatusUpdaterWithSuccess(paymentWithEmail, newExternalPaymentDetails);
+    mockGetPaymentResultConverter(ExternalPaymentStatus.SUCCESS);
 
     // when
     Optional<Payment> result = getAndUpdatePaymentsService
         .getExternalPaymentAndUpdateStatus(paymentId);
 
     // then
-    assertThat(result).contains(payment);
-    verify(paymentStatusUpdater).updateWithStatus(eq(payment), eq(newStatus), argThat(callback -> {
-      Payment paymentWithEmail = callback.apply(payment);
-      return email.equals(paymentWithEmail.getEmailAddress());
-    }));
+    assertThat(result).contains(paymentWithEmail);
+    verify(paymentStatusUpdater)
+        .updateWithExternalPaymentDetails(eq(paymentWithEmail), eq(newExternalPaymentDetails));
   }
 
-  private void mockSuccessStatusUpdater(Payment payment) {
-    given(paymentStatusUpdater.updateWithStatus(eq(payment), any(), any()))
+  private void mockStatusUpdaterWithSuccess(Payment payment,
+      ExternalPaymentDetails externalPaymentDetails) {
+    given(paymentStatusUpdater.updateWithExternalPaymentDetails(payment, externalPaymentDetails))
         .willAnswer(answer -> answer.getArgument(0));
   }
 
@@ -158,6 +170,15 @@ class GetAndUpdatePaymentsServiceTest {
 
   private void mockInternalPaymentInDatabase(UUID paymentId, Payment payment) {
     given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.of(payment));
+  }
+
+  private void mockGetPaymentResultConverter(ExternalPaymentStatus externalPaymentStatus) {
+    given(getPaymentResultConverter.toExternalPaymentDetails(any()))
+        .willReturn(ExternalPaymentDetails.builder()
+            .email("example@email.com")
+            .externalPaymentStatus(externalPaymentStatus)
+            .build()
+        );
   }
 
   private void mockSuccessStatusFor(Payment payment, String email) {

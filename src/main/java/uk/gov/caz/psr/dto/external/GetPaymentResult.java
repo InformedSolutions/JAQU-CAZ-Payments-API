@@ -15,6 +15,7 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 @Builder
 @Slf4j
 public class GetPaymentResult {
+
   int amount;
   String description;
   String reference;

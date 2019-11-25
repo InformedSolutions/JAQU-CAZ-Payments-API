@@ -6,24 +6,27 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.util.TestObjectFactory;
+import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentWithExternalStatusBuilderTest {
 
-  private PaymentWithExternalStatusBuilder builder = new PaymentWithExternalStatusBuilder();
+  private PaymentWithExternalPaymentDetailsBuilder builder = new PaymentWithExternalPaymentDetailsBuilder();
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
     // given
     Payment payment = null;
-    ExternalPaymentStatus status = ExternalPaymentStatus.SUCCESS;
+    ExternalPaymentDetails externalPaymentDetails = ExternalPaymentDetailsFactory.any();
 
     // when
-    Throwable throwable = catchThrowable(() -> builder.buildPaymentWithStatus(payment, status));
+    Throwable throwable = catchThrowable(
+        () -> builder.buildPaymentWithExternalPaymentDetails(payment, externalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -34,25 +37,29 @@ class PaymentWithExternalStatusBuilderTest {
   public void shouldThrowNullPointerExceptionWhenStatusIsNull() {
     // given
     Payment payment = anyPayment();
-    ExternalPaymentStatus status = null;
+    ExternalPaymentDetails externalPaymentDetails = null;
 
     // when
-    Throwable throwable = catchThrowable(() -> builder.buildPaymentWithStatus(payment, status));
+    Throwable throwable = catchThrowable(
+        () -> builder.buildPaymentWithExternalPaymentDetails(payment, externalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
-        .hasMessage("newStatus cannot be null");
+        .hasMessage("externalPaymentDetails cannot be null");
   }
 
   @Test
   public void shouldThrowNullPointerExceptionWhenNewStatusIsTheSameAsTheExistingOne() {
     // given
-    ExternalPaymentStatus initStatus = ExternalPaymentStatus.INITIATED;
-    Payment payment = anyPaymentWithStatus(initStatus);
-    ExternalPaymentStatus newStatus = ExternalPaymentStatus.INITIATED;
+    ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment = anyPaymentWithStatus(initExternalPaymentDetails.getExternalPaymentStatus());
+    ExternalPaymentDetails newExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
 
     // when
-    Throwable throwable = catchThrowable(() -> builder.buildPaymentWithStatus(payment, newStatus));
+    Throwable throwable = catchThrowable(
+        () -> builder.buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -62,15 +69,19 @@ class PaymentWithExternalStatusBuilderTest {
   @Test
   public void shouldCreateNewPaymentWithPassedStatus() {
     // given
-    ExternalPaymentStatus initStatus = ExternalPaymentStatus.INITIATED;
-    Payment payment = anyPaymentWithStatus(initStatus);
-    ExternalPaymentStatus newStatus = ExternalPaymentStatus.CREATED;
+    ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment = anyPaymentWithStatus(initExternalPaymentDetails.getExternalPaymentStatus());
+    ExternalPaymentDetails newExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.CREATED);
 
     // when
-    Payment result = builder.buildPaymentWithStatus(payment, newStatus);
+    Payment result = builder
+        .buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails);
 
     // then
-    assertThat(result.getExternalPaymentStatus()).isEqualTo(newStatus);
+    assertThat(result.getExternalPaymentStatus())
+        .isEqualTo(newExternalPaymentDetails.getExternalPaymentStatus());
     assertThat(result.getAuthorisedTimestamp()).isNull();
     assertThat(result.getVehicleEntrantPayments()).allSatisfy((vehicleEntrantPayment -> {
       assertThat(vehicleEntrantPayment.getInternalPaymentStatus())
@@ -81,15 +92,19 @@ class PaymentWithExternalStatusBuilderTest {
   @Test
   public void shouldCreateNewSuccessPaymentWithAuthTimestampSetAndPaidInternalStatus() {
     // given
-    ExternalPaymentStatus initStatus = ExternalPaymentStatus.INITIATED;
-    Payment payment = anyPaymentWithStatus(initStatus);
-    ExternalPaymentStatus newStatus = ExternalPaymentStatus.SUCCESS;
+    ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment = anyPaymentWithStatus(initExternalPaymentDetails.getExternalPaymentStatus());
+    ExternalPaymentDetails newExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.SUCCESS);
 
     // when
-    Payment result = builder.buildPaymentWithStatus(payment, newStatus);
+    Payment result = builder
+        .buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails);
 
     // then
-    assertThat(result.getExternalPaymentStatus()).isEqualTo(newStatus);
+    assertThat(result.getExternalPaymentStatus())
+        .isEqualTo(newExternalPaymentDetails.getExternalPaymentStatus());
     assertThat(result.getAuthorisedTimestamp()).isNotNull();
     assertThat(result.getVehicleEntrantPayments()).allSatisfy((vehicleEntrantPayment -> {
       assertThat(vehicleEntrantPayment.getInternalPaymentStatus())

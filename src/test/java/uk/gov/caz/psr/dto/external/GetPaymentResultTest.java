@@ -13,7 +13,7 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 class GetPaymentResultTest {
 
   @Nested
-  class GetStatus {
+  class ToExternalPaymentDetails {
 
     @ParameterizedTest
     @ValueSource(strings = {"not_recognized", "invalid_status", "aaa"})

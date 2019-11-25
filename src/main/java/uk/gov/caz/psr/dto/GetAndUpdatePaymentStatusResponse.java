@@ -13,14 +13,18 @@ import uk.gov.caz.psr.model.Payment;
 public class GetAndUpdatePaymentStatusResponse {
   @NonNull
   UUID paymentId;
+
   @NonNull
   SuccessFailurePaymentStatus status;
 
+  String userEmail;
+  
   /**
    * Creates an instance of this class based on the passed {@link Payment} instance.
    */
   public static GetAndUpdatePaymentStatusResponse from(Payment payment) {
     return new GetAndUpdatePaymentStatusResponse(payment.getId(),
-        SuccessFailurePaymentStatus.from(payment.getExternalPaymentStatus()));
+        SuccessFailurePaymentStatus.from(payment.getExternalPaymentStatus()),
+        payment.getEmailAddress());
   }
 }
