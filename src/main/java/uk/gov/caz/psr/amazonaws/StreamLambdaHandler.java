@@ -64,8 +64,8 @@ public class StreamLambdaHandler implements RequestStreamHandler {
   }
 
   @Override
-  public void handleRequest(final InputStream inputStream, final OutputStream outputStream,
-      final Context context)
+  public void handleRequest(InputStream inputStream, OutputStream outputStream,
+      Context context)
       throws IOException {
     String input = StreamUtils.copyToString(inputStream, Charset.defaultCharset());
     log.info("Input received: " + input);
@@ -98,7 +98,7 @@ public class StreamLambdaHandler implements RequestStreamHandler {
                 (double) sleepDuration / 1000));
         Thread.sleep(sleepDuration);
       }
-    } catch (final Exception e) {
+    } catch (Exception e) {
       throw new IOException(e);
     }
   }
@@ -109,7 +109,7 @@ public class StreamLambdaHandler implements RequestStreamHandler {
    * @param action the request under examination
    * @return true if the incoming request is a keep-warm one otherwise false.
    */
-  private boolean isWarmupRequest(final String action) {
+  private boolean isWarmupRequest(String action) {
     boolean isWarmupRequest = action.contains(KEEP_WARM_ACTION);
     if (isWarmupRequest) {
       log.info("Received lambda warmup request");
@@ -167,7 +167,7 @@ public class StreamLambdaHandler implements RequestStreamHandler {
     /**
     * Set the time that the container serves a request.
     */
-    public static void setLatestRequestTime(final LocalDateTime latestRequestTime) {
+    public static void setLatestRequestTime(LocalDateTime latestRequestTime) {
       LambdaContainerStats.latestRequestTime = latestRequestTime;
     }
   }
