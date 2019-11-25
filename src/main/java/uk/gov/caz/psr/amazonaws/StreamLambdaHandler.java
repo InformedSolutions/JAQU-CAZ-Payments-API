@@ -65,8 +65,7 @@ public class StreamLambdaHandler implements RequestStreamHandler {
 
   @Override
   public void handleRequest(InputStream inputStream, OutputStream outputStream,
-      Context context)
-      throws IOException {
+      Context context) throws IOException {
     String input = StreamUtils.copyToString(inputStream, Charset.defaultCharset());
     log.info("Input received: " + input);
     if (isWarmupRequest(input)) {
