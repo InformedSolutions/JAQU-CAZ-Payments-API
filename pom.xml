@@ -562,6 +562,7 @@
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
+                <exclude>**/psr/repository/PaymentInfoRepository.class</exclude>
                 <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
               </excludes>
               <rules>
