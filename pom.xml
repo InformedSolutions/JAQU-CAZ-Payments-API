@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.1.5.RELEASE</version> <!-- lookup parent from repository -->
+    <version>2.2.1.RELEASE</version> <!-- lookup parent from repository -->
   </parent>
   <groupId>uk.gov.caz.psr</groupId>
   <artifactId>payment-service</artifactId>
@@ -18,7 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <rest-assured.version>4.0.0</rest-assured.version>
-    <internal.libraries.version>2.0-SNAPSHOT</internal.libraries.version>
+    <internal.libraries.version>2.5-SNAPSHOT</internal.libraries.version>
     <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
@@ -147,10 +147,20 @@
       <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-aws-secrets-manager-config</artifactId>
     </dependency>
     <!-- Spring-related : end -->
+
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-jpamodelgen</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- swagger: begin -->
     <dependency>
@@ -228,7 +238,7 @@
     <dependency>
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-netty</artifactId>
-      <version>5.6.1</version>
+      <version>5.7.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -560,9 +570,10 @@
                 <exclude>**/Application.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
+                <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
+                <exclude>**/psr/model/info/*_.class</exclude>
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
-                <exclude>**/psr/repository/PaymentInfoRepository.class</exclude>
                 <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
               </excludes>
               <rules>

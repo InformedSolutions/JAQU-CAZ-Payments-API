@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
+import javax.persistence.criteria.Join;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,10 +18,15 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
-import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.info.PaymentInfo;
+import uk.gov.caz.psr.model.info.PaymentInfo_;
+import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
+import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo_;
+import uk.gov.caz.psr.repository.jpa.PaymentInfoRepository;
 
 @IntegrationTest
 public class ChargeSettlementPaymentInfoRepositoryTestIT {
@@ -37,6 +43,8 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
 
   @BeforeEach
   public void insertTestData() {
+    // we cannot use SQL annotations on this class, see:
+    // https://github.com/spring-projects/spring-framework/issues/19930
     executeSqlFrom("data/sql/charge-settlement/payment-info/test-data.sql");
   }
 
@@ -46,7 +54,7 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
   }
 
   @Autowired
-  private PaymentInfoRepository repository;
+  private PaymentInfoRepository paymentInfoRepository;
 
   @Nested
   class FindByCleanZoneIdAndVrnAndEntryDatesRange {
@@ -54,13 +62,14 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     @Test
     public void shouldReturnEmptyListForNotCoveredDateRange() {
       // given
+      UUID caz = ANY_PRESENT_CAZ_ID;
+      String vrn = ANY_PRESENT_VRN;
       LocalDate start = LocalDate.parse("2018-07-04");
       LocalDate end = LocalDate.parse("2019-10-08");
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndVrnAndEntryDatesRange(
-          ANY_PRESENT_CAZ_ID, ANY_PRESENT_VRN,
-          start, end);
+      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
+          vrn, start, end));
 
       // then
       assertThat(result).isEmpty();
@@ -69,13 +78,14 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     @Test
     public void shouldReturnEmptyListForNotCoveredVrn() {
       // given
+      UUID caz = ANY_PRESENT_CAZ_ID;
+      String vrn = ANY_ABSENT_VRN;
       LocalDate start = LocalDate.parse("2018-07-04");
       LocalDate end = LocalDate.parse("2019-11-07");
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndVrnAndEntryDatesRange(
-          ANY_PRESENT_CAZ_ID, ANY_ABSENT_VRN,
-          start, end);
+      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
+          vrn, start, end));
 
       // then
       assertThat(result).isEmpty();
@@ -84,13 +94,14 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     @Test
     public void shouldReturnEmptyListForNotCoveredCazId() {
       // given
+      UUID caz = ANY_ABSENT_CAZ_ID;
+      String vrn = ANY_PRESENT_VRN;
       LocalDate start = LocalDate.parse("2018-07-04");
       LocalDate end = LocalDate.parse("2019-11-07");
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndVrnAndEntryDatesRange(ANY_ABSENT_CAZ_ID,
-          ANY_PRESENT_VRN,
-          start, end);
+      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
+          vrn, start, end));
 
       // then
       assertThat(result).isEmpty();
@@ -100,17 +111,18 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     @MethodSource("uk.gov.caz.psr.repository.ChargeSettlementPaymentInfoRepositoryTestIT#partiallyCoveredDateRange")
     public void shouldReturnListForPartiallyCoveredDateRange(LocalDate start, LocalDate end) {
       // given
+      UUID caz = ANY_PRESENT_CAZ_ID;
+      String vrn = ANY_PRESENT_VRN;
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndVrnAndEntryDatesRange(
-          ANY_PRESENT_CAZ_ID, ANY_PRESENT_VRN,
-          start, end);
+      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
+          vrn, start, end));
 
       // then
       assertThat(result).hasSize(1);
       assertThat(result).allSatisfy(payment ->
-          assertThat(payment.getVehicleEntrantPayments()).allSatisfy(vehicleEntrantPayment ->
-              assertThat(vehicleEntrantPayment.getCleanZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID)
+          assertThat(payment.getVehicleEntrantPaymentInfoList()).allSatisfy(vehicleEntrantPayment ->
+              assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID)
           )
       );
     }
@@ -118,13 +130,14 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     @Test
     public void shouldReturnRecordsForDifferentPaymentObjects() {
       // given
+      UUID caz = ANY_PRESENT_CAZ_ID;
+      String vrn = ANY_PRESENT_VRN;
       LocalDate start = LocalDate.parse("2018-10-01");
       LocalDate end = LocalDate.parse("2019-12-01");
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndVrnAndEntryDatesRange(
-          ANY_PRESENT_CAZ_ID, ANY_PRESENT_VRN,
-          start, end);
+      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
+          vrn, start, end));
 
       // then
       assertThat(result).hasSize(2);
@@ -134,6 +147,20 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
           )
       );
     }
+
+    private Specification<PaymentInfo> byCazAndVrnAndDateRangeSpecification(UUID caz, String vrn,
+        LocalDate start, LocalDate end) {
+      return (root, criteriaQuery, criteriaBuilder) -> {
+        criteriaQuery.distinct(true);
+        Join<PaymentInfo, VehicleEntrantPaymentInfo> join = (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
+        return criteriaBuilder.and(
+            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
+            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.vrn), vrn)),
+            criteriaBuilder.and(criteriaBuilder.greaterThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), start)),
+            criteriaBuilder.and(criteriaBuilder.lessThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), end))
+        );
+      };
+    }
   }
 
   @Nested
@@ -141,19 +168,20 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     @Test
     public void shouldReturnRecordsForSpecifiedDate() {
       // given
+      UUID caz = ANY_PRESENT_CAZ_ID;
       LocalDate start = LocalDate.parse("2019-11-02");
       LocalDate end = start;
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndEntryDatesRange(ANY_PRESENT_CAZ_ID,
-          start, end);
+      List<PaymentInfo> result = paymentInfoRepository
+          .findAll(byCazAndDateRangeSpecification(caz, start, end));
 
       // then
       assertThat(result).hasSize(2);
       assertThat(result).allSatisfy(payment ->
-          assertThat(payment.getVehicleEntrantPayments()).allSatisfy(vehicleEntrantPayment -> {
+          assertThat(payment.getVehicleEntrantPaymentInfoList()).allSatisfy(vehicleEntrantPayment -> {
             assertThat(vehicleEntrantPayment.getVrn()).isIn("ND84VSX", "AB11CDE");
-            assertThat(vehicleEntrantPayment.getCleanZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
+            assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
             assertThat(vehicleEntrantPayment.getTravelDate()).isEqualTo(start);
           })
       );
@@ -162,23 +190,37 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     @Test
     public void shouldReturnRecordsForSpecifiedDateRange() {
       // given
+      UUID caz = ANY_PRESENT_CAZ_ID;
       LocalDate start = LocalDate.parse("2019-11-02");
       LocalDate end = LocalDate.parse("2019-11-06");
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndEntryDatesRange(ANY_PRESENT_CAZ_ID,
-          start, end);
+      List<PaymentInfo> result = paymentInfoRepository
+          .findAll(byCazAndDateRangeSpecification(caz, start, end));
 
       // then
       assertThat(result).hasSize(3);
       assertThat(result).allSatisfy(payment ->
-          assertThat(payment.getVehicleEntrantPayments()).allSatisfy(vehicleEntrantPayment -> {
+          assertThat(payment.getVehicleEntrantPaymentInfoList()).allSatisfy(vehicleEntrantPayment -> {
             assertThat(vehicleEntrantPayment.getVrn()).isIn("ND84VSX", "AB11CDE");
-            assertThat(vehicleEntrantPayment.getCleanZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
+            assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
             assertThat(vehicleEntrantPayment.getTravelDate()).isBeforeOrEqualTo(end);
             assertThat(vehicleEntrantPayment.getTravelDate()).isAfterOrEqualTo(start);
           })
       );
+    }
+
+    private Specification<PaymentInfo> byCazAndDateRangeSpecification(UUID caz, LocalDate start,
+        LocalDate end) {
+      return (root, criteriaQuery, criteriaBuilder) -> {
+        criteriaQuery.distinct(true);
+        Join<PaymentInfo, VehicleEntrantPaymentInfo> join = (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
+        return criteriaBuilder.and(
+            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
+            criteriaBuilder.and(criteriaBuilder.greaterThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), start)),
+            criteriaBuilder.and(criteriaBuilder.lessThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), end))
+        );
+      };
     }
   }
 
@@ -187,17 +229,18 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     @Test
     public void shouldReturnRecordsForPresentVrn() {
       // given
+      UUID caz = ANY_PRESENT_CAZ_ID;
       String vrn = "AB11CDE";
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndVrn(ANY_PRESENT_CAZ_ID, vrn);
+      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnSpecification(caz, vrn));
 
       // then
       assertThat(result).hasSize(1);
       assertThat(result).allSatisfy(payment -> {
-        assertThat(payment.getVehicleEntrantPayments()).hasSize(2);
-        assertThat(payment.getVehicleEntrantPayments()).allSatisfy(vehicleEntrantPayment -> {
-          assertThat(vehicleEntrantPayment.getCleanZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
+        assertThat(payment.getVehicleEntrantPaymentInfoList()).hasSize(2);
+        assertThat(payment.getVehicleEntrantPaymentInfoList()).allSatisfy(vehicleEntrantPayment -> {
+          assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
           assertThat(vehicleEntrantPayment.getVrn()).isEqualTo(vrn);
         });
       });
@@ -207,20 +250,34 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     public void shouldReturnEmptyListForPresentVrnAndAbsentCaz() {
       // given
       String vrn = "AB11CDE";
+      UUID caz = ANY_ABSENT_CAZ_ID;
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndVrn(ANY_ABSENT_CAZ_ID, vrn);
+      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnSpecification(caz, vrn));
 
       // then
       assertThat(result).isEmpty();
     }
 
+    private Specification<PaymentInfo> byCazAndVrnSpecification(UUID caz, String vrn) {
+      return (root, criteriaQuery, criteriaBuilder) -> {
+        criteriaQuery.distinct(true);
+        Join<PaymentInfo, VehicleEntrantPaymentInfo> join = (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
+        return criteriaBuilder.and(
+            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
+            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.vrn), vrn))
+        );
+      };
+    }
+
     @Test
     public void shouldReturnEmptyListForPresentCazAndAbsentVrn() {
       // given
+      String vrn = ANY_ABSENT_VRN;
+      UUID caz = ANY_PRESENT_CAZ_ID;
 
       // when
-      List<Payment> result = repository.findByCleanZoneIdAndVrn(ANY_PRESENT_CAZ_ID, ANY_ABSENT_VRN);
+      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnSpecification(caz, vrn));
 
       // then
       assertThat(result).isEmpty();
