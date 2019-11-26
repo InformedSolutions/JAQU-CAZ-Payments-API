@@ -1,11 +1,16 @@
 package uk.gov.caz.psr.controller;
 
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
+import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentInfoResults;
+import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
@@ -30,7 +35,20 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest paymentInfoRequest) {
-    throw new UnsupportedOperationException();
+    PaymentsInfo paymentsInfo = new PaymentsInfo(
+        "paymentId",
+        LocalDate.now(),
+        ChargeSettlementPaymentStatus.PAID,
+        "caseReference",
+        54.5,
+        Collections.singletonList(LocalDate.now())
+    );
+    PaymentInfoResults paymentInfoResults = new PaymentInfoResults(
+        "vrn",
+        Collections.singletonList(paymentsInfo)
+    );
+    return ResponseEntity.ok(new PaymentInfoResponse(
+        Collections.singletonList(paymentInfoResults)));
   }
 
   @Override
