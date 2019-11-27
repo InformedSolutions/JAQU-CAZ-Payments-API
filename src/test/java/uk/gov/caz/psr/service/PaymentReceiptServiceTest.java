@@ -2,20 +2,17 @@ package uk.gov.caz.psr.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.gov.caz.psr.dto.SendEmailRequest;
 
-@ExtendWith(MockitoExtension.class)
 public class PaymentReceiptServiceTest {
 
-  PaymentReceiptService paymentReceiptService;
-  String templateId = "test-template-id";
+  private PaymentReceiptService paymentReceiptService;
+  private String templateId = "test-template-id";
 
   @BeforeEach
   void init() {
@@ -31,9 +28,13 @@ public class PaymentReceiptServiceTest {
 
   @Test
   void canSendPaymentReceipt() throws JsonProcessingException {
+    // given
     String testEmail = "test@test.com";
-    ReflectionTestUtils.setField(paymentReceiptService, "templateId", templateId);
+
+    // when
     SendEmailRequest request = paymentReceiptService.buildSendEmailRequest(testEmail, 1.0);
+
+    // then
     assertNotNull(request);
     assertEquals(testEmail, request.getEmailAddress());
     assertEquals("{\"amount\":\"1.00\"}", request.getPersonalisation());
