@@ -136,3 +136,6 @@ swagger:
         description: >-
           Allows LAs to query and retrieve data about a payment that has been made via GOV.UK Pay in relation
           to a vehicle that has entered their CAZ (a 'vehicle entrant')
+    db:
+      migration:
+        description: Evolve DB schema          

@@ -12,10 +12,12 @@ import java.util.stream.Collectors;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
+import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
@@ -296,6 +298,7 @@ public class TestObjectFactory {
   }
 
   public static class VehicleEntrantPaymentStatusUpdates {
+
     public static VehicleEntrantPaymentStatusUpdate any() {
       return VehicleEntrantPaymentStatusUpdate.builder()
           .caseReference("Test case Reference")
@@ -304,6 +307,42 @@ public class TestObjectFactory {
           .vrn("VRN123")
           .dateOfCazEntry(LocalDate.now())
           .cleanAirZoneId(UUID.randomUUID())
+          .build();
+    }
+  }
+
+  public static class PaymentStatusFactory {
+
+    public static PaymentStatus anyWithStatus(InternalPaymentStatus internalPaymentStatus) {
+      return PaymentStatus.builder()
+          .caseReference("any-valid-case-reference")
+          .status(internalPaymentStatus)
+          .externalId(UUID.randomUUID().toString())
+          .build();
+    }
+
+    public static PaymentStatus with(InternalPaymentStatus internalPaymentStatus,
+        String caseReference, String externalId) {
+      return PaymentStatus.builder()
+          .caseReference(caseReference)
+          .status(internalPaymentStatus)
+          .externalId(externalId)
+          .build();
+    }
+  }
+
+  public static class ExternalPaymentDetailsFactory {
+    public static ExternalPaymentDetails any() {
+      return ExternalPaymentDetails.builder()
+          .email("example@email.com")
+          .externalPaymentStatus(ExternalPaymentStatus.SUCCESS)
+          .build();
+    }
+
+    public static ExternalPaymentDetails anyWithStatus(ExternalPaymentStatus externalPaymentStatus) {
+      return ExternalPaymentDetails.builder()
+          .email("example@email.com")
+          .externalPaymentStatus(externalPaymentStatus)
           .build();
     }
   }

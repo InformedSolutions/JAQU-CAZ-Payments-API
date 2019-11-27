@@ -13,16 +13,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.TestObjectFactory;
+import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentStatusUpdaterTest {
 
   @Mock
-  private PaymentWithExternalStatusBuilder paymentWithExternalStatusBuilder;
+  private PaymentWithExternalPaymentDetailsBuilder paymentWithExternalPaymentDetailsBuilder;
   @Mock
   private PaymentRepository internalPaymentsRepository;
   @Mock
@@ -37,11 +39,12 @@ class PaymentStatusUpdaterTest {
   public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
     // given
     Payment payment = null;
-    ExternalPaymentStatus status = ExternalPaymentStatus.SUCCESS;
+    ExternalPaymentDetails externalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.SUCCESS);
 
     // when
-    Throwable throwable = catchThrowable(() -> updater.updateWithStatus(payment, status,
-        payment1 -> payment1));
+    Throwable throwable = catchThrowable(
+        () -> updater.updateWithExternalPaymentDetails(payment, externalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -52,26 +55,27 @@ class PaymentStatusUpdaterTest {
   public void shouldThrowNullPointerExceptionWhenStatusIsNull() {
     // given
     Payment payment = anyPayment();
-    ExternalPaymentStatus status = null;
+    ExternalPaymentDetails externalPaymentDetails = null;
 
     // when
-    Throwable throwable = catchThrowable(() -> updater.updateWithStatus(payment, status,
-        payment1 -> payment1));
+    Throwable throwable = catchThrowable(
+        () -> updater.updateWithExternalPaymentDetails(payment, externalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
-        .hasMessage("Status cannot be null");
+        .hasMessage("ExternalPaymentDetails cannot be null");
   }
 
   @Test
   public void shouldThrowIllegalArgumentExceptionWhenPaymentHasEmptyVehicleEntrants() {
     // given
     Payment payment = paymentWithEmptyVehicleEntrants();
-    ExternalPaymentStatus status = ExternalPaymentStatus.SUCCESS;
+    ExternalPaymentDetails externalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.SUCCESS);
 
     // when
-    Throwable throwable = catchThrowable(() -> updater.updateWithStatus(payment, status,
-        payment1 -> payment1));
+    Throwable throwable = catchThrowable(
+        () -> updater.updateWithExternalPaymentDetails(payment, externalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -81,13 +85,15 @@ class PaymentStatusUpdaterTest {
   @Test
   public void shouldThrowNullPointerExceptionWhenNewStatusIsTheSameAsTheExistingOne() {
     // given
-    ExternalPaymentStatus initStatus = ExternalPaymentStatus.INITIATED;
-    Payment payment = anyPaymentWithStatus(initStatus);
-    ExternalPaymentStatus newStatus = ExternalPaymentStatus.INITIATED;
+    ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment = anyPaymentWithStatus(initExternalPaymentDetails.getExternalPaymentStatus());
+    ExternalPaymentDetails newExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
 
     // when
-    Throwable throwable = catchThrowable(() -> updater.updateWithStatus(payment, newStatus,
-        payment1 -> payment1));
+    Throwable throwable = catchThrowable(
+        () -> updater.updateWithExternalPaymentDetails(payment, newExternalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -97,18 +103,21 @@ class PaymentStatusUpdaterTest {
   @Test
   public void shouldPerformUpdateWithLinkingToExistingVehicleEntrants() {
     // given
-    ExternalPaymentStatus initStatus = ExternalPaymentStatus.INITIATED;
-    Payment payment = anyPaymentWithStatus(initStatus);
-    ExternalPaymentStatus newStatus = ExternalPaymentStatus.FAILED;
-    Payment newPayment = mockCallsToServices(payment, newStatus);
+    ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment = anyPaymentWithStatus(initExternalPaymentDetails.getExternalPaymentStatus());
+    ExternalPaymentDetails newExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.FAILED);
+    Payment newPayment = mockCallsToServices(payment, newExternalPaymentDetails);
 
     // when
-    Payment result = updater.updateWithStatus(payment, newStatus, payment1 -> payment1);
+    Payment result = updater.updateWithExternalPaymentDetails(payment, newExternalPaymentDetails);
 
     // then
     assertThat(result).isEqualTo(newPayment);
 
-    verify(paymentWithExternalStatusBuilder).buildPaymentWithStatus(payment, newStatus);
+    verify(paymentWithExternalPaymentDetailsBuilder)
+        .buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails);
     verify(transientVehicleEntrantsLinker).associateExistingVehicleEntrantsWith(any());
     verify(applicationEventPublisher).publishEvent(any());
     verify(internalPaymentsRepository).update(any());
@@ -121,9 +130,11 @@ class PaymentStatusUpdaterTest {
         .build();
   }
 
-  private Payment mockCallsToServices(Payment payment, ExternalPaymentStatus newStatus) {
-    Payment newPayment = anyPaymentWithStatus(newStatus);
-    given(paymentWithExternalStatusBuilder.buildPaymentWithStatus(payment, newStatus))
+  private Payment mockCallsToServices(Payment payment,
+      ExternalPaymentDetails newExternalPaymentDetails) {
+    Payment newPayment = anyPaymentWithStatus(newExternalPaymentDetails.getExternalPaymentStatus());
+    given(paymentWithExternalPaymentDetailsBuilder
+        .buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails))
         .willReturn(newPayment);
     given(transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(newPayment))
         .willReturn(newPayment);

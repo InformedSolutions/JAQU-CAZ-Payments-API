@@ -19,12 +19,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.dto.external.PaymentState;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.VehicleEntrantPaymentRepository;
+import uk.gov.caz.psr.util.GetPaymentResultConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
+import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +39,8 @@ class CleanupDanglingPaymentServiceTest {
   private ExternalPaymentsRepository externalPaymentsRepository;
   @Mock
   private PaymentStatusUpdater paymentStatusUpdater;
+  @Mock
+  private GetPaymentResultConverter getPaymentResultConverter;
 
   @InjectMocks
   private CleanupDanglingPaymentService service;
@@ -85,28 +90,35 @@ class CleanupDanglingPaymentServiceTest {
     // given
     Payment payment = paymentWithEmptyVehicleEntrants();
     mockSameExternalStatusInExternalService(payment);
+    mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
 
     // when
     service.processDanglingPayment(payment);
 
     // then
-    verify(paymentStatusUpdater, never()).updateWithStatus(any(), any(), any());
+    verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
     verify(vehicleEntrantPaymentRepository, never()).findByPaymentId(any());
   }
 
   @Test
   public void shouldUpdateStatusIfChanged() {
     // given
-    ExternalPaymentStatus status = ExternalPaymentStatus.INITIATED;
-    Payment payment = paymentWithEmptyVehicleEntrantsAndStatus(status);
+    ExternalPaymentDetails externalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
+    ExternalPaymentDetails failedExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.FAILED);
+    Payment payment = paymentWithEmptyVehicleEntrantsAndStatus(
+        externalPaymentDetails.getExternalPaymentStatus());
     mockFailedExternalStatusInExternalService(payment);
     mockVehicleEntrantsFor(payment);
+    mockGetPaymentResultConverter(ExternalPaymentStatus.FAILED);
 
     // when
     service.processDanglingPayment(payment);
 
     // then
-    verify(paymentStatusUpdater).updateWithStatus(any(), eq(ExternalPaymentStatus.FAILED), any());
+    verify(paymentStatusUpdater)
+        .updateWithExternalPaymentDetails(any(), eq(failedExternalPaymentDetails));
   }
 
   private void mockVehicleEntrantsFor(Payment payment) {
@@ -121,6 +133,7 @@ class CleanupDanglingPaymentServiceTest {
     given(externalPaymentsRepository.findById(payment.getExternalId()))
         .willReturn(Optional.of(GetPaymentResult.builder()
             .state(PaymentState.builder().status(ExternalPaymentStatus.FAILED.name()).build())
+            .email("example@email.com")
             .build()
         ));
   }
@@ -155,5 +168,14 @@ class CleanupDanglingPaymentServiceTest {
 
   private Payment paymentWithNonEmptyVehicleEntrants() {
     return TestObjectFactory.Payments.existing();
+  }
+
+  private void mockGetPaymentResultConverter(ExternalPaymentStatus externalPaymentStatus) {
+    given(getPaymentResultConverter.toExternalPaymentDetails(any()))
+        .willReturn(ExternalPaymentDetails.builder()
+            .email("example@email.com")
+            .externalPaymentStatus(externalPaymentStatus)
+            .build()
+        );
   }
 }

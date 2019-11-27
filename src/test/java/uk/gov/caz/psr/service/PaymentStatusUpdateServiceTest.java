@@ -83,10 +83,42 @@ public class PaymentStatusUpdateServiceTest {
     verify(vehicleEntrantPaymentRepository).update(anyList());
   }
 
+
+  @Test
+  public void shouldUpdateWithProvidedData() {
+    // given
+    VehicleEntrantPaymentStatusUpdate vehicleEntrantPaymentStatusUpdate = VehicleEntrantPaymentStatusUpdates
+        .any();
+    List<VehicleEntrantPaymentStatusUpdate> vehicleEntrantPaymentStatusUpdatesList = Arrays.asList(
+        vehicleEntrantPaymentStatusUpdate
+    );
+    VehicleEntrantPayment foundVehicleEntrantPayment = VehicleEntrantPayments.anyPaid();
+    mockVehicleEntrantPaymentFoundWith(foundVehicleEntrantPayment);
+    List<VehicleEntrantPayment> expectedVehicleEntrantPaymentsList = Arrays.asList(
+        foundVehicleEntrantPayment.toBuilder()
+            .caseReference(vehicleEntrantPaymentStatusUpdate.getCaseReference())
+            .internalPaymentStatus(vehicleEntrantPaymentStatusUpdate.getPaymentStatus())
+            .build()
+    );
+    doNothing().when(vehicleEntrantPaymentRepository).update(expectedVehicleEntrantPaymentsList);
+
+    // when
+    paymentStatusUpdateService.processUpdate(vehicleEntrantPaymentStatusUpdatesList);
+
+    // then
+    verify(vehicleEntrantPaymentRepository).update(expectedVehicleEntrantPaymentsList);
+  }
+
   private void mockVehicleEntrantPaymentNotFound() {
     given(vehicleEntrantPaymentRepository
         .findOnePaidByCazEntryDateAndExternalPaymentId(any(), any(), any())).willReturn(
         java.util.Optional.empty());
+  }
+
+  private void mockVehicleEntrantPaymentFoundWith(VehicleEntrantPayment vehicleEntrantPayment) {
+    given(vehicleEntrantPaymentRepository
+        .findOnePaidByCazEntryDateAndExternalPaymentId(any(), any(), any())).willReturn(
+        java.util.Optional.ofNullable(vehicleEntrantPayment));
   }
 
   private void mockVehicleEntrantPaymentFound() {

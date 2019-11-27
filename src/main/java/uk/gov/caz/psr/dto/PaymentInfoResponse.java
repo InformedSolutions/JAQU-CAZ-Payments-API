@@ -15,7 +15,7 @@ public class PaymentInfoResponse {
   List<PaymentInfoResults> results;
 
   @Value
-  private static class PaymentInfoResults {
+  public static class PaymentInfoResults {
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.vrn}")
     String vrn;
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payments}")
@@ -23,7 +23,7 @@ public class PaymentInfoResponse {
   }
 
   @Value
-  private static class PaymentsInfo {
+  public static class PaymentsInfo {
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-id}")
     String paymentId;
 

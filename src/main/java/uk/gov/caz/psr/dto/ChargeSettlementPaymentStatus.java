@@ -2,6 +2,9 @@ package uk.gov.caz.psr.dto;
 
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 
+/**
+ * Class represents charge settlement statuses.
+ */
 public enum ChargeSettlementPaymentStatus {
   PAID,
   NOT_PAID,

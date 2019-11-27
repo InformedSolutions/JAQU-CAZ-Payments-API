@@ -21,4 +21,3 @@ public class PaymentStatusRequest {
   @DateTimeFormat(iso = ISO.DATE)
   LocalDate dateOfCazEntry;
 }
-

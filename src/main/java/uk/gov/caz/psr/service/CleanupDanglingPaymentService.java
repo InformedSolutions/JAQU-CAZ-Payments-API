@@ -7,10 +7,12 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.VehicleEntrantPaymentRepository;
+import uk.gov.caz.psr.util.GetPaymentResultConverter;
 
 /**
  * A service responsible for 'cleaning up' a single dangling payment.
@@ -23,6 +25,7 @@ public class CleanupDanglingPaymentService {
   private final VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository;
   private final PaymentStatusUpdater paymentStatusUpdater;
   private final ExternalPaymentsRepository externalPaymentsRepository;
+  private final GetPaymentResultConverter getPaymentResultConverter;
 
   /**
    * Processes the passed {@code danglingPayment}: gets the external status and updates it in the
@@ -37,7 +40,9 @@ public class CleanupDanglingPaymentService {
       GetPaymentResult paymentInfo = externalPaymentsRepository.findById(externalId)
           .orElseThrow(() -> new IllegalStateException("External payment not found with id "
               + "'" + externalId + "'"));
-      ExternalPaymentStatus status = paymentInfo.getPaymentStatus();
+      ExternalPaymentDetails externalPaymentDetails = getPaymentResultConverter
+          .toExternalPaymentDetails(paymentInfo);
+      ExternalPaymentStatus status = externalPaymentDetails.getExternalPaymentStatus();
       if (status == danglingPayment.getExternalPaymentStatus()) {
         log.info("The status of a dangling payment has not changed and is equal to '{}', "
             + "aborting the update", danglingPayment.getExternalPaymentStatus());
@@ -47,8 +52,9 @@ public class CleanupDanglingPaymentService {
       log.info("Updating status of payment '{}' from '{}' to '{}'", danglingPayment.getId(),
           danglingPayment.getExternalPaymentStatus(), status);
 
-      paymentStatusUpdater.updateWithStatus(loadVehicleEntrantPayments(danglingPayment),
-          status, OnBeforePublishPaymentStatusUpdateEvent.buildPaymentWith(paymentInfo.getEmail()));
+      paymentStatusUpdater
+          .updateWithExternalPaymentDetails(loadVehicleEntrantPayments(danglingPayment),
+              externalPaymentDetails);
     } finally {
       long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
       log.info("Processing the dangling payment '{}' took {}ms", danglingPayment.getId(), elapsed);
