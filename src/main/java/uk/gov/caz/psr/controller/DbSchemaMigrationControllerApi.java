@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,8 +10,16 @@ import uk.gov.caz.psr.util.LiquibaseWrapper;
 public class DbSchemaMigrationControllerApi implements DbSchemaMigrationControllerApiSpec {
   public static final String PATH = "/v1/migrate-db";
 
-  @Autowired
-  LiquibaseWrapper liquibaseWrapper;
+  private final LiquibaseWrapper liquibaseWrapper;
+  
+  /**
+   * Creates an instance of {@link DbSchemaMigrationControllerApi}.
+   *
+   * @param liquibaseWrapper An instance of {@link LiquibaseWrapper}.
+   */
+  public DbSchemaMigrationControllerApi(LiquibaseWrapper liquibaseWrapper) {
+    this.liquibaseWrapper = liquibaseWrapper;
+  }
 
   @Override
   public ResponseEntity<Void> migrateDb() {
