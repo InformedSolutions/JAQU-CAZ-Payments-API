@@ -24,7 +24,7 @@ public class LiquibaseWrapper {
   
   private final DataSource dataSource;
 
-  @Value("${spring.liquibase.change-log:classpath:db/changelog/db.changelog-master.yaml}")
+  @Value("${spring.liquibase.change-log:db/changelog/db.changelog-master.yaml}")
   private String liquibaseChangelog;
 
   /**
