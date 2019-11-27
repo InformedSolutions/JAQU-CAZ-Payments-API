@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * Interface with swagger documentation for DbSchemaMigrationController.
  */
 @RequestMapping(value = PATH, produces = {
-    MediaType.APPLICATION_JSON_UTF8_VALUE, MediaType.APPLICATION_XML_VALUE})
+    MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 public interface DbSchemaMigrationControllerApiSpec {
   /**
    * Trigger DB schema migration.
