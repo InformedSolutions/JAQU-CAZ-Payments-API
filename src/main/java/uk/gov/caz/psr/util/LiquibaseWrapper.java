@@ -54,21 +54,25 @@ public class LiquibaseWrapper {
    
     try {
       liquibase = liquibaseFactory.getInstance(dataSource, changeLog);
+    } catch (SQLException | DatabaseException ex) {
+      log.error(ex.getMessage());
+      throw ex;
+    }
+
+    try {
       // tag DB for future rollback when db update fail
       liquibase.tag(dbTag);
       isDbBeingUpdated = true;
       liquibase.update(contexts);
-    } catch (LiquibaseException | SQLException ex) {
+    } catch (LiquibaseException ex) {
       log.error(ex.getMessage());
       if (isDbBeingUpdated) {
         log.info("Attempting to rollback db update");
-        if (liquibase != null) {
-          liquibase.rollback(dbTag, contexts);
-        }
+        liquibase.rollback(dbTag, contexts);
       }
       throw ex;
     } finally {
-      if (liquibase != null && liquibase.getDatabase() != null) {
+      if (liquibase.getDatabase() != null) {
         liquibase.getDatabase().close();
       }
     }
@@ -90,10 +94,9 @@ public class LiquibaseWrapper {
       Connection connection = dataSource.getConnection();
       Database database = DatabaseFactory.getInstance()
                               .findCorrectDatabaseImplementation(new JdbcConnection(connection));
-      Liquibase liquibase = new Liquibase(changeLog,
-                                new ClassLoaderResourceAccessor(),
-                                database);
-      return liquibase;
+      return new Liquibase(changeLog,
+                          new ClassLoaderResourceAccessor(),
+                          database);
     }
   }
 }

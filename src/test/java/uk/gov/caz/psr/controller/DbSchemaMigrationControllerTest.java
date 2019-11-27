@@ -44,13 +44,13 @@ public class DbSchemaMigrationControllerTest {
   public void setup() throws LiquibaseException, SQLException {
     liquibaseWrapper = new LiquibaseWrapper(dataSource, liquibaseFactory, "classpath:db/changelog/db.changelog-master.yaml");
     dbSchemaMigrationControllerApi = new DbSchemaMigrationControllerApi(liquibaseWrapper);
-
-    //given
-    when(liquibaseFactory.getInstance(any(DataSource.class), any(String.class))).thenReturn(liquibase);
   }
 
   @Test
-  public void shouldReturnOKWhenMigrateDbSchemaSucceeded() throws LiquibaseException {
+  public void shouldReturnOKWhenMigrateDbSchemaSucceeded() throws Exception {
+    //given
+    when(liquibaseFactory.getInstance(any(DataSource.class), any(String.class))).thenReturn(liquibase);
+
     //when
     ResponseEntity<Void> response = dbSchemaMigrationControllerApi.migrateDb();
 
@@ -67,6 +67,7 @@ public class DbSchemaMigrationControllerTest {
   @Test
   public void shouldReturnErrorWhenMigrateDbSchemaFailed() throws Exception {
     //given
+    when(liquibaseFactory.getInstance(any(DataSource.class), any(String.class))).thenReturn(liquibase);
     doThrow(LiquibaseException.class)
      .when(liquibase)
      .update(any(Contexts.class));
@@ -79,6 +80,22 @@ public class DbSchemaMigrationControllerTest {
     verify(liquibase).update(any(Contexts.class));
     verify(liquibase).rollback(anyString(), any(Contexts.class));
     verify(liquibase).getDatabase();
+    verifyNoMoreInteractions(liquibase);
+    assertThat(response).isNotNull();
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    assertThat(response.getBody()).isNull();
+  }
+
+
+  @Test
+  public void shouldReturnErrorWhenFailToInstantiateLiquibase() throws Exception {
+    //given
+    when(liquibaseFactory.getInstance(any(DataSource.class), any(String.class))).thenThrow(SQLException.class);
+
+    //when
+    ResponseEntity<Void> response = dbSchemaMigrationControllerApi.migrateDb();
+    
+    //then
     verifyNoMoreInteractions(liquibase);
     assertThat(response).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
