@@ -32,7 +32,6 @@
       <!-- TODO remove once ChargeSettlementController is implemented and tested -->
       **/psr/dto/ChargeSettlementPaymentStatus.java,
       **/psr/controller/ChargeSettlementController.java,
-      **/util/LiquibaseWrapper.java,
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -565,7 +564,6 @@
                 <!-- TODO remove once ChargeSettlementController is implemented and tested -->
                 <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
                 <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
-								<exclude>**/util/LiquibaseWrapper.class</exclude>
               </excludes>
               <rules>
                 <rule>
