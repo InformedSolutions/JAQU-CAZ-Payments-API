@@ -15,18 +15,25 @@ import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
 public class LiquibaseWrapper {
-  @Autowired
-  private DataSource dataSource;
+  
+  private final DataSource dataSource;
 
   @Value("${spring.liquibase.change-log:classpath:db/changelog/db.changelog-master.yaml}")
   private String liquibaseChangelog;
+
+  /**
+   * Default constructor.
+   * @param dataSource liquibase data source.
+   */
+  public LiquibaseWrapper(DataSource dataSource) {
+    this.dataSource = dataSource;
+  }
 
   /**
    * Update db schema.
