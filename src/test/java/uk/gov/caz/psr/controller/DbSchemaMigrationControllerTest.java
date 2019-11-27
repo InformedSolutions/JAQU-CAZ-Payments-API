@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -19,6 +20,7 @@ import liquibase.exception.LiquibaseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -65,7 +67,7 @@ public class DbSchemaMigrationControllerTest {
   }
   
   @Test
-  public void shouldReturnErrorWhenMigrateDbSchemaFailed() throws Exception {
+  public void shouldRollbackThenReturnErrorWhenMigrateDbSchemaFailed() throws Exception {
     //given
     when(liquibaseFactory.getInstance(any(DataSource.class), any(String.class))).thenReturn(liquibase);
     doThrow(LiquibaseException.class)
@@ -76,11 +78,14 @@ public class DbSchemaMigrationControllerTest {
     ResponseEntity<Void> response = dbSchemaMigrationControllerApi.migrateDb();
     
     //then
-    verify(liquibase).tag(anyString());
+    ArgumentCaptor<String> tagArgumentCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> rollbackArgumentCaptor = ArgumentCaptor.forClass(String.class);
+    verify(liquibase).tag(tagArgumentCaptor.capture());
     verify(liquibase).update(any(Contexts.class));
-    verify(liquibase).rollback(anyString(), any(Contexts.class));
+    verify(liquibase).rollback(rollbackArgumentCaptor.capture(), any(Contexts.class));
     verify(liquibase).getDatabase();
     verifyNoMoreInteractions(liquibase);
+    assertEquals(rollbackArgumentCaptor.<String>getValue(), tagArgumentCaptor.<String>getValue());
     assertThat(response).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     assertThat(response.getBody()).isNull();

@@ -29,6 +29,8 @@ public class LiquibaseWrapper {
   /**
    * Default constructor.
    * @param dataSource liquibase data source.
+   * @param liquibaseFactory liquibase provider
+   * @param liquibaseChangelog path to liquibase scripts
    */
   public LiquibaseWrapper(DataSource dataSource,
         LiquibaseFactory liquibaseFactory,
