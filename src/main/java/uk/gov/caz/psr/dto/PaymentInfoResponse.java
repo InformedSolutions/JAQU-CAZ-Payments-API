@@ -3,6 +3,7 @@ package uk.gov.caz.psr.dto;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
 import java.util.List;
+import lombok.Builder;
 import lombok.Value;
 
 /**
@@ -23,23 +24,33 @@ public class PaymentInfoResponse {
   }
 
   @Value
+  @Builder
   public static class PaymentsInfo {
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-id}")
-    String paymentId;
+    String paymentProviderId;
 
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-date}")
     LocalDate paymentDate;
 
-    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-status}")
-    ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
+    Integer totalPaid;
 
-    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.case-reference}")
-    String caseReference;
+    List<SingleVehicleEntrantPaymentInfo> lineItems;
 
-    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.charge-paid}")
-    double chargePaid;
+    @Value
+    @Builder
+    public static class SingleVehicleEntrantPaymentInfo {
 
-    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.travel-dates}")
-    List<LocalDate> travelDates;
+      @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-status}")
+      ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
+
+      @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.case-reference}")
+      String caseReference;
+
+      @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.charge-paid}")
+      double chargePaid;
+
+      @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.travel-dates}")
+      LocalDate travelDate;
+    }
   }
 }

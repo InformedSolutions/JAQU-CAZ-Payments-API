@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.model.info;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -25,6 +26,9 @@ public class PaymentInfo {
   @Column(name = "payment_provider_id")
   private String externalId;
 
+  @Column(name = "payment_submitted_timestamp")
+  private LocalDateTime submittedTimestamp;
+
   @Column(name = "total_paid")
   private Integer totalPaid;
 
@@ -32,7 +36,7 @@ public class PaymentInfo {
   @Enumerated(EnumType.STRING)
   private ExternalPaymentStatus externalPaymentStatus;
 
-  @OneToMany(fetch = FetchType.EAGER)
-  @JoinColumn(name = "payment_id")
-  private List<VehicleEntrantPaymentInfo> vehicleEntrantPaymentInfoList;
+//  @OneToMany(fetch = FetchType.LAZY)
+//  @JoinColumn(name = "payment_id")
+//  private List<VehicleEntrantPaymentInfo> vehicleEntrantPaymentInfoList;
 }

@@ -35,20 +35,21 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest paymentInfoRequest) {
-    PaymentsInfo paymentsInfo = new PaymentsInfo(
-        "paymentId",
-        LocalDate.now(),
-        ChargeSettlementPaymentStatus.PAID,
-        "caseReference",
-        54.5,
-        Collections.singletonList(LocalDate.now())
-    );
-    PaymentInfoResults paymentInfoResults = new PaymentInfoResults(
-        "vrn",
-        Collections.singletonList(paymentsInfo)
-    );
-    return ResponseEntity.ok(new PaymentInfoResponse(
-        Collections.singletonList(paymentInfoResults)));
+//    PaymentsInfo paymentsInfo = new PaymentsInfo(
+//        "paymentId",
+//        LocalDate.now(),
+//        ChargeSettlementPaymentStatus.PAID,
+//        "caseReference",
+//        54.5,
+//        Collections.singletonList(LocalDate.now())
+//    );
+//    PaymentInfoResults paymentInfoResults = new PaymentInfoResults(
+//        "vrn",
+//        Collections.singletonList(paymentsInfo)
+//    );
+    return null;
+//    return ResponseEntity.ok(new PaymentInfoResponse(
+//        Collections.singletonList(paymentInfoResults)));
   }
 
   @Override
