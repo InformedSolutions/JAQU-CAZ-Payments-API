@@ -1,0 +1,12 @@
+{
+  "name": "taxi-phv-data-generator",
+  "version": "1.0.0",
+  "main": "payments-data-generator.js",
+  "license": "MIT",
+  "dependencies": {
+    "minimist": "^1.2.0"
+  },
+  "scripts": {
+    "generate": "node payments-data-generator.js"
+  }
+}
