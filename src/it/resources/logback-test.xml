@@ -4,5 +4,5 @@
     <logger name="org.springframework" level="WARN"/>
 
     <!-- Please change the line below to INFO for debugging purposes of mockserver -->
-    <logger name="org.mockserver.mock" level="WARN"/>
+    <logger name="org.mockserver" level="WARN"/>
 </configuration>
