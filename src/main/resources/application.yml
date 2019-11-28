@@ -57,9 +57,21 @@ swagger:
         results: An array containig details about payments of queried VRNs
         vrn: Vehicle registration number
         payments: An array containing information about particular payments of the given VRN
-        payment-id: GOV.UK Pay unique payment identifier
+        payment-provider-id: GOV.UK Pay unique payment identifier
+        total-paid: >-
+          The total GBP value of the payment linked to the paymentProviderId.
+          If the motorist paid in advance to travel in to the CAZ on multiple dates, then the payment amount will be a multiple
+          of the daily charge due (e.g. if the daily charge for a car entering a CAZ is £8.00, but the motorist paid in advance
+          for 3 days of travel, then the chargePaid would be equal to £24.00).
+          Expressed in pounds and pence format to 2 decimal places.
         payment-date: ISO 8601 formatted date string that specifies the date on which the payment was made via GOV.UK Pay
         payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
+        line-items: >-
+          Array containing objects that specify the: (1) date(s) for which the vehicle has paid to journey in to the CAZ
+          (identified by the x-api-key header parameter); (2) the charge associated with the journey; (3) the payment status of
+          the charge (i.e. whether it has been paid or refunded); and, (4) any Local Authority case reference associated with the
+          charge (e.g. that may be linked to a customer query relating to the charge).
+          1 object will be returned for each date of travel associated with the payment.
         case-reference: >-
           A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems
           in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
@@ -68,9 +80,9 @@ swagger:
           dates, then the payment amount will be a multiple of the daily charge due (e.g. if the daily charge for a car entering a CAZ
           is £8.00, but the motorist paid in advance for 3 days of travel, then the chargePaid would be equal to £24.00).
           Expressed in pounds and pence format to 2 decimal places
-        travel-dates: >-
-          Array containing ISO 8601 formatted date strings that specify the date(s) for which the vehicle has paid to travel in to the
-          CAZ (identified by the x-api-key header parameter). All dates of travel associated with the payment will be returned.
+        travel-date: >-
+          ISO 8601 formatted date string that specifies a date(s) for which the vehicle has paid to travel in to the CAZ
+          (identified by the x-api-key header parameter)
       payment-info-request:
         payment-id: >-
           GOV.UK Pay unique payment identifier. Can be used to obtain data associated with a specific GOV.UK Pay payment transaction.
