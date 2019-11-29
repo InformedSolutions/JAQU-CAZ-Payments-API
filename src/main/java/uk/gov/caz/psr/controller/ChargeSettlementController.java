@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.UUID;
@@ -9,8 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
-import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentInfoResults;
 import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo.VehicleEntrantPaymentInfo;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
@@ -35,16 +37,19 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest paymentInfoRequest) {
-    PaymentsInfo paymentsInfo = new PaymentsInfo(
-        "paymentId",
-        LocalDate.now(),
-        ChargeSettlementPaymentStatus.PAID,
-        "caseReference",
-        54.5,
-        Collections.singletonList(LocalDate.now())
-    );
-    PaymentInfoResults paymentInfoResults = new PaymentInfoResults(
-        "vrn",
+    SinglePaymentInfo paymentsInfo = SinglePaymentInfo.builder()
+        .paymentDate(LocalDate.now())
+        .paymentProviderId("paymentId")
+        .totalPaid(BigDecimal.valueOf(50).setScale(2))
+        .lineItems(Collections.singletonList(
+            VehicleEntrantPaymentInfo.builder()
+                .caseReference("caseReference")
+                .chargePaid(BigDecimal.valueOf(50).setScale(2))
+                .travelDate(LocalDate.now())
+                .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.PAID)
+                .build()
+        )).build();
+    PaymentsInfo paymentInfoResults = new PaymentsInfo("vrn",
         Collections.singletonList(paymentsInfo)
     );
     return ResponseEntity.ok(new PaymentInfoResponse(

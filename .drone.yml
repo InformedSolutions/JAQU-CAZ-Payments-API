@@ -261,6 +261,25 @@ steps:
       event:
         - push
 
+  # Invokes lambda function with $LATEST alias to deploy schema migrations prior to code deploy rollover
+  - name: apply db schema migrations
+    image: alpine:latest
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - > 
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-dev --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+    when:
+      event:
+        - push
 
   - name: codedeploy api dev
     image: alpine:latest
@@ -488,6 +507,25 @@ steps:
       event:
         - push
 
+  # Invokes lambda function with $LATEST alias to deploy schema migrations prior to code deploy rollover
+  - name: apply db schema migrations
+    image: alpine:latest
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - > 
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-sit --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+    when:
+      event:
+        - push
 
   - name: codedeploy api sit
     image: alpine:latest

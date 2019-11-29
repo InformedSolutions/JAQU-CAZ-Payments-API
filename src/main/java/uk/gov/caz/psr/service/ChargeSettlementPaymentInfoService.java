@@ -19,9 +19,9 @@ import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
 @AllArgsConstructor
 public class ChargeSettlementPaymentInfoService {
 
-  private VehicleEntrantPaymentInfoRepository vehicleEntrantPaymentInfoRepository;
+  private final VehicleEntrantPaymentInfoRepository vehicleEntrantPaymentInfoRepository;
 
-  private List<PaymentInfoSpecification> specifications;
+  private final List<PaymentInfoSpecification> specifications;
 
   /**
    * Method which filter payments based on PaymentInfoRequest.

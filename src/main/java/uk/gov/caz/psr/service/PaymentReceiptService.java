@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class PaymentReceiptService {
 
   /**
    * Creates a SendEmailRequest object.
-   * 
+   *
    * @param email the recipient of the email
    * @param amount the total cost of their CAZ charge
    * @return SendEmailRequest
@@ -38,8 +39,8 @@ public class PaymentReceiptService {
   }
 
   private String createPersonalisationPayload(double amount) throws JsonProcessingException {
-    Map<String, String> personalisationMap =
-        Collections.singletonMap("amount", String.format("%.2f", amount));
+    Map<String, String> personalisationMap = Collections.singletonMap("amount",
+        String.format(Locale.UK, "%.2f", amount));
     return objectMapper.writeValueAsString(personalisationMap);
   }
 }
