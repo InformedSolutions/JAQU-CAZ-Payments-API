@@ -71,6 +71,7 @@ public class PaymentStatusUpdateService {
 
     return vehicleEntrantPayment.toBuilder()
         .internalPaymentStatus(vehicleEntrantPaymentStatusUpdate.getPaymentStatus())
+        .caseReference(vehicleEntrantPaymentStatusUpdate.getCaseReference())
         .build();
   }
 

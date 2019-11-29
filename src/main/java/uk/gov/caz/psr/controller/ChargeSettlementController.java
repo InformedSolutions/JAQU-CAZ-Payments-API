@@ -1,17 +1,24 @@
 package uk.gov.caz.psr.controller;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
+import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo.VehicleEntrantPaymentInfo;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
+import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.service.ChargeSettlementService;
 import uk.gov.caz.psr.service.PaymentStatusUpdateService;
 
 /**
@@ -19,31 +26,48 @@ import uk.gov.caz.psr.service.PaymentStatusUpdateService;
  */
 @RestController
 @AllArgsConstructor
-@Slf4j
 public class ChargeSettlementController implements ChargeSettlementControllerApiSpec {
 
   public static final String BASE_PATH = "/v1/charge-settlement";
   public static final String PAYMENT_INFO_PATH = "/payment-info";
   public static final String PAYMENT_STATUS_PATH = "/payment-status";
 
-  private PaymentStatusUpdateService paymentStatusUpdateService;
+  private final PaymentStatusUpdateService paymentStatusUpdateService;
+  private final ChargeSettlementService chargeSettlementService;
 
   @Override
   public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest paymentInfoRequest) {
-    throw new UnsupportedOperationException();
+    SinglePaymentInfo paymentsInfo = SinglePaymentInfo.builder()
+        .paymentDate(LocalDate.now())
+        .paymentProviderId("paymentId")
+        .totalPaid(BigDecimal.valueOf(50).setScale(2))
+        .lineItems(Collections.singletonList(
+            VehicleEntrantPaymentInfo.builder()
+                .caseReference("caseReference")
+                .chargePaid(BigDecimal.valueOf(50).setScale(2))
+                .travelDate(LocalDate.now())
+                .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.PAID)
+                .build()
+        )).build();
+    PaymentsInfo paymentInfoResults = new PaymentsInfo("vrn",
+        Collections.singletonList(paymentsInfo)
+    );
+    return ResponseEntity.ok(new PaymentInfoResponse(
+        Collections.singletonList(paymentInfoResults)));
   }
 
   @Override
-  public ResponseEntity<PaymentStatusResponse> getPaymentStatus(PaymentStatusRequest request) {
-    log.info("Received request: {}", request);
+  public ResponseEntity<PaymentStatusResponse> getPaymentStatus(PaymentStatusRequest request,
+      String apiKey) {
+    UUID cleanAirZoneId = UUID.fromString(apiKey);
 
-    PaymentStatusResponse fakeResponse = PaymentStatusResponse.builder()
-        .paymentStatus(ChargeSettlementPaymentStatus.PAID)
-        .paymentId("350be6da-10f1-41fe-9840-98c738ec763e")
-        .caseReference("sample-case-reference")
-        .build();
+    PaymentStatus paymentStatus = chargeSettlementService
+        .findChargeSettlement(
+            cleanAirZoneId,
+            request.getVrn(),
+            request.getDateOfCazEntry());
 
-    return ResponseEntity.ok(fakeResponse);
+    return ResponseEntity.ok(PaymentStatusResponse.from(paymentStatus));
   }
 
   @Override

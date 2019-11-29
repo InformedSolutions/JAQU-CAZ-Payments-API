@@ -69,7 +69,7 @@ create-archetype: clean
 	./mvnw -f target/generated-sources/archetype/pom.xml install
 
 local-db-up:
-	docker-compose -f docker/docker-compose.yml -p postgres_docker up -d
+	docker-compose -f docker/docker-compose.yml -p postgres_docker up -d postgres
 
 local-db-down:
 	docker-compose -f docker/docker-compose.yml -p postgres_docker down
@@ -104,3 +104,6 @@ docker-rm:
 	docker rm `docker ps -a -q`
 
 docker-clean: docker-stop docker-rm
+
+sonar:
+	./mvnw sonar:sonar

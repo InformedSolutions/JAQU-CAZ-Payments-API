@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -16,7 +16,7 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 @AllArgsConstructor
 public class PaymentStatusUpdater {
 
-  private final PaymentWithExternalStatusBuilder paymentWithExternalStatusBuilder;
+  private final PaymentWithExternalPaymentDetailsBuilder paymentWithExternalPaymentDetailsBuilder;
   private final PaymentRepository internalPaymentsRepository;
   private final TransientVehicleEntrantsLinker transientVehicleEntrantsLinker;
   private final ApplicationEventPublisher applicationEventPublisher;
@@ -24,19 +24,19 @@ public class PaymentStatusUpdater {
   /**
    * Updates {@code payment} with a new {@code status}.
    */
-  public Payment updateWithStatus(Payment payment, ExternalPaymentStatus status,
-      OnBeforePublishPaymentStatusUpdateEvent onBeforePublishEvent) {
-    checkPreconditions(payment, status, onBeforePublishEvent);
+  public Payment updateWithExternalPaymentDetails(Payment payment,
+      ExternalPaymentDetails externalPaymentDetails) {
+    checkPreconditions(payment, externalPaymentDetails);
 
-    Payment paymentWithNewStatus = paymentWithExternalStatusBuilder.buildPaymentWithStatus(
-        payment, status);
+    Payment paymentWithNewStatus = paymentWithExternalPaymentDetailsBuilder
+        .buildPaymentWithExternalPaymentDetails(payment, externalPaymentDetails);
 
     Payment updatedPayment = transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(
         paymentWithNewStatus);
 
     internalPaymentsRepository.update(updatedPayment);
 
-    publishPaymentStatusUpdatedEvent(onBeforePublishEvent.apply(updatedPayment));
+    publishPaymentStatusUpdatedEvent(updatedPayment);
 
     return updatedPayment;
   }
@@ -51,17 +51,16 @@ public class PaymentStatusUpdater {
 
   /**
    * Verifies passed arguments if they are valid when invoking {@link
-   * PaymentStatusUpdater#updateWithStatus(uk.gov.caz.psr.model.Payment,
-   * uk.gov.caz.psr.model.ExternalPaymentStatus, OnBeforePublishPaymentStatusUpdateEvent)}.
+   * PaymentStatusUpdater#updateWithExternalPaymentDetails(uk.gov.caz.psr.model.Payment,
+   * uk.gov.caz.psr.model.ExternalPaymentDetails)}.
    */
-  private void checkPreconditions(Payment payment, ExternalPaymentStatus status,
-      OnBeforePublishPaymentStatusUpdateEvent onBeforePublishEvent) {
+  private void checkPreconditions(Payment payment, ExternalPaymentDetails externalPaymentDetails) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
-    Preconditions.checkNotNull(status, "Status cannot be null");
-    Preconditions.checkNotNull(onBeforePublishEvent, "onBeforePublishEvent cannot be null");
-    Preconditions.checkArgument(status != payment.getExternalPaymentStatus(),
+    Preconditions.checkNotNull(externalPaymentDetails, "ExternalPaymentDetails cannot be null");
+    Preconditions.checkArgument(
+        externalPaymentDetails.getExternalPaymentStatus() != payment.getExternalPaymentStatus(),
         "Status cannot be equal to the existing status ('%s' != '%s')",
-        status, payment.getExternalPaymentStatus());
+        externalPaymentDetails.getExternalPaymentStatus(), payment.getExternalPaymentStatus());
     Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
         "vehicle entrant payments cannot be empty");
   }

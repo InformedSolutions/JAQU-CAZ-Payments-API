@@ -104,7 +104,10 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @GetMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
-  ResponseEntity<PaymentStatusResponse> getPaymentStatus(@Valid PaymentStatusRequest request);
+  ResponseEntity<PaymentStatusResponse> getPaymentStatus(
+      @Valid PaymentStatusRequest request,
+      @RequestHeader(Headers.X_API_KEY) String apiKey
+  );
 
   /**
    * Allows Local Authorities to update the status of one or more paid CAZ charges to reflect any

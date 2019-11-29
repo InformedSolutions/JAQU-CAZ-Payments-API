@@ -6,6 +6,11 @@ spring:
 #    url: jdbc:postgresql://${postgres.url:localhost:5432}/caz-payments
     hikari:
       maximum-pool-size: 1
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
 
 aws:
   sqs:
