@@ -18,7 +18,7 @@ public class VehicleEntrantRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrant.clean-zone-id}")
   @NotNull
-  UUID cleanAirZoneId;
+  UUID cleanZoneId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrant.caz-entry-timestamp}")
   @NotNull
@@ -36,8 +36,7 @@ public class VehicleEntrantRequest {
    */
 
   public VehicleEntrant toVehicleEntrant() {
-    return VehicleEntrant.builder().cleanAirZoneId(cleanAirZoneId)
-        .cazEntryTimestamp(cazEntryTimestamp).cazEntryDate(cazEntryTimestamp.toLocalDate()).vrn(vrn)
-        .build();
+    return VehicleEntrant.builder().cleanZoneId(cleanZoneId).cazEntryTimestamp(cazEntryTimestamp)
+        .cazEntryDate(cazEntryTimestamp.toLocalDate()).vrn(vrn).build();
   }
 }

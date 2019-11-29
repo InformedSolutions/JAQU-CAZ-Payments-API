@@ -93,6 +93,7 @@ public class PaymentReceiptSenderTest {
     PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
     when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT))
         .thenThrow(new JsonMappingException(null, "test exception"));
+    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
 
     // when
     paymentReceiptSender.onPaymentStatusUpdated(event);

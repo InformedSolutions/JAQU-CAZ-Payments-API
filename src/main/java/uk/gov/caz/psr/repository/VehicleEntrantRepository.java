@@ -49,7 +49,7 @@ public class VehicleEntrantRepository {
           .prepareStatement(Sql.INSERT_IF_NOT_EXISTS_SQL, new String[] {"vehicle_entrant_id"});
       preparedStatement.setObject(1, vehicleEntrant.getCazEntryTimestamp());
       preparedStatement.setObject(2, vehicleEntrant.getCazEntryDate());
-      preparedStatement.setObject(3, vehicleEntrant.getCleanAirZoneId());
+      preparedStatement.setObject(3, vehicleEntrant.getCleanZoneId());
       preparedStatement.setString(4, vehicleEntrant.getVrn());
       return preparedStatement;
     }, keyHolder);
@@ -113,7 +113,7 @@ public class VehicleEntrantRepository {
     @Override
     public VehicleEntrant mapRow(ResultSet resultSet, int i) throws SQLException {
       return VehicleEntrant.builder().id(UUID.fromString(resultSet.getString("vehicle_entrant_id")))
-          .cleanAirZoneId(UUID.fromString(resultSet.getString("caz_id")))
+          .cleanZoneId(UUID.fromString(resultSet.getString("caz_id")))
           .vrn(resultSet.getString("vrn"))
           .cazEntryTimestamp(resultSet.getObject("caz_entry_timestamp", LocalDateTime.class))
           .cazEntryDate(resultSet.getObject("caz_entry_date", LocalDate.class)).build();

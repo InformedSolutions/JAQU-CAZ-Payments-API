@@ -1,9 +1,10 @@
+
 package uk.gov.caz.psr.service;
 
-import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +43,7 @@ public class InitiatePaymentService {
     Payment paymentWithInternalId = paymentRepository.insertWithExternalStatus(payment);
 
     // Retrieve API key for appropriate Gov.UK Pay account
-    Optional<String> apiKey = credentialRetrievalManager.getApiKey(request.getCleanAirZoneName());
+    Optional<String> apiKey = credentialRetrievalManager.getApiKey(request.getCleanAirZoneId());
     if (apiKey.isPresent()) {
       externalPaymentsRepository.setApiKey(apiKey.get());
     } else {

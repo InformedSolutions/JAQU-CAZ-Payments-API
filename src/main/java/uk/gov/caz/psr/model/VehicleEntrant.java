@@ -23,7 +23,7 @@ public class VehicleEntrant {
    * A unique identifier for the Clean Air Zone.
    */
   @NonNull
-  UUID cleanAirZoneId;
+  UUID cleanZoneId;
 
   /**
    * Date with time when a vehicle entered the CAZ for the first time on the given date.

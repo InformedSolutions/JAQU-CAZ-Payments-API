@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,16 +17,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class CredentialRetrievalManager {
 
-  @Value("${aws.secretsmanager.prefix")
+  @Value("${aws.secretsmanager.prefix}")
   String secretPrefix;
 
-  @Value("${aws.secretsmanager.name")
+  @Value("${aws.secretsmanager.name}")
   String secretName;
 
-  @Value("${aws.secretsmanager.profileSeparator")
+  @Value("${aws.secretsmanager.profileSeparator}")
   String secretProfileSeparator;
 
-  @Value("${aws.secretsmanager.environment")
+  @Value("${aws.secretsmanager.environment}")
   String secretEnvironment;
 
   private final AWSSecretsManager client;
@@ -49,17 +50,14 @@ public class CredentialRetrievalManager {
     GetSecretValueRequest getSecretValueRequest =
         new GetSecretValueRequest().withSecretId(generateSecretName());
     GetSecretValueResult getSecretValueResult = null;
-
     getSecretValueResult = client.getSecretValue(getSecretValueRequest);
 
     // Decrypts secret using the associated KMS CMK.
-    // Depending on whether the secret is a string or binary, one of these
-    // fields will be populated.
     if (getSecretValueResult.getSecretString() != null) {
       secret = getSecretValueResult.getSecretString();
     } else {
-      secret = new String(Base64.getDecoder()
-          .decode(getSecretValueResult.getSecretBinary()).array());
+      secret =
+          new String(Base64.getDecoder().decode(getSecretValueResult.getSecretBinary()).array());
     }
     log.info(secret);
     return secret;
@@ -68,11 +66,13 @@ public class CredentialRetrievalManager {
   /**
    * Get secret value by a given key from external property source.
    * 
-   * @param  cleanAirZoneName the name to match to a Secrets value
-   * @return                  Secrets value for a given key.
+   * @param cleanAirZoneId the ID of the Clean Air Zone which gives the key of the secret
+   * @return Secret value for a given key.
    */
-  public Optional<String> getApiKey(String cleanAirZoneName) {
-    log.info("Getting API key for Clean Air Zone: {}", cleanAirZoneName);
+  public Optional<String> getApiKey(UUID cleanAirZoneId) {
+    log.info("Getting API key for Clean Air Zone: {}", cleanAirZoneId);
+    String secretName = generateSecretKey(cleanAirZoneId);
+
     String rawSecretString = this.getSecretsValue();
 
     ObjectMapper objectMapper = new ObjectMapper();
@@ -81,10 +81,9 @@ public class CredentialRetrievalManager {
 
     try {
       jsonNode = objectMapper.readTree(rawSecretString);
-      if (jsonNode.has(cleanAirZoneName)) {
-        log.info("Successfully retrieved API key for Clean Air Zone: {}",
-            cleanAirZoneName);
-        String apiKey = jsonNode.get(cleanAirZoneName).toString();
+      if (jsonNode.has(secretName)) {
+        log.info("Successfully retrieved API key for Clean Air Zone: {}", secretName);
+        String apiKey = jsonNode.get(secretName).toString();
         return Optional.ofNullable(apiKey);
       } else {
         return Optional.empty();
@@ -94,13 +93,18 @@ public class CredentialRetrievalManager {
     }
   }
 
+  private String generateSecretKey(UUID cleanAirZoneId) {
+    String cleanAirZoneStr = cleanAirZoneId.toString();
+    return cleanAirZoneStr.replace("-", "");
+  }
+
   /**
    * Helper method to generate a full secret name from a number of variables.
    * 
    * @return the full secret name
    */
   private String generateSecretName() {
-    return this.secretPrefix + "/" + this.secretName
-        + this.secretProfileSeparator + this.secretEnvironment;
+    return this.secretPrefix + "/" + this.secretName + this.secretProfileSeparator
+        + this.secretEnvironment;
   }
 }

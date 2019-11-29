@@ -15,6 +15,12 @@ spring:
 aws:
   sqs:
     endpoint: http://${aws.sqs.url:localhost:4576}
+  secretsmanager:
+    endpoint: http://${aws.sqs.url:localhost:4584}
+    environment: localstack
+    name: config
+    prefix: payments
+    profileSeparator: .
 
 services:
   gov-uk-pay:

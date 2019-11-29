@@ -1,10 +1,10 @@
 package uk.gov.caz.psr.configuration;
 
-import com.amazonaws.services.secretsmanager.AWSSecretsManager;
-import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.services.secretsmanager.AWSSecretsManager;
+import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.google.common.base.Strings;
@@ -25,6 +25,33 @@ public class AwsConfiguration {
   @Value("${cloud.aws.region.static}")
   private String region;
 
+  /**
+   * Returns an instance of {@link AmazonSecretsManager} which is used to to retrieve secrets from
+   * AWS secrets manager.
+   * 
+   * @param secretsManagerEndpoint An endpoint of mocked Secrets Manager. Cannot be empty or
+   *        {@code null}
+   * @return An instance of {@link AmazonSecretsManager}
+   * @throws IllegalStateException if {@code secretsManagerEndpoint} is null or empty
+   */
+  @Bean
+  @Primary
+  @Profile({"integration-tests", "localstack"})
+  public AWSSecretsManager secretsManagerLocalstackClient(
+      @Value("${aws.secretsmanager.endpoint:}") String secretsManagerEndpoint) {
+    if (Strings.isNullOrEmpty(secretsManagerEndpoint)) {
+      throw new IllegalStateException(
+          "Secrets Manager endpoint must be overridden when running with "
+              + "Localstack! Please set in 'aws.secretsmanager.endpoint' property");
+    }
+
+    log.info("Using '{}' as Secrets Manager Endpoint", secretsManagerEndpoint);
+
+    return AWSSecretsManagerClientBuilder.standard().withCredentials(dummyCredentialsProvider())
+        .withEndpointConfiguration(new EndpointConfiguration(secretsManagerEndpoint, region))
+        .build();
+
+  }
 
   /**
    * Returns an instance of {@link AWSSecretsManager} which is used to retrieve secrets from AWS
@@ -35,6 +62,7 @@ public class AwsConfiguration {
    */
   @Bean
   @Primary
+  @Profile("!integration-tests & !localstack")
   public AWSSecretsManager awsSecretsManagerClientBuilder(
       @Value("${cloud.aws.region.static}") String region) {
     return AWSSecretsManagerClientBuilder.standard().withRegion(region).build();

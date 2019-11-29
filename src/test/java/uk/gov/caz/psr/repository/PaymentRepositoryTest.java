@@ -2,7 +2,6 @@ package uk.gov.caz.psr.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,7 +39,8 @@ class PaymentRepositoryTest {
       Payment payment = null;
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+      Throwable throwable =
+          catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -50,11 +50,12 @@ class PaymentRepositoryTest {
     @Test
     public void shouldThrowIllegalArgumentExceptionWhenPaymentHasId() {
       // given
-      Payment payment = Payments.forRandomDaysWithId(
-          UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150"));
+      Payment payment =
+          Payments.forRandomDaysWithId(UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150"));
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+      Throwable throwable =
+          catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -67,7 +68,8 @@ class PaymentRepositoryTest {
       Payment payment = paymentWithEmptyVehicleEntrantPayments();
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+      Throwable throwable =
+          catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -80,7 +82,8 @@ class PaymentRepositoryTest {
       Payment payment = paymentWithTwoDifferentVehicleEntrantStatuses();
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+      Throwable throwable =
+          catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -88,24 +91,21 @@ class PaymentRepositoryTest {
     }
 
     private Payment paymentWithEmptyVehicleEntrantPayments() {
-      return Payments.forRandomDays().toBuilder()
-          .vehicleEntrantPayments(Collections.emptyList())
+      return Payments.forRandomDays().toBuilder().vehicleEntrantPayments(Collections.emptyList())
           .build();
     }
 
     private Payment paymentWithTwoDifferentVehicleEntrantStatuses() {
-      Payment payment = Payments.forDays(Arrays.asList(LocalDate.now(),
-          LocalDate.now().plusDays(1)), UUID.randomUUID(), "ext-id");
+      Payment payment =
+          Payments.forDays(Arrays.asList(LocalDate.now(), LocalDate.now().plusDays(1)),
+              UUID.randomUUID(), "ext-id", null);
       Iterator<VehicleEntrantPayment> it = payment.getVehicleEntrantPayments().iterator();
-      List<VehicleEntrantPayment> updatedVehicleEntrantPayments = Arrays
-          .asList(InternalPaymentStatus.PAID, InternalPaymentStatus.CHARGEBACK)
-          .stream()
-          .map(status -> it.next().toBuilder().internalPaymentStatus(status).build())
-          .collect(Collectors.toList());
+      List<VehicleEntrantPayment> updatedVehicleEntrantPayments =
+          Arrays.asList(InternalPaymentStatus.PAID, InternalPaymentStatus.CHARGEBACK).stream()
+              .map(status -> it.next().toBuilder().internalPaymentStatus(status).build())
+              .collect(Collectors.toList());
 
-      return payment.toBuilder()
-          .id(null)
-          .vehicleEntrantPayments(updatedVehicleEntrantPayments)
+      return payment.toBuilder().id(null).vehicleEntrantPayments(updatedVehicleEntrantPayments)
           .build();
     }
   }

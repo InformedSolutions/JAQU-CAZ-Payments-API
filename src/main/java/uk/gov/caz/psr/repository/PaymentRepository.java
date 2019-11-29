@@ -199,7 +199,7 @@ public class PaymentRepository {
 
     static final String SELECT_DANGLING_PAYMENTS =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM payment " + "WHERE "
-        // only GOV UK Pay payment
+            // only GOV UK Pay payment
             + "payment_provider_id IS NOT NULL "
             // only the one which is submitted more than 90 minutes ago; if
             // payment_submitted_timestamp

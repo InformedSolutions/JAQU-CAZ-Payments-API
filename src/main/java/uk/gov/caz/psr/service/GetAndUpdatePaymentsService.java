@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.service;
 
 import com.google.common.base.Preconditions;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,8 @@ import uk.gov.caz.psr.domain.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.VehicleEntrantPayment;
+import uk.gov.caz.psr.model.service.VehicleEntrantPaymentsService;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 
@@ -25,6 +28,7 @@ public class GetAndUpdatePaymentsService {
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final PaymentRepository internalPaymentsRepository;
   private final PaymentStatusUpdater paymentStatusUpdater;
+  private final VehicleEntrantPaymentsService vehicleEntrantPaymentsService;
 
   /**
    * Retrieves the payment by its internal identifier and, provided it exists and has an external
@@ -51,8 +55,13 @@ public class GetAndUpdatePaymentsService {
     }
 
     // Retrieve API key for appropriate Gov.UK Pay account
-    // TODO: get caz id
-    Optional<String> apiKey = credentialRetrievalManager.getApiKey(payment);
+    List<VehicleEntrantPayment> vehicleEntrantPayments = payment.getVehicleEntrantPayments();
+    if (vehicleEntrantPayments.isEmpty()) {
+      log.warn("Payment '{}' does not have any associated vehicle entrant payments", id);
+      return Optional.empty();
+    }
+    UUID cleanAirZoneId = vehicleEntrantPaymentsService.findCazId(vehicleEntrantPayments);
+    Optional<String> apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId);
     if (apiKey.isPresent()) {
       externalPaymentsRepository.setApiKey(apiKey.get());
     } else {

@@ -32,8 +32,8 @@ import uk.gov.caz.psr.service.GetAndUpdatePaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
-@ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class,
-    Configuration.class, PaymentsController.class})
+@ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class, Configuration.class,
+    PaymentsController.class})
 @WebMvcTest
 class PaymentsControllerTest {
   @MockBean
@@ -57,16 +57,14 @@ class PaymentsControllerTest {
   private static final String ANY_CORRELATION_ID = UUID.randomUUID().toString();
 
   @Test
-  public void missingCorrelationIdShouldResultIn400AndValidMessage()
-      throws Exception {
+  public void missingCorrelationIdShouldResultIn400AndValidMessage() throws Exception {
     String payload = "";
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload)
-            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-        .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
-            .value("Missing request header 'X-Correlation-ID'"));
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Missing request header 'X-Correlation-ID'"));
     verify(initiatePaymentService, never()).createPayment(any());
   }
 
@@ -75,8 +73,7 @@ class PaymentsControllerTest {
     String payload = paymentRequestWithEmptyDays();
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload)
-            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
@@ -88,8 +85,7 @@ class PaymentsControllerTest {
     String payload = paymentRequestWithVrn("1234567890123456");
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload)
-            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
@@ -101,8 +97,7 @@ class PaymentsControllerTest {
     String payload = paymentRequestWithAmount(-1250);
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload)
-            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
@@ -114,8 +109,7 @@ class PaymentsControllerTest {
     String payload = paymentRequestWithEmptyReturnUrl();
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload)
-            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
@@ -127,66 +121,37 @@ class PaymentsControllerTest {
     InitiatePaymentRequest requestParams = baseRequestBuilder().build();
     String payload = toJsonString(requestParams);
     Payment successfullyCreatedPayment = Payments.existing();
-
-<<<<<<< HEAD
-    given(
-        initiatePaymentService.createPayment(requestParams, ANY_CORRELATION_ID))
-            .willReturn(successfullyCreatedPayment);
-=======
     given(initiatePaymentService.createPayment(requestParams))
         .willReturn(successfullyCreatedPayment);
->>>>>>> 0b3427216898cdca1b2a03074aed4b81f521254a
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload)
-            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
             .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.paymentId")
-            .value(successfullyCreatedPayment.getId().toString()))
-        .andExpect(jsonPath("$.nextUrl")
-            .value(successfullyCreatedPayment.getNextUrl()));
-
-<<<<<<< HEAD
-    verify(initiatePaymentService).createPayment(requestParams,
-        ANY_CORRELATION_ID);
-  }
-
-  private Payment createdPayment(InitiatePaymentRequest requestParams) {
-    return Payment.builder().id(UUID.randomUUID())
-        .chargePaid(requestParams.getAmount())
-        .cleanAirZoneId(requestParams.getCleanAirZoneId())
-        .externalPaymentId("EXTERNAL_PAYMENT_ID")
-        .nextUrl("https://next.payment.url").status(PaymentStatus.CREATED)
-        .paymentMethod(PaymentMethod.CREDIT_CARD).build();
-=======
+        .andExpect(jsonPath("$.paymentId").value(successfullyCreatedPayment.getId().toString()))
+        .andExpect(jsonPath("$.nextUrl").value(successfullyCreatedPayment.getNextUrl()));
     verify(initiatePaymentService).createPayment(requestParams);
->>>>>>> 0b3427216898cdca1b2a03074aed4b81f521254a
   }
 
   private String paymentRequestWithEmptyDays() {
     List<LocalDate> emptyDays = Collections.emptyList();
-    InitiatePaymentRequest requestParams =
-        baseRequestBuilder().days(emptyDays).build();
+    InitiatePaymentRequest requestParams = baseRequestBuilder().days(emptyDays).build();
     return toJsonString(requestParams);
   }
 
   private String paymentRequestWithVrn(String vrn) {
-    InitiatePaymentRequest requestParams =
-        baseRequestBuilder().vrn(vrn).build();
+    InitiatePaymentRequest requestParams = baseRequestBuilder().vrn(vrn).build();
     return toJsonString(requestParams);
   }
 
   private String paymentRequestWithAmount(Integer amount) {
-    InitiatePaymentRequest requestParams =
-        baseRequestBuilder().amount(amount).build();
+    InitiatePaymentRequest requestParams = baseRequestBuilder().amount(amount).build();
     return toJsonString(requestParams);
   }
 
   private String paymentRequestWithEmptyReturnUrl() {
-    InitiatePaymentRequest requestParams =
-        baseRequestBuilder().returnUrl("").build();
+    InitiatePaymentRequest requestParams = baseRequestBuilder().returnUrl("").build();
     return toJsonString(requestParams);
   }
 
@@ -196,8 +161,7 @@ class PaymentsControllerTest {
   }
 
   private InitiatePaymentRequest.InitiatePaymentRequestBuilder baseRequestBuilder() {
-    return InitiatePaymentRequest.builder().cleanAirZoneId(UUID.randomUUID())
-        .cleanAirZoneName("test").days(days).vrn("TEST123").amount(1050)
-        .returnUrl("https://example.return.url");
+    return InitiatePaymentRequest.builder().cleanAirZoneId(UUID.randomUUID()).days(days)
+        .vrn("TEST123").amount(1050).returnUrl("https://example.return.url");
   }
 }
