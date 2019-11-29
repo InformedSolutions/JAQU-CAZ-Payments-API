@@ -2,6 +2,7 @@ package uk.gov.caz.psr.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import javax.sql.DataSource;
@@ -14,7 +15,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
-import uk.gov.caz.psr.model.info.PaymentInfo;
+import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 
 @IntegrationTest
 public class ChargeSettlementPaymentInfoServiceTestIT {
@@ -23,14 +24,18 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       UUID.fromString("53e03a28-0627-11ea-9511-ffaaee87e375");
   private static final UUID ABSENT_CAZ_ID =
       UUID.fromString("d83bf00e-1028-11ea-be9e-a3f00ff90b28");
-  private static final String ANY_ABSENT_VRN = "AB84SEN";
-  private static final String PAYMENT_1_EXTERNAL_ID = "ext-payment-id-1";
-  private static final UUID PAYMENT_1_ID = UUID.fromString("d80deb4e-0f8a-11ea-8dc9-93fa5be4476e");
-  private static final String PAYMENT_1_VRN = "ND84VSX";
+  private static final String NOT_EXISTING_VRN = "AB84SEN";
+  private static final String NOT_EXISTING_EXTERNAL_ID = "ext-payment-id-not-exists";
   private static final String PAYMENT_2_EXTERNAL_ID = "ext-payment-id-2";
-  private static final String PAYMENT_2_VRN = "ND84VSX";
   private static final String PAYMENT_3_EXTERNAL_ID = "ext-payment-id-3";
   private static final String PAYMENT_3_VRN = "AB11CDE";
+  private static final UUID P1_VP_1_ID = UUID.fromString("c59d0f46-0f8d-11ea-bbdd-9bfba959fef8");
+  private static final UUID P1_VP2_ID = UUID.fromString("c9801856-0f8d-11ea-bbdd-0fb9b9867da0");
+  private static final UUID P1_VP3_ID = UUID.fromString("ce083912-0f8d-11ea-bbdd-47debb103c06");
+  private static final UUID P2_VP1_ID = UUID.fromString("62320a6c-0f90-11ea-bbdd-b3fa7794610e");
+  private static final UUID P2_VP2_ID = UUID.fromString("65821f90-0f90-11ea-bbdd-9bba0c562c82");
+  private static final UUID P3_VP1_ID = UUID.fromString("e218c724-102c-11ea-be9e-973e776167e1");
+  private static final UUID P3_VP2_ID = UUID.fromString("e593130a-102c-11ea-be9e-975729b598b5");
 
   @Autowired
   private DataSource dataSource;
@@ -58,19 +63,326 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       // given
       UUID caz = PRESENT_CAZ_ID;
       PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          PAYMENT_1_EXTERNAL_ID,
+          PAYMENT_2_EXTERNAL_ID,
           null,
           null,
           null
       );
 
       // when
-      List<PaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).hasSize(2);
+      assertThat(result).extracting("id")
+          .contains(
+              P2_VP1_ID,
+              P2_VP2_ID
+          );
+    }
+
+    @Test
+    public void shouldReturnEmptyListIfNotFound() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          NOT_EXISTING_EXTERNAL_ID,
+          null,
+          null,
+          null
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).isEmpty();
+    }
+  }
+
+  @Nested
+  class FindByCleanZoneIdAndVrn {
+
+    @Test
+    public void shouldReturnExactMatch() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          PAYMENT_3_VRN,
+          null,
+          null
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).hasSize(2);
+      assertThat(result).extracting("id")
+          .contains(
+              P3_VP1_ID,
+              P3_VP2_ID
+          );
+    }
+
+    @Test
+    public void shouldReturnEmptyListIfNotFound() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          NOT_EXISTING_VRN,
+          null,
+          null
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).isEmpty();
+    }
+  }
+
+  @Nested
+  class FindByCleanZoneIdAndTravelDatesFromAndTo {
+
+    @Test
+    public void shouldFindTwoPayments() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          LocalDate.of(2019, 11, 1),
+          LocalDate.of(2019, 11, 3)
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).hasSize(5);
+      assertThat(result).extracting("id")
+          .contains(
+              P1_VP_1_ID,
+              P1_VP2_ID,
+              P1_VP3_ID,
+              P3_VP1_ID,
+              P3_VP2_ID
+          );
+    }
+
+    @Test
+    public void shouldFindAllPayments() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          LocalDate.of(2019, 11, 1),
+          LocalDate.of(2019, 11, 7)
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).hasSize(9);
+    }
+
+    @Test
+    public void shouldReturnEmptyListIfNotFound() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          LocalDate.of(2020, 11, 1),
+          LocalDate.of(2020, 11, 7)
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).isEmpty();
+    }
+  }
+
+  @Nested
+  class FindByCleanZoneIdAndTravelDateFromOnly {
+
+    @Test
+    public void shouldFindTwoPayments() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          LocalDate.of(2019, 11, 1),
+          null
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).hasSize(2);
+      assertThat(result).extracting("id")
+          .contains(
+              P1_VP_1_ID,
+              P3_VP1_ID
+          );
+    }
+
+    @Test
+    public void shouldFindOnlyOnePayment() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          LocalDate.of(2019, 11, 7),
+          null
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(1);
       assertThat(result).extracting("id")
-          .contains(PAYMENT_1_ID);
+          .contains(P2_VP2_ID);
+    }
+
+    @Test
+    public void shouldReturnEmptyListIfNotFound() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          LocalDate.of(2020, 11, 1),
+          null
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).isEmpty();
+    }
+  }
+
+  @Nested
+  class FindByCleanZoneIdAndTravelDateToOnly {
+
+    @Test
+    public void shouldFindTwoPayments() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          null,
+          LocalDate.of(2019, 11, 1)
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).hasSize(2);
+      assertThat(result).extracting("id")
+          .contains(
+              P1_VP_1_ID,
+              P3_VP1_ID
+          );
+    }
+
+    @Test
+    public void shouldFindOnlyOnePayment() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          null,
+          LocalDate.of(2019, 11, 7)
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).hasSize(1);
+      assertThat(result).extracting("id")
+          .contains(P2_VP2_ID);
+    }
+
+    @Test
+    public void shouldReturnEmptyListIfNotFound() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          null,
+          null,
+          null,
+          LocalDate.of(2020, 11, 7)
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).isEmpty();
+    }
+  }
+
+  @Nested
+  class FindByAllParams {
+
+    @Test
+    public void shouldReturnExactMatch() {
+      // given
+      UUID caz = PRESENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          PAYMENT_3_EXTERNAL_ID,
+          PAYMENT_3_VRN,
+          LocalDate.of(2019, 11, 1),
+          LocalDate.of(2019, 11, 2)
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).hasSize(2);
+      assertThat(result).extracting("id")
+          .contains(
+              P3_VP1_ID,
+              P3_VP2_ID
+          );
+    }
+
+    @Test
+    public void shouldReturnEmptyListIfCazIdNotFound() {
+      // given
+      UUID caz = ABSENT_CAZ_ID;
+      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
+          PAYMENT_3_EXTERNAL_ID,
+          PAYMENT_3_VRN,
+          LocalDate.of(2019, 11, 1),
+          LocalDate.of(2019, 11, 2)
+      );
+
+      // when
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+
+      // then
+      assertThat(result).isEmpty();
     }
   }
 
