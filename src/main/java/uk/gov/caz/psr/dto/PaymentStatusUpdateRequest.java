@@ -11,6 +11,7 @@ import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 
 /**

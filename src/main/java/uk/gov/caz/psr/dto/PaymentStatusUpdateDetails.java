@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
+import uk.gov.caz.psr.model.ValidationError;
 
 /**
  * A value object which is used as a request for updating payment status which contains payment

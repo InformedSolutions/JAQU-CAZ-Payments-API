@@ -3,6 +3,7 @@ package uk.gov.caz.psr.controller;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +27,7 @@ import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
  */
 @RestController
 @AllArgsConstructor
+@Slf4j
 public class ChargeSettlementController implements ChargeSettlementControllerApiSpec {
 
   public static final String BASE_PATH = "/v1/charge-settlement";
