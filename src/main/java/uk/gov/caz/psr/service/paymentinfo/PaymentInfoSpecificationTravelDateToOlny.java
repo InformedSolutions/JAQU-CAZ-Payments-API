@@ -23,6 +23,6 @@ public class PaymentInfoSpecificationTravelDateToOlny implements PaymentInfoSpec
   public Specification<VehicleEntrantPaymentInfo> create(PaymentInfoRequest paymentInfoRequest) {
     return (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
         .equal(root.get(VehicleEntrantPaymentInfo_.travelDate),
-            paymentInfoRequest.getToDatePaidFor());
+            paymentInfoRequest.getToDatePaidFor().minusDays(1));
   }
 }

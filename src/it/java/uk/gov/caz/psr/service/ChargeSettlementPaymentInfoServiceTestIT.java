@@ -287,7 +287,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
           null,
           null,
           null,
-          LocalDate.of(2019, 11, 1)
+          LocalDate.of(2019, 11, 2)
       );
 
       // when
@@ -310,7 +310,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
           null,
           null,
           null,
-          LocalDate.of(2019, 11, 7)
+          LocalDate.of(2019, 11, 8)
       );
 
       // when
