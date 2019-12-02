@@ -1,7 +1,6 @@
 package uk.gov.caz.psr.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.List;
@@ -68,8 +67,8 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
       LocalDate end = LocalDate.parse("2019-10-08");
 
       // when
-      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
-          vrn, start, end));
+      List<PaymentInfo> result =
+          paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz, vrn, start, end));
 
       // then
       assertThat(result).isEmpty();
@@ -84,8 +83,8 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
       LocalDate end = LocalDate.parse("2019-11-07");
 
       // when
-      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
-          vrn, start, end));
+      List<PaymentInfo> result =
+          paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz, vrn, start, end));
 
       // then
       assertThat(result).isEmpty();
@@ -100,8 +99,8 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
       LocalDate end = LocalDate.parse("2019-11-07");
 
       // when
-      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
-          vrn, start, end));
+      List<PaymentInfo> result =
+          paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz, vrn, start, end));
 
       // then
       assertThat(result).isEmpty();
@@ -115,16 +114,15 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
       String vrn = ANY_PRESENT_VRN;
 
       // when
-      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
-          vrn, start, end));
+      List<PaymentInfo> result =
+          paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz, vrn, start, end));
 
       // then
       assertThat(result).hasSize(1);
-      assertThat(result).allSatisfy(payment ->
-          assertThat(payment.getVehicleEntrantPaymentInfoList()).allSatisfy(vehicleEntrantPayment ->
-              assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID)
-          )
-      );
+      assertThat(result)
+          .allSatisfy(payment -> assertThat(payment.getVehicleEntrantPaymentInfoList()).allSatisfy(
+              vehicleEntrantPayment -> assertThat(vehicleEntrantPayment.getCleanAirZoneId())
+                  .isEqualTo(ANY_PRESENT_CAZ_ID)));
     }
 
     @Test
@@ -136,29 +134,30 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
       LocalDate end = LocalDate.parse("2019-12-01");
 
       // when
-      List<PaymentInfo> result = paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz,
-          vrn, start, end));
+      List<PaymentInfo> result =
+          paymentInfoRepository.findAll(byCazAndVrnAndDateRangeSpecification(caz, vrn, start, end));
 
       // then
       assertThat(result).hasSize(2);
-      assertThat(result).allSatisfy(payment ->
-          assertThat(payment.getExternalPaymentStatus()).isIn(
-              EnumSet.of(ExternalPaymentStatus.SUCCESS, ExternalPaymentStatus.FAILED)
-          )
-      );
+      assertThat(result).allSatisfy(payment -> assertThat(payment.getExternalPaymentStatus())
+          .isIn(EnumSet.of(ExternalPaymentStatus.SUCCESS, ExternalPaymentStatus.FAILED)));
     }
 
     private Specification<PaymentInfo> byCazAndVrnAndDateRangeSpecification(UUID caz, String vrn,
         LocalDate start, LocalDate end) {
       return (root, criteriaQuery, criteriaBuilder) -> {
         criteriaQuery.distinct(true);
-        Join<PaymentInfo, VehicleEntrantPaymentInfo> join = (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
+        Join<PaymentInfo, VehicleEntrantPaymentInfo> join =
+            (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
         return criteriaBuilder.and(
-            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
-            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.vrn), vrn)),
-            criteriaBuilder.and(criteriaBuilder.greaterThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), start)),
-            criteriaBuilder.and(criteriaBuilder.lessThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), end))
-        );
+            criteriaBuilder.and(
+                criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
+            criteriaBuilder
+                .and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.vrn), vrn)),
+            criteriaBuilder.and(criteriaBuilder
+                .greaterThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), start)),
+            criteriaBuilder.and(criteriaBuilder
+                .lessThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), end)));
       };
     }
   }
@@ -173,18 +172,18 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
       LocalDate end = start;
 
       // when
-      List<PaymentInfo> result = paymentInfoRepository
-          .findAll(byCazAndDateRangeSpecification(caz, start, end));
+      List<PaymentInfo> result =
+          paymentInfoRepository.findAll(byCazAndDateRangeSpecification(caz, start, end));
 
       // then
       assertThat(result).hasSize(2);
-      assertThat(result).allSatisfy(payment ->
-          assertThat(payment.getVehicleEntrantPaymentInfoList()).allSatisfy(vehicleEntrantPayment -> {
-            assertThat(vehicleEntrantPayment.getVrn()).isIn("ND84VSX", "AB11CDE");
-            assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
-            assertThat(vehicleEntrantPayment.getTravelDate()).isEqualTo(start);
-          })
-      );
+      assertThat(result)
+          .allSatisfy(payment -> assertThat(payment.getVehicleEntrantPaymentInfoList())
+              .allSatisfy(vehicleEntrantPayment -> {
+                assertThat(vehicleEntrantPayment.getVrn()).isIn("ND84VSX", "AB11CDE");
+                assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
+                assertThat(vehicleEntrantPayment.getTravelDate()).isEqualTo(start);
+              }));
     }
 
     @Test
@@ -195,31 +194,34 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
       LocalDate end = LocalDate.parse("2019-11-06");
 
       // when
-      List<PaymentInfo> result = paymentInfoRepository
-          .findAll(byCazAndDateRangeSpecification(caz, start, end));
+      List<PaymentInfo> result =
+          paymentInfoRepository.findAll(byCazAndDateRangeSpecification(caz, start, end));
 
       // then
       assertThat(result).hasSize(3);
-      assertThat(result).allSatisfy(payment ->
-          assertThat(payment.getVehicleEntrantPaymentInfoList()).allSatisfy(vehicleEntrantPayment -> {
-            assertThat(vehicleEntrantPayment.getVrn()).isIn("ND84VSX", "AB11CDE");
-            assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
-            assertThat(vehicleEntrantPayment.getTravelDate()).isBeforeOrEqualTo(end);
-            assertThat(vehicleEntrantPayment.getTravelDate()).isAfterOrEqualTo(start);
-          })
-      );
+      assertThat(result)
+          .allSatisfy(payment -> assertThat(payment.getVehicleEntrantPaymentInfoList())
+              .allSatisfy(vehicleEntrantPayment -> {
+                assertThat(vehicleEntrantPayment.getVrn()).isIn("ND84VSX", "AB11CDE");
+                assertThat(vehicleEntrantPayment.getCleanAirZoneId()).isEqualTo(ANY_PRESENT_CAZ_ID);
+                assertThat(vehicleEntrantPayment.getTravelDate()).isBeforeOrEqualTo(end);
+                assertThat(vehicleEntrantPayment.getTravelDate()).isAfterOrEqualTo(start);
+              }));
     }
 
     private Specification<PaymentInfo> byCazAndDateRangeSpecification(UUID caz, LocalDate start,
         LocalDate end) {
       return (root, criteriaQuery, criteriaBuilder) -> {
         criteriaQuery.distinct(true);
-        Join<PaymentInfo, VehicleEntrantPaymentInfo> join = (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
+        Join<PaymentInfo, VehicleEntrantPaymentInfo> join =
+            (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
         return criteriaBuilder.and(
-            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
-            criteriaBuilder.and(criteriaBuilder.greaterThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), start)),
-            criteriaBuilder.and(criteriaBuilder.lessThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), end))
-        );
+            criteriaBuilder.and(
+                criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
+            criteriaBuilder.and(criteriaBuilder
+                .greaterThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), start)),
+            criteriaBuilder.and(criteriaBuilder
+                .lessThanOrEqualTo(join.get(VehicleEntrantPaymentInfo_.travelDate), end)));
       };
     }
   }
@@ -262,11 +264,13 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
     private Specification<PaymentInfo> byCazAndVrnSpecification(UUID caz, String vrn) {
       return (root, criteriaQuery, criteriaBuilder) -> {
         criteriaQuery.distinct(true);
-        Join<PaymentInfo, VehicleEntrantPaymentInfo> join = (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
+        Join<PaymentInfo, VehicleEntrantPaymentInfo> join =
+            (Join) root.fetch(PaymentInfo_.vehicleEntrantPaymentInfoList);
         return criteriaBuilder.and(
-            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
-            criteriaBuilder.and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.vrn), vrn))
-        );
+            criteriaBuilder.and(
+                criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), caz)),
+            criteriaBuilder
+                .and(criteriaBuilder.equal(join.get(VehicleEntrantPaymentInfo_.vrn), vrn)));
       };
     }
 
@@ -285,12 +289,11 @@ public class ChargeSettlementPaymentInfoRepositoryTestIT {
   }
 
   static Stream<Arguments> partiallyCoveredDateRange() {
-    return Stream.of(
-        Arguments.of(LocalDate.parse("2019-11-01"), LocalDate.parse("2019-11-01")), // inclusive #1
+    return Stream.of(Arguments.of(LocalDate.parse("2019-11-01"), LocalDate.parse("2019-11-01")), // inclusive
+                                                                                                 // #1
         Arguments.of(LocalDate.parse("2019-11-07"), LocalDate.parse("2019-11-07")), // inclusive #2
         Arguments.of(LocalDate.parse("2019-11-07"), LocalDate.parse("2019-11-08")),
-        Arguments.of(LocalDate.parse("2019-11-07"), LocalDate.parse("2020-04-08"))
-    );
+        Arguments.of(LocalDate.parse("2019-11-07"), LocalDate.parse("2020-04-08")));
   }
 
   private void executeSqlFrom(String classPathFile) {

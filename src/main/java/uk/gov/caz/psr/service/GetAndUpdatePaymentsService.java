@@ -9,12 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.domain.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
-import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.model.service.VehicleEntrantPaymentsService;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.util.GetPaymentResultConverter;
 
 /**
  * Class that handles getting external payments and updating its status in the database.
@@ -29,6 +30,7 @@ public class GetAndUpdatePaymentsService {
   private final PaymentRepository internalPaymentsRepository;
   private final PaymentStatusUpdater paymentStatusUpdater;
   private final VehicleEntrantPaymentsService vehicleEntrantPaymentsService;
+  private final GetPaymentResultConverter getPaymentResultConverter;
 
   /**
    * Retrieves the payment by its internal identifier and, provided it exists and has an external
@@ -71,18 +73,32 @@ public class GetAndUpdatePaymentsService {
     GetPaymentResult paymentInfo = externalPaymentsRepository.findById(externalPaymentId)
         .orElseThrow(() -> new IllegalStateException(
             "External payment not found with id " + "'" + externalPaymentId + "'"));
+    ExternalPaymentDetails externalPaymentDetails =
+        getPaymentResultConverter.toExternalPaymentDetails(paymentInfo);
 
-    ExternalPaymentStatus externalStatus = paymentInfo.getPaymentStatus();
-
-    if (payment.getExternalPaymentStatus() == externalStatus) {
+    if (hasSameStatus(payment, externalPaymentDetails)) {
       log.warn(
           "External payment status is the same as the one from database and equal to '{}', "
               + "the payment will not be updated in the database",
           payment.getExternalPaymentStatus());
       return Optional.of(payment);
     }
-    Payment result = paymentStatusUpdater.updateWithStatus(payment, externalStatus,
-        OnBeforePublishPaymentStatusUpdateEvent.buildPaymentWith(paymentInfo.getEmail()));
+
+    Payment paymentWithEmail = payment.toBuilder().emailAddress(paymentInfo.getEmail()).build();
+
+    Payment result = paymentStatusUpdater.updateWithExternalPaymentDetails(paymentWithEmail,
+        externalPaymentDetails);
     return Optional.of(result);
+  }
+
+  /**
+   * Method which check if payment has the same status as payment in GOV.UK PAY
+   * 
+   * @param payment payment object from DB
+   * @param externalPaymentDetails data about payment from GOV.UK PAY
+   * @return boolean value if payment has the same status as externalPaymentDetails
+   */
+  private boolean hasSameStatus(Payment payment, ExternalPaymentDetails externalPaymentDetails) {
+    return payment.getExternalPaymentStatus() == externalPaymentDetails.getExternalPaymentStatus();
   }
 }

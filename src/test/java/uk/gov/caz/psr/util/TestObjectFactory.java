@@ -253,36 +253,28 @@ public class TestObjectFactory {
   public static class PaymentStatusFactory {
 
     public static PaymentStatus anyWithStatus(InternalPaymentStatus internalPaymentStatus) {
-      return PaymentStatus.builder()
-          .caseReference("any-valid-case-reference")
-          .status(internalPaymentStatus)
-          .externalId(UUID.randomUUID().toString())
-          .build();
+      return PaymentStatus.builder().caseReference("any-valid-case-reference")
+          .status(internalPaymentStatus).externalId(UUID.randomUUID().toString()).build();
     }
 
     public static PaymentStatus with(InternalPaymentStatus internalPaymentStatus,
         String caseReference, String externalId) {
-      return PaymentStatus.builder()
-          .caseReference(caseReference)
-          .status(internalPaymentStatus)
-          .externalId(externalId)
-          .build();
+      return PaymentStatus.builder().caseReference(caseReference).status(internalPaymentStatus)
+          .externalId(externalId).build();
     }
   }
 
   public static class ExternalPaymentDetailsFactory {
     public static ExternalPaymentDetails any() {
-      return ExternalPaymentDetails.builder()
-          .email("example@email.com")
-          .externalPaymentStatus(ExternalPaymentStatus.SUCCESS)
-          .build();
+      return ExternalPaymentDetails.builder().email("example@email.com")
+          .externalPaymentStatus(ExternalPaymentStatus.SUCCESS).build();
     }
 
-    public static ExternalPaymentDetails anyWithStatus(ExternalPaymentStatus externalPaymentStatus) {
-      return ExternalPaymentDetails.builder()
-          .email("example@email.com")
-          .externalPaymentStatus(externalPaymentStatus)
-          .build();
+    public static ExternalPaymentDetails anyWithStatus(
+        ExternalPaymentStatus externalPaymentStatus) {
+      return ExternalPaymentDetails.builder().email("example@email.com")
+          .externalPaymentStatus(externalPaymentStatus).build();
     }
   }
+
 }

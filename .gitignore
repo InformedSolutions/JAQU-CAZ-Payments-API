@@ -31,6 +31,9 @@ HELP.md
 ### Vagrant ###
 .vagrant
 
+### Hibernate ###
+*_.java
+
 bin/
 .checkstyle
 *.log

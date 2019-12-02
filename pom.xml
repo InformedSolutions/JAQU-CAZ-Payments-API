@@ -159,7 +159,6 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-jpamodelgen</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <!-- swagger: begin -->
@@ -474,6 +473,16 @@
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <encoding>UTF-8</encoding>
+          <compilerArgument>-proc:none</compilerArgument>
+        </configuration>
+      </plugin>
     </plugins>
     <pluginManagement>
     	<plugins>
@@ -505,6 +514,7 @@
     								<goals>
     									<goal>pmd</goal>
     									<goal>cpd-check</goal>
+    									<goal>generate-sources</goal>
     								</goals>
     							</pluginExecutionFilter>
     							<action>
@@ -519,6 +529,14 @@
     </pluginManagement>
   </build>
 
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>maven-annotation-plugin</id>
+	  <url>http://maven-annotation-plugin.googlecode.com/svn/trunk/mavenrepo</url>
+    </pluginRepository>
+  </pluginRepositories>
+	
   <reporting>
     <plugins>
       <plugin>
