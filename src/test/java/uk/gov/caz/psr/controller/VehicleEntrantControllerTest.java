@@ -63,8 +63,8 @@ class VehicleEntrantControllerTest {
       mockMvc.perform(post(PATH)
           .content(payload)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
@@ -79,8 +79,8 @@ class VehicleEntrantControllerTest {
       mockMvc.perform(post(PATH)
           .content(payload)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
@@ -95,8 +95,8 @@ class VehicleEntrantControllerTest {
       mockMvc.perform(post(PATH)
           .content(payload)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
@@ -112,8 +112,8 @@ class VehicleEntrantControllerTest {
       mockMvc.perform(post(PATH)
           .content(payload)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
@@ -132,8 +132,8 @@ class VehicleEntrantControllerTest {
     mockMvc.perform(post(PATH)
         .content(payload)
         .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-        .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(jsonPath("$.status").value(InternalPaymentStatus.NOT_PAID.name()));
@@ -151,8 +151,8 @@ class VehicleEntrantControllerTest {
     mockMvc.perform(post(PATH)
         .content(payload)
         .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-        .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(jsonPath("$.status").value(InternalPaymentStatus.PAID.name()));

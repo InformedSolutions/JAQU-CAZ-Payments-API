@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiResponses;
 import javax.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -149,6 +150,6 @@ public interface ChargeSettlementControllerApiSpec {
   })
   @PutMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
   PaymentUpdateSuccessResponse updatePaymentStatus(
-      @Valid @RequestBody PaymentStatusUpdateRequest request,
+      @Valid @RequestBody PaymentStatusUpdateRequest request, BindingResult bindingResult,
       @RequestHeader(Headers.X_API_KEY) String apiKey);
 }

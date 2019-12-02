@@ -2,11 +2,12 @@ package uk.gov.caz.psr.dto;
 
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
+import uk.gov.caz.psr.model.ValidationError;
 
 /**
  * A value object which is used as a request for updating payment status which contains payment
@@ -17,19 +18,19 @@ import lombok.Value;
 public class PaymentStatusUpdateDetails {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.date-caz-entry}")
-  @NotNull
+  @NotNull(message = ValidationError.MANDATORY_FIELD_MISSING_ERROR)
   LocalDate dateOfCazEntry;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.payment-status}")
-  @NotNull
+  @NotNull(message = ValidationError.MANDATORY_FIELD_MISSING_ERROR)
   ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.payment-id}")
-  @Max(255)
+  @Size(max = 255)
   String paymentId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.case-reference}")
-  @NotBlank
-  @Max(15)
+  @NotBlank(message = ValidationError.MANDATORY_FIELD_MISSING_ERROR)
+  @Size(max = 15)
   String caseReference;
 }

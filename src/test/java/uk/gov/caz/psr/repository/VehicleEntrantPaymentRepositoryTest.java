@@ -22,6 +22,7 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.VehicleEntrantPaymentRepository.VehicleEntrantPaymentRowMapper;
+import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 import uk.gov.caz.psr.util.TestObjectFactory.VehicleEntrantPayments;
 
@@ -189,8 +190,8 @@ class VehicleEntrantPaymentRepositoryTest {
               .findOnePaidByVrnAndCazEntryDate(UUID.randomUUID(), "VRN", LocalDate.now()));
 
       // then
-      assertThat(throwable).isInstanceOf(IllegalStateException.class)
-          .hasMessage("More than one VehicleEntrantPayment found");
+      assertThat(throwable).isInstanceOf(NotUniqueVehicleEntrantPaymentFoundException.class)
+          .hasMessage("Not able to find unique VehicleEntrantPayment");
     }
 
     @Test
@@ -267,8 +268,8 @@ class VehicleEntrantPaymentRepositoryTest {
                   "test"));
 
       // then
-      assertThat(throwable).isInstanceOf(IllegalStateException.class)
-          .hasMessage("More than one VehicleEntrantPayment found");
+      assertThat(throwable).isInstanceOf(NotUniqueVehicleEntrantPaymentFoundException.class)
+          .hasMessage("Not able to find unique VehicleEntrantPayment");
     }
 
     @Test

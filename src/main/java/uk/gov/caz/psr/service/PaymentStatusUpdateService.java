@@ -66,8 +66,9 @@ public class PaymentStatusUpdateService {
       VehicleEntrantPaymentStatusUpdate vehicleEntrantPaymentStatusUpdate) {
     VehicleEntrantPayment vehicleEntrantPayment = loadVehicleEntrantPayment(
         vehicleEntrantPaymentStatusUpdate).orElseThrow(
-          () -> new MissingVehicleEntrantPaymentException("VehicleEntrantPayment not found for: "
-              + vehicleEntrantPaymentStatusUpdate));
+          () -> new MissingVehicleEntrantPaymentException(
+              vehicleEntrantPaymentStatusUpdate.getVrn(),
+              "VehicleEntrantPayment not found for: " + vehicleEntrantPaymentStatusUpdate));
 
     return vehicleEntrantPayment.toBuilder()
         .internalPaymentStatus(vehicleEntrantPaymentStatusUpdate.getPaymentStatus())

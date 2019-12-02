@@ -57,8 +57,8 @@ public class GetChargeSettlementPaymentStatusTestIT {
     String nonExistingVrn = "CAS222";
 
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
-        .contentType(MediaType.APPLICATION_JSON_UTF8)
-        .accept(MediaType.APPLICATION_JSON_UTF8)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", nonExistingVrn)
@@ -72,8 +72,8 @@ public class GetChargeSettlementPaymentStatusTestIT {
   public void shouldReturn500WhenThereAreTwoPaidPaymentStatusesWithSameVrnAndDateOfEntrance()
       throws Exception {
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
-        .contentType(MediaType.APPLICATION_JSON_UTF8)
-        .accept(MediaType.APPLICATION_JSON_UTF8)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)
@@ -85,8 +85,8 @@ public class GetChargeSettlementPaymentStatusTestIT {
   public void shouldReturn200AndPaidPaymentStatusWhenThereAreManyRecordsAndOneOfThemIsPaid()
       throws Exception {
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
-        .contentType(MediaType.APPLICATION_JSON_UTF8)
-        .accept(MediaType.APPLICATION_JSON_UTF8)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)
@@ -99,8 +99,8 @@ public class GetChargeSettlementPaymentStatusTestIT {
   @Test
   public void shouldReturn200AndTheExistingPaymentWhenThereAreNoPaid() throws Exception {
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
-        .contentType(MediaType.APPLICATION_JSON_UTF8)
-        .accept(MediaType.APPLICATION_JSON_UTF8)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)

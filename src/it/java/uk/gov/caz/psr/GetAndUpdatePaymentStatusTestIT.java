@@ -43,7 +43,7 @@ public class GetAndUpdatePaymentStatusTestIT {
     String correlationId = "31f69f26-fb99-11e9-8483-9fcf0b2b434f";
     mockMvc.perform(get(URL_TEMPLATE, id)
         .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isBadRequest());
   }
@@ -55,7 +55,7 @@ public class GetAndUpdatePaymentStatusTestIT {
     String correlationId = "542de1b5-4aab-45eb-bccc-6ec91f1d6d51";
     mockMvc.perform(get(URL_TEMPLATE, notExistingId)
         .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
   }
@@ -67,7 +67,7 @@ public class GetAndUpdatePaymentStatusTestIT {
     String correlationId = "939898b0-fb9e-11e9-8483-cb50ccd05275";
     mockMvc.perform(get(URL_TEMPLATE, paymentId)
         .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
   }

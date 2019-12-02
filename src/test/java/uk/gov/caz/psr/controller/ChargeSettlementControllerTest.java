@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.controller;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -43,7 +44,7 @@ import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
 import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
 
 @ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class, Configuration.class,
-    ChargeSettlementController.class})
+    ChargeSettlementController.class, ExceptionController.class})
 @WebMvcTest
 class ChargeSettlementControllerTest {
 
@@ -77,8 +78,8 @@ class ChargeSettlementControllerTest {
 
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .content(payload)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message")
               .value("Missing request header 'X-Correlation-ID'"));
@@ -88,8 +89,8 @@ class ChargeSettlementControllerTest {
     public void shouldReturn400StatusCodeWhenVrnIsMissing() throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
           .param("dateOfCazEntry", ANY_VALID_DATE_STRING))
           .andExpect(status().isBadRequest());
     }
@@ -98,8 +99,8 @@ class ChargeSettlementControllerTest {
     public void shouldReturn400StatusWhenDateOfCazEntryIsMissing() throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON_UTF8)
-          .accept(MediaType.APPLICATION_JSON_UTF8)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
           .param("vrn", ANY_VALID_VRN))
           .andExpect(status().isBadRequest());
     }
@@ -109,8 +110,8 @@ class ChargeSettlementControllerTest {
     public void shouldReturn400StatusCodeWhenVrnIsInvalid(String vrn) throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
           .param("vrn", vrn)
           .param("dateOfCazEntry", ANY_VALID_DATE_STRING))
           .andExpect(status().isBadRequest());
@@ -128,8 +129,8 @@ class ChargeSettlementControllerTest {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, UUID.randomUUID())
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
           .param("vrn", ANY_VALID_VRN)
           .param("dateOfCazEntry", ANY_VALID_DATE_STRING))
           .andExpect(status().isOk());
@@ -145,8 +146,9 @@ class ChargeSettlementControllerTest {
 
       mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message")
               .value("Missing request header 'X-Correlation-ID'"));
@@ -159,7 +161,8 @@ class ChargeSettlementControllerTest {
       mockMvc.perform(post(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+          .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isMethodNotAllowed());
     }
 
@@ -169,10 +172,28 @@ class ChargeSettlementControllerTest {
 
       mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-          .andExpect(status().isBadRequest());
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.errors[*].title").value(hasItem("Mandatory field missing")))
+          .andExpect(jsonPath("$.errors[*].detail").value(hasItem("The vrn field is mandatory")));
+    }
+
+    @Test
+    public void invalidVrnShouldResultIn400() throws Exception {
+      String payload = requestWithVrn("TOO_LONG_VRN_1234567890");
+
+      mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
+          .content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.errors[0].title").value("size must be between 1 and 15"))
+          .andExpect(jsonPath("$.errors[0].detail").value("The vrn size must be between 1 and 15"));
     }
 
     @Test
@@ -181,10 +202,30 @@ class ChargeSettlementControllerTest {
 
       mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-          .andExpect(status().isBadRequest());
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.errors[0].title").value("Mandatory field missing"))
+          .andExpect(jsonPath("$.errors[0].detail").value("The statusUpdates field is mandatory"));
+    }
+
+    @Test
+    public void invalidStatusUpdatesShouldResultIn400() throws Exception {
+      String payload = requestWithStatusUpdates(
+          Arrays.asList(PaymentStatusUpdateDetailsFactory.anyInvalid()));
+
+      mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
+          .content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.errors[0].title").value("Mandatory field missing"))
+          .andExpect(jsonPath("$.errors[0].detail")
+              .value("The statusUpdates[0].caseReference field is mandatory"));
     }
 
     @Test
@@ -193,8 +234,8 @@ class ChargeSettlementControllerTest {
 
       mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
-          .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-          .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isOk());
