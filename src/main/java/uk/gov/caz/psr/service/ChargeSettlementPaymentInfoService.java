@@ -7,7 +7,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.model.info.PaymentInfo;
-import uk.gov.caz.psr.repository.jpa.PaymentInfoRepository;
+import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
+import uk.gov.caz.psr.repository.jpa.VehicleEntrantPaymentInfoRepository;
 import uk.gov.caz.psr.service.paymentinfo.CazIdSpecification;
 import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
 
@@ -18,9 +19,9 @@ import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
 @AllArgsConstructor
 public class ChargeSettlementPaymentInfoService {
 
-  private PaymentInfoRepository paymentInfoRepository;
+  private final VehicleEntrantPaymentInfoRepository vehicleEntrantPaymentInfoRepository;
 
-  private List<PaymentInfoSpecification> specifications;
+  private final List<PaymentInfoSpecification> specifications;
 
   /**
    * Method which filter payments based on PaymentInfoRequest.
@@ -29,13 +30,13 @@ public class ChargeSettlementPaymentInfoService {
    * @param cazId for payment
    * @return  list of {@link PaymentInfo}
    */
-  public List<PaymentInfo> filter(PaymentInfoRequest paymentInfoRequest, UUID cazId) {
-    Specification<PaymentInfo> specification = specifications.stream()
+  public List<VehicleEntrantPaymentInfo> filter(PaymentInfoRequest paymentInfoRequest, UUID cazId) {
+    Specification<VehicleEntrantPaymentInfo> specification = specifications.stream()
         .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(paymentInfoRequest))
         .map(paymentInfoSpecification -> paymentInfoSpecification.create(paymentInfoRequest))
         .reduce(initSpecification(cazId), Specification::and);
 
-    return paymentInfoRepository.findAll(specification);
+    return vehicleEntrantPaymentInfoRepository.findAll(specification);
   }
 
   /**
@@ -44,8 +45,7 @@ public class ChargeSettlementPaymentInfoService {
    * @param cazId for payment
    * @return {@link Specification}
    */
-  private Specification<PaymentInfo> initSpecification(UUID cazId) {
+  private Specification<VehicleEntrantPaymentInfo> initSpecification(UUID cazId) {
     return new CazIdSpecification(cazId);
   }
-
 }

@@ -2,11 +2,14 @@ package uk.gov.caz.psr.model.info;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import lombok.Data;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -15,9 +18,15 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 @Table(name = "vehicle_entrant_payment")
 @Data
 public class VehicleEntrantPaymentInfo {
+
   @Id
   @Column(name = "vehicle_entrant_payment_id")
   UUID id;
+
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "payment_id", referencedColumnName = "payment_id", nullable = false,
+      unique = true)
+  PaymentInfo paymentInfo;
 
   @Column
   String vrn;
