@@ -2,8 +2,8 @@
 
 spring:
   datasource:
-    url: jdbc:postgresql://${postgres.url:localhost:9999}/caz-payments
-#    url: jdbc:postgresql://${postgres.url:localhost:5432}/caz-payments
+#    url: jdbc:postgresql://${postgres.url:localhost:9999}/caz-payments
+    url: jdbc:postgresql://${postgres.url:localhost:5432}/caz-payments
     hikari:
       maximum-pool-size: 1
   jpa:

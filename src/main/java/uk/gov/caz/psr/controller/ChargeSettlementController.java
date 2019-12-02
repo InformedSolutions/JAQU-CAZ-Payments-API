@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -54,11 +55,17 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public ResponseEntity<PaymentStatusResponse> getPaymentStatus(PaymentStatusRequest request,
-      UUID cleanAirZoneId) {
-    PaymentStatus paymentStatus = chargeSettlementService.findChargeSettlement(
-        cleanAirZoneId,
-        request.getVrn(),
-        request.getDateOfCazEntry());
+      BindingResult bindingResult, UUID cleanAirZoneId) {
+    if (bindingResult.hasErrors()) {
+      throw new PaymentStatusDtoValidationException(request.getVrn(),
+          "getPaymentStatus.validationErrorTitle", bindingResult);
+    }
+
+    PaymentStatus paymentStatus = chargeSettlementService
+        .findChargeSettlement(
+            cleanAirZoneId,
+            request.getVrn(),
+            LocalDate.parse(request.getDateOfCazEntry()));
 
     return ResponseEntity.ok(PaymentStatusResponse.from(paymentStatus));
   }

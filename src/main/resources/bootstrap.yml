@@ -5,8 +5,8 @@ aws:
     profileSeparator: .
     name: payments
     failFast: true
-    enabled: true
-#    enabled: false
+#    enabled: true
+    enabled: false
 
 cloud:
   aws:

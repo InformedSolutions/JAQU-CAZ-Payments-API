@@ -2,13 +2,16 @@ package uk.gov.caz.psr;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
@@ -78,7 +81,9 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)
         .param("dateOfCazEntry", VALID_DUPLICATED_DATE_STRING))
-        .andExpect(status().is5xxServerError());
+        .andExpect(status().is5xxServerError())
+        .andExpect(
+            jsonPath("$.errors[0].detail").value("More than one paid VehicleEntrantPayment found"));
   }
 
   @Test
@@ -109,6 +114,29 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.REFUNDED, VALID_CASE_REFERENCE,
                 VALID_EXTERNAL_ID)));
+  }
+
+  @Test
+  public void shouldReturn400WithVrnAndDateOfCazEntryValidationErrorsWhenAllParamsAreMissing()
+      throws Exception {
+    mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.X_API_KEY, VALID_CAZ_ID))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+        .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
+        .andExpect(jsonPath("$.errors[0].vrn").value(IsNull.nullValue()))
+        .andExpect(jsonPath("$.errors[0].detail")
+            .value("\"dateOfCazEntry\" is mandatory and cannot be blank"))
+        .andExpect(jsonPath("$.errors[1].title").value("Parameter validation error"))
+        .andExpect(jsonPath("$.errors[1].status").value(HttpStatus.BAD_REQUEST.value()))
+        .andExpect(jsonPath("$.errors[1].vrn").value(IsNull.nullValue()))
+        .andExpect(
+            jsonPath("$.errors[1].detail").value("\"vrn\" is mandatory and cannot be blank"));
+
+
   }
 
   private String getNotPaidResponse() {
