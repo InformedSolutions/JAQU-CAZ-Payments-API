@@ -64,7 +64,8 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @GetMapping(ChargeSettlementController.PAYMENT_INFO_PATH)
-  ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest);
+  ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest,
+      @RequestHeader(Headers.X_API_KEY) String apiKey);
 
   /**
    * Allows LAs to query and retrieve data that enables them to determine whether a vehicle that has

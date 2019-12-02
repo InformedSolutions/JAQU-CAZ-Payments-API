@@ -16,7 +16,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
-import uk.gov.caz.psr.model.info.PaymentInfo;
 import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 import uk.gov.caz.psr.repository.jpa.VehicleEntrantPaymentInfoRepository;
 import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
@@ -39,7 +38,7 @@ class ChargeSettlementPaymentInfoServiceTest {
 
     //when
     List<VehicleEntrantPaymentInfo> any = paymentInfoService
-        .filter(new PaymentInfoRequest(null, null, null, null), UUID.randomUUID());
+        .findPaymentInfo(new PaymentInfoRequest(null, null, null, null), UUID.randomUUID());
 
     //then
     assertThat(any).isEqualTo(emptyList());

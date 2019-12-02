@@ -30,7 +30,8 @@ public class ChargeSettlementPaymentInfoService {
    * @param cazId for payment
    * @return  list of {@link PaymentInfo}
    */
-  public List<VehicleEntrantPaymentInfo> filter(PaymentInfoRequest paymentInfoRequest, UUID cazId) {
+  public List<VehicleEntrantPaymentInfo> findPaymentInfo(PaymentInfoRequest paymentInfoRequest,
+      UUID cazId) {
     Specification<VehicleEntrantPaymentInfo> specification = specifications.stream()
         .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(paymentInfoRequest))
         .map(paymentInfoSpecification -> paymentInfoSpecification.create(paymentInfoRequest))
