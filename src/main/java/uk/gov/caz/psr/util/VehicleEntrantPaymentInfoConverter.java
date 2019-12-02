@@ -108,7 +108,7 @@ public class VehicleEntrantPaymentInfoConverter {
         .caseReference(vehicleEntrantPaymentInfo.getCaseReference())
         .chargePaid(currencyFormatter.parsePenniesToBigDecimal(
             vehicleEntrantPaymentInfo.getChargePaid()))
-        .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus
+        .paymentStatus(ChargeSettlementPaymentStatus
             .from(vehicleEntrantPaymentInfo.getPaymentStatus()))
         .build();
   }

@@ -23,7 +23,7 @@ import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
 
 @RequestMapping(
     value = ChargeSettlementController.BASE_PATH,
-    produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+    produces = MediaType.APPLICATION_JSON_VALUE
 )
 public interface ChargeSettlementControllerApiSpec {
 
