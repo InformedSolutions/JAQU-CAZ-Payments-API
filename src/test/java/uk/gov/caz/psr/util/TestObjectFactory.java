@@ -271,7 +271,7 @@ public class TestObjectFactory {
 
     public static PaymentStatusUpdateDetails anyWithStatus(ChargeSettlementPaymentStatus status) {
       return PaymentStatusUpdateDetails.builder()
-          .caseReference("Test case Reference")
+          .caseReference("CaseReference")
           .chargeSettlementPaymentStatus(status)
           .dateOfCazEntry(LocalDate.now())
           .paymentId("TestPaymentId")
@@ -280,7 +280,7 @@ public class TestObjectFactory {
 
     public static PaymentStatusUpdateDetails refundedWithDateOfCazEntry(LocalDate date) {
       return PaymentStatusUpdateDetails.builder()
-          .caseReference("Test case Reference")
+          .caseReference("CaseReference")
           .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
           .dateOfCazEntry(date)
           .build();
@@ -289,19 +289,28 @@ public class TestObjectFactory {
     public static PaymentStatusUpdateDetails refundedWithDateOfCazEntryAndPaymentId(
         LocalDate date, String paymentID) {
       return PaymentStatusUpdateDetails.builder()
-          .caseReference("Test case Reference")
+          .caseReference("CaseReference")
           .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
           .paymentId(paymentID)
           .dateOfCazEntry(date)
           .build();
     }
+
+    public static PaymentStatusUpdateDetails anyInvalid() {
+      return PaymentStatusUpdateDetails.builder()
+          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentId("paymentID")
+          .dateOfCazEntry(LocalDate.now())
+          .build();
+    }
+
   }
 
   public static class VehicleEntrantPaymentStatusUpdates {
 
     public static VehicleEntrantPaymentStatusUpdate any() {
       return VehicleEntrantPaymentStatusUpdate.builder()
-          .caseReference("Test case Reference")
+          .caseReference("CaseReference")
           .externalPaymentId("test payment id")
           .paymentStatus(InternalPaymentStatus.REFUNDED)
           .vrn("VRN123")

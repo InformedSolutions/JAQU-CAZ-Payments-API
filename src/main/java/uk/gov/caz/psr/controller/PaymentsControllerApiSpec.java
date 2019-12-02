@@ -25,7 +25,7 @@ import uk.gov.caz.psr.dto.PaymentStatusResponse;
 
 @RequestMapping(
     value = PaymentsController.BASE_PATH,
-    produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+    produces = MediaType.APPLICATION_JSON_VALUE
 )
 public interface PaymentsControllerApiSpec {
 

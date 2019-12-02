@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RestController;
+import uk.gov.caz.psr.controller.exception.DtoValidationException;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
@@ -60,8 +62,11 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public PaymentUpdateSuccessResponse updatePaymentStatus(PaymentStatusUpdateRequest request,
-      String apiKey) {
+      BindingResult bindingResult, String apiKey) {
     UUID cleanAirZoneId = UUID.fromString(apiKey);
+    if (bindingResult.hasErrors()) {
+      throw new DtoValidationException(request.getVrn(), bindingResult);
+    }
     paymentStatusUpdateService
         .processUpdate(request.toVehicleEntrantPaymentStatusUpdates(cleanAirZoneId));
     return new PaymentUpdateSuccessResponse();
