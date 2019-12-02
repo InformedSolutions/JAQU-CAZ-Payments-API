@@ -104,7 +104,8 @@ class ChargeSettlementControllerTest {
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].vrn").doesNotExist())
-          .andExpect(jsonPath("$.errors[0].detail").value("Request must contain at least one parameter"));
+          .andExpect(
+              jsonPath("$.errors[0].detail").value("Request must contain at least one parameter"));
     }
 
     @Nested
@@ -112,18 +113,22 @@ class ChargeSettlementControllerTest {
 
       @Nested
       class ToDatePaidFor {
+
         @ParameterizedTest
         @ValueSource(strings = {"01.10.2019", "28/04/2007", "not-a-valid-date"})
-        public void shouldReturn400StatusCodeUponInvalidFormat(String invalidToDatePaidFor) throws Exception {
+        public void shouldReturn400StatusCodeUponInvalidFormat(String invalidToDatePaidFor)
+            throws Exception {
           invalidDateFormatTest(invalidToDatePaidFor, "toDatePaidFor");
         }
       }
 
       @Nested
       class FromDatePaidFor {
+
         @ParameterizedTest
         @ValueSource(strings = {"07.09.2019", "11/03/2006", "not-a-valid-date"})
-        public void shouldReturn400StatusCodeUponInvalidFormat(String invalidFromDatePaidFor) throws Exception {
+        public void shouldReturn400StatusCodeUponInvalidFormat(String invalidFromDatePaidFor)
+            throws Exception {
           invalidDateFormatTest(invalidFromDatePaidFor, "fromDatePaidFor");
         }
       }
@@ -160,7 +165,8 @@ class ChargeSettlementControllerTest {
             .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
             .andExpect(jsonPath("$.errors[0].vrn").doesNotExist())
             .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
-            .andExpect(jsonPath("$.errors[0].detail").value("\"vrn\" size must be between 1 and 15"));
+            .andExpect(
+                jsonPath("$.errors[0].detail").value("\"vrn\" size must be between 1 and 15"));
       }
     }
 
@@ -224,20 +230,34 @@ class ChargeSettlementControllerTest {
     public void shouldReturn400StatusCodeWhenVrnIsMissing() throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, ANY_API_KEY)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
           .param("dateOfCazEntry", ANY_VALID_DATE_STRING))
-          .andExpect(status().isBadRequest());
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.errors[0].vrn").value(IsNull.nullValue()))
+          .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+          .andExpect(jsonPath("$.errors[0].detail")
+              .value("\"vrn\" is mandatory and cannot be blank"))
+          .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()));
+
     }
 
     @Test
     public void shouldReturn400StatusWhenDateOfCazEntryIsMissing() throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, ANY_API_KEY)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
           .param("vrn", ANY_VALID_VRN))
-          .andExpect(status().isBadRequest());
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.errors[0].vrn").value(ANY_VALID_VRN))
+          .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+          .andExpect(jsonPath("$.errors[0].detail")
+              .value("\"dateOfCazEntry\" is mandatory and cannot be blank"))
+          .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()));
+
     }
 
     @ParameterizedTest
@@ -245,11 +265,38 @@ class ChargeSettlementControllerTest {
     public void shouldReturn400StatusCodeWhenVrnIsInvalid(String vrn) throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, ANY_API_KEY)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
           .param("vrn", vrn)
           .param("dateOfCazEntry", ANY_VALID_DATE_STRING))
-          .andExpect(status().isBadRequest());
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.errors[0].vrn").value(vrn))
+          .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+          .andExpect(jsonPath("$.errors[0].detail")
+              .value("\"vrn\" size must be between 1 and 15"))
+          .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()));
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2019-11-111", "inva-li-dd", "2019/11/11"})
+    public void shouldReturn400StatusCodeWhenDateOfCazEntryIsInvalid(String dateOfCazEntry)
+        throws Exception {
+      mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+          .param("vrn", ANY_VALID_VRN)
+          .param("dateOfCazEntry", dateOfCazEntry)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, ANY_API_KEY)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.errors[0].vrn").value(ANY_VALID_VRN))
+          .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+          .andExpect(jsonPath("$.errors[0].detail")
+              .value("Invalid date format of \"dateOfCazEntry\""))
+          .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()));
+
     }
 
     @Test
@@ -314,7 +361,8 @@ class ChargeSettlementControllerTest {
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].vrn").value(""))
           .andExpect(jsonPath("$.errors[*].title").value(hasItem("Parameter validation error")))
-          .andExpect(jsonPath("$.errors[*].detail").value(hasItem("\"vrn\" is mandatory and cannot be blank")));
+          .andExpect(jsonPath("$.errors[*].detail")
+              .value(hasItem("\"vrn\" is mandatory and cannot be blank")));
     }
 
     @Test
@@ -331,7 +379,8 @@ class ChargeSettlementControllerTest {
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].vrn").value(IsNull.nullValue()))
           .andExpect(jsonPath("$.errors[*].title").value(hasItem("Parameter validation error")))
-          .andExpect(jsonPath("$.errors[*].detail").value(hasItem("\"vrn\" is mandatory and cannot be blank")));
+          .andExpect(jsonPath("$.errors[*].detail")
+              .value(hasItem("\"vrn\" is mandatory and cannot be blank")));
     }
 
     @Test
@@ -365,7 +414,8 @@ class ChargeSettlementControllerTest {
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
           .andExpect(jsonPath("$.errors[0].vrn").isNotEmpty())
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
-          .andExpect(jsonPath("$.errors[0].detail").value("\"statusUpdates\" is mandatory and cannot be empty"));
+          .andExpect(jsonPath("$.errors[0].detail")
+              .value("\"statusUpdates\" is mandatory and cannot be empty"));
     }
 
     @Test
