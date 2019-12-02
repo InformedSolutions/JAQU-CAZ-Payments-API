@@ -79,7 +79,7 @@ class VehicleEntrantPaymentInfoConverterTest {
     assertThat(lineItem.getCaseReference()).isEqualTo(ANY_CASE_REFERENCE);
     assertThat(lineItem.getChargePaid()).isEqualTo(BigDecimal.valueOf(ANY_TOTAL_PAID));
     assertThat(lineItem.getTravelDate()).isEqualTo(ANY_TRAVEL_DATE);
-    assertThat(lineItem.getChargeSettlementPaymentStatus()).isEqualTo(ChargeSettlementPaymentStatus.REFUNDED);
+    assertThat(lineItem.getPaymentStatus()).isEqualTo(ChargeSettlementPaymentStatus.REFUNDED);
   }
 
   private Collection<VehicleEntrantPaymentInfo> singleVehicleEntrantPaymentInfo() {

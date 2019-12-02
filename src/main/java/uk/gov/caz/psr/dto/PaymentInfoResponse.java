@@ -46,7 +46,7 @@ public class PaymentInfoResponse {
     public static class VehicleEntrantPaymentInfo {
 
       @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-status}")
-      ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
+      ChargeSettlementPaymentStatus paymentStatus;
 
       @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.case-reference}")
       String caseReference;
