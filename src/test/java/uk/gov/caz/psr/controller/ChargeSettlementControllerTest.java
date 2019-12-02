@@ -35,10 +35,12 @@ import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.service.ChargeSettlementPaymentInfoService;
 import uk.gov.caz.psr.service.ChargeSettlementService;
 import uk.gov.caz.psr.service.PaymentStatusUpdateService;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
+import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
 
 @ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class, Configuration.class,
     ChargeSettlementController.class})
@@ -55,6 +57,10 @@ class ChargeSettlementControllerTest {
   private PaymentStatusUpdateService paymentStatusUpdateService;
   @MockBean
   private ChargeSettlementService chargeSettlementService;
+  @MockBean
+  private ChargeSettlementPaymentInfoService chargeSettlementPaymentInfoService;
+  @MockBean
+  private VehicleEntrantPaymentInfoConverter vehicleEntrantPaymentInfoConverter;
 
   private static final String ANY_VALID_VRN = "DL76MWX";
   private static final String ANY_VALID_DATE_STRING = LocalDate.now().toString();

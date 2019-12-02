@@ -70,7 +70,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(2);
@@ -93,7 +93,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).isEmpty();
@@ -115,7 +115,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(2);
@@ -138,7 +138,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).isEmpty();
@@ -160,7 +160,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(5);
@@ -186,7 +186,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(9);
@@ -204,7 +204,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).isEmpty();
@@ -226,7 +226,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(2);
@@ -249,7 +249,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(1);
@@ -269,7 +269,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).isEmpty();
@@ -291,7 +291,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(2);
@@ -314,7 +314,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(1);
@@ -334,7 +334,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).isEmpty();
@@ -356,7 +356,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).hasSize(2);
@@ -379,7 +379,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
       );
 
       // when
-      List<VehicleEntrantPaymentInfo> result = paymentInfoService.filter(paymentInfoRequest, caz);
+      List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
 
       // then
       assertThat(result).isEmpty();

@@ -41,6 +41,9 @@ public class VehicleEntrantPaymentInfo {
   @Column(name = "travel_date")
   LocalDate travelDate;
 
+  @Column(name = "case_reference")
+  String caseReference;
+
   @Column(name = "caz_id")
   UUID cleanAirZoneId;
 }

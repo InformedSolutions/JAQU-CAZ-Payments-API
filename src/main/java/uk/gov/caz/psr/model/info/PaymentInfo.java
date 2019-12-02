@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.model.info;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -28,4 +29,7 @@ public class PaymentInfo {
   @Column(name = "payment_provider_status")
   @Enumerated(EnumType.STRING)
   private ExternalPaymentStatus externalPaymentStatus;
+
+  @Column(name = "payment_submitted_timestamp")
+  private LocalDateTime submittedTimestamp;
 }
