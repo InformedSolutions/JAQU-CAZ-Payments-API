@@ -57,6 +57,7 @@ public class CleanupDanglingPaymentService {
       } else {
         log.warn("Could not find Clean Air Zone ID for payment with ID {}",
             danglingPayment.getId());
+        return;
       }
 
 

@@ -58,7 +58,6 @@ public class CredentialRetrievalManager {
    * @return secret the contents of the secret
    */
   public String getSecretsValue() {
-    String secret;
     GetSecretValueRequest getSecretValueRequest =
         new GetSecretValueRequest().withSecretId(generateSecretName());
     GetSecretValueResult getSecretValueResult = null;
@@ -66,13 +65,10 @@ public class CredentialRetrievalManager {
 
     // Decrypts secret using the associated KMS CMK.
     if (getSecretValueResult.getSecretString() != null) {
-      secret = getSecretValueResult.getSecretString();
+      return getSecretValueResult.getSecretString();
     } else {
-      secret =
-          new String(Base64.getDecoder().decode(getSecretValueResult.getSecretBinary()).array());
+      return new String(Base64.getDecoder().decode(getSecretValueResult.getSecretBinary()).array());
     }
-    log.info(secret);
-    return secret;
   }
 
   /**
@@ -92,7 +88,7 @@ public class CredentialRetrievalManager {
       jsonNode = objectMapper.readTree(rawSecretString);
       if (jsonNode.has(secretName)) {
         log.info("Successfully retrieved API key for Clean Air Zone: {}", secretName);
-        String apiKey = jsonNode.get(secretName).toString();
+        String apiKey = jsonNode.get(secretName).textValue();
         return Optional.ofNullable(apiKey);
       } else {
         return Optional.empty();

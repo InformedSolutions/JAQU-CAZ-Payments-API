@@ -70,11 +70,12 @@ public class GetAndUpdatePaymentsService {
       if (apiKey.isPresent()) {
         externalPaymentsRepository.setApiKey(apiKey.get());
       } else {
-        log.warn("Could not find API key for Clean Air Zone with ID {}", cleanAirZoneId);
+        log.warn("Could not find API key for Clean Air Zone with ID {}", cleanAirZoneId.get());
         return Optional.empty();
       }
     } else {
       log.warn("Could not find Clean Air Zone ID for payment with ID {}", payment.getId());
+      return Optional.empty();
     }
 
     GetPaymentResult paymentInfo = externalPaymentsRepository.findById(externalPaymentId)

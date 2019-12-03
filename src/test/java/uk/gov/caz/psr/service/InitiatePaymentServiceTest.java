@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -86,6 +87,22 @@ public class InitiatePaymentServiceTest {
     verify(internalPaymentsRepository, never()).update(any());
   }
 
+  @Test
+  public void shouldThrowExceptionWhenApiKeyNotFound() {
+    // given
+    InitiatePaymentRequest request = createRequest();
+    Payment paymentWithoutInternalId = createPaymentWithoutId(request);
+    mockChargeCalculator(request);
+    mockAbsentApiKey(request);
+
+    // when
+    Throwable throwable = catchThrowable(() -> initiatePaymentService.createPayment(request));
+
+    // then
+    assertThat(throwable).isInstanceOf(NoSuchElementException.class);
+    verify(internalPaymentsRepository).insertWithExternalStatus(paymentWithoutInternalId);
+  }
+
   private InitiatePaymentRequest createRequest() {
     List<LocalDate> days = Arrays.asList(LocalDate.of(2019, 1, 1), LocalDate.of(2019, 1, 3));
 
@@ -140,5 +157,10 @@ public class InitiatePaymentServiceTest {
   private void mockApiKey(InitiatePaymentRequest request) {
     when(credentialRetrievalManager.getApiKey(request.getCleanAirZoneId()))
         .thenReturn(Optional.of("testApiKey"));
+  }
+
+  private void mockAbsentApiKey(InitiatePaymentRequest request) {
+    when(credentialRetrievalManager.getApiKey(request.getCleanAirZoneId()))
+        .thenReturn(Optional.empty());
   }
 }

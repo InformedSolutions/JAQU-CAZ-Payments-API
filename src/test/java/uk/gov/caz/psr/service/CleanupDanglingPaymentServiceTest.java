@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -82,7 +83,7 @@ class CleanupDanglingPaymentServiceTest {
     // given
     Payment payment = paymentWithEmptyVehicleEntrants();
     mockPaymentAbsenceInExternalService(payment);
-    mockApiKey();
+    mockApiKey(UUID.randomUUID(), "testApiKey");
 
     // when
     Throwable throwable = catchThrowable(() -> service.processDanglingPayment(payment));
@@ -98,7 +99,7 @@ class CleanupDanglingPaymentServiceTest {
     Payment payment = paymentWithEmptyVehicleEntrants();
     mockSameExternalStatusInExternalService(payment);
     mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
-    mockApiKey();
+    mockApiKey(UUID.randomUUID(), "testApiKey");
 
     // when
     service.processDanglingPayment(payment);
@@ -119,7 +120,7 @@ class CleanupDanglingPaymentServiceTest {
     mockFailedExternalStatusInExternalService(payment);
     mockVehicleEntrantsFor(payment);
     mockGetPaymentResultConverter(ExternalPaymentStatus.FAILED);
-    mockApiKey();
+    mockApiKey(UUID.randomUUID(), "testApiKey");
 
     // when
     service.processDanglingPayment(payment);
@@ -127,6 +128,36 @@ class CleanupDanglingPaymentServiceTest {
     // then
     verify(paymentStatusUpdater).updateWithExternalPaymentDetails(any(),
         eq(failedExternalPaymentDetails));
+  }
+
+  @Test
+  void externalPaymentRepositoryNotCalledWhenCleanAirZoneIdNotFound() {
+    // given
+    ExternalPaymentDetails externalPaymentDetails =
+        ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment =
+        paymentWithEmptyVehicleEntrantsAndStatus(externalPaymentDetails.getExternalPaymentStatus());
+    mockApiKey(null, "testApiKey");
+
+    service.processDanglingPayment(payment);
+
+    verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
+
+  }
+
+  @Test
+  void externalPaymentRepositoryNotCalledWhenApiKeyNotFound() {
+    // given
+    ExternalPaymentDetails externalPaymentDetails =
+        ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment =
+        paymentWithEmptyVehicleEntrantsAndStatus(externalPaymentDetails.getExternalPaymentStatus());
+    mockApiKey(UUID.randomUUID(), null);
+
+    service.processDanglingPayment(payment);
+
+    verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
+
   }
 
   private void mockVehicleEntrantsFor(Payment payment) {
@@ -175,9 +206,12 @@ class CleanupDanglingPaymentServiceTest {
             .externalPaymentStatus(externalPaymentStatus).build());
   }
 
-  private void mockApiKey() {
-    UUID cazId = UUID.randomUUID();
-    given(vehicleEntrantPaymentsService.findCazId(any())).willReturn(Optional.of(cazId));
-    given(credentialRetrievalManager.getApiKey(cazId)).willReturn(Optional.of("test-api-key"));
+  private void mockApiKey(UUID cazId, String apiKey) {
+    given(vehicleEntrantPaymentsService.findCazId(any()))
+        .willReturn((cazId != null) ? Optional.of(cazId) : Optional.empty());
+    if (cazId != null) {
+      given(credentialRetrievalManager.getApiKey(cazId))
+          .willReturn((apiKey != null) ? Optional.of(apiKey) : Optional.empty());
+    }
   }
 }
