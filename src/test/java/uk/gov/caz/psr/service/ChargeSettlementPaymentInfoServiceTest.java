@@ -34,11 +34,12 @@ class ChargeSettlementPaymentInfoServiceTest {
 
   @Test
   void shouldReturnListOfPaymentInfo() {
+    // given
+    PaymentInfoRequest input = PaymentInfoRequest.builder().build();
     when(vehicleEntrantPaymentInfoRepository.findAll(Mockito.any(Specification.class))).thenReturn(emptyList());
 
     //when
-    List<VehicleEntrantPaymentInfo> any = paymentInfoService
-        .findPaymentInfo(new PaymentInfoRequest(null, null, null, null), UUID.randomUUID());
+    List<VehicleEntrantPaymentInfo> any = paymentInfoService.findPaymentInfo(input, UUID.randomUUID());
 
     //then
     assertThat(any).isEqualTo(emptyList());

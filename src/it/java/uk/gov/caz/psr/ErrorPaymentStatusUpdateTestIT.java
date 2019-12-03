@@ -164,7 +164,7 @@ public class ErrorPaymentStatusUpdateTestIT {
           .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
           .statusCode(HttpStatus.BAD_REQUEST.value())
           .body("errors[0].vrn", equalTo(null))
-          .body("errors[0].detail", containsString("The vrn field is mandatory"));
+          .body("errors[0].detail", containsString("\"vrn\" is mandatory and cannot be blank"));
       return this;
     }
 

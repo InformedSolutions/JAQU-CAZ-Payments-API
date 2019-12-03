@@ -11,29 +11,27 @@ import uk.gov.caz.psr.model.ValidationError;
  */
 @Value
 @Builder
-public class ErrorResponse {
+public class PaymentStatusErrorResponse {
 
-  private static final String NO_VRN = "";
   private static final String VALIDATION_ERROR_TITLE = "Validation error";
 
   String vrn;
   String title;
   String detail;
-  int status;
+  int status = HttpStatus.BAD_REQUEST.value();
 
   /**
    * Static factory method.
    *
    * @param validationError An instance of {@link ValidationError} that will be mapped to {@link
-   *                        ErrorResponse}
-   * @return an instance of {@link ErrorResponse}
+   *                        PaymentStatusErrorResponse}
+   * @return an instance of {@link PaymentStatusErrorResponse}
    */
-  public static ErrorResponse from(ValidationError validationError) {
-    return ErrorResponse.builder()
+  public static PaymentStatusErrorResponse from(ValidationError validationError) {
+    return PaymentStatusErrorResponse.builder()
         .vrn(validationError.getVrn())
         .title(validationError.getTitle())
         .detail(validationError.getDetail())
-        .status(HttpStatus.BAD_REQUEST.value())
         .build();
   }
 
@@ -41,12 +39,12 @@ public class ErrorResponse {
    * Creates a validation error response, i.e. its title is fixed and equal to 'Validation error',
    * status is equal to 400 and detail is set to the parameter.
    */
-  public static ErrorResponse validationErrorResponseWithDetailAndVrn(String vrn, String detail) {
-    return ErrorResponse.builder()
+  public static PaymentStatusErrorResponse validationErrorResponseWithDetailAndVrn(String vrn,
+      String detail) {
+    return PaymentStatusErrorResponse.builder()
         .vrn(vrn)
         .title(VALIDATION_ERROR_TITLE)
         .detail(detail)
-        .status(HttpStatus.BAD_REQUEST.value())
         .build();
   }
 }
