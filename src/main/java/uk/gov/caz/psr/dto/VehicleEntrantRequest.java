@@ -36,7 +36,11 @@ public class VehicleEntrantRequest {
    */
 
   public VehicleEntrant toVehicleEntrant() {
-    return VehicleEntrant.builder().cleanZoneId(cleanZoneId).cazEntryTimestamp(cazEntryTimestamp)
-        .cazEntryDate(cazEntryTimestamp.toLocalDate()).vrn(vrn).build();
+    return VehicleEntrant.builder()
+        .cleanZoneId(cleanZoneId)
+        .cazEntryTimestamp(cazEntryTimestamp)
+        .cazEntryDate(cazEntryTimestamp.toLocalDate())
+        .vrn(vrn)
+        .build();
   }
 }

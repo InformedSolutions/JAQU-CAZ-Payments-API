@@ -67,12 +67,17 @@ public class InitiatePaymentService {
     int chargePerDay =
         chargeCalculator.calculateCharge(request.getAmount(), request.getDays().size());
     List<VehicleEntrantPayment> vehicleEntrantPayments =
-        request.getDays().stream().map(day -> toVehicleEntrantPayment(day, request, chargePerDay))
+        request.getDays()
+            .stream()
+            .map(day -> toVehicleEntrantPayment(day, request, chargePerDay))
             .collect(Collectors.toList());
 
-    return Payment.builder().externalPaymentStatus(ExternalPaymentStatus.INITIATED)
-        .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD).totalPaid(request.getAmount())
-        .vehicleEntrantPayments(vehicleEntrantPayments).build();
+    return Payment.builder()
+        .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
+        .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+        .totalPaid(request.getAmount())
+        .vehicleEntrantPayments(vehicleEntrantPayments)
+        .build();
   }
 
   /**
@@ -81,8 +86,12 @@ public class InitiatePaymentService {
    */
   private VehicleEntrantPayment toVehicleEntrantPayment(LocalDate travelDate,
       InitiatePaymentRequest request, int chargePerDay) {
-    return VehicleEntrantPayment.builder().vrn(request.getVrn())
-        .cleanZoneId(request.getCleanAirZoneId()).travelDate(travelDate).chargePaid(chargePerDay)
-        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID).build();
+    return VehicleEntrantPayment.builder()
+        .vrn(request.getVrn())
+        .cleanZoneId(request.getCleanAirZoneId())
+        .travelDate(travelDate)
+        .chargePaid(chargePerDay)
+        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
+        .build();
   }
 }

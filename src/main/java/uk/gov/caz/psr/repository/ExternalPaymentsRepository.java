@@ -167,17 +167,22 @@ public class ExternalPaymentsRepository {
    */
   private RequestEntity<CreateCardPaymentRequest> buildRequestEntityForCreate(
       CreateCardPaymentRequest body) {
-    return RequestEntity.post(createPaymentUri).accept(MediaType.APPLICATION_JSON)
-        .contentType(MediaType.APPLICATION_JSON).body(body);
+    return RequestEntity.post(createPaymentUri)
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(body);
   }
 
   /**
    * Creates {@link URI} for {@code create} operation.
    */
   private CreateCardPaymentRequest buildCreateBody(Payment payment, String returnUrl) {
-    return CreateCardPaymentRequest.builder().amount(payment.getTotalPaid())
-        .description("Payment for #" + payment.getId()).reference(payment.getId().toString())
-        .returnUrl(returnUrl).build();
+    return CreateCardPaymentRequest.builder()
+        .amount(payment.getTotalPaid())
+        .description("Payment for #" + payment.getId())
+        .reference(payment.getId().toString())
+        .returnUrl(returnUrl)
+        .build();
   }
 
   /**
