@@ -11,7 +11,6 @@ import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 
 /**
@@ -22,12 +21,12 @@ import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 public class PaymentStatusUpdateRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.vrn}")
-  @NotBlank(message = ValidationError.MANDATORY_FIELD_MISSING_ERROR)
+  @NotBlank
   @Size(min = 1, max = 15)
   String vrn;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.status-updates}")
-  @NotEmpty(message = ValidationError.MANDATORY_FIELD_MISSING_ERROR)
+  @NotEmpty
   @Valid
   List<PaymentStatusUpdateDetails> statusUpdates;
 

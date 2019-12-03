@@ -62,12 +62,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnExactMatch() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          PAYMENT_2_EXTERNAL_ID,
-          null,
-          null,
-          null
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder().paymentId(PAYMENT_2_EXTERNAL_ID).build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -85,12 +80,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnEmptyListIfNotFound() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          NOT_EXISTING_EXTERNAL_ID,
-          null,
-          null,
-          null
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder().paymentId(NOT_EXISTING_EXTERNAL_ID).build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -107,12 +97,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnExactMatch() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          PAYMENT_3_VRN,
-          null,
-          null
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder().vrn(PAYMENT_3_VRN).build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -130,12 +115,7 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnEmptyListIfNotFound() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          NOT_EXISTING_VRN,
-          null,
-          null
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder().vrn(NOT_EXISTING_VRN).build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -152,12 +132,10 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldFindTwoPayments() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          LocalDate.of(2019, 11, 1),
-          LocalDate.of(2019, 11, 3)
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .fromDatePaidFor(LocalDate.of(2019, 11, 1))
+          .toDatePaidFor(LocalDate.of(2019, 11, 3))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -178,12 +156,10 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldFindAllPayments() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          LocalDate.of(2019, 11, 1),
-          LocalDate.of(2019, 11, 7)
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .fromDatePaidFor(LocalDate.of(2019, 11, 1))
+          .toDatePaidFor(LocalDate.of(2019, 11, 7))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -196,12 +172,10 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnEmptyListIfNotFound() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          LocalDate.of(2020, 11, 1),
-          LocalDate.of(2020, 11, 7)
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .fromDatePaidFor(LocalDate.of(2020, 11, 1))
+          .toDatePaidFor(LocalDate.of(2020, 11, 7))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -218,12 +192,9 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldFindTwoPayments() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          LocalDate.of(2019, 11, 1),
-          null
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .fromDatePaidFor(LocalDate.of(2019, 11, 1))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -241,12 +212,9 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldFindOnlyOnePayment() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          LocalDate.of(2019, 11, 7),
-          null
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .fromDatePaidFor(LocalDate.of(2019, 11, 7))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -261,12 +229,9 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnEmptyListIfNotFound() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          LocalDate.of(2020, 11, 1),
-          null
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .fromDatePaidFor(LocalDate.of(2020, 11, 1))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -283,12 +248,9 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldFindTwoPayments() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          null,
-          LocalDate.of(2019, 11, 2)
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .toDatePaidFor(LocalDate.of(2019, 11, 2))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -306,12 +268,9 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldFindOnlyOnePayment() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          null,
-          LocalDate.of(2019, 11, 8)
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .toDatePaidFor(LocalDate.of(2019, 11, 8))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -326,12 +285,9 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnEmptyListIfNotFound() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          null,
-          null,
-          null,
-          LocalDate.of(2020, 11, 7)
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .toDatePaidFor(LocalDate.of(2020, 11, 7))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -348,12 +304,12 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnExactMatch() {
       // given
       UUID caz = PRESENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          PAYMENT_3_EXTERNAL_ID,
-          PAYMENT_3_VRN,
-          LocalDate.of(2019, 11, 1),
-          LocalDate.of(2019, 11, 2)
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .vrn(PAYMENT_3_VRN)
+          .paymentId(PAYMENT_3_EXTERNAL_ID)
+          .fromDatePaidFor(LocalDate.of(2019, 11, 1))
+          .toDatePaidFor(LocalDate.of(2019, 11, 2))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);
@@ -371,12 +327,12 @@ public class ChargeSettlementPaymentInfoServiceTestIT {
     public void shouldReturnEmptyListIfCazIdNotFound() {
       // given
       UUID caz = ABSENT_CAZ_ID;
-      PaymentInfoRequest paymentInfoRequest = new PaymentInfoRequest(
-          PAYMENT_3_EXTERNAL_ID,
-          PAYMENT_3_VRN,
-          LocalDate.of(2019, 11, 1),
-          LocalDate.of(2019, 11, 2)
-      );
+      PaymentInfoRequest paymentInfoRequest = PaymentInfoRequest.builder()
+          .vrn(PAYMENT_3_VRN)
+          .paymentId(PAYMENT_3_EXTERNAL_ID)
+          .fromDatePaidFor(LocalDate.of(2019, 11, 1))
+          .toDatePaidFor(LocalDate.of(2019, 11, 2))
+          .build();
 
       // when
       List<VehicleEntrantPaymentInfo> result = paymentInfoService.findPaymentInfo(paymentInfoRequest, caz);

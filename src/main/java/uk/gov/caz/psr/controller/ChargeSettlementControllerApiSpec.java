@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.UUID;
 import javax.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -66,7 +67,7 @@ public interface ChargeSettlementControllerApiSpec {
   })
   @GetMapping(ChargeSettlementController.PAYMENT_INFO_PATH)
   ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest,
-      @RequestHeader(Headers.X_API_KEY) String apiKey);
+      BindingResult bindingResult, @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId);
 
   /**
    * Allows LAs to query and retrieve data that enables them to determine whether a vehicle that has
@@ -106,10 +107,8 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @GetMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
-  ResponseEntity<PaymentStatusResponse> getPaymentStatus(
-      @Valid PaymentStatusRequest request,
-      @RequestHeader(Headers.X_API_KEY) String apiKey
-  );
+  ResponseEntity<PaymentStatusResponse> getPaymentStatus(@Valid PaymentStatusRequest request,
+      @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId);
 
   /**
    * Allows Local Authorities to update the status of one or more paid CAZ charges to reflect any
@@ -151,5 +150,5 @@ public interface ChargeSettlementControllerApiSpec {
   @PutMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
   PaymentUpdateSuccessResponse updatePaymentStatus(
       @Valid @RequestBody PaymentStatusUpdateRequest request, BindingResult bindingResult,
-      @RequestHeader(Headers.X_API_KEY) String apiKey);
+      @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId);
 }

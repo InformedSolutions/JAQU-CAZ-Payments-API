@@ -304,6 +304,23 @@ public class TestObjectFactory {
           .build();
     }
 
+    public static PaymentStatusUpdateDetails withPaymentId(String paymentId) {
+      return PaymentStatusUpdateDetails.builder()
+          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .caseReference("caseReference")
+          .paymentId(paymentId)
+          .dateOfCazEntry(LocalDate.now())
+          .build();
+    }
+
+    public static PaymentStatusUpdateDetails withCaseReference(String caseReference) {
+      return PaymentStatusUpdateDetails.builder()
+          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .caseReference(caseReference)
+          .paymentId("paymentID")
+          .dateOfCazEntry(LocalDate.now())
+          .build();
+    }
   }
 
   public static class VehicleEntrantPaymentStatusUpdates {

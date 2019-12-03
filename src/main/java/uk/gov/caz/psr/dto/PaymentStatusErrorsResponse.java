@@ -12,20 +12,21 @@ import lombok.Value;
  */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class ErrorsResponse {
+public class PaymentStatusErrorsResponse {
 
-  List<ErrorResponse> errors;
+  List<PaymentStatusErrorResponse> errors;
 
   /**
    * Method to return single errors response for provided vrn and provided details.
    *
-   * @param vrn    Vehicle Registration Number
+   * @param vrn Vehicle Registration Number
    * @param detail Error details.
    */
-  public static ErrorsResponse singleValidationErrorResponse(String vrn, String detail) {
-    ErrorResponse errorResponse = ErrorResponse
+  public static PaymentStatusErrorsResponse singleValidationErrorResponse(String vrn,
+      String detail) {
+    PaymentStatusErrorResponse errorResponse = PaymentStatusErrorResponse
         .validationErrorResponseWithDetailAndVrn(vrn, detail);
-    return new ErrorsResponse(Collections.singletonList(errorResponse));
+    return new PaymentStatusErrorsResponse(Collections.singletonList(errorResponse));
   }
 
   /**
@@ -33,7 +34,8 @@ public class ErrorsResponse {
    *
    * @param validationErrors Validation Errors.
    */
-  public static ErrorsResponse from(List<ErrorResponse> validationErrors) {
-    return new ErrorsResponse(validationErrors);
+  public static PaymentStatusErrorsResponse from(
+      List<PaymentStatusErrorResponse> validationErrors) {
+    return new PaymentStatusErrorsResponse(validationErrors);
   }
 }

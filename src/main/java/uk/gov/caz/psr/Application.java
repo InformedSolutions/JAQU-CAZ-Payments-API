@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
     "uk.gov.caz.psr.messaging",
     "uk.gov.caz.psr.repository",
     "uk.gov.caz.psr.service",
+    "uk.gov.caz.psr.dto.validation",
     "uk.gov.caz.psr.util"
 })
 @EnableJpaRepositories
