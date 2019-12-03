@@ -23,7 +23,7 @@ import uk.gov.caz.psr.dto.VehicleEntrantResponse;
  */
 @RequestMapping(
     value = VehicleEntrantController.BASE_PATH,
-    produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+    produces = MediaType.APPLICATION_JSON_VALUE
 )
 public interface VehicleEntrantControllerApiSpec {
 

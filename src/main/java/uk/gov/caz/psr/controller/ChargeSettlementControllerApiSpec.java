@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiResponses;
 import javax.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,7 +24,7 @@ import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
 
 @RequestMapping(
     value = ChargeSettlementController.BASE_PATH,
-    produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+    produces = MediaType.APPLICATION_JSON_VALUE
 )
 public interface ChargeSettlementControllerApiSpec {
 
@@ -64,7 +65,8 @@ public interface ChargeSettlementControllerApiSpec {
           paramType = "header")
   })
   @GetMapping(ChargeSettlementController.PAYMENT_INFO_PATH)
-  ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest);
+  ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest,
+      @RequestHeader(Headers.X_API_KEY) String apiKey);
 
   /**
    * Allows LAs to query and retrieve data that enables them to determine whether a vehicle that has
@@ -148,6 +150,6 @@ public interface ChargeSettlementControllerApiSpec {
   })
   @PutMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
   PaymentUpdateSuccessResponse updatePaymentStatus(
-      @Valid @RequestBody PaymentStatusUpdateRequest request,
+      @Valid @RequestBody PaymentStatusUpdateRequest request, BindingResult bindingResult,
       @RequestHeader(Headers.X_API_KEY) String apiKey);
 }

@@ -1,15 +1,12 @@
 package uk.gov.caz.psr.model.info;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.Data;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
@@ -18,6 +15,7 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 @Table(name = "payment")
 @Data
 public class PaymentInfo {
+
   @Id
   @Column(name = "payment_id")
   private UUID id;
@@ -32,7 +30,6 @@ public class PaymentInfo {
   @Enumerated(EnumType.STRING)
   private ExternalPaymentStatus externalPaymentStatus;
 
-  @OneToMany(fetch = FetchType.EAGER)
-  @JoinColumn(name = "payment_id")
-  private List<VehicleEntrantPaymentInfo> vehicleEntrantPaymentInfoList;
+  @Column(name = "payment_submitted_timestamp")
+  private LocalDateTime submittedTimestamp;
 }

@@ -42,7 +42,7 @@ public class GetAndUpdatePaymentStatusTestIT {
     String correlationId = "31f69f26-fb99-11e9-8483-9fcf0b2b434f";
     mockMvc
         .perform(get(URL_TEMPLATE, id).header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isBadRequest());
   }
@@ -55,7 +55,7 @@ public class GetAndUpdatePaymentStatusTestIT {
     mockMvc
         .perform(get(URL_TEMPLATE, notExistingId)
             .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
   }
@@ -68,7 +68,7 @@ public class GetAndUpdatePaymentStatusTestIT {
     mockMvc
         .perform(
             get(URL_TEMPLATE, paymentId).header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-                .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
   }

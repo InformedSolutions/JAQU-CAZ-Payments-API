@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
+import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 
 /**
  * A class which handles managing data in {@code VEHICLE_ENTRANT_PAYMENT} table.
@@ -242,16 +243,18 @@ public class VehicleEntrantPaymentRepository {
 
   /**
    * Finds single of {@link VehicleEntrantPayment} entity for the passed params. If none is found,
-   * {@link Optional#empty()} is returned. If more then one found throws {@code RuntimeException}.
+   * {@link Optional#empty()} is returned. If more then one found throws {@link
+   * NotUniqueVehicleEntrantPaymentFoundException}.
    *
    * @param cleanZoneId  provided Clean Air Zone ID.
    * @param vrn          provided VRN number
    * @param cazEntryDate Date of entry to provided CAZ
    * @return list of found {@link VehicleEntrantPayment}.
-   * @throws NullPointerException     if {@code cleanZoneId} is null.
-   * @throws NullPointerException     if {@code cazEntryDate} is null.
-   * @throws IllegalArgumentException if {@code vrn} is empty.
-   * @throws IllegalStateException    if method found more than one VehicleEntrantPayment.
+   * @throws NullPointerException                         if {@code cleanZoneId} is null.
+   * @throws NullPointerException                         if {@code cazEntryDate} is null.
+   * @throws IllegalArgumentException                     if {@code vrn} is empty.
+   * @throws NotUniqueVehicleEntrantPaymentFoundException if method found more than one
+   *                                                      VehicleEntrantPayment.
    */
   public Optional<VehicleEntrantPayment> findOnePaidByVrnAndCazEntryDate(UUID cleanZoneId,
       String vrn, LocalDate cazEntryDate) {
@@ -270,7 +273,8 @@ public class VehicleEntrantPaymentRepository {
             ROW_MAPPER
         );
     if (results.size() > 1) {
-      throw new IllegalStateException("More than one VehicleEntrantPayment found");
+      throw new NotUniqueVehicleEntrantPaymentFoundException(vrn,
+          "Not able to find unique VehicleEntrantPayment");
     }
     if (results.isEmpty()) {
       return Optional.empty();
@@ -280,16 +284,18 @@ public class VehicleEntrantPaymentRepository {
 
   /**
    * Finds single of {@link VehicleEntrantPayment} entity for the passed params. If none is found,
-   * {@link Optional#empty()} is returned. If more then one found throws {@code RuntimeException}.
+   * {@link Optional#empty()} is returned. If more then one found throws {@link
+   * NotUniqueVehicleEntrantPaymentFoundException}.
    *
    * @param cleanZoneId       provided Clean Air Zone ID
    * @param cazEntryDate      Date of entry to provided CAZ
    * @param externalPaymentId Payment Id from GOV.UK PAY
    * @return list of found {@link VehicleEntrantPayment}.
-   * @throws NullPointerException     if {@code cleanZoneId} is null.
-   * @throws NullPointerException     if {@code cazEntryDate} is null.
-   * @throws IllegalArgumentException if {@code vrn} is empty.
-   * @throws IllegalStateException    if method found more than one VehicleEntrantPayment.
+   * @throws NullPointerException                         if {@code cleanZoneId} is null.
+   * @throws NullPointerException                         if {@code cazEntryDate} is null.
+   * @throws IllegalArgumentException                     if {@code vrn} is empty.
+   * @throws NotUniqueVehicleEntrantPaymentFoundException if method found more than one
+   *                                                      VehicleEntrantPayment.
    */
   public Optional<VehicleEntrantPayment> findOnePaidByCazEntryDateAndExternalPaymentId(
       UUID cleanZoneId, LocalDate cazEntryDate, String externalPaymentId) {
@@ -309,7 +315,8 @@ public class VehicleEntrantPaymentRepository {
             ROW_MAPPER
         );
     if (results.size() > 1) {
-      throw new IllegalStateException("More than one VehicleEntrantPayment found");
+      throw new NotUniqueVehicleEntrantPaymentFoundException(null,
+          "Not able to find unique VehicleEntrantPayment");
     }
     if (results.isEmpty()) {
       return Optional.empty();

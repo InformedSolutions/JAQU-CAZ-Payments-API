@@ -25,6 +25,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.caz.GlobalExceptionHandlerConfiguration;
 import uk.gov.caz.correlationid.Configuration;
+import uk.gov.caz.psr.controller.exception.DtoValidationException;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
@@ -61,8 +62,8 @@ class PaymentsControllerTest {
     String payload = "";
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("Missing request header 'X-Correlation-ID'"));
     verify(initiatePaymentService, never()).createPayment(any());
@@ -73,9 +74,8 @@ class PaymentsControllerTest {
     String payload = paymentRequestWithEmptyDays();
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
     verify(initiatePaymentService, never()).createPayment(any());
   }
@@ -85,9 +85,8 @@ class PaymentsControllerTest {
     String payload = paymentRequestWithVrn("1234567890123456");
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
     verify(initiatePaymentService, never()).createPayment(any());
   }
@@ -97,9 +96,8 @@ class PaymentsControllerTest {
     String payload = paymentRequestWithAmount(-1250);
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
     verify(initiatePaymentService, never()).createPayment(any());
   }
@@ -109,9 +107,8 @@ class PaymentsControllerTest {
     String payload = paymentRequestWithEmptyReturnUrl();
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isBadRequest());
     verify(initiatePaymentService, never()).createPayment(any());
   }
@@ -125,9 +122,8 @@ class PaymentsControllerTest {
         .willReturn(successfullyCreatedPayment);
 
     mockMvc
-        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
-            .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.paymentId").value(successfullyCreatedPayment.getId().toString()))
         .andExpect(jsonPath("$.nextUrl").value(successfullyCreatedPayment.getNextUrl()));
