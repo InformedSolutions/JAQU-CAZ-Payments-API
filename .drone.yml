@@ -163,6 +163,7 @@ steps:
       JAQU_NEXUS_PASSWORD:
         from_secret: nexus_password
       AWS_SQS_URL: localstack:4576
+      AWS_SECRETSMANAGER_URL: localstack:4584
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 

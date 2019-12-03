@@ -16,7 +16,7 @@ aws:
   sqs:
     endpoint: http://${aws.sqs.url:localhost:4576}
   secretsmanager:
-    endpoint: http://${aws.sqs.url:localhost:4584}
+    endpoint: http://${aws.secretsmanager.url:localhost:4584}
     environment: localstack
     name: config
     prefix: payments
