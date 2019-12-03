@@ -217,7 +217,7 @@ class GetAndUpdatePaymentsServiceTest {
 
   private void mockApiKey(Payment payment) {
     given(vehicleEntrantPaymentsService.findCazId(payment.getVehicleEntrantPayments()))
-        .willReturn(cazIdentifier);
+        .willReturn(Optional.of(cazIdentifier));
     given(credentialRetrievalManager.getApiKey(cazIdentifier))
         .willReturn(Optional.of("testApiKey"));
   }

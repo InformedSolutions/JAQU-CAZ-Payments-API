@@ -62,12 +62,19 @@ public class GetAndUpdatePaymentsService {
       log.warn("Payment '{}' does not have any associated vehicle entrant payments", id);
       return Optional.empty();
     }
-    UUID cleanAirZoneId = vehicleEntrantPaymentsService.findCazId(vehicleEntrantPayments);
-    Optional<String> apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId);
-    if (apiKey.isPresent()) {
-      externalPaymentsRepository.setApiKey(apiKey.get());
+
+    Optional<UUID> cleanAirZoneId =
+        vehicleEntrantPaymentsService.findCazId(payment.getVehicleEntrantPayments());
+    if (cleanAirZoneId.isPresent()) {
+      Optional<String> apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId.get());
+      if (apiKey.isPresent()) {
+        externalPaymentsRepository.setApiKey(apiKey.get());
+      } else {
+        log.warn("Could not find API key for Clean Air Zone with ID {}", cleanAirZoneId);
+        return Optional.empty();
+      }
     } else {
-      return Optional.empty();
+      log.warn("Could not find Clean Air Zone ID for payment with ID {}", payment.getId());
     }
 
     GetPaymentResult paymentInfo = externalPaymentsRepository.findById(externalPaymentId)

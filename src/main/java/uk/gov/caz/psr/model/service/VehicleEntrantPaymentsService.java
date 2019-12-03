@@ -2,6 +2,7 @@
 package uk.gov.caz.psr.model.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,16 +27,17 @@ public class VehicleEntrantPaymentsService {
    * @param vehicleEntrantPayments a list of VehicleEntrantPayment objects
    * @return a unique identifier for a Clean Air Zone
    */
-  public UUID findCazId(List<VehicleEntrantPayment> vehicleEntrantPayments) {
-    return vehicleEntrantPayments.stream()
-        .filter(distinctByKey(VehicleEntrantPayment::getCleanZoneId)).collect(toSingleton())
-        .getCleanZoneId();
+  public Optional<UUID> findCazId(List<VehicleEntrantPayment> vehicleEntrantPayments) {
+    VehicleEntrantPayment vehicleEntrantPayment = vehicleEntrantPayments.stream()
+        .filter(distinctByKey(VehicleEntrantPayment::getCleanZoneId)).collect(toSingleton());
+    return (vehicleEntrantPayment != null) ? Optional.of(vehicleEntrantPayment.getCleanZoneId())
+        : Optional.empty();
   }
 
   private static <T> Collector<T, ?, T> toSingleton() {
     return Collectors.collectingAndThen(Collectors.toList(), list -> {
       if (list.size() != 1) {
-        throw new IllegalStateException();
+        return null;
       }
       return list.get(0);
     });

@@ -2,7 +2,6 @@ package uk.gov.caz.psr.domain.authentication;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,14 +23,11 @@ public class CredentialRetrievalManagerTest {
 
   @Test
   void canGetApiKey() {
-    GetSecretValueResult getSecretValueResponse =
-        mock(GetSecretValueResult.class);
+    GetSecretValueResult getSecretValueResponse = mock(GetSecretValueResult.class);
 
-    Mockito
-        .when(client.getSecretValue(Mockito.any(GetSecretValueRequest.class)))
+    Mockito.when(client.getSecretValue(Mockito.any(GetSecretValueRequest.class)))
         .thenReturn(getSecretValueResponse);
-    Mockito.when(getSecretValueResponse.getSecretString())
-        .thenReturn("testKey");
+    Mockito.when(getSecretValueResponse.getSecretString()).thenReturn("testKey");
 
     String secret = credentialRetrievalManager.getSecretsValue();
 

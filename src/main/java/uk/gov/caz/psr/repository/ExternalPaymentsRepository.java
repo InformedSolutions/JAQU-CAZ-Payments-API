@@ -108,12 +108,8 @@ public class ExternalPaymentsRepository {
   }
 
   /**
-   * <<<<<<< HEAD Converts a status returned from the GOV UK Pay service to {@link PaymentStatus}.
-   * If the value does not match any existing one, {@link PaymentStatus#UNKNOWN} is returned.
-   * ======= Converts a status returned from the GOV UK Pay service to
-   * {@link ExternalPaymentStatus}. If the value does not match any existing one,
-   * {@link ExternalPaymentStatus#UNKNOWN} is returned. >>>>>>>
-   * 0b3427216898cdca1b2a03074aed4b81f521254a
+   * Converts a status returned from the GOV UK Pay service to {@link ExternalPaymentStatus}. If the
+   * value does not match any existing one, {@link ExternalPaymentStatus#UNKNOWN} is returned.
    */
   private ExternalPaymentStatus toModelStatus(String status) {
     try {

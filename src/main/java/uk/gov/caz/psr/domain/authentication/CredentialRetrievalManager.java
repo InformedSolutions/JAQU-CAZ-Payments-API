@@ -13,31 +13,43 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * Class for managing the external repository of secrets used by the application.
+ */
 @Slf4j
 @Service
 public class CredentialRetrievalManager {
 
-  @Value("${aws.secretsmanager.prefix}")
   String secretPrefix;
-
-  @Value("${aws.secretsmanager.name}")
   String secretName;
-
-  @Value("${aws.secretsmanager.profileSeparator}")
   String secretProfileSeparator;
-
-  @Value("${aws.secretsmanager.environment}")
   String secretEnvironment;
 
   private final AWSSecretsManager client;
+  private final ObjectMapper objectMapper;
 
   /**
-   * Constructor for the CredentialRetrievalManager.
+   * Constructor for manager class of the external secrets repository.
    * 
-   * @param awsSecretsManager a bean of type AWSSecretsManager
+   * @param secretPrefix the prefix of the secret
+   * @param secretName the name of the secret
+   * @param secretProfileSeparator the profile separator of the secret
+   * @param secretEnvironment the environment of the secret
+   * @param awsSecretsManager an instance of {@link AWSSecretsManager}
+   * @param objectMapper an instance of {@link ObjectMapper}
    */
-  public CredentialRetrievalManager(AWSSecretsManager awsSecretsManager) {
+  public CredentialRetrievalManager(@Value("${aws.secretsmanager.prefix}") String secretPrefix,
+      @Value("${aws.secretsmanager.name}") String secretName,
+      @Value("${aws.secretsmanager.profileSeparator}") String secretProfileSeparator,
+      @Value("${aws.secretsmanager.environment}") String secretEnvironment,
+      AWSSecretsManager awsSecretsManager, ObjectMapper objectMapper) {
+    this.secretPrefix = secretPrefix;
+    this.secretName = secretName;
+    this.secretProfileSeparator = secretProfileSeparator;
+    this.secretEnvironment = secretEnvironment;
     this.client = awsSecretsManager;
+    this.objectMapper = objectMapper;
+
   }
 
   /**
@@ -70,12 +82,9 @@ public class CredentialRetrievalManager {
    * @return Secret value for a given key.
    */
   public Optional<String> getApiKey(UUID cleanAirZoneId) {
-    log.info("Getting API key for Clean Air Zone: {}", cleanAirZoneId);
+
     String secretName = generateSecretKey(cleanAirZoneId);
-
     String rawSecretString = this.getSecretsValue();
-
-    ObjectMapper objectMapper = new ObjectMapper();
 
     JsonNode jsonNode;
 

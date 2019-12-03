@@ -90,7 +90,7 @@ public class SuccessPaymentsJourneyTestIT {
   private final LocalDate dateWithoutEntityInDB = LocalDate.of(2019, 11, 10);
 
   private String secretName = "payments/config.localstack";
-  private String cazId;
+  private String cazId = "b8e53786-c5ca-426a-a701-b14ee74857d4";
 
   @BeforeEach
   public void startMockServer() {
@@ -109,7 +109,6 @@ public class SuccessPaymentsJourneyTestIT {
 
   @BeforeEach
   public void createSecret() throws JsonProcessingException {
-    cazId = UUID.randomUUID().toString();
     String cazIdFormatted = cazId.replace("-", "");
     ObjectNode node = objectMapper.createObjectNode();
     node.put(cazIdFormatted, "testApiKey");
