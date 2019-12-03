@@ -99,10 +99,11 @@ services:
   - name: localstack
     image: localstack/localstack:0.10.2
     environment:
-      SERVICES: sqs
+      SERVICES: sqs, secretsmanager
       HOSTNAME_EXTERNAL: localstack
     ports:
       - 4576
+      - 4584
 
 steps:
 
@@ -346,10 +347,11 @@ services:
   - name: localstack
     image: localstack/localstack:0.10.2
     environment:
-      SERVICES: sqs
+      SERVICES: sqs, secretsmanager
       HOSTNAME_EXTERNAL: localstack
     ports:
       - 4576
+      - 4584
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
