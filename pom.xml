@@ -588,6 +588,11 @@
                       <minimum>${codeCoverage.minCoveredRatio}</minimum>
                     </limit>
                     <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>${codeCoverage.minCoveredRatio}</minimum>
+                    </limit>
+                    <limit>
                       <counter>CLASS</counter>
                       <value>MISSEDCOUNT</value>
                       <maximum>${codeCoverage.classMaxMissedCount}</maximum>
