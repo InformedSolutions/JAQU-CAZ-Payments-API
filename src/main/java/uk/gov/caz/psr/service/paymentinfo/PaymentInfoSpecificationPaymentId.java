@@ -18,7 +18,7 @@ public class PaymentInfoSpecificationPaymentId implements PaymentInfoSpecificati
 
   @Override
   public boolean shouldUse(PaymentInfoRequest paymentInfoRequest) {
-    return Optional.ofNullable(paymentInfoRequest.getPaymentId()).isPresent();
+    return Optional.ofNullable(paymentInfoRequest.getPaymentProviderId()).isPresent();
   }
 
   @Override
@@ -28,7 +28,7 @@ public class PaymentInfoSpecificationPaymentId implements PaymentInfoSpecificati
       Join<VehicleEntrantPaymentInfo, PaymentInfo> join = QueryUtil
           .getOrCreateJoin(root, criteriaQuery, VehicleEntrantPaymentInfo_.paymentInfo);
       return criteriaBuilder
-          .equal(join.get(PaymentInfo_.externalId), paymentInfoRequest.getPaymentId());
+          .equal(join.get(PaymentInfo_.externalId), paymentInfoRequest.getPaymentProviderId());
     };
   }
 }

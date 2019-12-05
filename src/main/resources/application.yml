@@ -47,7 +47,7 @@ swagger:
     descriptions:
       payment-status:
         payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
-        payment-id: GOV.UK Pay unique payment identifier
+        payment-provider-id: GOV.UK Pay unique payment identifier
         case-reference: >-
           A unique identifier that provides traceability between the central CAZ Service and Local Authority case management
           systems in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
@@ -76,7 +76,7 @@ swagger:
           A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems
           in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
         charge-paid: >-
-          The GBP value of the payment linked to the paymentId. If the motorist paid in advance to travel in to the CAZ on multiple
+          The GBP value of the payment linked to the paymentProviderId. If the motorist paid in advance to travel in to the CAZ on multiple
           dates, then the payment amount will be a multiple of the daily charge due (e.g. if the daily charge for a car entering a CAZ
           is £8.00, but the motorist paid in advance for 3 days of travel, then the chargePaid would be equal to £24.00).
           Expressed in pounds and pence format to 2 decimal places
@@ -84,16 +84,18 @@ swagger:
           ISO 8601 formatted date string that specifies a date(s) for which the vehicle has paid to travel in to the CAZ
           (identified by the x-api-key header parameter)
       payment-info-request:
-        payment-id: >-
+        payment-provider-id: >-
           GOV.UK Pay unique payment identifier. Can be used to obtain data associated with a specific GOV.UK Pay payment transaction.
           Can be specified as an alternative to vrn, fromDatePaidFor and toDatePaidFor to obtain information about a specific payment
           that a vehicle has made to travel in to a CAZ (identified by the x-api-key header parameter).
         vrn: >-
-          Identifies a vehicle for the purpose of obtaining information about associated payments that have been made to travel in to a CAZ
-          (identified by the x-api-key header parameter). Attribute must exclude whitespace and is case insensitive. Can be specified as an
-          alternative to paymentId and in combination with fromDatePaidFor and toDatePaidFor to obtain information about the payments
-          associated with a specific vehicle that has paid to travel in to a CAZ (identified by the x-api-key header parameter) within
-          a specific date range.
+          Identifies a vehicle for the purpose of obtaining information about associated payments that have been made to travel in to
+          a CAZ (identified by the x-api-key header parameter). Attribute must exclude whitespace and is case insensitive.
+          Typical usage of this attribute would be to specify it in combination with fromDatePaidFor and toDatePaidFor to obtain
+          information about the payments associated with a specific vehicle that has paid to travel in to a CAZ
+          (identified by the x-api-key header parameter) within a specific date range. If no fromDatePaidFor or toDatePaidFor is
+          specified, information about all payments associated with the specified VRN and CAZ (identified by the x-api-key header
+          parameter) will be returned.
         from-date-paid-for: >-
           ISO 8601 formatted date string that can be used to obtain information about payments that have been made to travel in to a CAZ
           (identified by the x-api-key header parameter) on the specified date. This date is inclusive. If no VRN is specified, payment
@@ -114,7 +116,7 @@ swagger:
         case-reference: >-
           A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems in the event
           that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
-        payment-id: GOV.UK Pay unique payment identifier returned by the payment-status GET method
+        payment-provider-id: GOV.UK Pay unique payment identifier returned by the payment-status GET method
       vehicle-entrant:
         vrn: Vehicle registration number
         caz-entry-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
