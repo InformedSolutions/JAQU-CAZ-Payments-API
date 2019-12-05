@@ -24,9 +24,10 @@ public class PaymentStatusUpdateDetails {
   @NotNull
   ChargeSettlementPaymentStatus chargeSettlementPaymentStatus;
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.payment-id}")
+  @ApiModelProperty(value =
+      "${swagger.model.descriptions.payment-status-update.payment-provider-id}")
   @Size(min = 1, max = 255)
-  String paymentId;
+  String paymentProviderId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.case-reference}")
   @NotBlank

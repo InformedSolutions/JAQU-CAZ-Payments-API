@@ -156,7 +156,7 @@ class AtLeastOneParameterPresentValidatorTest {
     public void shouldReturnTrueWhenToDatePaidForIsPresent() {
       // given
       PaymentInfoRequest request = PaymentInfoRequest.builder()
-          .paymentId(ANY_PAYMENT_ID)
+          .paymentProviderId(ANY_PAYMENT_ID)
           .toDatePaidFor(ANY_DATE)
           .build();
 
@@ -171,7 +171,7 @@ class AtLeastOneParameterPresentValidatorTest {
     public void shouldReturnTrueWhenFromDatePaidForIsPresent() {
       // given
       PaymentInfoRequest request = PaymentInfoRequest.builder()
-          .paymentId(ANY_PAYMENT_ID)
+          .paymentProviderId(ANY_PAYMENT_ID)
           .fromDatePaidFor(ANY_DATE)
           .build();
 
@@ -186,7 +186,7 @@ class AtLeastOneParameterPresentValidatorTest {
     public void shouldReturnTrueWhenBothDatesArePresent() {
       // given
       PaymentInfoRequest request = PaymentInfoRequest.builder()
-          .paymentId(ANY_PAYMENT_ID)
+          .paymentProviderId(ANY_PAYMENT_ID)
           .toDatePaidFor(ANY_DATE)
           .fromDatePaidFor(ANY_DATE)
           .build();
@@ -202,7 +202,7 @@ class AtLeastOneParameterPresentValidatorTest {
     public void shouldReturnTrueWhenVrnIsPresent() {
       // given
       PaymentInfoRequest request = PaymentInfoRequest.builder()
-          .paymentId(ANY_PAYMENT_ID)
+          .paymentProviderId(ANY_PAYMENT_ID)
           .vrn(ANY_VRN)
           .build();
 
@@ -217,7 +217,7 @@ class AtLeastOneParameterPresentValidatorTest {
     public void shouldReturnTrueWhenVrnAndToDatePaidArePresent() {
       // given
       PaymentInfoRequest request = PaymentInfoRequest.builder()
-          .paymentId(ANY_PAYMENT_ID)
+          .paymentProviderId(ANY_PAYMENT_ID)
           .vrn(ANY_VRN)
           .toDatePaidFor(ANY_DATE)
           .build();
@@ -233,7 +233,7 @@ class AtLeastOneParameterPresentValidatorTest {
     public void shouldReturnTrueWhenVrnAndFromDatePaidArePresent() {
       // given
       PaymentInfoRequest request = PaymentInfoRequest.builder()
-          .paymentId(ANY_PAYMENT_ID)
+          .paymentProviderId(ANY_PAYMENT_ID)
           .vrn(ANY_VRN)
           .fromDatePaidFor(ANY_DATE)
           .build();
@@ -249,7 +249,7 @@ class AtLeastOneParameterPresentValidatorTest {
     public void shouldReturnTrueWhenVrnAndDatesArePresent() {
       // given
       PaymentInfoRequest request = PaymentInfoRequest.builder()
-          .paymentId(ANY_PAYMENT_ID)
+          .paymentProviderId(ANY_PAYMENT_ID)
           .vrn(ANY_VRN)
           .fromDatePaidFor(ANY_DATE)
           .toDatePaidFor(ANY_DATE)

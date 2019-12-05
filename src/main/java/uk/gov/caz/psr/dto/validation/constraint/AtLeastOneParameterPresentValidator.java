@@ -23,7 +23,7 @@ public class AtLeastOneParameterPresentValidator implements
     return input == null
         || input.getFromDatePaidFor() != null
         || input.getToDatePaidFor() != null
-        || input.getPaymentId() != null
+        || input.getPaymentProviderId() != null
         || input.getVrn() != null;
   }
 }

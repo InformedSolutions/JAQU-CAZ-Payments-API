@@ -17,9 +17,10 @@ import uk.gov.caz.psr.dto.validation.constraint.AtLeastOneParameterPresent;
 @AtLeastOneParameterPresent
 public class PaymentInfoRequest {
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.payment-info-request.payment-id}")
+  @ApiModelProperty(value =
+      "${swagger.model.descriptions.payment-info-request.payment-provider-id}")
   @Size(min = 1, max = 255)
-  String paymentId;
+  String paymentProviderId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-info-request.vrn}")
   @Size(min = 1, max = 15)

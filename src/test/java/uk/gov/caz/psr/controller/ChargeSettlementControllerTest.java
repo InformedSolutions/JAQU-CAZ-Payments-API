@@ -165,7 +165,7 @@ class ChargeSettlementControllerTest {
     }
 
     @Nested
-    class PaymentId {
+    class PaymentProviderId {
 
       @ParameterizedTest
       @ValueSource(strings = {
@@ -175,10 +175,10 @@ class ChargeSettlementControllerTest {
               + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
               + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       })
-      public void shouldReturn400StatusCodeUponPaymentIdWithInvalidLength(String paymentId)
+      public void shouldReturn400StatusCodeUponPaymentIdWithInvalidLength(String paymentProviderId)
           throws Exception {
         mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
-            .param("paymentId", paymentId)
+            .param("paymentProviderId", paymentProviderId)
             .accept(MediaType.APPLICATION_JSON)
             .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
             .header(Headers.X_API_KEY, ANY_API_KEY))
@@ -186,14 +186,14 @@ class ChargeSettlementControllerTest {
             .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
             .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
             .andExpect(jsonPath("$.errors[0].vrn").doesNotExist())
-            .andExpect(jsonPath("$.errors[0].detail").value("\"paymentId\" size must be between 1 and 255"));
+            .andExpect(jsonPath("$.errors[0].detail").value("\"paymentProviderId\" size must be between 1 and 255"));
       }
     }
 
     @Test
     public void shouldReturn200StatusCodeWhenParametersAreValid() throws Exception {
       mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
-          .param("paymentId", ANY_PAYMENT_ID)
+          .param("paymentProviderId", ANY_PAYMENT_ID)
           .param("vrn", ANY_VALID_VRN)
           .param("toDatePaidFor", ANY_VALID_DATE_STRING)
           .param("fromDatePaidFor", ANY_VALID_DATE_STRING)
@@ -427,7 +427,7 @@ class ChargeSettlementControllerTest {
           .andExpect(jsonPath("$.errors[0].vrn").value(request.getVrn()))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].detail")
-              .value("\"statusUpdates[0].paymentId\" size must be between 1 and 255"));
+              .value("\"statusUpdates[0].paymentProviderId\" size must be between 1 and 255"));
     }
 
     @Test

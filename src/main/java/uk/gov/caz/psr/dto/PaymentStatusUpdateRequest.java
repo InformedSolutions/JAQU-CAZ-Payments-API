@@ -53,7 +53,7 @@ public class PaymentStatusUpdateRequest {
         .dateOfCazEntry(paymentStatusUpdateDetail.getDateOfCazEntry())
         .paymentStatus(InternalPaymentStatus
             .valueOf(paymentStatusUpdateDetail.getChargeSettlementPaymentStatus().name()))
-        .externalPaymentId(paymentStatusUpdateDetail.getPaymentId())
+        .externalPaymentId(paymentStatusUpdateDetail.getPaymentProviderId())
         .caseReference(paymentStatusUpdateDetail.getCaseReference())
         .build();
   }

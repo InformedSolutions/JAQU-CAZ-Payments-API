@@ -274,7 +274,7 @@ public class TestObjectFactory {
           .caseReference("CaseReference")
           .chargeSettlementPaymentStatus(status)
           .dateOfCazEntry(LocalDate.now())
-          .paymentId("TestPaymentId")
+          .paymentProviderId("TestPaymentId")
           .build();
     }
 
@@ -291,7 +291,7 @@ public class TestObjectFactory {
       return PaymentStatusUpdateDetails.builder()
           .caseReference("CaseReference")
           .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
-          .paymentId(paymentID)
+          .paymentProviderId(paymentID)
           .dateOfCazEntry(date)
           .build();
     }
@@ -299,7 +299,7 @@ public class TestObjectFactory {
     public static PaymentStatusUpdateDetails anyInvalid() {
       return PaymentStatusUpdateDetails.builder()
           .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
-          .paymentId("paymentID")
+          .paymentProviderId("paymentID")
           .dateOfCazEntry(LocalDate.now())
           .build();
     }
@@ -308,7 +308,7 @@ public class TestObjectFactory {
       return PaymentStatusUpdateDetails.builder()
           .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
           .caseReference("caseReference")
-          .paymentId(paymentId)
+          .paymentProviderId(paymentId)
           .dateOfCazEntry(LocalDate.now())
           .build();
     }
@@ -317,7 +317,7 @@ public class TestObjectFactory {
       return PaymentStatusUpdateDetails.builder()
           .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
           .caseReference(caseReference)
-          .paymentId("paymentID")
+          .paymentProviderId("paymentID")
           .dateOfCazEntry(LocalDate.now())
           .build();
     }

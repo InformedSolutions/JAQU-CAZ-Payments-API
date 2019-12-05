@@ -14,9 +14,9 @@ public class PaymentStatusResponse {
   @NotNull
   ChargeSettlementPaymentStatus paymentStatus;
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-id}")
+  @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-provider-id}")
   @Max(255)
-  String paymentId;
+  String paymentProviderId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.case-reference}")
   String caseReference;
@@ -30,7 +30,7 @@ public class PaymentStatusResponse {
   public static PaymentStatusResponse from(PaymentStatus paymentStatus) {
     return PaymentStatusResponse.builder()
         .paymentStatus(ChargeSettlementPaymentStatus.from(paymentStatus.getStatus()))
-        .paymentId(paymentStatus.getExternalId())
+        .paymentProviderId(paymentStatus.getExternalId())
         .caseReference(paymentStatus.getCaseReference())
         .build();
   }

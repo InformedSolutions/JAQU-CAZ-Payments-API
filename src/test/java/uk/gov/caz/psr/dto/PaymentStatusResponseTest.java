@@ -27,7 +27,7 @@ public class PaymentStatusResponseTest {
     PaymentStatusResponse result = PaymentStatusResponse.from(paymentStatus);
 
     // then
-    assertThat(result.getPaymentId()).isEqualTo(paymentStatus.getExternalId());
+    assertThat(result.getPaymentProviderId()).isEqualTo(paymentStatus.getExternalId());
     assertThat(result.getCaseReference()).isEqualTo(paymentStatus.getCaseReference());
     assertThat(result.getPaymentStatus()).isEqualTo(ChargeSettlementPaymentStatus.PAID);
   }
