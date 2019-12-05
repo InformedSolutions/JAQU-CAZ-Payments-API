@@ -31,6 +31,9 @@ HELP.md
 ### Vagrant ###
 .vagrant
 
+### Node ###
+node_modules
+
 bin/
 .checkstyle
 *.log
