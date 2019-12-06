@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.caz.correlationid.Constants;
+import uk.gov.caz.psr.dto.PaymentInfoErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
+import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
@@ -43,7 +45,7 @@ public interface ChargeSettlementControllerApiSpec {
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
       @ApiResponse(code = 405, message = "Method Not Allowed / Request method 'XXX' not supported"),
       @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
-          + "element)"),
+          + "element)", response = PaymentInfoErrorsResponse.class),
       @ApiResponse(code = 401, message = "Unauthorized"),
       @ApiResponse(code = 429, message = "Too many requests"),
   })
@@ -84,7 +86,7 @@ public interface ChargeSettlementControllerApiSpec {
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
       @ApiResponse(code = 405, message = "Method Not Allowed / Request method 'XXX' not supported"),
       @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
-          + "element)"),
+          + "element)", response = PaymentStatusErrorsResponse.class),
       @ApiResponse(code = 401, message = "Unauthorized"),
       @ApiResponse(code = 429, message = "Too many requests"),
   })
@@ -125,7 +127,7 @@ public interface ChargeSettlementControllerApiSpec {
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
       @ApiResponse(code = 405, message = "Method Not Allowed / Request method 'XXX' not supported"),
       @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
-          + "element)"),
+          + "element)", response = PaymentStatusErrorsResponse.class),
       @ApiResponse(code = 401, message = "Unauthorized"),
       @ApiResponse(code = 429, message = "Too many requests"),
   })
