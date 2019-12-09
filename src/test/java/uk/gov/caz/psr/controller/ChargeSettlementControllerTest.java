@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
@@ -135,6 +136,27 @@ class ChargeSettlementControllerTest {
 
     @Nested
     class Dates {
+
+      @Test
+      public void shouldReturn400StatusCodeWhenToIsBeforeFrom() throws Exception {
+        LocalDate toDatePaidFor = LocalDate.now();
+        LocalDate fromDatePaidFor = toDatePaidFor.plusDays(1);
+
+        mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
+            .accept(MediaType.APPLICATION_JSON)
+            .param("toDatePaidFor", toDatePaidFor.toString())
+            .param("fromDatePaidFor", fromDatePaidFor.toString())
+            .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+            .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
+            .header(Headers.X_API_KEY, ANY_API_KEY))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+            .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(jsonPath("$.errors[0].detail")
+                .value("\"fromDatePaidFor\" cannot be after \"toDatePaidFor\""))
+            .andExpect(jsonPath("$.errors[0].vrn").doesNotExist());
+      }
 
       @Nested
       class ToDatePaidFor {

@@ -10,11 +10,13 @@ import lombok.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import uk.gov.caz.psr.dto.validation.constraint.AtLeastOneParameterPresent;
+import uk.gov.caz.psr.dto.validation.constraint.FromAndToDatesInChronologicalOrder;
 
 @Value
 @Builder
 @RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 @AtLeastOneParameterPresent
+@FromAndToDatesInChronologicalOrder
 public class PaymentInfoRequest {
 
   @ApiModelProperty(value =
