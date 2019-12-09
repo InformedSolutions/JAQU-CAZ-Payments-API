@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
-import uk.gov.caz.psr.controller.Headers;
+import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
@@ -61,6 +62,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", nonExistingVrn)
         .param("dateOfCazEntry", VALID_DATE_STRING))
@@ -76,6 +78,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)
         .param("dateOfCazEntry", VALID_DUPLICATED_DATE_STRING))
@@ -91,6 +94,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)
         .param("dateOfCazEntry", VALID_DATE_WITH_DIFFERENT_STATUSES))
@@ -105,6 +109,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)
         .param("dateOfCazEntry", VALID_DATE_WITH_STATUSES_WHICH_IS_DIFFERENT_THAN_PAID))

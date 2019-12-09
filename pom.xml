@@ -28,10 +28,7 @@
       **/configuration/**/*.java,
       **/psr/Application.java,
       **/amazonaws/StreamLambdaHandler.java,
-      **/amazonaws/CleanupDanglingPaymentsHandler.java,
-      <!-- TODO remove once ChargeSettlementController is implemented and tested -->
-      **/psr/dto/ChargeSettlementPaymentStatus.java,
-      **/psr/controller/ChargeSettlementController.java,
+      **/amazonaws/CleanupDanglingPaymentsHandler.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -574,9 +571,6 @@
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
-                <!-- TODO remove once ChargeSettlementController is implemented and tested -->
-                <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
-                <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
               </excludes>
               <rules>
                 <rule>

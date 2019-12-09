@@ -11,11 +11,14 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import uk.gov.caz.GlobalExceptionHandler;
 import uk.gov.caz.psr.controller.exception.PaymentInfoDtoValidationException;
 import uk.gov.caz.psr.controller.exception.PaymentStatusDtoValidationException;
+import uk.gov.caz.psr.dto.GenericErrorResponse;
 import uk.gov.caz.psr.dto.PaymentInfoErrorResponse;
 import uk.gov.caz.psr.dto.PaymentInfoErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
@@ -116,6 +119,50 @@ public class ExceptionController extends GlobalExceptionHandler {
         .collect(Collectors.toList());
     log.info("PaymentInfoDtoValidationException occurred: {}", errorsList);
     return ResponseEntity.badRequest().body(PaymentInfoErrorsResponse.from(errorsList));
+  }
+
+  /**
+   * Exception handler that handles exceptions thrown when an obligatory header is missing.
+   */
+  @ExceptionHandler(MissingRequestHeaderException.class)
+  public ResponseEntity<GenericErrorResponse> handleException(
+      MissingRequestHeaderException e) {
+    log.warn("Missing header: ", e);
+    return ResponseEntity.badRequest()
+        .body(createMissingHeaderErrorResponse(e));
+  }
+
+  /**
+   * Exception handler that handles exceptions thrown when a type mismatch error occurs.
+   */
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<GenericErrorResponse> handleException(
+      MethodArgumentTypeMismatchException e) {
+    log.warn("Argument type mismatch exception: ", e);
+    return ResponseEntity.badRequest()
+        .body(createTypeMismatchErrorResponse(e));
+  }
+
+  /**
+   * Creates an instance of {@link GenericErrorResponse} based on {@link
+   * MissingRequestHeaderException}.
+   */
+  private GenericErrorResponse createTypeMismatchErrorResponse(
+      MethodArgumentTypeMismatchException e) {
+    return GenericErrorResponse.builder()
+        .message("Wrong format of '" + e.getName() + "'")
+        .build();
+  }
+
+  /**
+   * Creates an instance of {@link GenericErrorResponse} based on {@link
+   * MissingRequestHeaderException}.
+   */
+  private GenericErrorResponse createMissingHeaderErrorResponse(
+      MissingRequestHeaderException e) {
+    return GenericErrorResponse.builder()
+        .message("Missing request header '" + e.getHeaderName() + "'")
+        .build();
   }
 
   /**

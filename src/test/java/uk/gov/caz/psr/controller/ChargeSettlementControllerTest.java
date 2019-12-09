@@ -16,6 +16,7 @@ import static uk.gov.caz.psr.controller.ChargeSettlementController.PAYMENT_STATU
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +39,7 @@ import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.configuration.MessageBundleConfiguration;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
+import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -73,6 +75,7 @@ class ChargeSettlementControllerTest {
   private static final String ANY_VALID_DATE_STRING = LocalDate.now().toString();
   private static final String ANY_CORRELATION_ID = "1f7c6a8c-15a3-11ea-b483-afe9911b08f0";
   private static final String ANY_API_KEY = "e6d892be-15a2-11ea-b483-a3ea711c89e8";
+  private static final LocalDateTime ANY_TIMESTAMP = LocalDateTime.now();
   private static final String ANY_PAYMENT_ID = "payment-id";
   private static final String PAYMENT_INFO_GET_PATH = BASE_PATH + "/" + PAYMENT_INFO_PATH;
   private static final String PAYMENT_STATUS_GET_PATH = BASE_PATH + "/" + PAYMENT_STATUS_PATH;
@@ -95,10 +98,32 @@ class ChargeSettlementControllerTest {
     }
 
     @Test
+    public void shouldReturn400StatusCodeWhenTimestampHeaderIsMissing() throws Exception {
+      mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, ANY_API_KEY))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value("Missing request header 'Timestamp'"));
+    }
+
+    @Test
+    public void shouldReturn400StatusCodeWhenTimestampHeaderIsInWrongFormat() throws Exception {
+      mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.TIMESTAMP, "this-is-not-timestamp")
+          .header(Headers.X_API_KEY, ANY_API_KEY))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value("Wrong format of 'Timestamp'"));
+    }
+
+    @Test
     public void shouldReturn400StatusCodeWhenAllParametersAreMissing() throws Exception {
       mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
           .accept(MediaType.APPLICATION_JSON)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(Headers.X_API_KEY, ANY_API_KEY))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
@@ -139,6 +164,7 @@ class ChargeSettlementControllerTest {
             .accept(MediaType.APPLICATION_JSON)
             .param(argumentName, invalidDate)
             .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+            .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
             .header(Headers.X_API_KEY, ANY_API_KEY))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
@@ -160,6 +186,7 @@ class ChargeSettlementControllerTest {
             .param("vrn", invalidVrn)
             .accept(MediaType.APPLICATION_JSON)
             .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+            .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
             .header(Headers.X_API_KEY, ANY_API_KEY))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
@@ -186,6 +213,7 @@ class ChargeSettlementControllerTest {
         mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
             .param("paymentProviderId", paymentProviderId)
             .accept(MediaType.APPLICATION_JSON)
+            .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
             .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
             .header(Headers.X_API_KEY, ANY_API_KEY))
             .andExpect(status().isBadRequest())
@@ -204,6 +232,7 @@ class ChargeSettlementControllerTest {
           .param("toDatePaidFor", ANY_VALID_DATE_STRING)
           .param("fromDatePaidFor", ANY_VALID_DATE_STRING)
           .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, ANY_API_KEY))
           .andExpect(status().isOk());
@@ -227,8 +256,34 @@ class ChargeSettlementControllerTest {
     }
 
     @Test
+    public void shouldReturn400StatusCodeWhenTimestampHeaderIsMissing() throws Exception {
+      mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, ANY_API_KEY)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message")
+              .value("Missing request header 'Timestamp'"));
+    }
+
+    @Test
+    public void shouldReturn400StatusCodeWhenTimestampHeaderIsInWrongFormat() throws Exception {
+      mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+          .header(Headers.TIMESTAMP, "this-is-not-timestamp")
+          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.X_API_KEY, ANY_API_KEY)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message")
+              .value("Wrong format of 'Timestamp'"));
+    }
+
+    @Test
     public void shouldReturn400StatusCodeWhenVrnIsMissing() throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, ANY_API_KEY)
           .contentType(MediaType.APPLICATION_JSON)
@@ -246,6 +301,7 @@ class ChargeSettlementControllerTest {
     @Test
     public void shouldReturn400StatusWhenDateOfCazEntryIsMissing() throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, ANY_API_KEY)
           .contentType(MediaType.APPLICATION_JSON)
@@ -264,6 +320,7 @@ class ChargeSettlementControllerTest {
     @ValueSource(strings = {"", "UNSOPHISTICATION"})
     public void shouldReturn400StatusCodeWhenVrnIsInvalid(String vrn) throws Exception {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, ANY_API_KEY)
           .contentType(MediaType.APPLICATION_JSON)
@@ -286,6 +343,7 @@ class ChargeSettlementControllerTest {
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .param("vrn", ANY_VALID_VRN)
           .param("dateOfCazEntry", dateOfCazEntry)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, ANY_API_KEY)
           .contentType(MediaType.APPLICATION_JSON)
@@ -308,8 +366,9 @@ class ChargeSettlementControllerTest {
           .willReturn(paymentStatusStub);
 
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .header(Headers.X_API_KEY, UUID.randomUUID())
+          .header(Headers.X_API_KEY, ANY_API_KEY)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
           .param("vrn", ANY_VALID_VRN)
@@ -328,6 +387,7 @@ class ChargeSettlementControllerTest {
       mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .accept(MediaType.APPLICATION_JSON)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
@@ -336,11 +396,43 @@ class ChargeSettlementControllerTest {
     }
 
     @Test
+    public void shouldReturn400StatusCodeWhenTimestampHeaderIsMissing() throws Exception {
+      String payload = "{}";
+
+      mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
+          .content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message")
+              .value("Missing request header 'Timestamp'"));
+    }
+
+    @Test
+    public void shouldReturn400StatusCodeWhenTimestampHeaderIsInWrongFormat() throws Exception {
+      String payload = "{}";
+
+      mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
+          .content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.TIMESTAMP, "this-is-not-timestamp")
+          .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.X_API_KEY, UUID.randomUUID()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message")
+              .value("Wrong format of 'Timestamp'"));
+    }
+
+    @Test
     public void shouldReturn405StatusCodeForPostRequest() throws Exception {
       String payload = "";
 
       mockMvc.perform(post(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .accept(MediaType.APPLICATION_JSON)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
@@ -354,6 +446,7 @@ class ChargeSettlementControllerTest {
       mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .accept(MediaType.APPLICATION_JSON)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
@@ -373,6 +466,7 @@ class ChargeSettlementControllerTest {
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
@@ -391,6 +485,7 @@ class ChargeSettlementControllerTest {
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
@@ -408,6 +503,7 @@ class ChargeSettlementControllerTest {
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
@@ -427,6 +523,7 @@ class ChargeSettlementControllerTest {
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
@@ -447,6 +544,7 @@ class ChargeSettlementControllerTest {
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
@@ -471,6 +569,7 @@ class ChargeSettlementControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
@@ -488,8 +587,9 @@ class ChargeSettlementControllerTest {
           .content(payload)
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
+          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .header(Headers.X_API_KEY, UUID.randomUUID()))
+          .header(Headers.X_API_KEY, ANY_API_KEY))
           .andExpect(status().isOk());
     }
 
