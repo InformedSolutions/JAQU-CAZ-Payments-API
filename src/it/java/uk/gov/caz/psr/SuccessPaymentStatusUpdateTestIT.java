@@ -17,6 +17,7 @@ import static uk.gov.caz.security.SecurityHeadersInjector.X_FRAME_OPTIONS_VALUE;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +37,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
-import uk.gov.caz.psr.controller.Headers;
+import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -121,6 +122,7 @@ public class SuccessPaymentStatusUpdateTestIT {
           .given()
           .accept(MediaType.APPLICATION_JSON.toString())
           .contentType(MediaType.APPLICATION_JSON.toString())
+          .header(Headers.TIMESTAMP, LocalDateTime.now().toString())
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
           .header(Headers.X_API_KEY, cleanAirZoneId)
           .body(toJsonString(paymentStatusUpdateRequest))

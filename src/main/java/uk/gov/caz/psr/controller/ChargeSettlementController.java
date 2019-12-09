@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.controller;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -40,7 +41,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest request,
-      BindingResult bindingResult, UUID cleanAirZoneId) {
+      BindingResult bindingResult, UUID cleanAirZoneId, LocalDateTime timestamp) {
     if (bindingResult.hasErrors()) {
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
@@ -53,7 +54,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public ResponseEntity<PaymentStatusResponse> getPaymentStatus(PaymentStatusRequest request,
-      BindingResult bindingResult, UUID cleanAirZoneId) {
+      BindingResult bindingResult, UUID cleanAirZoneId, LocalDateTime timestamp) {
     if (bindingResult.hasErrors()) {
       throw new PaymentStatusDtoValidationException(request.getVrn(),
           "getPaymentStatus.validationErrorTitle", bindingResult);
@@ -70,7 +71,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
   @Override
   public PaymentUpdateSuccessResponse updatePaymentStatus(PaymentStatusUpdateRequest request,
-      BindingResult bindingResult, UUID cleanAirZoneId) {
+      BindingResult bindingResult, UUID cleanAirZoneId, LocalDateTime timestamp) {
     if (bindingResult.hasErrors()) {
       throw new PaymentStatusDtoValidationException(request.getVrn(),
           "paymentStatusUpdate.validationErrorTitle", bindingResult);

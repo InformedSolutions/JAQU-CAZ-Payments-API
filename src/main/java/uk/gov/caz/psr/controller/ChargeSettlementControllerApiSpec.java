@@ -1,12 +1,16 @@
 package uk.gov.caz.psr.controller;
 
+import static org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME;
+
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.caz.correlationid.Constants;
+import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentInfoErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
@@ -69,7 +74,8 @@ public interface ChargeSettlementControllerApiSpec {
   })
   @GetMapping(ChargeSettlementController.PAYMENT_INFO_PATH)
   ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest,
-      BindingResult bindingResult, @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId);
+      BindingResult bindingResult, @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId,
+      @RequestHeader(Headers.TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp);
 
   /**
    * Allows LAs to query and retrieve data that enables them to determine whether a vehicle that has
@@ -111,7 +117,8 @@ public interface ChargeSettlementControllerApiSpec {
   @GetMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
   ResponseEntity<PaymentStatusResponse> getPaymentStatus(
       @Valid PaymentStatusRequest request, BindingResult bindingResult,
-      @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId
+      @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId,
+      @RequestHeader(Headers.TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp
   );
 
   /**
@@ -154,5 +161,6 @@ public interface ChargeSettlementControllerApiSpec {
   @PutMapping(ChargeSettlementController.PAYMENT_STATUS_PATH)
   PaymentUpdateSuccessResponse updatePaymentStatus(
       @Valid @RequestBody PaymentStatusUpdateRequest request, BindingResult bindingResult,
-      @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId);
+      @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId,
+      @RequestHeader(Headers.TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp);
 }
