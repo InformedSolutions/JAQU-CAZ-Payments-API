@@ -22,7 +22,7 @@ public class CazIdSpecification implements Specification<VehicleEntrantPaymentIn
   public Predicate toPredicate(Root<VehicleEntrantPaymentInfo> root, CriteriaQuery<?> criteriaQuery,
       CriteriaBuilder criteriaBuilder) {
     criteriaQuery.distinct(true);
-    QueryUtil.getOrCreateJoin(root, criteriaQuery, VehicleEntrantPaymentInfo_.paymentInfo);
+    QueryUtil.getOrCreateJoin(root, VehicleEntrantPaymentInfo_.paymentInfo);
     return criteriaBuilder.equal(root.get(VehicleEntrantPaymentInfo_.cleanAirZoneId), cazId);
   }
 }

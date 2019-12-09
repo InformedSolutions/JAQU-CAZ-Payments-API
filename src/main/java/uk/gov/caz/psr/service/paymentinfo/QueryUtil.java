@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.service.paymentinfo;
 
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.Attribute;
@@ -22,8 +21,7 @@ public class QueryUtil {
    * @param <V> parent class of join
    * @param <T> child class of join
    */
-  public static <V, T> Join<V, T> getOrCreateJoin(Root<V> from, CriteriaQuery<?> criteriaQuery,
-      Attribute attribute) {
+  public static <V, T> Join<V, T> getOrCreateJoin(Root<V> from, Attribute attribute) {
     return (Join<V, T>) from.getFetches()
         .stream()
         .filter(fetch -> attribute.getName().equals(fetch.getAttribute().getName()))

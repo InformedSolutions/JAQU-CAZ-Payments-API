@@ -26,7 +26,7 @@ public class PaymentInfoSpecificationPaymentId implements PaymentInfoSpecificati
     return (root, criteriaQuery, criteriaBuilder) -> {
       criteriaQuery.distinct(true);
       Join<VehicleEntrantPaymentInfo, PaymentInfo> join = QueryUtil
-          .getOrCreateJoin(root, criteriaQuery, VehicleEntrantPaymentInfo_.paymentInfo);
+          .getOrCreateJoin(root, VehicleEntrantPaymentInfo_.paymentInfo);
       return criteriaBuilder
           .equal(join.get(PaymentInfo_.externalId), paymentInfoRequest.getPaymentProviderId());
     };
