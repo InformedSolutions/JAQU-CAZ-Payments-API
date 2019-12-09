@@ -2,6 +2,7 @@ package uk.gov.caz.psr;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,7 +79,9 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)
         .param("dateOfCazEntry", VALID_DUPLICATED_DATE_STRING))
-        .andExpect(status().is5xxServerError());
+        .andExpect(status().is5xxServerError())
+        .andExpect(
+            jsonPath("$.errors[0].detail").value("More than one paid VehicleEntrantPayment found"));
   }
 
   @Test

@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,6 +24,7 @@ import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.ValidationError.ValidationErrorBuilder;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 import uk.gov.caz.psr.service.exception.MissingVehicleEntrantPaymentException;
+import uk.gov.caz.psr.service.exception.TooManyPaidPaymentStatusesException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -64,6 +66,22 @@ public class ExceptionController extends GlobalExceptionHandler {
     return ResponseEntity.badRequest()
         .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(e.getVrn(),
             e.getMessage()));
+  }
+
+  /**
+   * Method to handle Exception when multiple {@link uk.gov.caz.psr.model.PaymentStatus} were found
+   * for cazId, vrn and cazEntryDate.
+   *
+   * @param exception Exception object.
+   */
+  @ExceptionHandler(TooManyPaidPaymentStatusesException.class)
+  ResponseEntity<PaymentStatusErrorsResponse> handleTooManyPaidPaymentStatusesException(
+      TooManyPaidPaymentStatusesException exception) {
+
+    log.info("TooManyPaidPaymentStatusesException occurred", exception);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(exception.getVrn(),
+            exception.getMessage()));
   }
 
   /**

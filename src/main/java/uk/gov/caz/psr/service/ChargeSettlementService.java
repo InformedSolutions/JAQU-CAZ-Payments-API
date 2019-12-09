@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.PaymentStatusRepository;
+import uk.gov.caz.psr.service.exception.TooManyPaidPaymentStatusesException;
 
 /**
  * Class responsible to call internal repository for payment info.
@@ -18,6 +19,8 @@ import uk.gov.caz.psr.repository.PaymentStatusRepository;
 @AllArgsConstructor
 public class ChargeSettlementService {
 
+  private static final String TOO_MANY_PAID_STATUSES_MESSAGE =
+      "More than one paid VehicleEntrantPayment found";
   private final PaymentStatusRepository paymentStatusRepository;
 
   /**
@@ -36,6 +39,12 @@ public class ChargeSettlementService {
     Collection<PaymentStatus> paymentStatuses = paymentStatusRepository
         .findByCazIdAndVrnAndEntryDate(cazId, vrn, dateOfCazEntry);
     Collection<PaymentStatus> paidPaymentStatuses = getPaidPaymentStatuses(paymentStatuses);
+
+    if (paidPaymentStatuses.size() > 1) {
+      throw new TooManyPaidPaymentStatusesException(
+          vrn, TOO_MANY_PAID_STATUSES_MESSAGE
+      );
+    }
 
     return getPaymentStatusToReturn(paymentStatuses, paidPaymentStatuses);
   }
@@ -64,10 +73,6 @@ public class ChargeSettlementService {
    */
   private PaymentStatus getPaymentStatusToReturn(Collection<PaymentStatus> allPaymentStatuses,
       Collection<PaymentStatus> paidPaymentStatuses) {
-    if (paidPaymentStatuses.size() > 1) {
-      throw new IllegalStateException("More than one paid VehicleEntrantPayment found");
-    }
-
     if (paidPaymentStatuses.size() == 1) {
       return paidPaymentStatuses.iterator().next();
     }
