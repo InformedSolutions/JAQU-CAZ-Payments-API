@@ -35,18 +35,8 @@ public class ChargeSettlementPaymentInfoService {
     Specification<VehicleEntrantPaymentInfo> specification = specifications.stream()
         .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(paymentInfoRequest))
         .map(paymentInfoSpecification -> paymentInfoSpecification.create(paymentInfoRequest))
-        .reduce(initSpecification(cazId), Specification::and);
+        .reduce(CazIdSpecification.forCaz(cazId), Specification::and);
 
     return vehicleEntrantPaymentInfoRepository.findAll(specification);
-  }
-
-  /**
-   * Method to init specification.
-   *
-   * @param cazId for payment
-   * @return {@link Specification}
-   */
-  private Specification<VehicleEntrantPaymentInfo> initSpecification(UUID cazId) {
-    return new CazIdSpecification(cazId);
   }
 }
