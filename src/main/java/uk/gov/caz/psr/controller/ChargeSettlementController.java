@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +29,7 @@ import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
  */
 @RestController
 @AllArgsConstructor
+@Slf4j
 public class ChargeSettlementController implements ChargeSettlementControllerApiSpec {
 
   public static final String BASE_PATH = "/v1/charge-settlement";
@@ -46,10 +48,11 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
     }
-
-    List<VehicleEntrantPaymentInfo> filter = chargeSettlementPaymentInfoService
+    List<VehicleEntrantPaymentInfo> result = chargeSettlementPaymentInfoService
         .findPaymentInfo(request, cleanAirZoneId);
-    return ResponseEntity.ok(vehicleEntrantPaymentInfoConverter.toPaymentInfoResponse(filter));
+    log.info("Found {} matching vehicle entrant payments for payment-info request {}",
+        result.size(), request);
+    return ResponseEntity.ok(vehicleEntrantPaymentInfoConverter.toPaymentInfoResponse(result));
   }
 
   @Override
