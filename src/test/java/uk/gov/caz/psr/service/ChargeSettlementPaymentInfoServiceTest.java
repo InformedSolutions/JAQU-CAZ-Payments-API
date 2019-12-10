@@ -15,7 +15,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
-import uk.gov.caz.psr.dto.PaymentInfoRequest;
+import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
 import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 import uk.gov.caz.psr.repository.jpa.VehicleEntrantPaymentInfoRepository;
 import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
@@ -35,7 +35,7 @@ class ChargeSettlementPaymentInfoServiceTest {
   @Test
   void shouldReturnListOfPaymentInfo() {
     // given
-    PaymentInfoRequest input = PaymentInfoRequest.builder().build();
+    PaymentInfoRequestAttributes input = PaymentInfoRequestAttributes.builder().build();
     when(vehicleEntrantPaymentInfoRepository.findAll(Mockito.any(Specification.class))).thenReturn(emptyList());
 
     //when

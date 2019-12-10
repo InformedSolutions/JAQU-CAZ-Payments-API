@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.controller;
 
+import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +24,7 @@ import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 import uk.gov.caz.psr.service.ChargeSettlementPaymentInfoService;
 import uk.gov.caz.psr.service.ChargeSettlementService;
 import uk.gov.caz.psr.service.PaymentStatusUpdateService;
+import uk.gov.caz.psr.util.PaymentInfoRequestConverter;
 import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
 
 /**
@@ -40,6 +43,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
   private final ChargeSettlementService chargeSettlementService;
   private final ChargeSettlementPaymentInfoService chargeSettlementPaymentInfoService;
   private final VehicleEntrantPaymentInfoConverter vehicleEntrantPaymentInfoConverter;
+  private final PaymentInfoRequestConverter paymentInfoRequestConverter;
 
   @Override
   public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest request,
@@ -48,8 +52,10 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
     }
-    List<VehicleEntrantPaymentInfo> result = chargeSettlementPaymentInfoService
-        .findPaymentInfo(request, cleanAirZoneId);
+    List<VehicleEntrantPaymentInfo> result = chargeSettlementPaymentInfoService.findPaymentInfo(
+        paymentInfoRequestConverter.toPaymentInfoRequestAttributes(request),
+        cleanAirZoneId
+    );
     log.info("Found {} matching vehicle entrant payments for payment-info request {}",
         result.size(), request);
     return ResponseEntity.ok(vehicleEntrantPaymentInfoConverter.toPaymentInfoResponse(result));
@@ -66,7 +72,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
     PaymentStatus paymentStatus = chargeSettlementService
         .findChargeSettlement(
             cleanAirZoneId,
-            request.getVrn(),
+            normalizeVrn(request.getVrn()),
             LocalDate.parse(request.getDateOfCazEntry()));
 
     return ResponseEntity.ok(PaymentStatusResponse.from(paymentStatus));

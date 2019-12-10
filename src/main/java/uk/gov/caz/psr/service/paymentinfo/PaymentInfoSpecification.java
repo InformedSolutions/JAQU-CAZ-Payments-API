@@ -1,7 +1,7 @@
 package uk.gov.caz.psr.service.paymentinfo;
 
 import org.springframework.data.jpa.domain.Specification;
-import uk.gov.caz.psr.dto.PaymentInfoRequest;
+import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
 import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 
 /**
@@ -12,16 +12,16 @@ public interface PaymentInfoSpecification {
   /**
    * Method used to verify if method create should be call.
    *
-   * @param paymentInfoRequest {@link PaymentInfoRequest}
+   * @param attributes {@link PaymentInfoRequestAttributes}
    * @return flag
    */
-  boolean shouldUse(PaymentInfoRequest paymentInfoRequest);
+  boolean shouldUse(PaymentInfoRequestAttributes attributes);
 
   /**
    * Creates Specification object.
    *
-   * @param paymentInfoRequest {@link PaymentInfoRequest}
+   * @param attributes {@link PaymentInfoRequestAttributes}
    * @return {@link Specification}
    */
-  Specification<VehicleEntrantPaymentInfo> create(PaymentInfoRequest paymentInfoRequest);
+  Specification<VehicleEntrantPaymentInfo> create(PaymentInfoRequestAttributes attributes);
 }
