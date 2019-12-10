@@ -4,6 +4,8 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Preconditions;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -78,11 +80,18 @@ public class VehicleEntrantPaymentInfoConverter {
   private SinglePaymentInfo toSinglePaymentInfo(PaymentInfo paymentInfo,
       List<VehicleEntrantPaymentInfo> entrantPaymentInfoList) {
     return SinglePaymentInfo.builder()
-        .paymentDate(paymentInfo.getSubmittedTimestamp().toLocalDate())
+        .paymentDate(toLocalDate(paymentInfo.getSubmittedTimestamp()))
         .paymentProviderId(paymentInfo.getExternalId())
         .totalPaid(currencyFormatter.parsePenniesToBigDecimal(paymentInfo.getTotalPaid()))
         .lineItems(toVehicleEntrantPayments(entrantPaymentInfoList))
         .build();
+  }
+
+  /**
+   * Maps the provided {@code timestamp} to a date provided it is non null. Returns null otherwise.
+   */
+  private LocalDate toLocalDate(LocalDateTime timestamp) {
+    return timestamp == null ? null : timestamp.toLocalDate();
   }
 
   /**
