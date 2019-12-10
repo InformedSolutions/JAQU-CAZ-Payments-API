@@ -92,7 +92,6 @@ public class ExternalPaymentsRepository {
           .externalId(responseBody.getPaymentId())
           .submittedTimestamp(LocalDateTime.now())
           .externalPaymentStatus(externalPaymentStatus)
-          .submittedTimestamp(LocalDateTime.now())
           .nextUrl(responseBody.getLinks().getNextUrl().getHref())
           .build();
     } catch (RestClientException e) {
