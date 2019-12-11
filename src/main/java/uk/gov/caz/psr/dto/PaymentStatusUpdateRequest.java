@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.dto;
 
+import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
+
 import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
 import java.util.UUID;
@@ -49,7 +51,7 @@ public class PaymentStatusUpdateRequest {
       UUID cleanAirZoneId, PaymentStatusUpdateDetails paymentStatusUpdateDetail) {
     return VehicleEntrantPaymentStatusUpdate.builder()
         .cleanAirZoneId(cleanAirZoneId)
-        .vrn(vrn)
+        .vrn(normalizeVrn(vrn))
         .dateOfCazEntry(paymentStatusUpdateDetail.getDateOfCazEntry())
         .paymentStatus(InternalPaymentStatus
             .valueOf(paymentStatusUpdateDetail.getChargeSettlementPaymentStatus().name()))

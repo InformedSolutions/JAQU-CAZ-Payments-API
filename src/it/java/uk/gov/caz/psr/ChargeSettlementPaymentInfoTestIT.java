@@ -32,6 +32,7 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
 import uk.gov.caz.psr.dto.Headers;
+import uk.gov.caz.psr.util.AttributesNormaliser;
 
 @FullyRunningServerIntegrationTest
 class ChargeSettlementPaymentInfoTestIT {
@@ -237,9 +238,15 @@ class ChargeSettlementPaymentInfoTestIT {
     @Nested
     class WhichExists {
 
-      @Test
-      public void shouldReturnDataForRequestedVrn() {
-        String vrn = "AB11CDE";
+      @ParameterizedTest
+      @ValueSource(strings = {
+          "AB11CDE", // existing
+          "Ab11CdE", "ab11cDe", // with changed capitalisation
+          "AB 11CDE", "AB 1 1 CD E", " AB 11CDE ", // with whitespaces
+          "AB 11cD e " // with whitespaces and changed capitalisation
+      })
+      public void shouldReturnDataForRequestedVrnRegardlessOfCapitalisationAndWhitespaces(
+          String vrn) {
         PaymentInfoAssertion.whenRequested()
             .withParam("vrn", vrn)
             .then()
@@ -723,7 +730,10 @@ class ChargeSettlementPaymentInfoTestIT {
     }
 
     public PaymentInfoAssertion containsExactlyVrns(String... vrns) {
-      validatableResponse.body("results.vrn", hasItems(vrns));
+      String [] normalisedVrns = Stream.of(vrns)
+          .map(AttributesNormaliser::normalizeVrn)
+          .toArray(String[]::new);
+      validatableResponse.body("results.vrn", hasItems(normalisedVrns));
       return this;
     }
 

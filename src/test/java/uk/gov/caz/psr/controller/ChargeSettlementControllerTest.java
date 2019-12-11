@@ -48,6 +48,7 @@ import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.service.ChargeSettlementPaymentInfoService;
 import uk.gov.caz.psr.service.ChargeSettlementService;
 import uk.gov.caz.psr.service.PaymentStatusUpdateService;
+import uk.gov.caz.psr.util.PaymentInfoRequestConverter;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
 import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
@@ -71,6 +72,8 @@ class ChargeSettlementControllerTest {
   private ChargeSettlementPaymentInfoService chargeSettlementPaymentInfoService;
   @MockBean
   private VehicleEntrantPaymentInfoConverter vehicleEntrantPaymentInfoConverter;
+  @MockBean
+  private PaymentInfoRequestConverter paymentInfoRequestConverter;
 
   private static final String ANY_VALID_VRN = "DL76MWX";
   private static final String ANY_VALID_DATE_STRING = LocalDate.now().toString();

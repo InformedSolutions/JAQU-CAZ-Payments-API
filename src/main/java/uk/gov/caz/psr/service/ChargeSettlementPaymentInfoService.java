@@ -5,7 +5,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.dto.PaymentInfoRequest;
+import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
 import uk.gov.caz.psr.model.info.PaymentInfo;
 import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 import uk.gov.caz.psr.repository.jpa.VehicleEntrantPaymentInfoRepository;
@@ -26,15 +26,15 @@ public class ChargeSettlementPaymentInfoService {
   /**
    * Method which filter payments based on PaymentInfoRequest.
    *
-   * @param paymentInfoRequest {@link PaymentInfoRequest}
+   * @param attributes {@link PaymentInfoRequestAttributes}
    * @param cazId for payment
    * @return  list of {@link PaymentInfo}
    */
-  public List<VehicleEntrantPaymentInfo> findPaymentInfo(PaymentInfoRequest paymentInfoRequest,
+  public List<VehicleEntrantPaymentInfo> findPaymentInfo(PaymentInfoRequestAttributes attributes,
       UUID cazId) {
     Specification<VehicleEntrantPaymentInfo> specification = specifications.stream()
-        .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(paymentInfoRequest))
-        .map(paymentInfoSpecification -> paymentInfoSpecification.create(paymentInfoRequest))
+        .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(attributes))
+        .map(paymentInfoSpecification -> paymentInfoSpecification.create(attributes))
         .reduce(CazIdSpecification.forCaz(cazId), Specification::and);
 
     return vehicleEntrantPaymentInfoRepository.findAll(specification);
