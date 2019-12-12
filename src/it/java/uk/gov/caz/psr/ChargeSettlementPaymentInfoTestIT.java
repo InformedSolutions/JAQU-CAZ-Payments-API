@@ -1,5 +1,6 @@
 package uk.gov.caz.psr;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -13,7 +14,10 @@ import io.restassured.specification.RequestSpecification;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -43,8 +47,13 @@ class ChargeSettlementPaymentInfoTestIT {
   @Autowired
   private DataSource dataSource;
 
+  @Autowired
+  private EntityManagerFactory entityManagerFactory;
+
   @LocalServerPort
   int randomServerPort;
+
+  private Statistics statistics;
 
   @Nested
   class WhenRequestedForOnlyToDatePaidFor {
@@ -66,6 +75,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .doesNotContainNotPaidEntries()
             .containsExactlyLineItemsWithTravelDates(expectedPaidEntrantDate.toString())
             .totalLineItemsCountIsEqualTo(2);
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
     }
 
@@ -83,6 +94,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
             .containsEmptyResults();
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
     }
   }
@@ -106,6 +119,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .doesNotContainNotPaidEntries()
             .containsExactlyLineItemsWithTravelDates(fromDatePaidForAsString)
             .totalLineItemsCountIsEqualTo(2);
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
     }
 
@@ -123,6 +138,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
             .containsEmptyResults();
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
     }
   }
@@ -145,6 +162,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
             .containsEmptyResults();
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
     }
 
@@ -163,6 +182,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .reponseHasOkStatus()
             .doesNotContainNotPaidEntries()
             .totalLineItemsCountIsEqualTo(expectedLineItemsCount);
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
     }
   }
@@ -182,6 +203,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
             .containsEmptyResults();
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
 
       @Nested
@@ -200,6 +223,8 @@ class ChargeSettlementPaymentInfoTestIT {
               .headerContainsCorrelationId()
               .reponseHasOkStatus()
               .containsEmptyResults();
+
+          verifyResultsWereFetchedByOneDatabaseQuery();
         }
       }
 
@@ -217,6 +242,8 @@ class ChargeSettlementPaymentInfoTestIT {
               .headerContainsCorrelationId()
               .reponseHasOkStatus()
               .containsEmptyResults();
+
+          verifyResultsWereFetchedByOneDatabaseQuery();
         }
       }
 
@@ -234,6 +261,8 @@ class ChargeSettlementPaymentInfoTestIT {
               .headerContainsCorrelationId()
               .reponseHasOkStatus()
               .containsEmptyResults();
+
+          verifyResultsWereFetchedByOneDatabaseQuery();
         }
       }
     }
@@ -259,6 +288,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02")
             .doesNotContainNotPaidEntries()
             .totalLineItemsCountIsEqualTo(2);
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
 
       @Nested
@@ -283,6 +314,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .containsExactlyVrns(vrn)
                 .containsExactlyLineItemsWithTravelDates(expectedPaidEntrantDate.toString())
                 .totalLineItemsCountIsEqualTo(1);
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
 
@@ -302,6 +335,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
                 .containsEmptyResults();
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
       }
@@ -325,6 +360,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .containsExactlyVrns(vrn)
                 .containsExactlyLineItemsWithTravelDates(fromDatePaidForAsString)
                 .totalLineItemsCountIsEqualTo(1);
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
 
@@ -343,6 +380,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
                 .containsEmptyResults();
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
       }
@@ -367,6 +406,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .reponseHasOkStatus()
                 .doesNotContainNotPaidEntries()
                 .totalLineItemsCountIsEqualTo(expectedLineItemsCount);
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
 
@@ -386,6 +427,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
                 .containsEmptyResults();
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
       }
@@ -407,6 +450,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
             .containsEmptyResults();
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
 
       @Nested
@@ -423,6 +468,8 @@ class ChargeSettlementPaymentInfoTestIT {
               .headerContainsCorrelationId()
               .reponseHasOkStatus()
               .containsEmptyResults();
+
+          verifyResultsWereFetchedByOneDatabaseQuery();
         }
 
         @Nested
@@ -443,6 +490,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
                 .containsEmptyResults();
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
 
@@ -462,6 +511,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
                 .containsEmptyResults();
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
 
@@ -481,6 +532,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
                 .containsEmptyResults();
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
       }
@@ -498,6 +551,8 @@ class ChargeSettlementPaymentInfoTestIT {
               .headerContainsCorrelationId()
               .reponseHasOkStatus()
               .containsEmptyResults();
+
+          verifyResultsWereFetchedByOneDatabaseQuery();
         }
 
         @Nested
@@ -518,9 +573,10 @@ class ChargeSettlementPaymentInfoTestIT {
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
                 .containsEmptyResults();
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
-
       }
     }
 
@@ -540,6 +596,8 @@ class ChargeSettlementPaymentInfoTestIT {
             .containsExactlyVrns("AB11CDE")
             .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02")
             .totalLineItemsCountIsEqualTo(2);
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
 
       @Nested
@@ -564,6 +622,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02", "2019-11-03",
                     "2019-11-04", "2019-11-05")
                 .totalLineItemsCountIsEqualTo(5);
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
 
           @Nested
@@ -587,6 +647,8 @@ class ChargeSettlementPaymentInfoTestIT {
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-03", "2019-11-04", "2019-11-05");
+
+              verifyResultsWereFetchedByOneDatabaseQuery();
             }
           }
 
@@ -609,6 +671,8 @@ class ChargeSettlementPaymentInfoTestIT {
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-03");
+
+              verifyResultsWereFetchedByOneDatabaseQuery();
             }
           }
 
@@ -631,6 +695,8 @@ class ChargeSettlementPaymentInfoTestIT {
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-02");
+
+              verifyResultsWereFetchedByOneDatabaseQuery();
             }
           }
         }
@@ -649,6 +715,8 @@ class ChargeSettlementPaymentInfoTestIT {
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
                 .containsEmptyResults();
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
           }
 
           @Nested
@@ -669,6 +737,8 @@ class ChargeSettlementPaymentInfoTestIT {
                   .headerContainsCorrelationId()
                   .reponseHasOkStatus()
                   .containsEmptyResults();
+
+              verifyResultsWereFetchedByOneDatabaseQuery();
             }
           }
 
@@ -688,6 +758,8 @@ class ChargeSettlementPaymentInfoTestIT {
                   .headerContainsCorrelationId()
                   .reponseHasOkStatus()
                   .containsEmptyResults();
+
+              verifyResultsWereFetchedByOneDatabaseQuery();
             }
           }
 
@@ -707,6 +779,8 @@ class ChargeSettlementPaymentInfoTestIT {
                   .headerContainsCorrelationId()
                   .reponseHasOkStatus()
                   .containsEmptyResults();
+
+              verifyResultsWereFetchedByOneDatabaseQuery();
             }
           }
         }
@@ -789,6 +863,17 @@ class ChargeSettlementPaymentInfoTestIT {
               + "'notPaid' }.paymentStatus.flatten().toSet().size()", equalTo(0));
       return this;
     }
+  }
+
+  @BeforeEach
+  public void initHibernateStats() {
+    statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+    statistics.clear();
+  }
+
+  private void verifyResultsWereFetchedByOneDatabaseQuery() {
+    long queryExecutionCount = statistics.getQueryExecutionCount();
+    assertThat(queryExecutionCount).isOne();
   }
 
   @BeforeEach
