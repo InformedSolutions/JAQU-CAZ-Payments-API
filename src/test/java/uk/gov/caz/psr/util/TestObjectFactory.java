@@ -222,10 +222,12 @@ public class TestObjectFactory {
   public static class PaymentStatusUpdateDetailsFactory {
 
     public static PaymentStatusUpdateDetails anyWithStatus(ChargeSettlementPaymentStatus status) {
-
-      return PaymentStatusUpdateDetails.builder().caseReference("CaseReference")
-          .chargeSettlementPaymentStatus(status).dateOfCazEntry(LocalDate.now())
-          .paymentId("TestPaymentId").build();
+      return PaymentStatusUpdateDetails.builder()
+          .caseReference("CaseReference")
+          .chargeSettlementPaymentStatus(status)
+          .dateOfCazEntry(LocalDate.now())
+          .paymentProviderId("TestPaymentId")
+          .build();
     }
 
     public static PaymentStatusUpdateDetails refundedWithDateOfCazEntry(LocalDate date) {
@@ -238,15 +240,36 @@ public class TestObjectFactory {
         String paymentID) {
       return PaymentStatusUpdateDetails.builder().caseReference("CaseReference")
           .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
-          .paymentId(paymentID).dateOfCazEntry(date).build();
+          .paymentProviderId(paymentID)
+          .dateOfCazEntry(date)
+          .build();
     }
 
     public static PaymentStatusUpdateDetails anyInvalid() {
       return PaymentStatusUpdateDetails.builder()
           .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
-          .paymentId("paymentID").dateOfCazEntry(LocalDate.now()).build();
+          .paymentProviderId("paymentID")
+          .dateOfCazEntry(LocalDate.now())
+          .build();
     }
 
+    public static PaymentStatusUpdateDetails withPaymentId(String paymentId) {
+      return PaymentStatusUpdateDetails.builder()
+          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .caseReference("caseReference")
+          .paymentProviderId(paymentId)
+          .dateOfCazEntry(LocalDate.now())
+          .build();
+    }
+
+    public static PaymentStatusUpdateDetails withCaseReference(String caseReference) {
+      return PaymentStatusUpdateDetails.builder()
+          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .caseReference(caseReference)
+          .paymentProviderId("paymentID")
+          .dateOfCazEntry(LocalDate.now())
+          .build();
+    }
   }
 
   public static class VehicleEntrantPaymentStatusUpdates {

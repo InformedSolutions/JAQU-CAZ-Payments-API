@@ -2,11 +2,15 @@ package uk.gov.caz.psr;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -16,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
-import uk.gov.caz.psr.controller.Headers;
+import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
@@ -60,6 +64,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", nonExistingVrn)
         .param("dateOfCazEntry", VALID_DATE_STRING))
@@ -75,35 +80,53 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", VALID_VRN)
         .param("dateOfCazEntry", VALID_DUPLICATED_DATE_STRING))
-        .andExpect(status().is5xxServerError());
+        .andExpect(status().is5xxServerError())
+        .andExpect(
+            jsonPath("$.errors[0].detail").value("More than one paid VehicleEntrantPayment found"));
   }
 
-  @Test
-  public void shouldReturn200AndPaidPaymentStatusWhenThereAreManyRecordsAndOneOfThemIsPaid()
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "ND84VSX", // existing
+      "Nd84vSX", "nD84vsX", // with changed capitalisation
+      "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
+      "N D8  4v SX " // with whitespaces and changed capitalisation
+  })
+  public void shouldReturn200AndPaidPaymentStatusWhenThereAreManyRecordsAndOneOfThemIsPaid(
+      String vrn)
       throws Exception {
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
-        .param("vrn", VALID_VRN)
+        .param("vrn", vrn)
         .param("dateOfCazEntry", VALID_DATE_WITH_DIFFERENT_STATUSES))
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE, VALID_EXTERNAL_ID)));
   }
 
-  @Test
-  public void shouldReturn200AndTheExistingPaymentWhenThereAreNoPaid() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "ND84VSX", // existing
+      "Nd84vSX", "nD84vsX", // with changed capitalisation
+      "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
+      "N D8  4v SX " // with whitespaces and changed capitalisation
+  })
+  public void shouldReturn200AndTheExistingPaymentWhenThereAreNoPaid(String vrn) throws Exception {
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
-        .param("vrn", VALID_VRN)
+        .param("vrn", vrn)
         .param("dateOfCazEntry", VALID_DATE_WITH_STATUSES_WHICH_IS_DIFFERENT_THAN_PAID))
         .andExpect(status().isOk())
         .andExpect(content().json(

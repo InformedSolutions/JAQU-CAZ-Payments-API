@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.dto;
 
+import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
+
 import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
 import java.util.UUID;
@@ -11,7 +13,6 @@ import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 
 /**
@@ -22,12 +23,12 @@ import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 public class PaymentStatusUpdateRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.vrn}")
-  @NotBlank(message = ValidationError.MANDATORY_FIELD_MISSING_ERROR)
+  @NotBlank
   @Size(min = 1, max = 15)
   String vrn;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.status-updates}")
-  @NotEmpty(message = ValidationError.MANDATORY_FIELD_MISSING_ERROR)
+  @NotEmpty
   @Valid
   List<PaymentStatusUpdateDetails> statusUpdates;
 
@@ -50,11 +51,11 @@ public class PaymentStatusUpdateRequest {
       UUID cleanAirZoneId, PaymentStatusUpdateDetails paymentStatusUpdateDetail) {
     return VehicleEntrantPaymentStatusUpdate.builder()
         .cleanAirZoneId(cleanAirZoneId)
-        .vrn(vrn)
+        .vrn(normalizeVrn(vrn))
         .dateOfCazEntry(paymentStatusUpdateDetail.getDateOfCazEntry())
         .paymentStatus(InternalPaymentStatus
             .valueOf(paymentStatusUpdateDetail.getChargeSettlementPaymentStatus().name()))
-        .externalPaymentId(paymentStatusUpdateDetail.getPaymentId())
+        .externalPaymentId(paymentStatusUpdateDetail.getPaymentProviderId())
         .caseReference(paymentStatusUpdateDetail.getCaseReference())
         .build();
   }

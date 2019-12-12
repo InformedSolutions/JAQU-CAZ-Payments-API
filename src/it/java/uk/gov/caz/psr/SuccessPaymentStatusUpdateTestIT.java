@@ -17,6 +17,7 @@ import static uk.gov.caz.security.SecurityHeadersInjector.X_FRAME_OPTIONS_VALUE;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -24,7 +25,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
@@ -36,7 +38,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
-import uk.gov.caz.psr.controller.Headers;
+import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -66,10 +68,16 @@ public class SuccessPaymentStatusUpdateTestIT {
         ChargeSettlementController.PAYMENT_STATUS_PATH;
   }
 
-  @Test
-  public void successPaymentStatusUpdateJourney() {
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "ND84VSX",
+      "Nd84vSX", "nD84vsX",
+      "ND 84 VSX", "  ND84V S X ", "N D8   4VSX",
+      "N D8  4v SX "
+  })
+  public void successPaymentStatusUpdateJourney(String vrn) {
     given()
-        .paymentStatusUpdateRequest(paymentStatusUpdateRequest())
+        .paymentStatusUpdateRequest(paymentStatusUpdateRequest(vrn))
         .whenSubmitted()
         .then()
         .vehicleEntrantPaymentsAreUpdatedInTheDatabse();
@@ -79,9 +87,9 @@ public class SuccessPaymentStatusUpdateTestIT {
     return new PaymentStatusUpdateJourneyAssertion(objectMapper, jdbcTemplate);
   }
 
-  private PaymentStatusUpdateRequest paymentStatusUpdateRequest() {
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequest(String vrn) {
     return PaymentStatusUpdateRequest.builder()
-        .vrn("ND84VSX")
+        .vrn(vrn)
         .statusUpdates(validStatusUpdates())
         .build();
   }
@@ -121,6 +129,7 @@ public class SuccessPaymentStatusUpdateTestIT {
           .given()
           .accept(MediaType.APPLICATION_JSON.toString())
           .contentType(MediaType.APPLICATION_JSON.toString())
+          .header(Headers.TIMESTAMP, LocalDateTime.now().toString())
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
           .header(Headers.X_API_KEY, cleanAirZoneId)
           .body(toJsonString(paymentStatusUpdateRequest))
@@ -152,7 +161,7 @@ public class SuccessPaymentStatusUpdateTestIT {
       int vehicleEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "vehicle_entrant_payment",
           "caz_id = '" + cleanAirZoneId.toString() + "' AND "
-              + "vrn = '" + paymentStatusUpdateRequest.getVrn() + "' AND "
+              + "vrn = 'ND84VSX' AND "
               + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
       assertThat(vehicleEntrantCount).isEqualTo(2);
     }

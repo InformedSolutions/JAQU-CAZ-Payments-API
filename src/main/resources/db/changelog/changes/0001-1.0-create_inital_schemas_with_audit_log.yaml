@@ -12,6 +12,12 @@ databaseChangeLog:
   - changeSet:
       id: 0001.2-1.0
       author: radoslaw.morytko
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              schemaName: audit
+              tableName: logged_actions
       changes:
         - sqlFile:
             dbms: postgresql

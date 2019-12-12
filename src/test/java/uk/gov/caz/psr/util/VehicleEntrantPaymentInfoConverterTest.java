@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -55,6 +56,25 @@ class VehicleEntrantPaymentInfoConverterTest {
   }
 
   @Test
+  public void shouldConvertPassedCollectionWhenSubmittedTimestampIsNull() {
+    // given
+    Collection<VehicleEntrantPaymentInfo> input = singleVehicleEntrantPaymentInfoWithNullTimestamp();
+    given(currencyFormatter.parsePenniesToBigDecimal(anyInt()))
+        .willAnswer(answer -> BigDecimal.valueOf(74));
+
+    // when
+    PaymentInfoResponse paymentInfoResponse = converter.toPaymentInfoResponse(input);
+
+    // then
+    assertThat(paymentInfoResponse).isNotNull();
+    assertThat(paymentInfoResponse.getResults()).hasSize(1);
+    PaymentsInfo paymentsInfo = paymentInfoResponse.getResults().iterator().next();
+    assertThat(paymentsInfo.getPayments()).hasSize(1);
+    SinglePaymentInfo payment = paymentsInfo.getPayments().iterator().next();
+    assertThat(payment.getPaymentDate()).isNull();
+  }
+
+  @Test
   public void shouldConvertPassedCollection() {
     // given
     Collection<VehicleEntrantPaymentInfo> input = singleVehicleEntrantPaymentInfo();
@@ -83,6 +103,16 @@ class VehicleEntrantPaymentInfoConverterTest {
   }
 
   private Collection<VehicleEntrantPaymentInfo> singleVehicleEntrantPaymentInfo() {
+    VehicleEntrantPaymentInfo result = buildVehicleEntrantPaymentInfo();
+    return Collections.singletonList(result);
+  }
+
+  private Collection<VehicleEntrantPaymentInfo> singleVehicleEntrantPaymentInfoWithNullTimestamp() {
+    VehicleEntrantPaymentInfo result = buildVehicleEntrantPaymentInfoWithNullSubmittedTimestamp();
+    return Collections.singletonList(result);
+  }
+
+  private VehicleEntrantPaymentInfo buildVehicleEntrantPaymentInfo() {
     VehicleEntrantPaymentInfo result = new VehicleEntrantPaymentInfo();
     result.setId(UUID.fromString("0af851ef-870e-4c2e-b9aa-f84c1db35f24"));
     result.setVrn(ANY_VRN);
@@ -92,16 +122,27 @@ class VehicleEntrantPaymentInfoConverterTest {
     result.setTravelDate(ANY_TRAVEL_DATE);
     result.setCleanAirZoneId(UUID.fromString("938cac88-1103-11ea-a1a6-33ad4299653d"));
     result.setPaymentInfo(buildPaymentInfo());
-    return Collections.singletonList(result);
+    return result;
+  }
+
+  @NotNull
+  private VehicleEntrantPaymentInfo buildVehicleEntrantPaymentInfoWithNullSubmittedTimestamp() {
+    VehicleEntrantPaymentInfo result = buildVehicleEntrantPaymentInfo();
+    result.setPaymentInfo(buildPaymentInfoWith(null));
+    return result;
   }
 
   private PaymentInfo buildPaymentInfo() {
+    return buildPaymentInfoWith(ANY_SUBMITTED_TIMESTAMP);
+  }
+
+  private PaymentInfo buildPaymentInfoWith(LocalDateTime timestamp) {
     PaymentInfo paymentInfo = new PaymentInfo();
     paymentInfo.setId(UUID.fromString("996c6c95-960d-4dfd-98a2-6effa9a1cbda"));
     paymentInfo.setExternalId(ANY_EXTERNAL_ID);
     paymentInfo.setTotalPaid(VehicleEntrantPaymentInfoConverterTest.ANY_TOTAL_PAID);
     paymentInfo.setExternalPaymentStatus(ExternalPaymentStatus.SUCCESS);
-    paymentInfo.setSubmittedTimestamp(ANY_SUBMITTED_TIMESTAMP);
+    paymentInfo.setSubmittedTimestamp(timestamp);
     return paymentInfo;
   }
 }

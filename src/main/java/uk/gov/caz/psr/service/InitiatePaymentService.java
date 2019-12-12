@@ -1,6 +1,8 @@
 
 package uk.gov.caz.psr.service;
 
+import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,8 +67,12 @@ public class InitiatePaymentService {
    */
   private VehicleEntrantPayment toVehicleEntrantPayment(LocalDate travelDate,
       InitiatePaymentRequest request, int chargePerDay) {
-    return VehicleEntrantPayment.builder().vrn(request.getVrn())
-        .cleanZoneId(request.getCleanAirZoneId()).travelDate(travelDate).chargePaid(chargePerDay)
-        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID).build();
+    return VehicleEntrantPayment.builder()
+        .vrn(normalizeVrn(request.getVrn()))
+        .cleanZoneId(request.getCleanAirZoneId())
+        .travelDate(travelDate)
+        .chargePaid(chargePerDay)
+        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
+        .build();
   }
 }

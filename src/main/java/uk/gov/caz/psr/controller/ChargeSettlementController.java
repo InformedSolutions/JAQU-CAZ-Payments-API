@@ -1,12 +1,18 @@
 package uk.gov.caz.psr.controller;
 
+import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.caz.psr.controller.exception.DtoValidationException;
+import uk.gov.caz.psr.controller.exception.PaymentInfoDtoValidationException;
+import uk.gov.caz.psr.controller.exception.PaymentStatusDtoValidationException;
 import uk.gov.caz.psr.dto.PaymentInfoRequest;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
@@ -18,6 +24,7 @@ import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 import uk.gov.caz.psr.service.ChargeSettlementPaymentInfoService;
 import uk.gov.caz.psr.service.ChargeSettlementService;
 import uk.gov.caz.psr.service.PaymentStatusUpdateService;
+import uk.gov.caz.psr.util.PaymentInfoRequestConverter;
 import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
 
 /**
@@ -25,6 +32,7 @@ import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
  */
 @RestController
 @AllArgsConstructor
+@Slf4j
 public class ChargeSettlementController implements ChargeSettlementControllerApiSpec {
 
   public static final String BASE_PATH = "/v1/charge-settlement";
@@ -35,40 +43,50 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
   private final ChargeSettlementService chargeSettlementService;
   private final ChargeSettlementPaymentInfoService chargeSettlementPaymentInfoService;
   private final VehicleEntrantPaymentInfoConverter vehicleEntrantPaymentInfoConverter;
+  private final PaymentInfoRequestConverter paymentInfoRequestConverter;
 
   @Override
-  public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest paymentInfoRequest,
-      String apiKey) {
-    UUID cleanAirZoneId = UUID.fromString(apiKey);
-
-    List<VehicleEntrantPaymentInfo> filter = chargeSettlementPaymentInfoService
-        .findPaymentInfo(paymentInfoRequest, cleanAirZoneId);
-    return ResponseEntity.ok(vehicleEntrantPaymentInfoConverter.toPaymentInfoResponse(filter));
+  public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest request,
+      BindingResult bindingResult, UUID cleanAirZoneId, LocalDateTime timestamp) {
+    if (bindingResult.hasErrors()) {
+      throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
+          bindingResult);
+    }
+    List<VehicleEntrantPaymentInfo> result = chargeSettlementPaymentInfoService.findPaymentInfo(
+        paymentInfoRequestConverter.toPaymentInfoRequestAttributes(request),
+        cleanAirZoneId
+    );
+    log.info("Found {} matching vehicle entrant payments for payment-info request {}",
+        result.size(), request);
+    return ResponseEntity.ok(vehicleEntrantPaymentInfoConverter.toPaymentInfoResponse(result));
   }
 
   @Override
   public ResponseEntity<PaymentStatusResponse> getPaymentStatus(PaymentStatusRequest request,
-      String apiKey) {
-    UUID cleanAirZoneId = UUID.fromString(apiKey);
+      BindingResult bindingResult, UUID cleanAirZoneId, LocalDateTime timestamp) {
+    if (bindingResult.hasErrors()) {
+      throw new PaymentStatusDtoValidationException(request.getVrn(),
+          "getPaymentStatus.validationErrorTitle", bindingResult);
+    }
 
     PaymentStatus paymentStatus = chargeSettlementService
         .findChargeSettlement(
             cleanAirZoneId,
-            request.getVrn(),
-            request.getDateOfCazEntry());
+            normalizeVrn(request.getVrn()),
+            LocalDate.parse(request.getDateOfCazEntry()));
 
     return ResponseEntity.ok(PaymentStatusResponse.from(paymentStatus));
   }
 
   @Override
   public PaymentUpdateSuccessResponse updatePaymentStatus(PaymentStatusUpdateRequest request,
-      BindingResult bindingResult, String apiKey) {
-    UUID cleanAirZoneId = UUID.fromString(apiKey);
+      BindingResult bindingResult, UUID cleanAirZoneId, LocalDateTime timestamp) {
     if (bindingResult.hasErrors()) {
-      throw new DtoValidationException(request.getVrn(), bindingResult);
+      throw new PaymentStatusDtoValidationException(request.getVrn(),
+          "paymentStatusUpdate.validationErrorTitle", bindingResult);
     }
-    paymentStatusUpdateService
-        .processUpdate(request.toVehicleEntrantPaymentStatusUpdates(cleanAirZoneId));
+    paymentStatusUpdateService.processUpdate(request.toVehicleEntrantPaymentStatusUpdates(
+        cleanAirZoneId));
     return new PaymentUpdateSuccessResponse();
   }
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -12,11 +13,9 @@ import static uk.gov.caz.psr.util.LiquibaseWrapper.LiquibaseFactory;
 
 import java.sql.SQLException;
 import javax.sql.DataSource;
-
 import liquibase.Contexts;
 import liquibase.Liquibase;
 import liquibase.exception.LiquibaseException;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +24,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import uk.gov.caz.psr.util.LiquibaseWrapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +41,7 @@ public class DbSchemaMigrationControllerTest {
   private DbSchemaMigrationControllerApi dbSchemaMigrationControllerApi;
 
   @BeforeEach
-  public void setup() throws LiquibaseException, SQLException {
+  public void setup() {
     liquibaseWrapper = new LiquibaseWrapper(dataSource, liquibaseFactory, "classpath:db/changelog/db.changelog-master.yaml");
     dbSchemaMigrationControllerApi = new DbSchemaMigrationControllerApi(liquibaseWrapper);
   }
@@ -91,6 +89,29 @@ public class DbSchemaMigrationControllerTest {
     assertThat(response.getBody()).isNull();
   }
 
+  @Test
+  public void shouldNotDoRollbackThenReturnErrorWhenLiquibaseFailedBeforeDoingMigrate()
+      throws Exception {
+    //given
+    when(liquibaseFactory.getInstance(any(DataSource.class), anyString()))
+        .thenReturn(liquibase);
+    doThrow(LiquibaseException.class)
+        .when(liquibase)
+        .tag(anyString());
+
+    //when
+    ResponseEntity<Void> response = dbSchemaMigrationControllerApi.migrateDb();
+
+    //then
+    verify(liquibase).tag(anyString());
+    verify(liquibase, never()).update(any(Contexts.class));
+    verify(liquibase, never()).rollback(anyString(), any(Contexts.class));
+    verify(liquibase).getDatabase();
+    verifyNoMoreInteractions(liquibase);
+    assertThat(response).isNotNull();
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    assertThat(response.getBody()).isNull();
+  }
 
   @Test
   public void shouldReturnErrorWhenFailToInstantiateLiquibase() throws Exception {

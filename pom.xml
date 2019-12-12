@@ -28,10 +28,7 @@
       **/configuration/**/*.java,
       **/psr/Application.java,
       **/amazonaws/StreamLambdaHandler.java,
-      **/amazonaws/CleanupDanglingPaymentsHandler.java,
-      <!-- TODO remove once ChargeSettlementController is implemented and tested -->
-      **/psr/dto/ChargeSettlementPaymentStatus.java,
-      **/psr/controller/ChargeSettlementController.java,
+      **/amazonaws/CleanupDanglingPaymentsHandler.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -93,6 +90,11 @@
     </dependency>
     <dependency>
       <groupId>uk.gov.caz</groupId>
+      <artifactId>version-logger</artifactId>
+      <version>${internal.libraries.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>uk.gov.caz</groupId>
       <artifactId>global-exception-mapper</artifactId>
       <version>${internal.libraries.version}</version>
     </dependency>
@@ -108,6 +110,18 @@
       <artifactId>guava</artifactId>
       <version>28.0-jre</version>
       <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.el</groupId>
+      <artifactId>javax.el-api</artifactId>
+      <version>3.0.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.glassfish.web</groupId>
+      <artifactId>javax.el</artifactId>
+      <version>2.2.6</version>
     </dependency>
 
     <!-- aws-related : begin -->
@@ -588,9 +602,6 @@
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
-                <!-- TODO remove once ChargeSettlementController is implemented and tested -->
-                <exclude>**/psr/controller/ChargeSettlementController.class</exclude>
-                <exclude>**/psr/dto/ChargeSettlementPaymentStatus.class</exclude>
               </excludes>
               <rules>
                 <rule>
@@ -598,6 +609,11 @@
                   <limits>
                     <limit>
                       <counter>INSTRUCTION</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>${codeCoverage.minCoveredRatio}</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
                       <minimum>${codeCoverage.minCoveredRatio}</minimum>
                     </limit>

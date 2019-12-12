@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import java.util.Collections;
@@ -29,9 +30,12 @@ public class PaymentReceiptSenderTest {
 
   private static final String ANY_VALID_EMAIL = "test@test.com";
   private static final int ANY_AMOUNT = 800;
-  private static final Payment ANY_PAYMENT = Payment.builder().id(UUID.randomUUID())
-      .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD).totalPaid(ANY_AMOUNT)
-      .vehicleEntrantPayments(Collections.emptyList()).emailAddress(ANY_VALID_EMAIL).build();
+  private static final Payment ANY_PAYMENT = Payment.builder()
+      .id(UUID.randomUUID())
+      .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+      .totalPaid(ANY_AMOUNT)
+      .vehicleEntrantPayments(Collections.emptyList())
+      .emailAddress(ANY_VALID_EMAIL).build();
 
   @Mock
   CurrencyFormatter currencyFormatter;
@@ -91,7 +95,9 @@ public class PaymentReceiptSenderTest {
   void shouldNotPropagateExceptionUponSerializationError() throws JsonProcessingException {
     // given
     PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
-    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT))
+    double amount = 8.0;
+    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(amount);
+    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, amount))
         .thenThrow(new JsonMappingException(null, "test exception"));
     when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
 

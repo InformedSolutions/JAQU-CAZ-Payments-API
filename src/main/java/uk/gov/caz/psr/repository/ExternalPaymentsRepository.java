@@ -104,7 +104,9 @@ public class ExternalPaymentsRepository {
       return payment.toBuilder().externalId(responseBody.getPaymentId())
           .submittedTimestamp(LocalDateTime.now()).externalPaymentStatus(externalPaymentStatus)
           .submittedTimestamp(LocalDateTime.now())
-          .nextUrl(responseBody.getLinks().getNextUrl().getHref()).build();
+          .externalPaymentStatus(externalPaymentStatus)
+          .nextUrl(responseBody.getLinks().getNextUrl().getHref())
+          .build();
     } catch (RestClientException e) {
       log.error("Error while creating the payment for '{}': {}", payment.getId(), e.getMessage());
       throw e;

@@ -1,26 +1,43 @@
 package uk.gov.caz.psr.controller;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import uk.gov.caz.GlobalExceptionHandler;
-import uk.gov.caz.psr.controller.exception.DtoValidationException;
-import uk.gov.caz.psr.dto.ErrorResponse;
-import uk.gov.caz.psr.dto.ErrorsResponse;
+import uk.gov.caz.psr.controller.exception.PaymentInfoDtoValidationException;
+import uk.gov.caz.psr.controller.exception.PaymentStatusDtoValidationException;
+import uk.gov.caz.psr.dto.GenericErrorResponse;
+import uk.gov.caz.psr.dto.PaymentInfoErrorResponse;
+import uk.gov.caz.psr.dto.PaymentInfoErrorsResponse;
+import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
+import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
 import uk.gov.caz.psr.model.ValidationError;
+import uk.gov.caz.psr.model.ValidationError.ValidationErrorBuilder;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 import uk.gov.caz.psr.service.exception.MissingVehicleEntrantPaymentException;
+import uk.gov.caz.psr.service.exception.TooManyPaidPaymentStatusesException;
 
 @Slf4j
+@RequiredArgsConstructor
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class ExceptionController extends GlobalExceptionHandler {
+
+  private static final Locale LOCALE = Locale.ENGLISH;
+
+  private final MessageSource messageSource;
 
   /**
    * Method to handle Exception while VehicleEntrantPayment was not found and failed with {@link
@@ -29,12 +46,13 @@ public class ExceptionController extends GlobalExceptionHandler {
    * @param e Exception object.
    */
   @ExceptionHandler(MissingVehicleEntrantPaymentException.class)
-  ResponseEntity<ErrorsResponse> handleMissingVehicleEntrantPaymentException(
+  ResponseEntity<PaymentStatusErrorsResponse> handleMissingVehicleEntrantPaymentException(
       MissingVehicleEntrantPaymentException e) {
 
-    log.info("MissingVehicleEntrantPaymentException occurred: {}", e);
+    log.info("MissingVehicleEntrantPaymentException occurred", e);
     return ResponseEntity.badRequest()
-        .body(ErrorsResponse.singleValidationErrorResponse(e.getVrn(), e.getMessage()));
+        .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(e.getVrn(),
+            e.getMessage()));
   }
 
   /**
@@ -44,32 +62,134 @@ public class ExceptionController extends GlobalExceptionHandler {
    * @param e Exception object.
    */
   @ExceptionHandler(NotUniqueVehicleEntrantPaymentFoundException.class)
-  ResponseEntity<ErrorsResponse> handleNotUniqueVehicleEntrantPaymentFoundException(
+  ResponseEntity<PaymentStatusErrorsResponse> handleNotUniqueVehicleEntrantPaymentFoundException(
       NotUniqueVehicleEntrantPaymentFoundException e) {
 
-    log.info("NotUniqueVehicleEntrantPaymentFoundException occurred: {}", e);
+    log.info("NotUniqueVehicleEntrantPaymentFoundException occurred", e);
     return ResponseEntity.badRequest()
-        .body(ErrorsResponse.singleValidationErrorResponse(e.getVrn(), e.getMessage()));
+        .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(e.getVrn(),
+            e.getMessage()));
+  }
+
+  /**
+   * Method to handle Exception when multiple {@link uk.gov.caz.psr.model.PaymentStatus} were found
+   * for cazId, vrn and cazEntryDate.
+   *
+   * @param exception Exception object.
+   */
+  @ExceptionHandler(TooManyPaidPaymentStatusesException.class)
+  ResponseEntity<PaymentStatusErrorsResponse> handleTooManyPaidPaymentStatusesException(
+      TooManyPaidPaymentStatusesException exception) {
+
+    log.info("TooManyPaidPaymentStatusesException occurred", exception);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(exception.getVrn(),
+            exception.getMessage()));
   }
 
   /**
    * Method to handle Exception while validation of request DTO failed with {@link
-   * DtoValidationException}.
+   * PaymentStatusDtoValidationException}.
    *
    * @param ex Exception object.
    */
-  @ExceptionHandler(DtoValidationException.class)
-  public ResponseEntity<ErrorsResponse> handleValidationExceptions(DtoValidationException ex) {
-    List<ErrorResponse> errorsList = ex.getBindingResult().getAllErrors().stream()
-        .map(error -> ErrorResponse.from(
-            ValidationError.builder()
-                .vrn(ex.getVrn())
-                .field(((FieldError) error).getField())
-                .title(error.getDefaultMessage())
-                .build()
-            )
+  @ExceptionHandler(PaymentStatusDtoValidationException.class)
+  public ResponseEntity<PaymentStatusErrorsResponse> handlePaymentStatusValidationExceptions(
+      PaymentStatusDtoValidationException ex) {
+    List<PaymentStatusErrorResponse> errorsList = ex.getBindingResult().getAllErrors().stream()
+        .map(error -> PaymentStatusErrorResponse.from(createValidationError(error,
+            ex.getGenericValidationCode(), ex.getVrn()))
         ).collect(Collectors.toList());
-    log.info("DtoValidationException occurred: {}", errorsList);
-    return ResponseEntity.badRequest().body(ErrorsResponse.from(errorsList));
+    log.info("PaymentStatusDtoValidationException occurred: {}", errorsList);
+    return ResponseEntity.badRequest().body(PaymentStatusErrorsResponse.from(errorsList));
+  }
+
+  /**
+   * Method to handle Exception while validation of request DTO failed with {@link
+   * PaymentStatusDtoValidationException}.
+   *
+   * @param ex Exception object.
+   */
+  @ExceptionHandler(PaymentInfoDtoValidationException.class)
+  public ResponseEntity<PaymentInfoErrorsResponse> handlePaymentInfoValidationExceptions(
+      PaymentInfoDtoValidationException ex) {
+    List<PaymentInfoErrorResponse> errorsList = ex.getBindingResult().getAllErrors().stream()
+        .map(error -> PaymentInfoErrorResponse.from(createValidationError(error,
+            ex.getGenericValidationCode())))
+        .collect(Collectors.toList());
+    log.info("PaymentInfoDtoValidationException occurred: {}", errorsList);
+    return ResponseEntity.badRequest().body(PaymentInfoErrorsResponse.from(errorsList));
+  }
+
+  /**
+   * Exception handler that handles exceptions thrown when an obligatory header is missing.
+   */
+  @ExceptionHandler(MissingRequestHeaderException.class)
+  public ResponseEntity<GenericErrorResponse> handleException(
+      MissingRequestHeaderException e) {
+    log.warn("Missing header: ", e);
+    return ResponseEntity.badRequest()
+        .body(createMissingHeaderErrorResponse(e));
+  }
+
+  /**
+   * Exception handler that handles exceptions thrown when a type mismatch error occurs.
+   */
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<GenericErrorResponse> handleException(
+      MethodArgumentTypeMismatchException e) {
+    log.warn("Argument type mismatch exception: ", e);
+    return ResponseEntity.badRequest()
+        .body(createTypeMismatchErrorResponse(e));
+  }
+
+  /**
+   * Creates an instance of {@link GenericErrorResponse} based on {@link
+   * MissingRequestHeaderException}.
+   */
+  private GenericErrorResponse createTypeMismatchErrorResponse(
+      MethodArgumentTypeMismatchException e) {
+    return GenericErrorResponse.builder()
+        .message("Wrong format of '" + e.getName() + "'")
+        .build();
+  }
+
+  /**
+   * Creates an instance of {@link GenericErrorResponse} based on {@link
+   * MissingRequestHeaderException}.
+   */
+  private GenericErrorResponse createMissingHeaderErrorResponse(
+      MissingRequestHeaderException e) {
+    return GenericErrorResponse.builder()
+        .message("Missing request header '" + e.getHeaderName() + "'")
+        .build();
+  }
+
+  /**
+   * Creates {@link ValidationError} based on passed parameters.
+   */
+  private ValidationError createValidationError(ObjectError error, String validationCode,
+      String vrn) {
+    return createBaseValidationErrorBuilder(error, validationCode)
+        .vrn(vrn)
+        .build();
+  }
+
+  /**
+   * Creates {@link ValidationError} based on passed parameters.
+   */
+  private ValidationError createValidationError(ObjectError error, String validationCode) {
+    return createBaseValidationErrorBuilder(error, validationCode)
+        .build();
+  }
+
+  /**
+   * Creates {@link ValidationErrorBuilder} with {@code error} and {@code validationCode}.
+   */
+  private ValidationErrorBuilder createBaseValidationErrorBuilder(ObjectError error,
+      String validationCode) {
+    return ValidationError.builder()
+        .detail(messageSource.getMessage(error, LOCALE))
+        .title(messageSource.getMessage(validationCode, null, LOCALE));
   }
 }

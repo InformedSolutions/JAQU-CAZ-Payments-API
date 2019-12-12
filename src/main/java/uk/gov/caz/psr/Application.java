@@ -13,7 +13,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
     "uk.gov.caz.psr.model.*",
     "uk.gov.caz.psr.repository",
     "uk.gov.caz.psr.service",
-    "uk.gov.caz.psr.util"})
+    "uk.gov.caz.psr.dto.validation",
+    "uk.gov.caz.psr.util"
+})
 @EnableJpaRepositories
 public class Application {
 
