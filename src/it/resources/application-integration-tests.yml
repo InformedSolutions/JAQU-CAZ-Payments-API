@@ -9,6 +9,7 @@ spring:
   jpa:
     properties:
       hibernate:
+        generate_statistics: true # this is to make sure we don't have a N+1 query problem
         show_sql: true
         format_sql: true
 
