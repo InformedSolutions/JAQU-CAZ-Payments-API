@@ -31,9 +31,6 @@ HELP.md
 ### Vagrant ###
 .vagrant
 
-### Hibernate ###
-*_.java
-
 ### Node ###
 node_modules
 
