@@ -63,6 +63,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .then()
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
+            .doesNotContainNotPaidEntries()
             .containsExactlyLineItemsWithTravelDates(expectedPaidEntrantDate.toString())
             .totalLineItemsCountIsEqualTo(2);
       }
@@ -72,7 +73,7 @@ class ChargeSettlementPaymentInfoTestIT {
     class AndThereAreNoMatchingLineItems {
 
       @ParameterizedTest
-      @ValueSource(strings = {"2019-11-01", "2019-11-09"})
+      @ValueSource(strings = {"2019-11-01", "2019-11-10"})
       public void shouldReturnEmptyArray(String toDatePaidForAsString) {
         LocalDate toDatePaidFor = LocalDate.parse(toDatePaidForAsString);
 
@@ -102,6 +103,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .then()
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
+            .doesNotContainNotPaidEntries()
             .containsExactlyLineItemsWithTravelDates(fromDatePaidForAsString)
             .totalLineItemsCountIsEqualTo(2);
       }
@@ -111,7 +113,7 @@ class ChargeSettlementPaymentInfoTestIT {
     class AndThereAreNoMatchingLineItems {
 
       @ParameterizedTest
-      @ValueSource(strings = {"2019-10-31", "2019-11-08", "2019-11-15"})
+      @ValueSource(strings = {"2019-10-31", "2019-11-09", "2019-11-15"})
       public void shouldReturnEmptyArray(String fromDatePaidForAsString) {
         LocalDate fromDatePaidFor = LocalDate.parse(fromDatePaidForAsString);
 
@@ -159,6 +161,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .then()
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
+            .doesNotContainNotPaidEntries()
             .totalLineItemsCountIsEqualTo(expectedLineItemsCount);
       }
     }
@@ -254,6 +257,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .reponseHasOkStatus()
             .containsExactlyVrns(vrn)
             .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02")
+            .doesNotContainNotPaidEntries()
             .totalLineItemsCountIsEqualTo(2);
       }
 
@@ -275,6 +279,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .then()
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
+                .doesNotContainNotPaidEntries()
                 .containsExactlyVrns(vrn)
                 .containsExactlyLineItemsWithTravelDates(expectedPaidEntrantDate.toString())
                 .totalLineItemsCountIsEqualTo(1);
@@ -285,7 +290,7 @@ class ChargeSettlementPaymentInfoTestIT {
         class AndThereAreNoMatchingLineItems {
 
           @ParameterizedTest
-          @ValueSource(strings = {"2019-11-01", "2019-11-09"})
+          @ValueSource(strings = {"2019-11-01", "2019-11-10"})
           public void shouldReturnEmptyArray(String toDatePaidForAsString) {
             String vrn = "ND84VSX";
             LocalDate toDatePaidFor = LocalDate.parse(toDatePaidForAsString);
@@ -316,6 +321,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .then()
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
+                .doesNotContainNotPaidEntries()
                 .containsExactlyVrns(vrn)
                 .containsExactlyLineItemsWithTravelDates(fromDatePaidForAsString)
                 .totalLineItemsCountIsEqualTo(1);
@@ -326,7 +332,7 @@ class ChargeSettlementPaymentInfoTestIT {
         class AndThereAreNoMatchingLineItems {
 
           @ParameterizedTest
-          @ValueSource(strings = {"2019-10-31", "2019-11-08"})
+          @ValueSource(strings = {"2019-10-31", "2019-11-09"})
           public void shouldReturnEmptyArray(String fromDatePaidForAsString) {
             String vrn = "ND84VSX";
 
@@ -359,6 +365,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .then()
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
+                .doesNotContainNotPaidEntries()
                 .totalLineItemsCountIsEqualTo(expectedLineItemsCount);
           }
         }
@@ -528,6 +535,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .then()
             .headerContainsCorrelationId()
             .reponseHasOkStatus()
+            .doesNotContainNotPaidEntries()
             .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
             .containsExactlyVrns("AB11CDE")
             .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02")
@@ -550,6 +558,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .then()
                 .headerContainsCorrelationId()
                 .reponseHasOkStatus()
+                .doesNotContainNotPaidEntries()
                 .containsExactlyVrns(matchingVrn)
                 .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                 .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02", "2019-11-03",
@@ -572,7 +581,9 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("vrn", matchingVrn)
                   .withParam("paymentProviderId", paymentProviderId)
                   .then()
+                  .reponseHasOkStatus()
                   .headerContainsCorrelationId()
+                  .doesNotContainNotPaidEntries()
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-03", "2019-11-04", "2019-11-05");
@@ -593,6 +604,8 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("paymentProviderId", paymentProviderId)
                   .then()
                   .headerContainsCorrelationId()
+                  .reponseHasOkStatus()
+                  .doesNotContainNotPaidEntries()
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-03");
@@ -613,6 +626,8 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("paymentProviderId", paymentProviderId)
                   .then()
                   .headerContainsCorrelationId()
+                  .reponseHasOkStatus()
+                  .doesNotContainNotPaidEntries()
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-02");
@@ -768,6 +783,12 @@ class ChargeSettlementPaymentInfoTestIT {
           .header(Headers.X_API_KEY, API_KEY_FOR_EXISTING_RECORDS)
           .header(Headers.TIMESTAMP, LocalDateTime.now().toString());
     }
+
+    public PaymentInfoAssertion doesNotContainNotPaidEntries() {
+      validatableResponse.body("results.payments.lineItems.findAll { it.paymentStatus == "
+              + "'notPaid' }.paymentStatus.flatten().toSet().size()", equalTo(0));
+      return this;
+    }
   }
 
   @BeforeEach
@@ -799,8 +820,8 @@ class ChargeSettlementPaymentInfoTestIT {
     return Stream.of(
         Arguments.of("2019-05-01", "2019-05-01"),
         Arguments.of("1998-05-01", "2003-01-02"),
-        Arguments.of("2019-11-08", "2019-11-08"),
-        Arguments.of("2019-11-08", "2019-11-09"),
+        Arguments.of("2019-11-09", "2019-11-09"),
+        Arguments.of("2019-11-09", "2019-11-10"),
         Arguments.of("2019-10-30", "2019-10-31")
     );
   }
@@ -813,9 +834,9 @@ class ChargeSettlementPaymentInfoTestIT {
         Arguments.of("1993-04-18", "2019-11-02", 2),
         Arguments.of("2019-11-02", "2019-11-06", 5),
         Arguments.of("2019-11-03", "2019-11-07", 5),
-        Arguments.of("2019-11-07", "2019-11-08", 1),
-        Arguments.of("2019-11-07", "2025-02-19", 1),
-        Arguments.of("2019-11-07", "2031-09-22", 1)
+        Arguments.of("2019-11-07", "2019-11-08", 2),
+        Arguments.of("2019-11-07", "2025-02-19", 2),
+        Arguments.of("2019-11-07", "2031-09-22", 2)
     );
   }
 
@@ -824,8 +845,8 @@ class ChargeSettlementPaymentInfoTestIT {
     return Stream.of(
         Arguments.of("2019-05-01", "2019-05-01"),
         Arguments.of("1998-05-01", "2003-01-02"),
-        Arguments.of("2019-11-08", "2019-11-08"),
-        Arguments.of("2019-11-08", "2019-11-09"),
+        Arguments.of("2019-11-09", "2019-11-09"),
+        Arguments.of("2019-11-09", "2019-11-10"),
         Arguments.of("2019-10-30", "2019-10-31")
     );
   }
@@ -837,9 +858,9 @@ class ChargeSettlementPaymentInfoTestIT {
         Arguments.of("1993-04-18", "2019-11-02", 4),
         Arguments.of("2019-11-02", "2019-11-06", 6),
         Arguments.of("2019-11-03", "2019-11-07", 5),
-        Arguments.of("2019-11-07", "2019-11-08", 1),
-        Arguments.of("2019-11-07", "2025-02-19", 1),
-        Arguments.of("2019-11-07", "2031-09-22", 1)
+        Arguments.of("2019-11-07", "2019-11-08", 2),
+        Arguments.of("2019-11-07", "2025-02-19", 2),
+        Arguments.of("2019-11-07", "2031-09-22", 2)
     );
   }
 
