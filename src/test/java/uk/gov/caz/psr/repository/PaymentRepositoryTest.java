@@ -51,7 +51,7 @@ class PaymentRepositoryTest {
     public void shouldThrowIllegalArgumentExceptionWhenPaymentHasId() {
       // given
       Payment payment =
-          Payments.forRandomDaysWithId(UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150"));
+          Payments.forRandomDaysWithId(UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150"), null);
 
       // when
       Throwable throwable =

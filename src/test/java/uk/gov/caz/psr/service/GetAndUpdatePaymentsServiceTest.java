@@ -16,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.domain.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.dto.external.PaymentState;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
@@ -26,6 +25,7 @@ import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.model.service.VehicleEntrantPaymentsService;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
@@ -74,7 +74,7 @@ class GetAndUpdatePaymentsServiceTest {
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     String externalId = "ext-id";
     Payment payment = mockInternalPaymentWith(paymentId, externalId);
-    mockApiKey(payment, cazIdentifier, "testApiKey");
+    mockCazId(payment, cazIdentifier, "testApiKey");
     mockPaymentAbsenceInExternalService(payment);
 
     // when
@@ -98,7 +98,7 @@ class GetAndUpdatePaymentsServiceTest {
 
     // then
     assertThat(result).isEmpty();
-    verify(externalPaymentsRepository, never()).findById(any());
+    verify(externalPaymentsRepository, never()).findByIdAndCazId(any(), any());
     verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
   }
 
@@ -115,7 +115,7 @@ class GetAndUpdatePaymentsServiceTest {
 
     // then
     assertThat(result).isEmpty();
-    verify(externalPaymentsRepository, never()).findById(any());
+    verify(externalPaymentsRepository, never()).findByIdAndCazId(any(), any());
     verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
   }
 
@@ -124,7 +124,7 @@ class GetAndUpdatePaymentsServiceTest {
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     String externalId = "ext-id";
     Payment payment = mockInternalPaymentWith(paymentId, externalId);
-    mockApiKey(payment, cazIdentifier, "testApiKey");
+    mockCazId(payment, cazIdentifier, "testApiKey");
     mockSameExternalStatusFor(payment);
     mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
 
@@ -149,7 +149,7 @@ class GetAndUpdatePaymentsServiceTest {
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
         initExternalPaymentDetails.getExternalPaymentStatus());
-    mockApiKey(payment, cazIdentifier, "testApiKey");
+    mockCazId(payment, cazIdentifier, "testApiKey");
     Payment paymentWithEmail = payment.toBuilder().emailAddress(email).build();
     mockSuccessStatusFor(payment, email);
     mockStatusUpdaterWithSuccess(paymentWithEmail, newExternalPaymentDetails);
@@ -184,35 +184,20 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   @Test
-  public void shouldReturnEmptyIfApiKeyNotPresent() {
+  public void shouldThrowIllegalStateExceptionIfCannotFindCleanAirZoneId() {
     ExternalPaymentDetails initExternalPaymentDetails =
         ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.CREATED);
 
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
         initExternalPaymentDetails.getExternalPaymentStatus());
-    mockApiKey(payment, cazIdentifier, null);
+    mockCazId(payment, null, "testApiKey");
 
-    Optional<Payment> result =
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+    // when
+    Throwable throwable =
+        catchThrowable(() -> getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId));
 
-    assertTrue(!result.isPresent());
-  }
-
-  @Test
-  public void shouldReturnEmptyIfCannotFindCleanAirZoneId() {
-    ExternalPaymentDetails initExternalPaymentDetails =
-        ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.CREATED);
-
-    UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
-    Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
-        initExternalPaymentDetails.getExternalPaymentStatus());
-    mockApiKey(payment, null, "testApiKey");
-
-    Optional<Payment> result =
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
-
-    assertTrue(!result.isPresent());
+    assertThat(throwable).isInstanceOf(IllegalStateException.class).hasMessage("Clean Air Zone Id could not be found for Payment: " + paymentId);
   }
 
   private void mockStatusUpdaterWithSuccess(Payment payment,
@@ -240,14 +225,14 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   private void mockSuccessStatusFor(Payment payment, String email) {
-    given(externalPaymentsRepository.findById(payment.getExternalId()))
+    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
         .willReturn(Optional.of(GetPaymentResult.builder().email(email)
             .state(PaymentState.builder().status(ExternalPaymentStatus.SUCCESS.name()).build())
             .build()));
   }
 
   private void mockExternalStatusFor(Payment payment, ExternalPaymentStatus status) {
-    given(externalPaymentsRepository.findById(payment.getExternalId()))
+    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
         .willReturn(Optional.of(GetPaymentResult.builder()
             .state(PaymentState.builder().status(status.name()).build()).build()));
   }
@@ -264,16 +249,12 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   private void mockPaymentAbsenceInExternalService(Payment payment) {
-    given(externalPaymentsRepository.findById(payment.getExternalId()))
+    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
         .willReturn(Optional.empty());
   }
 
-  private void mockApiKey(Payment payment, UUID cazIdentifier, String apiKey) {
+  private void mockCazId(Payment payment, UUID cazIdentifier, String apiKey) {
     given(vehicleEntrantPaymentsService.findCazId(payment.getVehicleEntrantPayments()))
         .willReturn((cazIdentifier != null) ? Optional.of(cazIdentifier) : Optional.empty());
-    if (cazIdentifier != null) {
-      given(credentialRetrievalManager.getApiKey(cazIdentifier))
-          .willReturn((apiKey != null) ? Optional.of(apiKey) : Optional.empty());
-    }
   }
 }

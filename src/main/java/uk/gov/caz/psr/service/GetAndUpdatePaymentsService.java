@@ -7,7 +7,6 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.domain.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
@@ -25,7 +24,6 @@ import uk.gov.caz.psr.util.GetPaymentResultConverter;
 @Slf4j
 public class GetAndUpdatePaymentsService {
 
-  private final CredentialRetrievalManager credentialRetrievalManager;
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final PaymentRepository internalPaymentsRepository;
   private final PaymentStatusUpdater paymentStatusUpdater;
@@ -63,24 +61,14 @@ public class GetAndUpdatePaymentsService {
       return Optional.empty();
     }
 
-    Optional<UUID> cleanAirZoneId =
-        vehicleEntrantPaymentsService.findCazId(payment.getVehicleEntrantPayments());
-    if (cleanAirZoneId.isPresent()) {
-      Optional<String> apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId.get());
-      if (apiKey.isPresent()) {
-        externalPaymentsRepository.setApiKey(apiKey.get());
-      } else {
-        log.warn("Could not find API key for Clean Air Zone with ID {}", cleanAirZoneId.get());
-        return Optional.empty();
-      }
-    } else {
-      log.warn("Could not find Clean Air Zone ID for payment with ID {}", payment.getId());
-      return Optional.empty();
-    }
+    UUID cleanAirZoneId = vehicleEntrantPaymentsService
+        .findCazId(payment.getVehicleEntrantPayments()).orElseThrow(() -> new IllegalStateException(
+            "Clean Air Zone Id could not be found for Payment: " + payment.getId()));
 
-    GetPaymentResult paymentInfo = externalPaymentsRepository.findById(externalPaymentId)
-        .orElseThrow(() -> new IllegalStateException(
-            "External payment not found with id " + "'" + externalPaymentId + "'"));
+    GetPaymentResult paymentInfo =
+        externalPaymentsRepository.findByIdAndCazId(externalPaymentId, cleanAirZoneId)
+            .orElseThrow(() -> new IllegalStateException(
+                "External payment not found with id " + "'" + externalPaymentId + "'"));
     ExternalPaymentDetails externalPaymentDetails =
         getPaymentResultConverter.toExternalPaymentDetails(paymentInfo);
 

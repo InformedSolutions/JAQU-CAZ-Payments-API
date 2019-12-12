@@ -2,11 +2,6 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import com.amazonaws.services.secretsmanager.AWSSecretsManager;
-import com.amazonaws.services.secretsmanager.model.CreateSecretRequest;
-import com.amazonaws.services.secretsmanager.model.CreateSecretResult;
-import com.amazonaws.services.secretsmanager.model.PutSecretValueRequest;
-import com.amazonaws.services.secretsmanager.model.ResourceExistsException;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
@@ -14,7 +9,6 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.io.Resources;
@@ -27,7 +21,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +45,7 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
 @Sql(
@@ -62,7 +56,6 @@ import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
     scripts = {"classpath:data/sql/clear-all-payments.sql",
         "classpath:data/sql/clear-all-vehicle-entrants.sql"},
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-@Slf4j
 public class SuccessPaymentsJourneyTestIT {
 
   @Value("${services.gov-uk-pay.root-url}")
@@ -82,7 +75,7 @@ public class SuccessPaymentsJourneyTestIT {
   @Autowired
   private AmazonSQS sqsClient;
   @Autowired
-  private AWSSecretsManager secretsManager;
+  private SecretsManagerInitialisation secretsManagerInitialisation;
 
   private ClientAndServer mockServer;
 
@@ -90,7 +83,7 @@ public class SuccessPaymentsJourneyTestIT {
   private final LocalDate dateWithoutEntityInDB = LocalDate.of(2019, 11, 10);
 
   private String secretName = "payments/config.localstack";
-  private String cazId = "b8e53786-c5ca-426a-a701-b14ee74857d4";
+  private String cazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
 
   @BeforeEach
   public void startMockServer() {
@@ -109,24 +102,7 @@ public class SuccessPaymentsJourneyTestIT {
 
   @BeforeEach
   public void createSecret() throws JsonProcessingException {
-    String cazIdFormatted = cazId.replace("-", "");
-    ObjectNode node = objectMapper.createObjectNode();
-    node.put(cazIdFormatted, "testApiKey");
-    String secretString = objectMapper.writeValueAsString(node);
-    log.info("Secret string is {}", secretString);
-
-    try {
-      CreateSecretRequest createSecretRequest = new CreateSecretRequest();
-      createSecretRequest.setName(this.secretName);
-      createSecretRequest.setSecretString(secretString);
-      CreateSecretResult response = secretsManager.createSecret(createSecretRequest);
-      log.info(response.toString());
-    } catch (ResourceExistsException e) {
-      PutSecretValueRequest putSecretValueRequest = new PutSecretValueRequest();
-      putSecretValueRequest.withSecretId(secretName).withSecretString(secretString);
-      secretsManager.putSecretValue(putSecretValueRequest);
-    }
-
+    secretsManagerInitialisation.createSecret(secretName);
   }
 
   @AfterEach

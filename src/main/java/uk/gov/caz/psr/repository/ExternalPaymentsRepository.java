@@ -6,14 +6,13 @@ import com.google.common.base.Strings;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.HttpClientErrorException.NotFound;
 import org.springframework.web.client.RestClientException;
@@ -24,6 +23,7 @@ import uk.gov.caz.psr.dto.external.CreatePaymentResult;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 
 /**
  * REST http client for GOV UK PAY service.
@@ -37,37 +37,41 @@ public class ExternalPaymentsRepository {
   @VisibleForTesting
   public static final String CREATE_URI = "/v1/payments";
 
-  private RestTemplate restTemplate;
-  private final RestTemplateBuilder restTemplateBuilder;
+  private final RestTemplate restTemplate;
+  private final CredentialRetrievalManager credentialRetrievalManager;
   private final String rootUrl;
-  private final URI createPaymentUri;
 
   /**
    * Constructor for {@link ExternalPaymentsRepository}.
    */
   public ExternalPaymentsRepository(@Value("${services.gov-uk-pay.root-url}") String rootUrl,
-      RestTemplateBuilder restTemplateBuilder) {
+      RestTemplateBuilder restTemplateBuilder, 
+      CredentialRetrievalManager credentialRetrievalManager) {
     this.rootUrl = rootUrl;
-    this.createPaymentUri = URI.create(rootUrl + CREATE_URI);
-    this.restTemplateBuilder = restTemplateBuilder;
+    this.restTemplate = restTemplateBuilder.build();
+    this.credentialRetrievalManager = credentialRetrievalManager;
   }
 
-  /**
-   * Set API key and build Rest Template.
-   */
-  public void setApiKey(String apiKey) {
-    this.restTemplate = this.restTemplateBuilder.interceptors(apiKeyHeaderInjector(apiKey)).build();
-    logMaskedApiKey(apiKey);
+  private String getApiKeyFor(Payment payment) {
+    UUID cleanAirZoneId = payment.getVehicleEntrantPayments().iterator().next().getCleanZoneId();
+    return getApiKeyFor(cleanAirZoneId);
+  }
 
+  private String getApiKeyFor(UUID cleanAirZoneId) {
+    String apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId)
+        .orElseThrow(() -> new IllegalStateException(
+            "The API key has not been set for Clean Air Zone " + cleanAirZoneId));
+    logMaskedApiKey(apiKey, cleanAirZoneId);
+    return apiKey;
   }
 
   /**
    * Logs first 3 characters of the api key.
    */
-  private void logMaskedApiKey(String apiKey) {
+  private void logMaskedApiKey(String apiKey, UUID cleanAirZoneId) {
     int toReveal = Math.min(3, apiKey.length());
     int toMask = apiKey.length() - toReveal;
-    log.info("GOV UK PAY api key: {}{}", apiKey.substring(0, toReveal),
+    log.info("GOV UK PAY api key for CAZ '{}': {}{}", cleanAirZoneId, apiKey.substring(0, toReveal),
         Strings.repeat("*", toMask));
   }
 
@@ -86,10 +90,12 @@ public class ExternalPaymentsRepository {
     Preconditions.checkNotNull(payment.getId(), "Payment must have set its internal identifier");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(returnUrl),
         "Return url cannot be null or empty");
+    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
+        "Vehicle entrant payments cannot be null or empty");
     try {
       log.info("Create the payment for {}: start", payment.getId());
       RequestEntity<CreateCardPaymentRequest> request =
-          buildRequestEntityForCreate(buildCreateBody(payment, returnUrl));
+          buildRequestEntityForCreate(getApiKeyFor(payment), buildCreateBody(payment, returnUrl));
       ResponseEntity<CreatePaymentResult> responseEntity =
           restTemplate.exchange(request, CreatePaymentResult.class);
       CreatePaymentResult responseBody = responseEntity.getBody();
@@ -129,11 +135,11 @@ public class ExternalPaymentsRepository {
    *         {@link Optional#empty()} otherwise.
    * @throws IllegalArgumentException if {@code id} is null or empty
    */
-  public Optional<GetPaymentResult> findById(String id) {
+  public Optional<GetPaymentResult> findByIdAndCazId(String id, UUID cleanAirZoneId) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "ID cannot be null or empty");
     try {
       log.info("Get payment by id '{}' : start", id);
-      RequestEntity<Void> request = buildRequestEntityForFindById(id);
+      RequestEntity<Void> request = buildRequestEntityForFindById(getApiKeyFor(cleanAirZoneId), id);
       ResponseEntity<GetPaymentResult> responseEntity =
           restTemplate.exchange(request, GetPaymentResult.class);
       return Optional.of(responseEntity.getBody());
@@ -151,8 +157,9 @@ public class ExternalPaymentsRepository {
   /**
    * Creates a request entity for {@code findBy} operation.
    */
-  private RequestEntity<Void> buildRequestEntityForFindById(String id) {
-    return RequestEntity.get(buildFindByUri(id)).accept(MediaType.APPLICATION_JSON).build();
+  private RequestEntity<Void> buildRequestEntityForFindById(String apiKey, String id) {
+    return RequestEntity.get(buildFindByUri(id)).header("Authorization", "Bearer " + apiKey)
+        .accept(MediaType.APPLICATION_JSON).build();
   }
 
   /**
@@ -165,35 +172,20 @@ public class ExternalPaymentsRepository {
   /**
    * Creates a request entity for {@code create} operation.
    */
-  private RequestEntity<CreateCardPaymentRequest> buildRequestEntityForCreate(
+  private RequestEntity<CreateCardPaymentRequest> buildRequestEntityForCreate(String apiKey,
       CreateCardPaymentRequest body) {
-    return RequestEntity.post(createPaymentUri)
-        .accept(MediaType.APPLICATION_JSON)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body(body);
+    return RequestEntity.post(URI.create(rootUrl + CREATE_URI))
+        .header("Authorization", "Bearer " + apiKey).accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON).body(body);
   }
 
   /**
    * Creates {@link URI} for {@code create} operation.
    */
   private CreateCardPaymentRequest buildCreateBody(Payment payment, String returnUrl) {
-    return CreateCardPaymentRequest.builder()
-        .amount(payment.getTotalPaid())
-        .description("Payment for #" + payment.getId())
-        .reference(payment.getId().toString())
-        .returnUrl(returnUrl)
-        .build();
+    return CreateCardPaymentRequest.builder().amount(payment.getTotalPaid())
+        .description("Payment for #" + payment.getId()).reference(payment.getId().toString())
+        .returnUrl(returnUrl).build();
   }
 
-  /**
-   * Creates {@link ClientHttpRequestInterceptor} which injects authorization header in an automatic
-   * fashion for every request.
-   */
-  private ClientHttpRequestInterceptor apiKeyHeaderInjector(String apiKey) {
-    return (request, payload, execution) -> {
-      HttpHeaders headers = request.getHeaders();
-      headers.setBearerAuth(apiKey);
-      return execution.execute(request, payload);
-    };
-  }
 }

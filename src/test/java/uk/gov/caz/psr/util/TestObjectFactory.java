@@ -117,8 +117,8 @@ public class TestObjectFactory {
       return forRandomDaysWithId(null, null, null);
     }
 
-    public static Payment forRandomDaysWithId(UUID paymentId) {
-      return forRandomDaysWithId(paymentId, null, null);
+    public static Payment forRandomDaysWithId(UUID paymentId, UUID cazIdentifier) {
+      return forRandomDaysWithId(paymentId, null, cazIdentifier);
     }
 
     public static Payment forRandomDaysWithId(UUID paymentId, String externalId,

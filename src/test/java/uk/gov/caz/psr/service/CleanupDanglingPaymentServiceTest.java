@@ -3,22 +3,19 @@ package uk.gov.caz.psr.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.domain.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.dto.external.PaymentState;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
@@ -46,11 +43,11 @@ class CleanupDanglingPaymentServiceTest {
   private GetPaymentResultConverter getPaymentResultConverter;
   @Mock
   private VehicleEntrantPaymentsService vehicleEntrantPaymentsService;
-  @Mock
-  private CredentialRetrievalManager credentialRetrievalManager;
 
   @InjectMocks
   private CleanupDanglingPaymentService service;
+  
+  private UUID cazIdentifier;
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
@@ -81,9 +78,11 @@ class CleanupDanglingPaymentServiceTest {
   @Test
   public void shouldThrowIllegalStateExceptionWhenPaymentIsNotFoundExternally() {
     // given
+    UUID cazId = UUID.randomUUID();
     Payment payment = paymentWithEmptyVehicleEntrants();
-    mockPaymentAbsenceInExternalService(payment);
-    mockApiKey(UUID.randomUUID(), "testApiKey");
+    mockVehicleEntrantsFor(payment, cazId);
+    mockPaymentAbsenceInExternalService(payment, cazId);
+    mockCazId(cazId);
 
     // when
     Throwable throwable = catchThrowable(() -> service.processDanglingPayment(payment));
@@ -96,10 +95,12 @@ class CleanupDanglingPaymentServiceTest {
   @Test
   public void shouldNotUpdateStatusIfNotChanged() {
     // given
+    UUID cazId = UUID.randomUUID();
     Payment payment = paymentWithEmptyVehicleEntrants();
-    mockSameExternalStatusInExternalService(payment);
+    mockVehicleEntrantsFor(payment, cazId);
+    mockSameExternalStatusInExternalService(payment, cazId);
     mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
-    mockApiKey(UUID.randomUUID(), "testApiKey");
+    mockCazId(cazId);
 
     // when
     service.processDanglingPayment(payment);
@@ -111,16 +112,17 @@ class CleanupDanglingPaymentServiceTest {
   @Test
   public void shouldUpdateStatusIfChanged() {
     // given
+    UUID cazId = UUID.randomUUID();
     ExternalPaymentDetails externalPaymentDetails =
         ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.INITIATED);
     ExternalPaymentDetails failedExternalPaymentDetails =
         ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.FAILED);
     Payment payment =
         paymentWithEmptyVehicleEntrantsAndStatus(externalPaymentDetails.getExternalPaymentStatus());
-    mockFailedExternalStatusInExternalService(payment);
-    mockVehicleEntrantsFor(payment);
+    mockFailedExternalStatusInExternalService(payment, cazId);
+    mockVehicleEntrantsFor(payment, cazId);
     mockGetPaymentResultConverter(ExternalPaymentStatus.FAILED);
-    mockApiKey(UUID.randomUUID(), "testApiKey");
+    mockCazId(cazId);
 
     // when
     service.processDanglingPayment(payment);
@@ -137,45 +139,32 @@ class CleanupDanglingPaymentServiceTest {
         ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.INITIATED);
     Payment payment =
         paymentWithEmptyVehicleEntrantsAndStatus(externalPaymentDetails.getExternalPaymentStatus());
-    mockApiKey(null, "testApiKey");
+    mockVehicleEntrantsFor(payment, UUID.randomUUID());
+    mockCazId(null);
 
-    service.processDanglingPayment(payment);
-
+    Throwable throwable = catchThrowable(() -> service.processDanglingPayment(payment));
+    
+    assertThat(throwable).isInstanceOf(IllegalStateException.class).hasMessage("Clean Air Zone Id could not be found for Payment: " + payment.getId());
     verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
 
   }
 
-  @Test
-  void externalPaymentRepositoryNotCalledWhenApiKeyNotFound() {
-    // given
-    ExternalPaymentDetails externalPaymentDetails =
-        ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.INITIATED);
-    Payment payment =
-        paymentWithEmptyVehicleEntrantsAndStatus(externalPaymentDetails.getExternalPaymentStatus());
-    mockApiKey(UUID.randomUUID(), null);
-
-    service.processDanglingPayment(payment);
-
-    verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
-
-  }
-
-  private void mockVehicleEntrantsFor(Payment payment) {
+  private void mockVehicleEntrantsFor(Payment payment, UUID cazIdentifier) {
     UUID id = payment.getId();
     List<VehicleEntrantPayment> vehicleEntrantPayments =
-        Payments.forRandomDaysWithId(id).getVehicleEntrantPayments();
+        Payments.forRandomDaysWithId(id, cazIdentifier).getVehicleEntrantPayments();
     given(vehicleEntrantPaymentRepository.findByPaymentId(id)).willReturn(vehicleEntrantPayments);
   }
 
-  private void mockFailedExternalStatusInExternalService(Payment payment) {
-    given(externalPaymentsRepository.findById(payment.getExternalId()))
+  private void mockFailedExternalStatusInExternalService(Payment payment, UUID cazIdentifier) {
+    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
         .willReturn(Optional.of(GetPaymentResult.builder()
             .state(PaymentState.builder().status(ExternalPaymentStatus.FAILED.name()).build())
             .email("example@email.com").build()));
   }
 
-  private void mockPaymentAbsenceInExternalService(Payment payment) {
-    given(externalPaymentsRepository.findById(payment.getExternalId()))
+  private void mockPaymentAbsenceInExternalService(Payment payment, UUID cazIdentifier) {
+    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
         .willReturn(Optional.empty());
   }
 
@@ -189,8 +178,8 @@ class CleanupDanglingPaymentServiceTest {
         .vehicleEntrantPayments(Collections.emptyList()).build();
   }
 
-  private void mockSameExternalStatusInExternalService(Payment payment) {
-    given(externalPaymentsRepository.findById(payment.getExternalId()))
+  private void mockSameExternalStatusInExternalService(Payment payment, UUID cazIdentifier) {
+    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
         .willReturn(Optional.of(GetPaymentResult.builder()
             .state(PaymentState.builder().status(payment.getExternalPaymentStatus().name()).build())
             .build()));
@@ -206,12 +195,8 @@ class CleanupDanglingPaymentServiceTest {
             .externalPaymentStatus(externalPaymentStatus).build());
   }
 
-  private void mockApiKey(UUID cazId, String apiKey) {
+  private void mockCazId(UUID cazId) {
     given(vehicleEntrantPaymentsService.findCazId(any()))
         .willReturn((cazId != null) ? Optional.of(cazId) : Optional.empty());
-    if (cazId != null) {
-      given(credentialRetrievalManager.getApiKey(cazId))
-          .willReturn((apiKey != null) ? Optional.of(apiKey) : Optional.empty());
-    }
   }
 }

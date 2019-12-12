@@ -24,7 +24,7 @@ services:
   connection-timeout-seconds: 29
   read-timeout-seconds: 29
   gov-uk-pay:
-    root-url: https://publicapi.payments.service.gov.uk
+    rootUrl: https://publicapi.payments.service.gov.uk
     api-key: to-be-replaced-by-external-value
   sqs:
     message-group-id-payments: PAYMENTS_RECEIPT

@@ -11,8 +11,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
@@ -21,12 +19,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestClientException;
-import uk.gov.caz.psr.domain.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +53,6 @@ public class InitiatePaymentServiceTest {
     Payment paymentWithInternalId = mockPaymentWithoutExternalDetails(paymentWithoutInternalId);
     Payment paymentWithExternalId = mockSuccessPaymentCreation(paymentWithInternalId, request);
     mockChargeCalculator(request);
-    mockApiKey(request);
 
     // when
     Payment result = initiatePaymentService.createPayment(request);
@@ -75,7 +72,6 @@ public class InitiatePaymentServiceTest {
     Payment paymentWithInternalId = mockPaymentWithoutExternalDetails(paymentWithoutInternalId);
     mockFailedPaymentCreation(paymentWithInternalId, request);
     mockChargeCalculator(request);
-    mockApiKey(request);
 
     // when
     Throwable throwable = catchThrowable(() -> initiatePaymentService.createPayment(request));
@@ -85,22 +81,6 @@ public class InitiatePaymentServiceTest {
     verify(internalPaymentsRepository).insertWithExternalStatus(paymentWithoutInternalId);
     verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository, never()).update(any());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenApiKeyNotFound() {
-    // given
-    InitiatePaymentRequest request = createRequest();
-    Payment paymentWithoutInternalId = createPaymentWithoutId(request);
-    mockChargeCalculator(request);
-    mockAbsentApiKey(request);
-
-    // when
-    Throwable throwable = catchThrowable(() -> initiatePaymentService.createPayment(request));
-
-    // then
-    assertThat(throwable).isInstanceOf(NoSuchElementException.class);
-    verify(internalPaymentsRepository).insertWithExternalStatus(paymentWithoutInternalId);
   }
 
   private InitiatePaymentRequest createRequest() {
@@ -152,15 +132,5 @@ public class InitiatePaymentServiceTest {
   private void mockChargeCalculator(InitiatePaymentRequest request) {
     when(chargeCalculator.calculateCharge(anyInt(), anyInt()))
         .thenReturn(request.getAmount() / request.getDays().size());
-  }
-
-  private void mockApiKey(InitiatePaymentRequest request) {
-    when(credentialRetrievalManager.getApiKey(request.getCleanAirZoneId()))
-        .thenReturn(Optional.of("testApiKey"));
-  }
-
-  private void mockAbsentApiKey(InitiatePaymentRequest request) {
-    when(credentialRetrievalManager.getApiKey(request.getCleanAirZoneId()))
-        .thenReturn(Optional.empty());
   }
 }

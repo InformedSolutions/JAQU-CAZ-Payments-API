@@ -18,7 +18,8 @@ import com.amazonaws.services.secretsmanager.model.GetSecretValueResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.internal.filter.ValueNode.JsonNode;
+import uk.gov.caz.psr.dto.external.SecretsManagerProperties;
+import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 
 @ExtendWith(MockitoExtension.class)
 public class CredentialRetrievalManagerTest {
@@ -27,39 +28,14 @@ public class CredentialRetrievalManagerTest {
 
   @Mock
   AWSSecretsManager client;
+  
+  @Mock
+  SecretsManagerProperties secretsManagerProperties;
 
   @BeforeEach
   void init() {
     credentialRetrievalManager =
-        new CredentialRetrievalManager(null, null, null, null, client, new ObjectMapper());
-  }
-
-  @Test
-  void canGetSecretString() {
-    GetSecretValueResult getSecretValueResponse = mock(GetSecretValueResult.class);
-
-    Mockito.when(client.getSecretValue(Mockito.any(GetSecretValueRequest.class)))
-        .thenReturn(getSecretValueResponse);
-    Mockito.when(getSecretValueResponse.getSecretString()).thenReturn("testKey");
-
-    String secret = credentialRetrievalManager.getSecretsValue();
-
-    assertEquals("testKey", secret);
-  }
-
-  @Test
-  void canGetSecretBinary() {
-    GetSecretValueResult getSecretValueResponse = mock(GetSecretValueResult.class);
-
-    Mockito.when(client.getSecretValue(Mockito.any(GetSecretValueRequest.class)))
-        .thenReturn(getSecretValueResponse);
-    Mockito.when(getSecretValueResponse.getSecretString()).thenReturn(null);
-    Mockito.when(getSecretValueResponse.getSecretBinary())
-        .thenReturn(ByteBuffer.wrap("dGVzdEtleQ==".getBytes()));
-
-    String secret = credentialRetrievalManager.getSecretsValue();
-
-    assertEquals("testKey", secret);
+        new CredentialRetrievalManager(client, new ObjectMapper(), secretsManagerProperties);
   }
 
   @Test
@@ -106,6 +82,26 @@ public class CredentialRetrievalManagerTest {
     Optional<String> apiKey = credentialRetrievalManager.getApiKey(UUID.randomUUID());
 
     assertTrue(!apiKey.isPresent());
+  }
+  
+  @Test
+  void getApiKeyFromSecretBinaryString() throws JsonProcessingException {
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    GetSecretValueResult getSecretValueResponse = mock(GetSecretValueResult.class);
+    Mockito.when(client.getSecretValue(Mockito.any(GetSecretValueRequest.class)))
+        .thenReturn(getSecretValueResponse);
+    Mockito.when(getSecretValueResponse.getSecretString()).thenReturn(null);
+
+    UUID cleanAirZoneId = UUID.fromString("105db9f8-cdd0-4b0c-b906-29ce979fdc29");
+    ObjectNode node = objectMapper.createObjectNode();
+    node.put(cleanAirZoneId.toString().replace("-", ""), "testApiKey");
+    Mockito.when(getSecretValueResponse.getSecretBinary()).thenReturn(ByteBuffer.wrap("eyIxMDVkYjlmOGNkZDA0YjBjYjkwNjI5Y2U5NzlmZGMyOSI6ICJ0ZXN0QXBpS2V5In0=".getBytes()));
+
+    Optional<String> apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId);
+
+    assertTrue(apiKey.isPresent()); 
+    assertEquals("testApiKey", apiKey.get());   
   }
 
 }

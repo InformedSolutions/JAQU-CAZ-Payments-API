@@ -2,11 +2,6 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import com.amazonaws.services.secretsmanager.AWSSecretsManager;
-import com.amazonaws.services.secretsmanager.model.CreateSecretRequest;
-import com.amazonaws.services.secretsmanager.model.CreateSecretResult;
-import com.amazonaws.services.secretsmanager.model.PutSecretValueRequest;
-import com.amazonaws.services.secretsmanager.model.ResourceExistsException;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
@@ -14,14 +9,12 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +35,7 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.CleanupDanglingPaymentsService;
+import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @IntegrationTest
 @Sql(scripts = "classpath:data/sql/dangling-payments-test-data.sql",
@@ -50,7 +44,6 @@ import uk.gov.caz.psr.service.CleanupDanglingPaymentsService;
     scripts = {"classpath:data/sql/clear-all-payments.sql",
         "classpath:data/sql/clear-all-vehicle-entrants.sql"},
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-@Slf4j
 public class DanglingPaymentsCleanupTestIT {
 
   private static final int EXPECTED_NON_DANGLING_PAYMENTS_COUNT = 6;
@@ -67,7 +60,7 @@ public class DanglingPaymentsCleanupTestIT {
   @Autowired
   private ObjectMapper objectMapper;
   @Autowired
-  private AWSSecretsManager secretsManager;
+  private SecretsManagerInitialisation secretsManagerInitialisation;
 
   @Autowired
   private CleanupDanglingPaymentsService danglingPaymentsService;
@@ -90,24 +83,7 @@ public class DanglingPaymentsCleanupTestIT {
 
   @BeforeEach
   public void createSecret() throws JsonProcessingException {
-    String cazIdFormatted = "53e03a28-0627-11ea-9511-ffaaee87e375".replace("-", "");
-    ObjectNode node = objectMapper.createObjectNode();
-    node.put(cazIdFormatted, "testApiKey");
-    String secretString = objectMapper.writeValueAsString(node);
-    log.info("Secret string is {}", secretString);
-
-    try {
-      CreateSecretRequest createSecretRequest = new CreateSecretRequest();
-      createSecretRequest.setName(this.secretName);
-      createSecretRequest.setSecretString(secretString);
-      CreateSecretResult response = secretsManager.createSecret(createSecretRequest);
-      log.info(response.toString());
-    } catch (ResourceExistsException e) {
-      PutSecretValueRequest putSecretValueRequest = new PutSecretValueRequest();
-      putSecretValueRequest.withSecretId(secretName).withSecretString(secretString);
-      secretsManager.putSecretValue(putSecretValueRequest);
-    }
-
+    secretsManagerInitialisation.createSecret(secretName);
   }
 
   @AfterEach
