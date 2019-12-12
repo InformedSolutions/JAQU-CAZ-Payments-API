@@ -52,11 +52,22 @@ public class ExternalPaymentsRepository {
     this.credentialRetrievalManager = credentialRetrievalManager;
   }
 
+  /**
+   * Filters through a {@link Payment}'s {@link VehicleEntrantPayment}s to retrieve a 
+   * Clean Air Zone ID.
+   * @param payment an instance of a {@link Payment} object
+   * @return the API key
+   */
   private String getApiKeyFor(Payment payment) {
     UUID cleanAirZoneId = payment.getVehicleEntrantPayments().iterator().next().getCleanZoneId();
     return getApiKeyFor(cleanAirZoneId);
   }
 
+  /**
+   * Retrieve the API key from the external credentials repository.
+   * @param cleanAirZoneId a {@link UUID} for the Clean Air Zone.
+   * @return the API key
+   */
   private String getApiKeyFor(UUID cleanAirZoneId) {
     String apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId)
         .orElseThrow(() -> new IllegalStateException(
@@ -101,8 +112,8 @@ public class ExternalPaymentsRepository {
       CreatePaymentResult responseBody = responseEntity.getBody();
       ExternalPaymentStatus externalPaymentStatus =
           toModelStatus(responseBody.getState().getStatus());
-      return payment.toBuilder().externalId(responseBody.getPaymentId())
-          .submittedTimestamp(LocalDateTime.now()).externalPaymentStatus(externalPaymentStatus)
+      return payment.toBuilder()
+          .externalId(responseBody.getPaymentId())
           .submittedTimestamp(LocalDateTime.now())
           .externalPaymentStatus(externalPaymentStatus)
           .nextUrl(responseBody.getLinks().getNextUrl().getHref())
@@ -133,6 +144,7 @@ public class ExternalPaymentsRepository {
    * Gets payment details by its identifier.
    *
    * @param id ID of the payment.
+   * @param cleanAirZoneId a {@link UUID} identifying the Clean Air Zone the payment was made in.
    * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist,
    *         {@link Optional#empty()} otherwise.
    * @throws IllegalArgumentException if {@code id} is null or empty

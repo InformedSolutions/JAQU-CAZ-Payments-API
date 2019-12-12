@@ -11,7 +11,6 @@ import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.service.VehicleEntrantPaymentsService;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.VehicleEntrantPaymentRepository;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
@@ -28,7 +27,6 @@ public class CleanupDanglingPaymentService {
   private final GetPaymentResultConverter getPaymentResultConverter;
   private final PaymentStatusUpdater paymentStatusUpdater;
   private final VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository;
-  private final VehicleEntrantPaymentsService vehicleEntrantPaymentsService;
 
   /**
    * Processes the passed {@code danglingPayment}: gets the external status and updates it in the
@@ -40,14 +38,9 @@ public class CleanupDanglingPaymentService {
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
       danglingPayment = loadVehicleEntrantPayments(danglingPayment);
-      UUID paymentId = danglingPayment.getId();
-
-      UUID cleanAirZoneId =
-          vehicleEntrantPaymentsService.findCazId(danglingPayment.getVehicleEntrantPayments())
-              .orElseThrow(() -> new IllegalStateException(
-                  "Clean Air Zone Id could not be found for Payment: " + paymentId));
-
+      UUID cleanAirZoneId = getCleanAirZoneId(danglingPayment);
       String externalId = danglingPayment.getExternalId();
+      
       GetPaymentResult paymentInfo = externalPaymentsRepository
           .findByIdAndCazId(externalId, cleanAirZoneId).orElseThrow(() -> new IllegalStateException(
               "External payment not found with id " + "'" + externalId + "'"));
@@ -84,12 +77,23 @@ public class CleanupDanglingPaymentService {
 
   /**
    * For the passed {@code payment} it loads all associated vehicle entrant records. A new
-   * {@link Payment} instance is created with the newly fetched records ann all previous attributes
+   * {@link Payment} instance is created with the newly fetched records and all previous attributes
    * from {@code payment}.
    */
   private Payment loadVehicleEntrantPayments(Payment payment) {
     return payment.toBuilder()
         .vehicleEntrantPayments(vehicleEntrantPaymentRepository.findByPaymentId(payment.getId()))
         .build();
+  }
+  
+  /**
+   * Retrieves the Clean Air Zone ID for the given {@link Payment}.
+   * @param payment an instance of a {@link Payment} object
+   * @return a {@link UUID} representing a Clean Air Zone.
+   */
+  private UUID getCleanAirZoneId(Payment payment) {
+    Preconditions.checkArgument(! payment.getVehicleEntrantPayments().isEmpty(),
+        "Vehicle entrant payments should not be empty");
+    return payment.getVehicleEntrantPayments().iterator().next().getCleanZoneId();
   }
 }

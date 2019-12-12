@@ -22,7 +22,6 @@ import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
-import uk.gov.caz.psr.model.service.VehicleEntrantPaymentsService;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
@@ -44,9 +43,6 @@ class GetAndUpdatePaymentsServiceTest {
 
   @Mock
   private CredentialRetrievalManager credentialRetrievalManager;
-
-  @Mock
-  private VehicleEntrantPaymentsService vehicleEntrantPaymentsService;
 
   @Mock
   private GetPaymentResultConverter getPaymentResultConverter;
@@ -74,7 +70,6 @@ class GetAndUpdatePaymentsServiceTest {
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     String externalId = "ext-id";
     Payment payment = mockInternalPaymentWith(paymentId, externalId);
-    mockCazId(payment, cazIdentifier, "testApiKey");
     mockPaymentAbsenceInExternalService(payment);
 
     // when
@@ -124,7 +119,6 @@ class GetAndUpdatePaymentsServiceTest {
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     String externalId = "ext-id";
     Payment payment = mockInternalPaymentWith(paymentId, externalId);
-    mockCazId(payment, cazIdentifier, "testApiKey");
     mockSameExternalStatusFor(payment);
     mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
 
@@ -148,8 +142,7 @@ class GetAndUpdatePaymentsServiceTest {
     String email = "example@email.com";
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
-        initExternalPaymentDetails.getExternalPaymentStatus());
-    mockCazId(payment, cazIdentifier, "testApiKey");
+        initExternalPaymentDetails.getExternalPaymentStatus(), this.cazIdentifier);
     Payment paymentWithEmail = payment.toBuilder().emailAddress(email).build();
     mockSuccessStatusFor(payment, email);
     mockStatusUpdaterWithSuccess(paymentWithEmail, newExternalPaymentDetails);
@@ -166,38 +159,20 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   @Test
-  public void shouldReturnEmptyIfVehicleEntrantPaymentsNotSet() {
+  public void shouldThrowIllegalArgumentExceptionIfVehicleEntrantPaymentsNotSet() {
     ExternalPaymentDetails initExternalPaymentDetails =
         ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.CREATED);
 
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
-    Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
-        initExternalPaymentDetails.getExternalPaymentStatus());
-    Payment paymentWithoutEntrants =
-        payment.toBuilder().vehicleEntrantPayments(new ArrayList<VehicleEntrantPayment>()).build();
-    mockInternalPaymentInDatabase(paymentId, paymentWithoutEntrants);
-
-    Optional<Payment> result =
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
-
-    assertTrue(!result.isPresent());
-  }
-
-  @Test
-  public void shouldThrowIllegalStateExceptionIfCannotFindCleanAirZoneId() {
-    ExternalPaymentDetails initExternalPaymentDetails =
-        ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.CREATED);
-
-    UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
-    Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
-        initExternalPaymentDetails.getExternalPaymentStatus());
-    mockCazId(payment, null, "testApiKey");
+    mockInternalPaymentWith(paymentId, "ext-id",
+        initExternalPaymentDetails.getExternalPaymentStatus(), null);
+    
 
     // when
     Throwable throwable =
         catchThrowable(() -> getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId));
 
-    assertThat(throwable).isInstanceOf(IllegalStateException.class).hasMessage("Clean Air Zone Id could not be found for Payment: " + paymentId);
+    assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessage("Vehicle entrant payments should not be empty");
   }
 
   private void mockStatusUpdaterWithSuccess(Payment payment,
@@ -207,14 +182,17 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   private Payment mockInternalPaymentWith(UUID paymentId, String externalId,
-      ExternalPaymentStatus newStatus) {
-    Payment payment = TestObjectFactory.Payments.forRandomDaysWithId(paymentId, externalId, null)
+      ExternalPaymentStatus newStatus, UUID cazIdentifier) {
+    Payment payment = TestObjectFactory.Payments.forRandomDaysWithId(paymentId, externalId, cazIdentifier)
         .toBuilder().externalPaymentStatus(newStatus).build();
-    mockInternalPaymentInDatabase(paymentId, payment);
+    mockInternalPaymentInDatabase(paymentId, payment, cazIdentifier);
     return payment;
   }
 
-  private void mockInternalPaymentInDatabase(UUID paymentId, Payment payment) {
+  private void mockInternalPaymentInDatabase(UUID paymentId, Payment payment, UUID cazIdentifier) {
+    if (cazIdentifier == null) {
+      payment = payment.toBuilder().vehicleEntrantPayments(new ArrayList<VehicleEntrantPayment>()).build();
+    }
     given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.of(payment));
   }
 
@@ -244,17 +222,12 @@ class GetAndUpdatePaymentsServiceTest {
   private Payment mockInternalPaymentWith(UUID paymentId, String externalId) {
     Payment payment =
         TestObjectFactory.Payments.forRandomDaysWithId(paymentId, externalId, cazIdentifier);
-    mockInternalPaymentInDatabase(paymentId, payment);
+    mockInternalPaymentInDatabase(paymentId, payment, cazIdentifier);
     return payment;
   }
 
   private void mockPaymentAbsenceInExternalService(Payment payment) {
     given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
         .willReturn(Optional.empty());
-  }
-
-  private void mockCazId(Payment payment, UUID cazIdentifier, String apiKey) {
-    given(vehicleEntrantPaymentsService.findCazId(payment.getVehicleEntrantPayments()))
-        .willReturn((cazIdentifier != null) ? Optional.of(cazIdentifier) : Optional.empty());
   }
 }

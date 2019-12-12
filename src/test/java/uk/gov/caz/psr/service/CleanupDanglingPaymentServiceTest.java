@@ -22,7 +22,6 @@ import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.VehicleEntrantPayment;
-import uk.gov.caz.psr.model.service.VehicleEntrantPaymentsService;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.VehicleEntrantPaymentRepository;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
@@ -41,13 +40,9 @@ class CleanupDanglingPaymentServiceTest {
   private PaymentStatusUpdater paymentStatusUpdater;
   @Mock
   private GetPaymentResultConverter getPaymentResultConverter;
-  @Mock
-  private VehicleEntrantPaymentsService vehicleEntrantPaymentsService;
 
   @InjectMocks
   private CleanupDanglingPaymentService service;
-  
-  private UUID cazIdentifier;
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
@@ -82,7 +77,6 @@ class CleanupDanglingPaymentServiceTest {
     Payment payment = paymentWithEmptyVehicleEntrants();
     mockVehicleEntrantsFor(payment, cazId);
     mockPaymentAbsenceInExternalService(payment, cazId);
-    mockCazId(cazId);
 
     // when
     Throwable throwable = catchThrowable(() -> service.processDanglingPayment(payment));
@@ -100,7 +94,6 @@ class CleanupDanglingPaymentServiceTest {
     mockVehicleEntrantsFor(payment, cazId);
     mockSameExternalStatusInExternalService(payment, cazId);
     mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
-    mockCazId(cazId);
 
     // when
     service.processDanglingPayment(payment);
@@ -122,7 +115,6 @@ class CleanupDanglingPaymentServiceTest {
     mockFailedExternalStatusInExternalService(payment, cazId);
     mockVehicleEntrantsFor(payment, cazId);
     mockGetPaymentResultConverter(ExternalPaymentStatus.FAILED);
-    mockCazId(cazId);
 
     // when
     service.processDanglingPayment(payment);
@@ -139,12 +131,11 @@ class CleanupDanglingPaymentServiceTest {
         ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.INITIATED);
     Payment payment =
         paymentWithEmptyVehicleEntrantsAndStatus(externalPaymentDetails.getExternalPaymentStatus());
-    mockVehicleEntrantsFor(payment, UUID.randomUUID());
-    mockCazId(null);
+//    mockVehicleEntrantsFor(payment, UUID.randomUUID());
 
     Throwable throwable = catchThrowable(() -> service.processDanglingPayment(payment));
     
-    assertThat(throwable).isInstanceOf(IllegalStateException.class).hasMessage("Clean Air Zone Id could not be found for Payment: " + payment.getId());
+    assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessage("Vehicle entrant payments should not be empty");
     verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
 
   }
@@ -193,10 +184,5 @@ class CleanupDanglingPaymentServiceTest {
     given(getPaymentResultConverter.toExternalPaymentDetails(any()))
         .willReturn(ExternalPaymentDetails.builder().email("example@email.com")
             .externalPaymentStatus(externalPaymentStatus).build());
-  }
-
-  private void mockCazId(UUID cazId) {
-    given(vehicleEntrantPaymentsService.findCazId(any()))
-        .willReturn((cazId != null) ? Optional.of(cazId) : Optional.empty());
   }
 }

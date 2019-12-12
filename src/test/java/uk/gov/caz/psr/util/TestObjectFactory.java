@@ -2,6 +2,7 @@ package uk.gov.caz.psr.util;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -138,11 +139,9 @@ public class TestObjectFactory {
 
     public static Payment forDays(Collection<LocalDate> travelDates, UUID paymentId,
         String externalId, UUID cazIdentifier) {
-      List<VehicleEntrantPayment> vehicleEntrantPayments =
-          VehicleEntrantPaymentsBuilder.forDays(travelDates).withTotal(travelDates.size() * 800)
-              .withPaymentId(paymentId).withVrn(randomVrn())
-              .withStatus(InternalPaymentStatus.NOT_PAID).withCazId(cazIdentifier).build();
-
+        List<VehicleEntrantPayment> vehicleEntrantPayments = VehicleEntrantPaymentsBuilder.forDays(travelDates).withTotal(travelDates.size() * 800)
+            .withPaymentId(paymentId).withVrn(randomVrn())
+            .withStatus(InternalPaymentStatus.NOT_PAID).withCazId(cazIdentifier).build();
       return createPaymentWith(vehicleEntrantPayments, paymentId, externalId);
     }
 

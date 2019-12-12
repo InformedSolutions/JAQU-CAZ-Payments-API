@@ -1,7 +1,6 @@
 package uk.gov.caz.psr.service;
 
 import com.google.common.base.Preconditions;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -10,8 +9,6 @@ import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.VehicleEntrantPayment;
-import uk.gov.caz.psr.model.service.VehicleEntrantPaymentsService;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
@@ -27,7 +24,6 @@ public class GetAndUpdatePaymentsService {
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final PaymentRepository internalPaymentsRepository;
   private final PaymentStatusUpdater paymentStatusUpdater;
-  private final VehicleEntrantPaymentsService vehicleEntrantPaymentsService;
   private final GetPaymentResultConverter getPaymentResultConverter;
 
   /**
@@ -54,17 +50,7 @@ public class GetAndUpdatePaymentsService {
       return Optional.empty();
     }
 
-    // Retrieve API key for appropriate Gov.UK Pay account
-    List<VehicleEntrantPayment> vehicleEntrantPayments = payment.getVehicleEntrantPayments();
-    if (vehicleEntrantPayments.isEmpty()) {
-      log.warn("Payment '{}' does not have any associated vehicle entrant payments", id);
-      return Optional.empty();
-    }
-
-    UUID cleanAirZoneId = vehicleEntrantPaymentsService
-        .findCazId(payment.getVehicleEntrantPayments()).orElseThrow(() -> new IllegalStateException(
-            "Clean Air Zone Id could not be found for Payment: " + payment.getId()));
-
+    UUID cleanAirZoneId = getCleanAirZoneId(payment);
     GetPaymentResult paymentInfo =
         externalPaymentsRepository.findByIdAndCazId(externalPaymentId, cleanAirZoneId)
             .orElseThrow(() -> new IllegalStateException(
@@ -96,5 +82,16 @@ public class GetAndUpdatePaymentsService {
    */
   private boolean hasSameStatus(Payment payment, ExternalPaymentDetails externalPaymentDetails) {
     return payment.getExternalPaymentStatus() == externalPaymentDetails.getExternalPaymentStatus();
+  }
+  
+  /**
+   * Retrieves the Clean Air Zone ID for the given {@link Payment}.
+   * @param payment an instance of a {@link Payment} object
+   * @return a {@link UUID} representing a Clean Air Zone.
+   */
+  private UUID getCleanAirZoneId(Payment payment) {
+    Preconditions.checkArgument(! payment.getVehicleEntrantPayments().isEmpty(),
+        "Vehicle entrant payments should not be empty");
+    return payment.getVehicleEntrantPayments().iterator().next().getCleanZoneId();
   }
 }
