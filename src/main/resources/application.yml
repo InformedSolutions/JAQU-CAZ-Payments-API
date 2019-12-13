@@ -41,6 +41,10 @@ management:
     diskspace:
       enabled: false
 
+
+aws:
+  secret-name: /config/payments.dev
+
 swagger:
   model:
     descriptions:

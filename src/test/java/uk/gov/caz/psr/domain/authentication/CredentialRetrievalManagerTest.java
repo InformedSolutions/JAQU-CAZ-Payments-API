@@ -18,7 +18,6 @@ import com.amazonaws.services.secretsmanager.model.GetSecretValueResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import uk.gov.caz.psr.dto.external.SecretsManagerProperties;
 import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,14 +27,11 @@ public class CredentialRetrievalManagerTest {
 
   @Mock
   AWSSecretsManager client;
-  
-  @Mock
-  SecretsManagerProperties secretsManagerProperties;
 
   @BeforeEach
   void init() {
     credentialRetrievalManager =
-        new CredentialRetrievalManager(client, new ObjectMapper(), secretsManagerProperties);
+        new CredentialRetrievalManager(client, new ObjectMapper(), "testSecretName");
   }
 
   @Test

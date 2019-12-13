@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.dto.external.SecretsManagerProperties;
 
 /**
  * Class for managing the external repository of secrets used by the application.
@@ -33,12 +33,10 @@ public class CredentialRetrievalManager {
    * @param objectMapper an instance of {@link ObjectMapper}
    */
   public CredentialRetrievalManager(AWSSecretsManager awsSecretsManager, ObjectMapper objectMapper,
-      SecretsManagerProperties secretsManagerProperties) {
+      @Value("${aws.secret-name}") String secretName) {
     this.client = awsSecretsManager;
     this.objectMapper = objectMapper;
-    this.secretName = secretsManagerProperties.getPrefix() + "/"
-        + secretsManagerProperties.getName() + secretsManagerProperties.getProfileSeparator()
-        + secretsManagerProperties.getEnvironment();
+    this.secretName = secretName;
   }
 
   /**

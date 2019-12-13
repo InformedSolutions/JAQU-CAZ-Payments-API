@@ -82,7 +82,9 @@ public class SuccessPaymentsJourneyTestIT {
   private final LocalDate dateWithEntityInDB = LocalDate.of(2019, 11, 2);
   private final LocalDate dateWithoutEntityInDB = LocalDate.of(2019, 11, 10);
 
-  private String secretName = "payments/config.localstack";
+  @Value("${aws.secret-name}")
+  private String secretName;
+  
   private String cazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
 
   @BeforeEach
