@@ -3,6 +3,8 @@ package uk.gov.caz.psr.configuration;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.services.secretsmanager.AWSSecretsManager;
+import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.google.common.base.Strings;
@@ -24,11 +26,54 @@ public class AwsConfiguration {
   private String region;
 
   /**
+   * Returns an instance of {@link AmazonSecretsManager} which is used to to retrieve secrets from
+   * AWS secrets manager.
+   * 
+   * @param secretsManagerEndpoint An endpoint of mocked Secrets Manager. Cannot be empty or
+   *        {@code null}
+   * @return An instance of {@link AmazonSecretsManager}
+   * @throws IllegalStateException if {@code secretsManagerEndpoint} is null or empty
+   */
+  @Bean
+  @Primary
+  @Profile({"integration-tests", "localstack"})
+  public AWSSecretsManager secretsManagerLocalstackClient(
+      @Value("${aws.secretsmanager.endpoint:}") String secretsManagerEndpoint) {
+    if (Strings.isNullOrEmpty(secretsManagerEndpoint)) {
+      throw new IllegalStateException(
+          "Secrets Manager endpoint must be overridden when running with "
+              + "Localstack! Please set in 'aws.secretsmanager.endpoint' property");
+    }
+
+    log.info("Using '{}' as Secrets Manager Endpoint", secretsManagerEndpoint);
+
+    return AWSSecretsManagerClientBuilder.standard().withCredentials(dummyCredentialsProvider())
+        .withEndpointConfiguration(new EndpointConfiguration(secretsManagerEndpoint, region))
+        .build();
+
+  }
+
+  /**
+   * Returns an instance of {@link AWSSecretsManager} which is used to retrieve secrets from AWS
+   * secrets manager.
+   * 
+   * @param region the AWS region
+   * @return an instance of {@link AWSSecretsManager}
+   */
+  @Bean
+  @Primary
+  @Profile("!integration-tests & !localstack")
+  public AWSSecretsManager awsSecretsManagerClientBuilder(
+      @Value("${cloud.aws.region.static}") String region) {
+    return AWSSecretsManagerClientBuilder.standard().withRegion(region).build();
+  }
+
+  /**
    * Returns an instance of {@link AmazonSQS} which is used to send a message to a SQS queue mocked
    * by Localstack.
    *
    * @param sqsEndpoint An endpoint of mocked SQS. Cannot be empty or {@code null}
-   * @return An instance of {@link AmazonSQSAsync}
+   * @return An instance of {@link AmazonSQS}
    * @throws IllegalStateException if {@code sqsEndpoint} is null or empty
    */
   @Bean
@@ -44,10 +89,8 @@ public class AwsConfiguration {
 
     log.info("Using '{}' as SQS Endpoint", sqsEndpoint);
 
-    return AmazonSQSClientBuilder.standard()
-        .withCredentials(dummyCredentialsProvider())
-        .withEndpointConfiguration(new EndpointConfiguration(sqsEndpoint, region))
-        .build();
+    return AmazonSQSClientBuilder.standard().withCredentials(dummyCredentialsProvider())
+        .withEndpointConfiguration(new EndpointConfiguration(sqsEndpoint, region)).build();
   }
 
   private AWSStaticCredentialsProvider dummyCredentialsProvider() {
@@ -65,9 +108,7 @@ public class AwsConfiguration {
   @Primary
   @Profile("!integration-tests & !localstack")
   public AmazonSQS amazonSqs() {
-    return AmazonSQSClientBuilder.standard()
-        .withRegion(region)
-        .build();
+    return AmazonSQSClientBuilder.standard().withRegion(region).build();
   }
 
 }

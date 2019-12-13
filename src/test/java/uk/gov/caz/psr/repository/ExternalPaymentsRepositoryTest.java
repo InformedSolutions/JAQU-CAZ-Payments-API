@@ -7,8 +7,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,12 +17,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -31,15 +31,16 @@ import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.dto.external.Link;
 import uk.gov.caz.psr.dto.external.PaymentLinks;
 import uk.gov.caz.psr.dto.external.PaymentState;
-import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.VehicleEntrantPayment;
+import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
 class ExternalPaymentsRepositoryTest {
 
   private static final String ANY_ROOT_URL = "http://localhost";
-  private static final String ANY_API_KEY = "test-api-key";
   private static final String ANY_RETURN_URL = "http://localhost/return-url";
 
   @Mock
@@ -47,17 +48,16 @@ class ExternalPaymentsRepositoryTest {
 
   @Mock
   private RestTemplate restTemplate;
+  
+  @Mock
+  private CredentialRetrievalManager credentialRetrievalManager;
 
   private ExternalPaymentsRepository paymentsRepository;
 
   @BeforeEach
   public void setUp() {
-    when(restTemplateBuilder.interceptors(any(ClientHttpRequestInterceptor.class)))
-        .thenReturn(restTemplateBuilder);
     when(restTemplateBuilder.build()).thenReturn(restTemplate);
-
-    paymentsRepository = new ExternalPaymentsRepository(ANY_ROOT_URL, ANY_API_KEY,
-        restTemplateBuilder);
+    paymentsRepository = new ExternalPaymentsRepository(ANY_ROOT_URL, restTemplateBuilder, credentialRetrievalManager);
   }
 
   @Nested
@@ -69,8 +69,8 @@ class ExternalPaymentsRepositoryTest {
       Payment payment = null;
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, ANY_RETURN_URL));
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.create(payment, ANY_RETURN_URL));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -83,8 +83,8 @@ class ExternalPaymentsRepositoryTest {
       Payment payment = createPayment(null);
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, ANY_RETURN_URL));
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.create(payment, ANY_RETURN_URL));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -97,8 +97,7 @@ class ExternalPaymentsRepositoryTest {
       Payment payment = createPayment(UUID.fromString("26ca3b2a-fba9-11e9-9334-1fbaf36c3aee"));
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, null));
+      Throwable throwable = catchThrowable(() -> paymentsRepository.create(payment, null));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -111,12 +110,27 @@ class ExternalPaymentsRepositoryTest {
       Payment payment = createPayment(UUID.fromString("5b793d4e-fba9-11e9-9334-6b0964eb9a87"));
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, ""));
+      Throwable throwable = catchThrowable(() -> paymentsRepository.create(payment, ""));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("Return url cannot be null or empty");
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenVehicleEntrantPaymentsIsEmpty() {
+      // given
+      Payment payment = createPayment(UUID.fromString("5b793d4e-fba9-11e9-9334-6b0964eb9a87"));
+      Payment paymentWithEmptyVehicleEntrants = payment.toBuilder()
+          .vehicleEntrantPayments(new ArrayList<VehicleEntrantPayment>())
+          .build();
+
+      // when
+      Throwable throwable = catchThrowable(() -> paymentsRepository.create(paymentWithEmptyVehicleEntrants, ANY_RETURN_URL));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Vehicle entrant payments cannot be null or empty");
     }
 
     @Test
@@ -125,6 +139,7 @@ class ExternalPaymentsRepositoryTest {
       UUID paymentId = UUID.fromString("9d4fc418-fbae-11e9-8f23-cf92e47420e6");
       mockRestTemplateResultWithUnrecognizedStatus();
       Payment payment = createPayment(paymentId);
+      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
 
       // when
       Payment result = paymentsRepository.create(payment, ANY_RETURN_URL);
@@ -136,17 +151,10 @@ class ExternalPaymentsRepositoryTest {
 
     private void mockRestTemplateResultWithUnrecognizedStatus() {
       given(restTemplate.exchange(any(), eq(CreatePaymentResult.class))).willReturn(
-          ResponseEntity.ok(
-              CreatePaymentResult.builder()
-                  .paymentId("ex-pay-id")
-                  .amount(100)
-                  .links(PaymentLinks.builder()
-                      .nextUrl(new Link("http://some-address.com", "GET"))
-                      .build())
-                  .state(PaymentState.builder().status("not-recognized").build())
-                  .build()
-          )
-      );
+          ResponseEntity.ok(CreatePaymentResult.builder().paymentId("ex-pay-id").amount(100)
+              .links(PaymentLinks.builder().nextUrl(new Link("http://some-address.com", "GET"))
+                  .build())
+              .state(PaymentState.builder().status("not-recognized").build()).build()));
     }
 
 
@@ -154,23 +162,22 @@ class ExternalPaymentsRepositoryTest {
     public void shouldRethrowExceptionWhenCallFails() {
       // given
       Payment payment = createPayment(UUID.fromString("ef1aad78-fba7-11e9-9334-4b9678d9f25f"));
-      given(restTemplate.exchange(any(), eq(CreatePaymentResult.class))).willThrow(
-          HttpClientErrorException
-              .create(HttpStatus.INTERNAL_SERVER_ERROR, "", new HttpHeaders(), null, null));
+      given(restTemplate.exchange(any(), eq(CreatePaymentResult.class)))
+          .willThrow(HttpClientErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR, "",
+              new HttpHeaders(), null, null));
+      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
 
       // when
-      Throwable throwable = catchThrowable(() ->
-          paymentsRepository.create(payment, ANY_RETURN_URL));
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.create(payment, ANY_RETURN_URL));
 
       // then
       assertThat(throwable).isInstanceOf(RestClientException.class);
     }
 
     private Payment createPayment(UUID paymentId) {
-      return Payments.forDays(
-          Arrays.asList(LocalDate.now(), LocalDate.now().plusDays(1)),
-          paymentId
-      );
+      return Payments.forDays(Arrays.asList(LocalDate.now(), LocalDate.now().plusDays(1)),
+          paymentId);
     }
   }
 
@@ -183,7 +190,7 @@ class ExternalPaymentsRepositoryTest {
       String id = null;
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentsRepository.findById(id));
+      Throwable throwable = catchThrowable(() -> paymentsRepository.findByIdAndCazId(id, null));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -196,11 +203,26 @@ class ExternalPaymentsRepositoryTest {
       String id = "";
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentsRepository.findById(id));
+      Throwable throwable = catchThrowable(() -> paymentsRepository.findByIdAndCazId(id, null));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("ID cannot be null or empty");
+    }
+    
+    @Test
+    public void shouldThrowIllegalStateExceptionWhenApiKeyCannotBeFound() {
+      // given
+      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.empty());
+      String id = "payment id";
+      UUID cazId = UUID.randomUUID();
+
+      // when
+      Throwable throwable = catchThrowable(() -> paymentsRepository.findByIdAndCazId(id, cazId));
+      
+      // then
+      assertThat(throwable).isInstanceOf(IllegalStateException.class)
+          .hasMessage("The API key has not been set for Clean Air Zone " + cazId);
     }
 
     @Test
@@ -208,10 +230,12 @@ class ExternalPaymentsRepositoryTest {
       // given
       given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willThrow(
           HttpClientErrorException.create(HttpStatus.NOT_FOUND, "", new HttpHeaders(), null, null));
+      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
       String id = "payment id";
+      UUID cazId = UUID.randomUUID();
 
       // when
-      Optional<GetPaymentResult> result = paymentsRepository.findById(id);
+      Optional<GetPaymentResult> result = paymentsRepository.findByIdAndCazId(id, cazId);
 
       // then
       assertThat(result).isEmpty();
@@ -220,13 +244,15 @@ class ExternalPaymentsRepositoryTest {
     @Test
     public void shouldRethrowExceptionWhenCallFails() {
       // given
-      given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willThrow(
-          HttpClientErrorException
-              .create(HttpStatus.INTERNAL_SERVER_ERROR, "", new HttpHeaders(), null, null));
+      given(restTemplate.exchange(any(), eq(GetPaymentResult.class)))
+          .willThrow(HttpClientErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR, "",
+              new HttpHeaders(), null, null));
+      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
       String id = "payment id";
+      UUID cazId = UUID.randomUUID();
 
       // when
-      Throwable throwable = catchThrowable(() -> paymentsRepository.findById(id));
+      Throwable throwable = catchThrowable(() -> paymentsRepository.findByIdAndCazId(id, cazId));
 
       // then
       assertThat(throwable).isInstanceOf(RestClientException.class);
@@ -237,9 +263,12 @@ class ExternalPaymentsRepositoryTest {
       // given
       mockRestTemplateResult();
       String id = "payment id";
+      UUID cazId = UUID.randomUUID();
+
+      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
 
       // when
-      Optional<GetPaymentResult> result = paymentsRepository.findById(id);
+      Optional<GetPaymentResult> result = paymentsRepository.findByIdAndCazId(id, cazId);
 
       // then
       assertThat(result).isNotEmpty();
@@ -247,14 +276,9 @@ class ExternalPaymentsRepositoryTest {
     }
 
     private void mockRestTemplateResult() {
-      given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willReturn(
-          new ResponseEntity<>(
-              GetPaymentResult.builder()
-                  .state(PaymentState.builder().status("success").build())
-                  .build(),
-              HttpStatus.OK
-          )
-      );
+      given(restTemplate.exchange(any(), eq(GetPaymentResult.class)))
+          .willReturn(new ResponseEntity<>(GetPaymentResult.builder()
+              .state(PaymentState.builder().status("success").build()).build(), HttpStatus.OK));
     }
   }
 }

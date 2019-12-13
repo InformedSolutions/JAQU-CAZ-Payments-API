@@ -34,6 +34,7 @@ public class VehicleEntrantRequest {
    *
    * @return An instance of {@link VehicleEntrant} whose parameters comes from this object.
    */
+
   public VehicleEntrant toVehicleEntrant() {
     return VehicleEntrant.builder()
         .cleanZoneId(cleanZoneId)

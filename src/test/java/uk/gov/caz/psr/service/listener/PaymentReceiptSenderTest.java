@@ -99,6 +99,7 @@ public class PaymentReceiptSenderTest {
     when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(amount);
     when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, amount))
         .thenThrow(new JsonMappingException(null, "test exception"));
+    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
 
     // when
     paymentReceiptSender.onPaymentStatusUpdated(event);

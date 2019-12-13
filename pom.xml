@@ -271,6 +271,18 @@
         <version>1.12</version>
         <executions>
           <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>add-source</goal>
+            </goals>
+            <configuration>
+                <sources>
+                    <source>${project.build.directory}/generated-sources/annotations/</source>
+                </sources>
+            </configuration>
+          </execution>
+          <execution>
             <id>add-integration-test-sources</id>
             <phase>generate-test-sources</phase>
             <goals>
@@ -418,6 +430,7 @@
           <failOnViolation>true</failOnViolation>
           <linkXRef>false</linkXRef>
           <violationSeverity>warning</violationSeverity>
+          <excludes>**/psr/model/info/*_.java</excludes>
         </configuration>
 
         <executions>
@@ -520,6 +533,7 @@
     								<goals>
     									<goal>pmd</goal>
     									<goal>cpd-check</goal>
+    									<goal>generate-sources</goal>
     								</goals>
     							</pluginExecutionFilter>
     							<action>
@@ -533,7 +547,7 @@
     	</plugins>
     </pluginManagement>
   </build>
-
+	
   <reporting>
     <plugins>
       <plugin>

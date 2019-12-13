@@ -1,3 +1,4 @@
+
 package uk.gov.caz.psr.service;
 
 import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
@@ -6,7 +7,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
@@ -22,23 +22,23 @@ import uk.gov.caz.psr.repository.PaymentRepository;
  */
 @Service
 @AllArgsConstructor
-@Slf4j
 public class InitiatePaymentService {
 
-  private final PaymentRepository paymentRepository;
-  private final ExternalPaymentsRepository externalPaymentsRepository;
   private final VehicleEntrantPaymentChargeCalculator chargeCalculator;
+  private final ExternalPaymentsRepository externalPaymentsRepository;
+  private final PaymentRepository paymentRepository;
 
   /**
    * Creates Payment in GOV.UK PAY Inserts Payment details into database
    *
    * @param request A data which need to be used to create the payment.
    */
+
   public Payment createPayment(InitiatePaymentRequest request) {
     Payment payment = buildPayment(request);
     Payment paymentWithInternalId = paymentRepository.insertWithExternalStatus(payment);
-    Payment paymentWithExternalId = externalPaymentsRepository.create(paymentWithInternalId,
-        request.getReturnUrl());
+    Payment paymentWithExternalId =
+        externalPaymentsRepository.create(paymentWithInternalId, request.getReturnUrl());
     paymentRepository.update(paymentWithExternalId);
     return paymentWithExternalId;
   }
@@ -48,25 +48,22 @@ public class InitiatePaymentService {
    *
    * @param request A data which need to be used to create the payment.
    */
-  private Payment buildPayment(InitiatePaymentRequest request) {
-    int chargePerDay = chargeCalculator.calculateCharge(request.getAmount(),
-        request.getDays().size());
-    List<VehicleEntrantPayment> vehicleEntrantPayments = request.getDays()
-        .stream()
-        .map(day -> toVehicleEntrantPayment(day, request, chargePerDay))
-        .collect(Collectors.toList());
 
-    return Payment.builder()
-        .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
-        .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
-        .totalPaid(request.getAmount())
-        .vehicleEntrantPayments(vehicleEntrantPayments)
-        .build();
+  private Payment buildPayment(InitiatePaymentRequest request) {
+    int chargePerDay =
+        chargeCalculator.calculateCharge(request.getAmount(), request.getDays().size());
+    List<VehicleEntrantPayment> vehicleEntrantPayments =
+        request.getDays().stream().map(day -> toVehicleEntrantPayment(day, request, chargePerDay))
+            .collect(Collectors.toList());
+
+    return Payment.builder().externalPaymentStatus(ExternalPaymentStatus.INITIATED)
+        .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD).totalPaid(request.getAmount())
+        .vehicleEntrantPayments(vehicleEntrantPayments).build();
   }
 
   /**
-   * Maps a data from {@link InitiatePaymentRequest} to an instance of {@link
-   * VehicleEntrantPayment}.
+   * Maps a data from {@link InitiatePaymentRequest} to an instance of
+   * {@link VehicleEntrantPayment}.
    */
   private VehicleEntrantPayment toVehicleEntrantPayment(LocalDate travelDate,
       InitiatePaymentRequest request, int chargePerDay) {

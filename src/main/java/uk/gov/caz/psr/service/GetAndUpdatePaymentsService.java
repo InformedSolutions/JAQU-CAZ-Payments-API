@@ -21,8 +21,8 @@ import uk.gov.caz.psr.util.GetPaymentResultConverter;
 @Slf4j
 public class GetAndUpdatePaymentsService {
 
-  private final PaymentRepository internalPaymentsRepository;
   private final ExternalPaymentsRepository externalPaymentsRepository;
+  private final PaymentRepository internalPaymentsRepository;
   private final PaymentStatusUpdater paymentStatusUpdater;
   private final GetPaymentResultConverter getPaymentResultConverter;
 
@@ -50,22 +50,26 @@ public class GetAndUpdatePaymentsService {
       return Optional.empty();
     }
 
-    GetPaymentResult paymentInfo = externalPaymentsRepository.findById(externalPaymentId)
-        .orElseThrow(() -> new IllegalStateException("External payment not found with id "
-            + "'" + externalPaymentId + "'"));
-    ExternalPaymentDetails externalPaymentDetails = getPaymentResultConverter
-        .toExternalPaymentDetails(paymentInfo);
+    UUID cleanAirZoneId = getCleanAirZoneId(payment);
+    GetPaymentResult paymentInfo =
+        externalPaymentsRepository.findByIdAndCazId(externalPaymentId, cleanAirZoneId)
+            .orElseThrow(() -> new IllegalStateException(
+                "External payment not found with id " + "'" + externalPaymentId + "'"));
+    ExternalPaymentDetails externalPaymentDetails =
+        getPaymentResultConverter.toExternalPaymentDetails(paymentInfo);
 
     if (hasSameStatus(payment, externalPaymentDetails)) {
-      log.warn("External payment status is the same as the one from database and equal to '{}', "
-          + "the payment will not be updated in the database", payment.getExternalPaymentStatus());
+      log.warn(
+          "External payment status is the same as the one from database and equal to '{}', "
+              + "the payment will not be updated in the database",
+          payment.getExternalPaymentStatus());
       return Optional.of(payment);
     }
 
     Payment paymentWithEmail = payment.toBuilder().emailAddress(paymentInfo.getEmail()).build();
 
-    Payment result = paymentStatusUpdater
-        .updateWithExternalPaymentDetails(paymentWithEmail, externalPaymentDetails);
+    Payment result = paymentStatusUpdater.updateWithExternalPaymentDetails(paymentWithEmail,
+        externalPaymentDetails);
     return Optional.of(result);
   }
 
@@ -78,5 +82,16 @@ public class GetAndUpdatePaymentsService {
    */
   private boolean hasSameStatus(Payment payment, ExternalPaymentDetails externalPaymentDetails) {
     return payment.getExternalPaymentStatus() == externalPaymentDetails.getExternalPaymentStatus();
+  }
+  
+  /**
+   * Retrieves the Clean Air Zone ID for the given {@link Payment}.
+   * @param payment an instance of a {@link Payment} object
+   * @return a {@link UUID} representing a Clean Air Zone.
+   */
+  private UUID getCleanAirZoneId(Payment payment) {
+    Preconditions.checkArgument(! payment.getVehicleEntrantPayments().isEmpty(),
+        "Vehicle entrant payments should not be empty");
+    return payment.getVehicleEntrantPayments().iterator().next().getCleanZoneId();
   }
 }

@@ -8,7 +8,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +24,7 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +35,9 @@ public class InitiatePaymentServiceTest {
 
   @Mock
   private PaymentRepository internalPaymentsRepository;
+
+  @Mock
+  private CredentialRetrievalManager credentialRetrievalManager;
 
   @Mock
   private VehicleEntrantPaymentChargeCalculator chargeCalculator;
@@ -81,16 +84,10 @@ public class InitiatePaymentServiceTest {
   }
 
   private InitiatePaymentRequest createRequest() {
-    List<LocalDate> days = Arrays
-        .asList(LocalDate.of(2019, 1, 1), LocalDate.of(2019, 1, 3));
+    List<LocalDate> days = Arrays.asList(LocalDate.of(2019, 1, 1), LocalDate.of(2019, 1, 3));
 
-    return InitiatePaymentRequest.builder()
-        .cleanAirZoneId(UUID.randomUUID())
-        .days(days)
-        .vrn("VRN123")
-        .amount(700)
-        .returnUrl("https://example.return.url")
-        .build();
+    return InitiatePaymentRequest.builder().cleanAirZoneId(UUID.randomUUID()).days(days)
+        .vrn("VRN123").amount(700).returnUrl("https://example.return.url").build();
   }
 
   private Payment createPaymentWithoutId(InitiatePaymentRequest request) {
@@ -99,48 +96,41 @@ public class InitiatePaymentServiceTest {
 
   private Payment mockPaymentWithoutExternalDetails(Payment paymentWithoutId) {
     Payment paymentWithId = toPaymentWithId(paymentWithoutId);
-
-    given(internalPaymentsRepository.insertWithExternalStatus(paymentWithoutId)).willReturn(paymentWithId);
-
+    given(internalPaymentsRepository.insertWithExternalStatus(paymentWithoutId))
+        .willReturn(paymentWithId);
     return paymentWithId;
   }
 
   private Payment mockSuccessPaymentCreation(Payment payment, InitiatePaymentRequest request) {
     Payment externalPayment = toPaymentWithExternalPaymentDetails(payment);
-    given(externalPaymentsRepository.create(payment, request.getReturnUrl())).willReturn(
-        externalPayment);
+    given(externalPaymentsRepository.create(payment, request.getReturnUrl()))
+        .willReturn(externalPayment);
     return externalPayment;
   }
 
+
   private void mockFailedPaymentCreation(Payment payment, InitiatePaymentRequest request) {
-    given(externalPaymentsRepository.create(payment, request.getReturnUrl())).willThrow(
-        new RestClientException(""));
+    given(externalPaymentsRepository.create(payment, request.getReturnUrl()))
+        .willThrow(new RestClientException(""));
   }
 
   private Payment toPaymentWithId(Payment payment) {
     UUID paymentID = UUID.randomUUID();
 
-    return payment.toBuilder()
-        .id(paymentID)
-        .vehicleEntrantPayments(payment.getVehicleEntrantPayments()
-            .stream()
-            .map(vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder()
-                .paymentId(paymentID)
-                .build())
+    return payment.toBuilder().id(paymentID)
+        .vehicleEntrantPayments(payment.getVehicleEntrantPayments().stream().map(
+            vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder().paymentId(paymentID).build())
             .collect(Collectors.toList()))
         .build();
   }
 
   private Payment toPaymentWithExternalPaymentDetails(Payment payment) {
-    return payment.toBuilder()
-        .externalId("ANY_EXTERNAL_ID")
-        .externalPaymentStatus(ExternalPaymentStatus.CREATED)
-        .build();
+    return payment.toBuilder().externalId("ANY_EXTERNAL_ID")
+        .externalPaymentStatus(ExternalPaymentStatus.CREATED).build();
   }
 
   private void mockChargeCalculator(InitiatePaymentRequest request) {
-    when(chargeCalculator.calculateCharge(anyInt(), anyInt())).thenReturn(
-        request.getAmount() / request.getDays().size()
-    );
+    when(chargeCalculator.calculateCharge(anyInt(), anyInt()))
+        .thenReturn(request.getAmount() / request.getDays().size());
   }
 }

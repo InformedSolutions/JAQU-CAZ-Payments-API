@@ -2,12 +2,12 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -21,7 +21,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +45,7 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
 @Sql(
@@ -56,7 +56,6 @@ import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
     scripts = {"classpath:data/sql/clear-all-payments.sql",
         "classpath:data/sql/clear-all-vehicle-entrants.sql"},
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-@Slf4j
 public class SuccessPaymentsJourneyTestIT {
 
   @Value("${services.gov-uk-pay.root-url}")
@@ -75,11 +74,16 @@ public class SuccessPaymentsJourneyTestIT {
   private JdbcTemplate jdbcTemplate;
   @Autowired
   private AmazonSQS sqsClient;
+  @Autowired
+  private SecretsManagerInitialisation secretsManagerInitialisation;
 
   private ClientAndServer mockServer;
 
   private final LocalDate dateWithEntityInDB = LocalDate.of(2019, 11, 2);
   private final LocalDate dateWithoutEntityInDB = LocalDate.of(2019, 11, 10);
+
+  private String secretName = "payments/config.localstack";
+  private String cazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
 
   @BeforeEach
   public void startMockServer() {
@@ -94,6 +98,11 @@ public class SuccessPaymentsJourneyTestIT {
     CreateQueueRequest createQueueRequest = new CreateQueueRequest(emailSqsQueueName)
         .withAttributes(Collections.singletonMap("FifoQueue", "true"));
     sqsClient.createQueue(createQueueRequest);
+  }
+
+  @BeforeEach
+  public void createSecret() throws JsonProcessingException {
+    secretsManagerInitialisation.createSecret(secretName);
   }
 
   @AfterEach
@@ -116,21 +125,15 @@ public class SuccessPaymentsJourneyTestIT {
 
     given().initiatePaymentRequest(initiatePaymentRequest(dateWithEntityInDB)).whenSubmitted()
 
-        .then()
-        .paymentEntityIsCreatedInDatabase()
-        .withExternalIdEqualTo(externalPaymentId)
-        .withNullPaymentAuthorisedTimestamp()
-        .andResponseIsReturnedWithMatchingInternalId()
+        .then().paymentEntityIsCreatedInDatabase().withExternalIdEqualTo(externalPaymentId)
+        .withNullPaymentAuthorisedTimestamp().andResponseIsReturnedWithMatchingInternalId()
 
-        .and()
-        .whenRequestedToGetAndUpdateStatus()
+        .and().whenRequestedToGetAndUpdateStatus()
 
-        .then()
-        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .then().paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
         .connectsEntityToPaymentIfEntityWasFound(dateWithEntityInDB)
         .doesNotConnectEntityToPaymentIfEntityWasNotFound(dateWithoutEntityInDB)
-        .withNonNullPaymentAuthorisedTimestamp()
-        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .withNonNullPaymentAuthorisedTimestamp().andStatusResponseIsReturnedWithMatchinInternalId()
         .andPaymentReceiptIsSent();
   }
 
@@ -304,8 +307,8 @@ public class SuccessPaymentsJourneyTestIT {
 
     private List<Message> receiveSqsMessages() {
       GetQueueUrlResult queueUrlResult = sqsClient.getQueueUrl(emailSqsQueueName);
-      ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(
-          queueUrlResult.getQueueUrl());
+      ReceiveMessageResult receiveMessageResult =
+          sqsClient.receiveMessage(queueUrlResult.getQueueUrl());
       return receiveMessageResult.getMessages();
     }
   }
@@ -313,8 +316,8 @@ public class SuccessPaymentsJourneyTestIT {
   private InitiatePaymentRequest initiatePaymentRequest(LocalDate date) {
     return InitiatePaymentRequest.builder().amount(4200)
         .days(Arrays.asList(dateWithoutEntityInDB, dateWithEntityInDB))
-        .cleanAirZoneId(UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4"))
-        .returnUrl("http://localhost/return-url").vrn("ND84VSX").build();
+        .cleanAirZoneId(UUID.fromString(this.cazId)).returnUrl("http://localhost/return-url")
+        .vrn("ND84VSX").build();
   }
 
   private void externalPaymentServiceCreatesPaymentWithId(String externalPaymentId) {

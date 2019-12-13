@@ -2,12 +2,12 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -35,12 +35,14 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.CleanupDanglingPaymentsService;
+import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @IntegrationTest
 @Sql(scripts = "classpath:data/sql/dangling-payments-test-data.sql",
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
-    "classpath:data/sql/clear-all-vehicle-entrants.sql"},
+@Sql(
+    scripts = {"classpath:data/sql/clear-all-payments.sql",
+        "classpath:data/sql/clear-all-vehicle-entrants.sql"},
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 public class DanglingPaymentsCleanupTestIT {
 
@@ -57,11 +59,15 @@ public class DanglingPaymentsCleanupTestIT {
   private String emailSqsQueueName;
   @Autowired
   private ObjectMapper objectMapper;
+  @Autowired
+  private SecretsManagerInitialisation secretsManagerInitialisation;
 
   @Autowired
   private CleanupDanglingPaymentsService danglingPaymentsService;
 
   private ClientAndServer mockServer;
+
+  private String secretName = "payments/config.localstack";
 
   @BeforeEach
   public void createEmailQueue() {
@@ -73,6 +79,11 @@ public class DanglingPaymentsCleanupTestIT {
   @BeforeEach
   public void startMockServer() {
     mockServer = startClientAndServer(1080);
+  }
+
+  @BeforeEach
+  public void createSecret() throws JsonProcessingException {
+    secretsManagerInitialisation.createSecret(secretName);
   }
 
   @AfterEach
@@ -88,28 +99,19 @@ public class DanglingPaymentsCleanupTestIT {
 
   @Test
   public void danglingPaymentsCleanupTest() {
-    givenDanglingPaymentsWithExternalIds(
-        "cancelled-payment-id",
-        "expired-payment-id",
-        "success-payment-id"
-    );
+    givenDanglingPaymentsWithExternalIds("cancelled-payment-id", "expired-payment-id",
+        "success-payment-id");
     andNonDanglingPaymentsCountIs(EXPECTED_NON_DANGLING_PAYMENTS_COUNT);
 
     whenDanglingPaymentServiceIsCalled();
 
-    thenStatusOf("cancelled-payment-id")
-        .isFailed()
-        .andStatusOfVehicleEntrantPaymentsIsNotPaid();
-    thenStatusOf("expired-payment-id")
-        .isFailed()
-        .andStatusOfVehicleEntrantPaymentsIsNotPaid();
-    thenStatusOf("success-payment-id")
-        .isSuccess()
-        .andStatusOfVehicleEntrantPaymentsIsPaid()
+    thenStatusOf("cancelled-payment-id").isFailed().andStatusOfVehicleEntrantPaymentsIsNotPaid();
+    thenStatusOf("expired-payment-id").isFailed().andStatusOfVehicleEntrantPaymentsIsNotPaid();
+    thenStatusOf("success-payment-id").isSuccess().andStatusOfVehicleEntrantPaymentsIsPaid()
         .andPaymentIsLinkedToVehicleEntrant();
 
-    andNonDanglingPaymentsCountIs(EXPECTED_NON_DANGLING_PAYMENTS_COUNT
-        + INITIAL_DANGLING_PAYMENTS_COUNT);
+    andNonDanglingPaymentsCountIs(
+        EXPECTED_NON_DANGLING_PAYMENTS_COUNT + INITIAL_DANGLING_PAYMENTS_COUNT);
     andDanglingPaymentsCountIsZero();
     andPaymentReceiptIsSentOnlyOnce();
   }
@@ -144,10 +146,11 @@ public class DanglingPaymentsCleanupTestIT {
             + "OR payment_submitted_timestamp + INTERVAL '90 minutes' >= NOW() "
             + "OR payment_provider_status IN ('SUCCESS', 'FAILED', 'CANCELLED', 'ERROR')");
   }
+
   private List<Message> receiveSqsMessages() {
     GetQueueUrlResult queueUrlResult = sqsClient.getQueueUrl(emailSqsQueueName);
-    ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(
-        queueUrlResult.getQueueUrl());
+    ReceiveMessageResult receiveMessageResult =
+        sqsClient.receiveMessage(queueUrlResult.getQueueUrl());
     return receiveMessageResult.getMessages();
   }
 
@@ -179,25 +182,19 @@ public class DanglingPaymentsCleanupTestIT {
   }
 
   private void mockExternalPaymentResponse(String prefix, String externalId) {
-    mockServer.when(
-        HttpRequest.request()
-            .withMethod("GET")
+    mockServer
+        .when(HttpRequest.request().withMethod("GET")
             .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-            .withPath("/v1/payments/" + externalId)
-    ).respond(
-        HttpResponse.response()
-            .withStatusCode(HttpStatus.OK.value())
+            .withPath("/v1/payments/" + externalId))
+        .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readFile(prefix + "-payment.json"))
-    );
+            .withBody(readFile(prefix + "-payment.json")));
   }
 
   @SneakyThrows
   private String readFile(String filename) {
-    return Resources.toString(
-        Resources.getResource("data/external/dangling/" + filename),
-        Charsets.UTF_8
-    );
+    return Resources.toString(Resources.getResource("data/external/dangling/" + filename),
+        Charsets.UTF_8);
   }
 
   static class DanglingPaymentAssertion {
@@ -212,41 +209,40 @@ public class DanglingPaymentsCleanupTestIT {
     }
 
     private String findInternalIdFor(String externalId) {
-      return jdbcTemplate.queryForObject("select payment_id from payment where "
-          + "payment_provider_id = '" + externalId + "'", String.class);
+      return jdbcTemplate.queryForObject(
+          "select payment_id from payment where " + "payment_provider_id = '" + externalId + "'",
+          String.class);
     }
 
     public DanglingPaymentAssertion isFailed() {
       int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "payment_provider_id = '" + externalId + "' "
-              + "AND payment_provider_status = '" + ExternalPaymentStatus.FAILED.name() + "'");
+          "payment_provider_id = '" + externalId + "' " + "AND payment_provider_status = '"
+              + ExternalPaymentStatus.FAILED.name() + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
 
     public void andStatusOfVehicleEntrantPaymentsIsNotPaid() {
       // count of entries whose status is NOT equal to NOT_PAID must be zero
-      int count = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "payment_id = '" + internalId + "' "
-              + "AND payment_status != '" + InternalPaymentStatus.NOT_PAID.name() + "'");
+      int count = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "vehicle_entrant_payment",
+          "payment_id = '" + internalId + "' " + "AND payment_status != '"
+              + InternalPaymentStatus.NOT_PAID.name() + "'");
       assertThat(count).isZero();
     }
 
     public DanglingPaymentAssertion andStatusOfVehicleEntrantPaymentsIsPaid() {
       // count of entries whose status is NOT equal to PAID must be zero
-      int count = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "payment_id = '" + internalId + "' "
-              + "AND payment_status != '" + InternalPaymentStatus.PAID.name() + "'");
+      int count = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "vehicle_entrant_payment",
+          "payment_id = '" + internalId + "' " + "AND payment_status != '"
+              + InternalPaymentStatus.PAID.name() + "'");
       assertThat(count).isZero();
       return this;
     }
 
     public DanglingPaymentAssertion isSuccess() {
       int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "payment_provider_id = '" + externalId + "' "
-              + "AND payment_provider_status = '" + ExternalPaymentStatus.SUCCESS.name() + "'");
+          "payment_provider_id = '" + externalId + "' " + "AND payment_provider_status = '"
+              + ExternalPaymentStatus.SUCCESS.name() + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }

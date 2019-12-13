@@ -16,8 +16,9 @@ services:
     name: localstack
     ports:
       - "4576:4576"
+      - "4584:4584"
     environment:
-      - SERVICES=sqs
+      - SERVICES=sqs,secretsmanager
     volumes:
       - "~/tmp/localstack:/tmp/localstack"
     networks:

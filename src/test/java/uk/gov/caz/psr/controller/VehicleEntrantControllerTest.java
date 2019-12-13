@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -31,8 +30,7 @@ import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.service.VehicleEntrantService;
 import uk.gov.caz.psr.util.TestObjectFactory.VehicleEntrantPayments;
 
-@ContextConfiguration(classes = {Configuration.class,
-    VehicleEntrantController.class})
+@ContextConfiguration(classes = {Configuration.class, VehicleEntrantController.class})
 @WebMvcTest
 class VehicleEntrantControllerTest {
 
@@ -46,12 +44,11 @@ class VehicleEntrantControllerTest {
   private ObjectMapper objectMapper;
 
   private static final String ANY_CORRELATION_ID = "03d339e2-875f-4b3f-9dfa-1f6aa57cc119";
-  private static final UUID ANY_CLEAN_ZONE_ID = UUID.fromString(
-      "e41d36a6-fcd6-4467-9368-af75201dcae2");
+  private static final UUID ANY_CLEAN_ZONE_ID =
+      UUID.fromString("e41d36a6-fcd6-4467-9368-af75201dcae2");
   private static final String ANY_VALID_VRN = "DL76MWX";
-
-  private static final String PATH = VehicleEntrantController.BASE_PATH
-      + "/" + VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS;
+  private static final String PATH = VehicleEntrantController.BASE_PATH + "/"
+      + VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS;
 
   @Nested
   class Validation {
@@ -60,11 +57,10 @@ class VehicleEntrantControllerTest {
     public void shouldReturn400StatusCodeWhenCleanZoneIdIsNull() throws Exception {
       String payload = requestWithCleanZoneId(null);
 
-      mockMvc.perform(post(PATH)
-          .content(payload)
-          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON)
-          .accept(MediaType.APPLICATION_JSON))
+      mockMvc
+          .perform(post(PATH).content(payload)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
@@ -76,11 +72,10 @@ class VehicleEntrantControllerTest {
     public void shouldReturn400StatusCodeWhenCazEntryTimestampIsNull() throws Exception {
       String payload = requestWithCazEntryTimestamp(null);
 
-      mockMvc.perform(post(PATH)
-          .content(payload)
-          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON)
-          .accept(MediaType.APPLICATION_JSON))
+      mockMvc
+          .perform(post(PATH).content(payload)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
@@ -92,11 +87,10 @@ class VehicleEntrantControllerTest {
     public void shouldReturn400StatusCodeWhenVrnIsNull() throws Exception {
       String payload = requestWithVrn(null);
 
-      mockMvc.perform(post(PATH)
-          .content(payload)
-          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON)
-          .accept(MediaType.APPLICATION_JSON))
+      mockMvc
+          .perform(post(PATH).content(payload)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
@@ -109,11 +103,10 @@ class VehicleEntrantControllerTest {
     public void shouldReturn400StatusCodeWhenVrnIsInvalid(String vrn) throws Exception {
       String payload = requestWithVrn(vrn);
 
-      mockMvc.perform(post(PATH)
-          .content(payload)
-          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .contentType(MediaType.APPLICATION_JSON)
-          .accept(MediaType.APPLICATION_JSON))
+      mockMvc
+          .perform(post(PATH).content(payload)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
@@ -129,11 +122,10 @@ class VehicleEntrantControllerTest {
     given(vehicleEntrantService.registerVehicleEntrant(any()))
         .willReturn(foundVehicleEntrantPayment.getInternalPaymentStatus());
 
-    mockMvc.perform(post(PATH)
-        .content(payload)
-        .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON))
+    mockMvc
+        .perform(post(PATH).content(payload)
+            .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+            .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(jsonPath("$.status").value(InternalPaymentStatus.NOT_PAID.name()));
@@ -148,11 +140,10 @@ class VehicleEntrantControllerTest {
     given(vehicleEntrantService.registerVehicleEntrant(any()))
         .willReturn(foundVehicleEntrantPayment.getInternalPaymentStatus());
 
-    mockMvc.perform(post(PATH)
-        .content(payload)
-        .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON))
+    mockMvc
+        .perform(post(PATH).content(payload)
+            .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+            .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(jsonPath("$.status").value(InternalPaymentStatus.PAID.name()));
@@ -175,8 +166,8 @@ class VehicleEntrantControllerTest {
   }
 
   private String requestWithCazEntryTimestamp(LocalDateTime cazEntryTimestamp) {
-    VehicleEntrantRequest request = baseRequestBuilder().cazEntryTimestamp(cazEntryTimestamp)
-        .build();
+    VehicleEntrantRequest request =
+        baseRequestBuilder().cazEntryTimestamp(cazEntryTimestamp).build();
     return toJson(request);
   }
 
@@ -191,9 +182,7 @@ class VehicleEntrantControllerTest {
   }
 
   private VehicleEntrantRequest.VehicleEntrantRequestBuilder baseRequestBuilder() {
-    return VehicleEntrantRequest.builder()
-        .cleanZoneId(ANY_CLEAN_ZONE_ID)
-        .vrn(ANY_VALID_VRN)
+    return VehicleEntrantRequest.builder().cleanZoneId(ANY_CLEAN_ZONE_ID).vrn(ANY_VALID_VRN)
         .cazEntryTimestamp(todayDateTime());
   }
 }
