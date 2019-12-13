@@ -67,7 +67,8 @@ public class DanglingPaymentsCleanupTestIT {
 
   private ClientAndServer mockServer;
 
-  private String secretName = "payments/config.localstack";
+  @Value("${aws.secret-name}")
+  private String secretName;
 
   @BeforeEach
   public void createEmailQueue() {

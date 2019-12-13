@@ -189,7 +189,7 @@ public class ExternalPaymentsRepository {
   private RequestEntity<CreateCardPaymentRequest> buildRequestEntityForCreate(String apiKey,
       CreateCardPaymentRequest body) {
     return RequestEntity.post(URI.create(rootUrl + CREATE_URI))
-        .header("Authorization", "Bearer " + apiKey).accept(MediaType.APPLICATION_JSON)
+        .header("Authorization", "Bearer " + apiKey.trim()).accept(MediaType.APPLICATION_JSON)
         .contentType(MediaType.APPLICATION_JSON).body(body);
   }
 
