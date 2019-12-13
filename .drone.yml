@@ -36,27 +36,6 @@ steps:
       JAQU_NEXUS_PASSWORD:
         from_secret: nexus_password
 
-
-# Build end to end tests docker image
-  - name: build end to end test image
-    image: docker:git
-    commands:
-      - mkdir ~/.ssh
-      - echo -n "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
-      - chmod 600 ~/.ssh/id_rsa
-      - touch ~/.ssh/known_hosts
-      - chmod 600 ~/.ssh/known_hosts
-      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
-      - git clone git@github.com:InformedSolutions/JAQU-CAZ-QA-selenium.git
-      - cd JAQU-CAZ-QA-selenium
-      - docker build -t selenium-jaqu .
-    environment:
-      GIT_PRIVATE_SSH:
-        from_secret: github_private_key
-    volumes:
-      - name: docker_sock
-        path: /var/run/docker.sock
-
   ################################################# End Nightly Steps ############################################################
 
 ---
