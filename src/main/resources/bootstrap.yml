@@ -1,12 +1,14 @@
+spring:
+  application:
+    name: payments
+
 aws:
   secretsmanager:
     prefix: /config
     defaultContext: payments
     profileSeparator: .
-    name: payments
     failFast: true
     enabled: true
-#    enabled: false
 
 cloud:
   aws:

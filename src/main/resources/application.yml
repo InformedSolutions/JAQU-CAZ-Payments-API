@@ -27,7 +27,6 @@ services:
     root-url: https://publicapi.payments.service.gov.uk
     api-key: to-be-replaced-by-external-value
   sqs:
-    message-group-id-payments: PAYMENTS_RECEIPT
     new-queue-name: notify-gateway_new_dev.fifo
     template-id: a4282196-a623-4b78-acfa-70b0a0b4a19b
 
