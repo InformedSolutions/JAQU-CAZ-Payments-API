@@ -18,8 +18,7 @@ import uk.gov.caz.psr.dto.SendEmailRequest;
 @Slf4j
 public class MessagingClient {
 
-  String newQueueName;
-
+  private final String newQueueName;
   private final AmazonSQS client;
   private final ObjectMapper objectMapper;
 
