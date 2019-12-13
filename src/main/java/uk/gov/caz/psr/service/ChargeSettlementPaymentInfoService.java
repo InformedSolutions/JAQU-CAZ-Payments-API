@@ -10,6 +10,7 @@ import uk.gov.caz.psr.model.info.PaymentInfo;
 import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 import uk.gov.caz.psr.repository.jpa.VehicleEntrantPaymentInfoRepository;
 import uk.gov.caz.psr.service.paymentinfo.CazIdSpecification;
+import uk.gov.caz.psr.service.paymentinfo.OmitNotPaidPaymentInfoSpecification;
 import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
 
 /**
@@ -35,8 +36,16 @@ public class ChargeSettlementPaymentInfoService {
     Specification<VehicleEntrantPaymentInfo> specification = specifications.stream()
         .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(attributes))
         .map(paymentInfoSpecification -> paymentInfoSpecification.create(attributes))
-        .reduce(CazIdSpecification.forCaz(cazId), Specification::and);
+        .reduce(initialSpecification(cazId), Specification::and);
 
     return vehicleEntrantPaymentInfoRepository.findAll(specification);
+  }
+
+  /**
+   * Returns the initial specification that selects entries for a given {@code cazId} and
+   * does not include payments with {@code notPaid} status.
+   */
+  private Specification<VehicleEntrantPaymentInfo> initialSpecification(UUID cazId) {
+    return CazIdSpecification.forCaz(cazId).and(new OmitNotPaidPaymentInfoSpecification());
   }
 }

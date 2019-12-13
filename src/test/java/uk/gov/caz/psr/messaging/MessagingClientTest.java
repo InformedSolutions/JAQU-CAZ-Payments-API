@@ -35,17 +35,16 @@ public class MessagingClientTest {
 
   @BeforeEach
   void init() throws JsonProcessingException {
-    messagingClient = new MessagingClient("testId", "testQueue", client, new ObjectMapper());
+    messagingClient = new MessagingClient("testQueue", client, new ObjectMapper());
     sendEmailRequest = SendEmailRequest.builder().emailAddress("test@test.com")
         .personalisation("{}").templateId("test-template-id").build();
-    ReflectionTestUtils.setField(messagingClient, "newQueueName", "new");
   }
 
   @Test
   void canPublishMessage() throws JsonProcessingException {
     GetQueueUrlResult result = new GetQueueUrlResult();
     result.setQueueUrl("newUrl");
-    Mockito.when(client.getQueueUrl("new")).thenReturn(result);
+    Mockito.when(client.getQueueUrl("testQueue")).thenReturn(result);
 
     messagingClient.publishMessage(sendEmailRequest);
 
