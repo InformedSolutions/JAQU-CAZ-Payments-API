@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,7 +47,7 @@ public class PaymentStatusRepository {
     Preconditions.checkNotNull(vrn, "VRN cannot be null");
     Preconditions.checkNotNull(dateOfCazEntry, "dateOfCazEntry cannot be null");
 
-    List<PaymentStatus> results = jdbcTemplate.query(
+    return jdbcTemplate.query(
         SELECT_BY_ENTRY_DATE_AND_VRN_AND_CAZ_ID_SQL,
         preparedStatement -> {
           preparedStatement.setObject(1, cazId);
@@ -57,8 +56,6 @@ public class PaymentStatusRepository {
         },
         ROW_MAPPER
     );
-
-    return results;
   }
 
   /**

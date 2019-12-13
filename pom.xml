@@ -35,7 +35,7 @@
     </sonar.coverage.jacoco.xmlReportPaths>
 
     <!-- Sonar rule exclusions - begin -->
-    <sonar.issue.ignore.multicriteria>j1,j2</sonar.issue.ignore.multicriteria>
+    <sonar.issue.ignore.multicriteria>j1,j2,j3,j4,j5,j6,j7,j8</sonar.issue.ignore.multicriteria>
     <!-- Ignore 'URIs should not be hardcoded' rule -->
     <sonar.issue.ignore.multicriteria.j1.ruleKey>
       squid:S1075
@@ -51,6 +51,54 @@
     <sonar.issue.ignore.multicriteria.j2.resourceKey>
       **/psr/repository/*.java
     </sonar.issue.ignore.multicriteria.j2.resourceKey>
+
+    <!-- Ignore 'Using environment variables is security-sensitive' rule-->
+    <sonar.issue.ignore.multicriteria.j3.ruleKey>
+      squid:S5304
+    </sonar.issue.ignore.multicriteria.j3.ruleKey>
+    <sonar.issue.ignore.multicriteria.j3.resourceKey>
+      **/psr/amazonaws/StreamLambdaHandler.java
+    </sonar.issue.ignore.multicriteria.j3.resourceKey>
+
+    <!-- Ignore 'Using regular expressions is security-sensitive' rule-->
+    <sonar.issue.ignore.multicriteria.j4.ruleKey>
+      squid:S4784
+    </sonar.issue.ignore.multicriteria.j4.ruleKey>
+    <sonar.issue.ignore.multicriteria.j4.resourceKey>
+      **/psr/dto/*.java
+    </sonar.issue.ignore.multicriteria.j4.resourceKey>
+
+    <!-- Ignore 'Using command line arguments is security-sensitive' rule-->
+    <sonar.issue.ignore.multicriteria.j5.ruleKey>
+      squid:S4823
+    </sonar.issue.ignore.multicriteria.j5.ruleKey>
+    <sonar.issue.ignore.multicriteria.j5.resourceKey>
+      **/psr/Application.java
+    </sonar.issue.ignore.multicriteria.j5.resourceKey>
+
+    <!-- Ignore 'Instance methods should not write to "static" fields' rule-->
+    <sonar.issue.ignore.multicriteria.j6.ruleKey>
+      squid:S2696
+    </sonar.issue.ignore.multicriteria.j6.ruleKey>
+    <sonar.issue.ignore.multicriteria.j6.resourceKey>
+      **/psr/amazonaws/*.java
+    </sonar.issue.ignore.multicriteria.j6.resourceKey>
+
+    <!-- Ignore 'Fields in a "Serializable" class should either be transient or serializable' rule-->
+    <sonar.issue.ignore.multicriteria.j7.ruleKey>
+      squid:S1948
+    </sonar.issue.ignore.multicriteria.j7.ruleKey>
+    <sonar.issue.ignore.multicriteria.j7.resourceKey>
+      **/psr/**/*.java
+    </sonar.issue.ignore.multicriteria.j7.resourceKey>
+
+    <!-- Ignore 'Exception classes should be immutable' rule-->
+    <sonar.issue.ignore.multicriteria.j8.ruleKey>
+      squid:S1165
+    </sonar.issue.ignore.multicriteria.j8.ruleKey>
+    <sonar.issue.ignore.multicriteria.j8.resourceKey>
+      **/psr/*/exception/*.java
+    </sonar.issue.ignore.multicriteria.j8.resourceKey>
     <!-- Sonar rule exclusions - end -->
 
     <!-- to enable running only integration tests without unit tests -->
@@ -134,13 +182,13 @@
       <groupId>com.amazonaws.secretsmanager</groupId>
       <artifactId>aws-secretsmanager-jdbc</artifactId>
       <version>1.0.2</version>
-    </dependency>    
+    </dependency>
     <dependency>
 	    <groupId>com.amazonaws</groupId>
 	    <artifactId>amazon-sqs-java-messaging-lib</artifactId>
 	    <version>1.0.8</version>
 	  </dependency>
-	  
+
 	<dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-aws-messaging</artifactId>
@@ -547,7 +595,7 @@
     	</plugins>
     </pluginManagement>
   </build>
-	
+
   <reporting>
     <plugins>
       <plugin>

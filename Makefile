@@ -74,6 +74,12 @@ local-db-up:
 local-db-down:
 	docker-compose -f docker/docker-compose.yml -p postgres_docker down
 
+local-up:
+	docker-compose -f docker/docker-compose.yml -p postgres_docker up -d
+
+local-down:
+	docker-compose -f docker/docker-compose.yml -p postgres_docker down
+
 # Example run: 'make sam-local-run EVENT=src/test/resources/sample_lambda_events/import_10_taxis.json'
 sam-local-run:
 	SPRING_PROFILES_ACTIVE='sam-local' sam local invoke JaquCazFunction -t sam.yaml -e $$EVENT --docker-network postgres_docker_default
