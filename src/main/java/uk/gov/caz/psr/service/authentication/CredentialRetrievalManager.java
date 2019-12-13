@@ -48,12 +48,12 @@ public class CredentialRetrievalManager {
    * @return Secret value for a given key.
    */
   public Optional<String> getApiKey(UUID cleanAirZoneId) {
-    String secretName = generateSecretKey(cleanAirZoneId);
+    String generatedSecretKey = generateSecretKey(cleanAirZoneId);
     Map<String, String> secrets = this.getSecretsValue();
     
-    if (secrets.containsKey(secretName)) {
+    if (secrets.containsKey(generatedSecretKey)) {
       log.info("Successfully retrieved API key for Clean Air Zone: {}", cleanAirZoneId);
-      return Optional.of(secrets.get(secretName));
+      return Optional.of(secrets.get(generatedSecretKey));
     } else {
       log.error("Failed to retrieved API key for Clean Air Zone: {}", cleanAirZoneId);
       return Optional.empty();
