@@ -8,6 +8,8 @@ springfox:
         path: /v1/swagger-docs
 
 spring:
+  jpa:
+    open-in-view: false
   liquibase:
     enabled: true
   datasource:
