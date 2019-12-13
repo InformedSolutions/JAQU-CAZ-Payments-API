@@ -51,7 +51,7 @@ public class CredentialRetrievalManager {
     
     if (secrets.containsKey(generatedSecretKey)) {
       log.info("Successfully retrieved API key for Clean Air Zone: {}", cleanAirZoneId);
-      return Optional.of(secrets.get(generatedSecretKey));
+      return Optional.of(secrets.get(generatedSecretKey).trim());
     } else {
       log.error("Failed to retrieved API key for Clean Air Zone: {}", cleanAirZoneId);
       return Optional.empty();
