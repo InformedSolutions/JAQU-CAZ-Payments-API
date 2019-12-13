@@ -131,7 +131,6 @@ class CleanupDanglingPaymentServiceTest {
         ExternalPaymentDetailsFactory.anyWithStatus(ExternalPaymentStatus.INITIATED);
     Payment payment =
         paymentWithEmptyVehicleEntrantsAndStatus(externalPaymentDetails.getExternalPaymentStatus());
-//    mockVehicleEntrantsFor(payment, UUID.randomUUID());
 
     Throwable throwable = catchThrowable(() -> service.processDanglingPayment(payment));
     
