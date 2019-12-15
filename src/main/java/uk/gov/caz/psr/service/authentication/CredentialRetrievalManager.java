@@ -28,7 +28,7 @@ public class CredentialRetrievalManager {
 
   /**
    * Constructor for manager class of the external secrets repository.
-   * 
+   *
    * @param awsSecretsManager an instance of {@link AWSSecretsManager}
    * @param objectMapper an instance of {@link ObjectMapper}
    */
@@ -41,14 +41,14 @@ public class CredentialRetrievalManager {
 
   /**
    * Get secret value by a given key from external property source.
-   * 
+   *
    * @param cleanAirZoneId the ID of the Clean Air Zone which gives the key of the secret
    * @return Secret value for a given key.
    */
   public Optional<String> getApiKey(UUID cleanAirZoneId) {
     String generatedSecretKey = generateSecretKey(cleanAirZoneId);
-    Map<String, String> secrets = this.getSecretsValue();
-    
+    Map<String, String> secrets = getSecretsValue();
+
     if (secrets.containsKey(generatedSecretKey)) {
       log.info("Successfully retrieved API key for Clean Air Zone: {}", cleanAirZoneId);
       return Optional.of(secrets.get(generatedSecretKey).trim());
@@ -61,8 +61,7 @@ public class CredentialRetrievalManager {
   private Map<String, String> getSecretsValue() {
     GetSecretValueRequest getSecretValueRequest =
         new GetSecretValueRequest().withSecretId(this.secretName);
-    GetSecretValueResult getSecretValueResult = null;
-    getSecretValueResult = client.getSecretValue(getSecretValueRequest);
+    GetSecretValueResult getSecretValueResult = client.getSecretValue(getSecretValueRequest);
 
     String secretString = getSecretValueResult.getSecretString() != null
         ? getSecretValueResult.getSecretString()
@@ -75,7 +74,7 @@ public class CredentialRetrievalManager {
       return Collections.emptyMap();
     }
   }
-  
+
   private String generateSecretKey(UUID cleanAirZoneId) {
     String cleanAirZoneStr = cleanAirZoneId.toString();
     return cleanAirZoneStr.replace("-", "");
