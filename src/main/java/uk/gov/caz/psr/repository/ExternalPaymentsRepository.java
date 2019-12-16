@@ -198,7 +198,8 @@ public class ExternalPaymentsRepository {
    */
   private CreateCardPaymentRequest buildCreateBody(Payment payment, String returnUrl) {
     return CreateCardPaymentRequest.builder().amount(payment.getTotalPaid())
-        .description("Payment for #" + payment.getId()).reference(payment.getId().toString())
+        .description("Driving in a Clean Air Zone charge")
+        .reference(payment.getId().toString())
         .returnUrl(returnUrl).build();
   }
 
