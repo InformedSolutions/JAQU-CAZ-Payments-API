@@ -113,6 +113,17 @@ class PaymentsControllerTest {
   }
 
   @Test
+  public void invalidTariffCodeShouldResultIn400() throws Exception {
+    String payload = paymentRequestWithEmptyTariffCode();
+
+    mockMvc
+        .perform(post(BASE_PATH).content(payload).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .andExpect(status().isBadRequest());
+    verify(initiatePaymentService, never()).createPayment(any());
+  }
+
+  @Test
   public void shouldReturnValidResponse() throws Exception {
     InitiatePaymentRequest requestParams = baseRequestBuilder().build();
     String payload = toJsonString(requestParams);
@@ -150,6 +161,11 @@ class PaymentsControllerTest {
     return toJsonString(requestParams);
   }
 
+  private String paymentRequestWithEmptyTariffCode() {
+    InitiatePaymentRequest requestParams = baseRequestBuilder().tariffCode("").build();
+    return toJsonString(requestParams);
+  }
+
   @SneakyThrows
   private String toJsonString(InitiatePaymentRequest requestParams) {
     return objectMapper.writeValueAsString(requestParams);
@@ -157,6 +173,7 @@ class PaymentsControllerTest {
 
   private InitiatePaymentRequest.InitiatePaymentRequestBuilder baseRequestBuilder() {
     return InitiatePaymentRequest.builder().cleanAirZoneId(UUID.randomUUID()).days(days)
-        .vrn("TEST123").amount(1050).returnUrl("https://example.return.url");
+        .vrn("TEST123").amount(1050).returnUrl("https://example.return.url")
+        .tariffCode("BCC01-private_car");
   }
 }
