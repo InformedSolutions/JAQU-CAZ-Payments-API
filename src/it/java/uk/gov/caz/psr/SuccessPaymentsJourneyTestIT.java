@@ -319,7 +319,7 @@ public class SuccessPaymentsJourneyTestIT {
     return InitiatePaymentRequest.builder().amount(4200)
         .days(Arrays.asList(dateWithoutEntityInDB, dateWithEntityInDB))
         .cleanAirZoneId(UUID.fromString(this.cazId)).returnUrl("http://localhost/return-url")
-        .vrn("ND84VSX").build();
+        .vrn("ND84VSX").tariffCode("tariffCode").build();
   }
 
   private void externalPaymentServiceCreatesPaymentWithId(String externalPaymentId) {

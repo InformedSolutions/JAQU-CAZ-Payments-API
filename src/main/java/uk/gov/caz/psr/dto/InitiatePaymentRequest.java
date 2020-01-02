@@ -37,4 +37,8 @@ public class InitiatePaymentRequest {
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.return-url}")
   @NotBlank
   String returnUrl;
+
+  @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.tariff-code}")
+  @NotBlank
+  String tariffCode;
 }
