@@ -39,6 +39,6 @@ public class InitiatePaymentRequest {
   String returnUrl;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.tariff-code}")
-  @NotBlank
+  // TODO annotate with @NotBlank once the whole flow with passing tariffCode from UI is completed
   String tariffCode;
 }
