@@ -17,6 +17,7 @@ import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpRequest;
@@ -37,6 +38,7 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.CleanupDanglingPaymentsService;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
+@Disabled("Because of ERD updates")
 @IntegrationTest
 @Sql(scripts = "classpath:data/sql/dangling-payments-test-data.sql",
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)

@@ -50,7 +50,7 @@ public class PaymentRepository {
   public PaymentRepository(JdbcTemplate jdbcTemplate,
       VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository) {
     this.jdbcTemplate = jdbcTemplate;
-    this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("payment")
+    this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("t_payment")
         .usingGeneratedKeyColumns("payment_id")
         .usingColumns("payment_method", "total_paid", "payment_provider_status");
     this.vehicleEntrantPaymentRepository = vehicleEntrantPaymentRepository;

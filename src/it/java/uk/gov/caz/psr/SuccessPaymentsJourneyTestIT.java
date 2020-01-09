@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpRequest;
@@ -47,6 +48,7 @@ import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
+@Disabled("Because of ERD updates")
 @FullyRunningServerIntegrationTest
 @Sql(
     scripts = {"classpath:data/sql/clear-all-payments.sql",
