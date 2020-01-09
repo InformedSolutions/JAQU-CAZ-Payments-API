@@ -45,7 +45,7 @@ public class ExternalPaymentsRepository {
    * Constructor for {@link ExternalPaymentsRepository}.
    */
   public ExternalPaymentsRepository(@Value("${services.gov-uk-pay.root-url}") String rootUrl,
-      RestTemplateBuilder restTemplateBuilder, 
+      RestTemplateBuilder restTemplateBuilder,
       CredentialRetrievalManager credentialRetrievalManager) {
     this.rootUrl = rootUrl;
     this.restTemplate = restTemplateBuilder.build();
@@ -53,8 +53,9 @@ public class ExternalPaymentsRepository {
   }
 
   /**
-   * Filters through a {@link Payment}'s {@link VehicleEntrantPayment}s to retrieve a 
-   * Clean Air Zone ID.
+   * Filters through a {@link Payment}'s {@link VehicleEntrantPayment}s to retrieve a Clean Air Zone
+   * ID.
+   *
    * @param payment an instance of a {@link Payment} object
    * @return the API key
    */
@@ -65,6 +66,7 @@ public class ExternalPaymentsRepository {
 
   /**
    * Retrieve the API key from the external credentials repository.
+   *
    * @param cleanAirZoneId a {@link UUID} for the Clean Air Zone.
    * @return the API key
    */
@@ -92,7 +94,7 @@ public class ExternalPaymentsRepository {
    * @param payment Object of the internal payment.
    * @param returnUrl Url from the Fronted to redirect after payment in GOV.UK PAY.
    * @return An instance of {@link Payment} with {@code externalPaymentId} and {@code nextUrl}
-   *         properties set.
+   *     properties set.
    * @throws NullPointerException if {@code payment} or {@link Payment#getId()} is null
    * @throws IllegalArgumentException if {@code returnUrl} is null or empty
    */
@@ -144,9 +146,10 @@ public class ExternalPaymentsRepository {
    * Gets payment details by its identifier.
    *
    * @param id ID of the payment.
-   * @param cleanAirZoneId a {@link UUID} identifying the Clean Air Zone the payment was made in.
-   * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist,
-   *         {@link Optional#empty()} otherwise.
+   * @param cleanAirZoneId a {@link UUID} identifying the Clean Air Zone the payment was made
+   *     in.
+   * @return {@link GetPaymentResult} wrapped in {@link Optional} if the payment exist, {@link
+   *     Optional#empty()} otherwise.
    * @throws IllegalArgumentException if {@code id} is null or empty
    */
   public Optional<GetPaymentResult> findByIdAndCazId(String id, UUID cleanAirZoneId) {
