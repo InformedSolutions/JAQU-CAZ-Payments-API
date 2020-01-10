@@ -2,14 +2,10 @@ package uk.gov.caz.psr.service;
 
 import com.google.common.base.Preconditions;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
-import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
 /**
  * Creates a new instance of {@link Payment} with the new external status set and a mapped internal
@@ -31,16 +27,17 @@ public class PaymentWithExternalPaymentDetailsBuilder {
         .externalPaymentStatus(newStatus)
         .emailAddress(externalPaymentDetails.getEmail())
         .authorisedTimestamp(getAuthorisedTimestamp(payment, newStatus))
-        .vehicleEntrantPayments(buildVehicleEntrantPaymentsWith(newStatus,
-            payment.getVehicleEntrantPayments())
-        )
         .build();
+    // TODO: Fix with the payment updates CAZ-1716
+    //     .vehicleEntrantPayments(buildVehicleEntrantPaymentsWith(newStatus,
+    //            payment.getVehicleEntrantPayments())
+    //        )
   }
 
   /**
    * Verifies whether passed {@code payment} and {@status} are in valid state when calling {@link
    * PaymentWithExternalPaymentDetailsBuilder#buildPaymentWithExternalPaymentDetails(
-   * uk.gov.caz.psr.model.Payment, uk.gov.caz.psr.model.ExternalPaymentDetails)}.
+   *uk.gov.caz.psr.model.Payment, uk.gov.caz.psr.model.ExternalPaymentDetails)}.
    */
   private void checkPreconditions(Payment payment, ExternalPaymentDetails externalPaymentDetails) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
@@ -51,19 +48,20 @@ public class PaymentWithExternalPaymentDetailsBuilder {
         externalPaymentDetails.getExternalPaymentStatus(), payment.getExternalPaymentStatus());
   }
 
-  /**
-   * Creates a new list of {@link VehicleEntrantPayment} with an internal status mapped from {@code
-   * status}.
-   */
-  private List<VehicleEntrantPayment> buildVehicleEntrantPaymentsWith(ExternalPaymentStatus status,
-      List<VehicleEntrantPayment> vehicleEntrantPayments) {
-    return vehicleEntrantPayments
-        .stream()
-        .map(vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder()
-            .internalPaymentStatus(InternalPaymentStatus.from(status))
-            .build())
-        .collect(Collectors.toList());
-  }
+  //  /**
+  //   * Creates a new list of {@link VehicleEntrantPayment} with an internal status mapped from
+  //   * {@code status}.
+  //   */
+  //  private List<VehicleEntrantPayment> buildVehicleEntrantPaymentsWith(
+  //      ExternalPaymentStatus status,
+  //      List<VehicleEntrantPayment> vehicleEntrantPayments) {
+  //    return vehicleEntrantPayments
+  //        .stream()
+  //        .map(vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder()
+  //            .internalPaymentStatus(InternalPaymentStatus.from(status))
+  //            .build())
+  //        .collect(Collectors.toList());
+  //  }
 
   /**
    * Returns {@link LocalDateTime#now()} as the authorised payment timestamp (date and time when the

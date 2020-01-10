@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.dto.VehicleEntrantRequest;
 import uk.gov.caz.psr.dto.VehicleEntrantResponse;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.service.VehicleEntrantService;
 
 /**
  * A controller which deals with requests that informs about a vehicle entering a CAZ.
@@ -22,13 +21,14 @@ public class VehicleEntrantController implements VehicleEntrantControllerApiSpec
   public static final String CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS =
       "vehicle-entrants";
 
-  private final VehicleEntrantService vehicleEntrantService;
-
   @Override
   public ResponseEntity<VehicleEntrantResponse> createVehicleEntrantAndGetPaymentDetails(
       VehicleEntrantRequest request) {
-    InternalPaymentStatus paymentStatus = vehicleEntrantService
-        .registerVehicleEntrant(request.toVehicleEntrant());
+    // TODO: We are not longer supporting adding VehicleEntrant
+    //       will keep it here until the process is fixed.
+    //    InternalPaymentStatus paymentStatus = vehicleEntrantService
+    //        .registerVehicleEntrant(request.toVehicleEntrant());
+    InternalPaymentStatus paymentStatus = InternalPaymentStatus.PAID;
     return ResponseEntity.ok(VehicleEntrantResponse.from(paymentStatus));
   }
 }

@@ -38,11 +38,11 @@ public class Payment {
   Integer totalPaid;
 
   /**
-   * A list of {@link VehicleEntrantPayment} instances associated with this object. It can be empty
+   * A list of {@link CazEntrantPayment} instances associated with this object. It can be empty
    * in cases when we don't want to eagerly fetch all associated entities with this payment.
    */
   @NonNull
-  List<VehicleEntrantPayment> vehicleEntrantPayments;
+  List<CazEntrantPayment> cazEntrantPayments;
 
   /**
    * Status of the payment as stored in GOV UK Pay.
@@ -92,7 +92,7 @@ public class Payment {
           "authorisedTimestamp is null and external payment status is not 'SUCCESS' or "
               + "authorisedTimestamp is not null and external payment status is 'SUCCESS'");
 
-      return new Payment(id, externalId, paymentMethod, totalPaid, vehicleEntrantPayments,
+      return new Payment(id, externalId, paymentMethod, totalPaid, cazEntrantPayments,
           externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl, emailAddress);
     }
 
