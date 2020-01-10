@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
-import uk.gov.caz.psr.repository.PaymentRepository;
 
 /**
  * Updates the external status of a {@link Payment} instance.
@@ -17,7 +16,7 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 public class PaymentStatusUpdater {
 
   private final PaymentWithExternalPaymentDetailsBuilder paymentWithExternalPaymentDetailsBuilder;
-  private final PaymentRepository internalPaymentsRepository;
+  //  private final PaymentRepository internalPaymentsRepository;
   private final TransientVehicleEntrantsLinker transientVehicleEntrantsLinker;
   private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -33,8 +32,8 @@ public class PaymentStatusUpdater {
 
     Payment updatedPayment = transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(
         paymentWithNewStatus);
-
-    internalPaymentsRepository.update(updatedPayment);
+    //    TODO: Fix with the payment updates CAZ-1716
+    //    internalPaymentsRepository.update(updatedPayment);
 
     publishPaymentStatusUpdatedEvent(updatedPayment);
 
@@ -61,7 +60,8 @@ public class PaymentStatusUpdater {
         externalPaymentDetails.getExternalPaymentStatus() != payment.getExternalPaymentStatus(),
         "Status cannot be equal to the existing status ('%s' != '%s')",
         externalPaymentDetails.getExternalPaymentStatus(), payment.getExternalPaymentStatus());
-    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
-        "vehicle entrant payments cannot be empty");
+    //    TODO: Fix with the payment updates CAZ-1716
+    //    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
+    //        "vehicle entrant payments cannot be empty");
   }
 }

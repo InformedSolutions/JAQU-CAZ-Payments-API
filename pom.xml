@@ -34,6 +34,7 @@
       **/psr/service/**/*.java,
       **/psr/controller/**/*.java,
       **/psr/dto/**/*.java,
+      **/psr/model/**/*.java,
       **/psr/util/**/*.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
@@ -662,6 +663,7 @@
                 <exclude>**/psr/controller/**/*.class</exclude>
                 <exclude>**/psr/dto/**/*.class</exclude>
                 <exclude>**/psr/util/**/*.class</exclude>
+                <exclude>**/psr/model/**/*.class</exclude>
               </excludes>
               <rules>
                 <rule>

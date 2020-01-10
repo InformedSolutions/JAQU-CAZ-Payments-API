@@ -53,14 +53,14 @@ public class ExternalPaymentsRepository {
   }
 
   /**
-   * Filters through a {@link Payment}'s {@link VehicleEntrantPayment}s to retrieve a Clean Air Zone
-   * ID.
+   * Filters through a {@link Payment}'s {@link uk.gov.caz.psr.model.CazEntrantPayment}s to retrieve
+   * a Clean Air Zone ID.
    *
    * @param payment an instance of a {@link Payment} object
    * @return the API key
    */
   private String getApiKeyFor(Payment payment) {
-    UUID cleanAirZoneId = payment.getVehicleEntrantPayments().iterator().next().getCleanZoneId();
+    UUID cleanAirZoneId = payment.getCazEntrantPayments().iterator().next().getCleanAirZoneId();
     return getApiKeyFor(cleanAirZoneId);
   }
 
@@ -103,8 +103,9 @@ public class ExternalPaymentsRepository {
     Preconditions.checkNotNull(payment.getId(), "Payment must have set its internal identifier");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(returnUrl),
         "Return url cannot be null or empty");
-    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
-        "Vehicle entrant payments cannot be null or empty");
+    //    TODO: Fix with the payment updates CAZ-1716
+    //    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
+    //        "Vehicle entrant payments cannot be null or empty");
     try {
       log.info("Create the payment for {}: start", payment.getId());
       RequestEntity<CreateCardPaymentRequest> request =
