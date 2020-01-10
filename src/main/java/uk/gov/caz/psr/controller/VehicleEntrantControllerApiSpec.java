@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +27,7 @@ import uk.gov.caz.psr.dto.VehicleEntrantDto;
     value = VehicleEntrantController.BASE_PATH,
     produces = MediaType.APPLICATION_JSON_VALUE
 )
+@Validated
 public interface VehicleEntrantControllerApiSpec {
 
   /**
@@ -54,5 +56,5 @@ public interface VehicleEntrantControllerApiSpec {
   @PostMapping(VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS)
   @ResponseStatus(HttpStatus.OK)
   ResponseEntity<List<EntrantPaymentDto>> createVehicleEntrantAndGetPaymentDetails(
-      @RequestBody @Valid List<VehicleEntrantDto> vehicleEntrants);
+      @RequestBody List<@Valid VehicleEntrantDto> vehicleEntrants);
 }

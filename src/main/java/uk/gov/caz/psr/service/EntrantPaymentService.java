@@ -8,11 +8,12 @@ import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.EntrantPaymentDto;
 import uk.gov.caz.psr.dto.VehicleEntrantDto;
 import uk.gov.caz.psr.model.EntrantPayment;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 
 @Service
 @AllArgsConstructor
-@SuppressWarnings("PMD.EmptyIfStmt") // TODO: Remove in CAZ-1715
 public class EntrantPaymentService {
 
   private final EntrantPaymentRepository entrantPaymentRepository;
@@ -25,30 +26,53 @@ public class EntrantPaymentService {
    * @return List of {@link EntrantPaymentDto}.
    */
   public List<EntrantPaymentDto> bulkProcess(List<VehicleEntrantDto> vehicleEntrants) {
-    List<EntrantPaymentDto> cazEntrantPayments = new ArrayList<>();
+    List<EntrantPaymentDto> result = new ArrayList<>();
 
     for (VehicleEntrantDto vehicleEntrantDto : vehicleEntrants) {
-      Optional<EntrantPayment> record = entrantPaymentRepository
-          .findOneByVrnAndCazEntryDate(
-              vehicleEntrantDto.getCleanZoneId(),
-              vehicleEntrantDto.getVrn(),
-              vehicleEntrantDto.getCazEntryTimestamp().toLocalDate()
-          );
+      Optional<EntrantPayment> record = fetchEntrantPaymentFromRepository(vehicleEntrantDto);
 
-      if (record.isPresent()) {
-        EntrantPayment cazEntrantPayment = record.get();
-        EntrantPaymentDto cazEntrantPaymentDto = EntrantPaymentDto.from(cazEntrantPayment);
-        cazEntrantPayments.add(cazEntrantPaymentDto);
+      EntrantPayment entrantPayment = record.isPresent()
+          ? record.get()
+          : storeNewEntrantPayment(vehicleEntrantDto);
 
-        if (!cazEntrantPayment.isVehicleEntrantCaptured()) {
-          EntrantPayment cazEntrantPaymentToUpdate = cazEntrantPayment.toBuilder()
-              .vehicleEntrantCaptured(true).build();
-          entrantPaymentRepository.update(cazEntrantPaymentToUpdate);
-        }
-      } else {
-        // TODO: CAZ-1715
-      }
+      updateVehicleEntrantCapturedIfNotCaptured(entrantPayment);
+      result.add(EntrantPaymentDto.from(entrantPayment));
     }
-    return cazEntrantPayments;
+
+    return result;
+  }
+
+  private Optional<EntrantPayment> fetchEntrantPaymentFromRepository(
+      VehicleEntrantDto vehicleEntrantDto) {
+    return entrantPaymentRepository
+        .findOneByVrnAndCazEntryDate(
+            vehicleEntrantDto.getCleanZoneId(),
+            vehicleEntrantDto.getVrn(),
+            vehicleEntrantDto.getCazEntryTimestamp().toLocalDate()
+        );
+  }
+
+  private void updateVehicleEntrantCapturedIfNotCaptured(EntrantPayment entrantPayment) {
+    if (!entrantPayment.isVehicleEntrantCaptured()) {
+      EntrantPayment entrantPaymentToUpdate = entrantPayment.toBuilder()
+          .vehicleEntrantCaptured(true).build();
+      entrantPaymentRepository.update(entrantPaymentToUpdate);
+    }
+  }
+
+  private EntrantPayment storeNewEntrantPayment(VehicleEntrantDto vehicleEntrantDto) {
+    EntrantPayment entrantPayment = buildNewEntrantPayment(vehicleEntrantDto);
+    return entrantPaymentRepository.insert(entrantPayment);
+  }
+
+  private EntrantPayment buildNewEntrantPayment(VehicleEntrantDto vehicleEntrantDto) {
+    return EntrantPayment.builder()
+        .vrn(vehicleEntrantDto.getVrn())
+        .cleanAirZoneId(vehicleEntrantDto.getCleanZoneId())
+        .travelDate(vehicleEntrantDto.getCazEntryTimestamp().toLocalDate())
+        .vehicleEntrantCaptured(true)
+        .updateActor(EntrantPaymentUpdateActor.VCCS_API)
+        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
+        .build();
   }
 }

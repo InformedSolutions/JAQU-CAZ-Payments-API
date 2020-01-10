@@ -74,6 +74,7 @@ public class EntrantPaymentRepository {
       + "charge, "
       + "payment_status, "
       + "vehicle_entrant_captured, "
+      + "update_actor, "
       + "case_reference "
       + "FROM caz_payment.t_clean_air_zone_entrant_payment "
       + "WHERE clean_air_zone_id = ? AND vrn = ? AND travel_date = ?";
@@ -138,7 +139,7 @@ public class EntrantPaymentRepository {
   }
 
   /**
-   * Inserts the passed {@code vehicleEntrantPayments} into the database.
+   * Inserts the passed {@code entrantPayments} into the database.
    *
    * @param entrantPayments A list of {@link EntrantPayment} instances.
    * @return A list of {@link EntrantPayment} with their internal identifiers set.
@@ -168,7 +169,8 @@ public class EntrantPaymentRepository {
    * @param entrantPayment An instance of {@link EntrantPayment}.
    * @return An instance of {@link EntrantPayment} with its internal identifiers set.
    * @throws NullPointerException if {@code entrantPayment} is null.
-   * @throws IllegalArgumentException if {@code entrantPayment} has a non-null entrant payment id.
+   * @throws IllegalArgumentException if {@code entrantPayment} has a non-null entrant payment
+   *     id.
    */
   public EntrantPayment insert(EntrantPayment entrantPayment) {
     Preconditions.checkNotNull(entrantPayment, "Entrant payment cannot be null");
@@ -239,8 +241,8 @@ public class EntrantPaymentRepository {
 
   /**
    * Finds all {@link EntrantPayment} entities by the passed {@code paymentId} (an identifier of the
-   * payment for which entries in T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT table are populated).
-   * If none is find, an empty list is returned.
+   * payment for which entries in T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT table are populated). If none is
+   * find, an empty list is returned.
    *
    * @param paymentId The payment identifier against which the search is to be performed.
    * @return A list of matching {@link EntrantPayment} entities.
@@ -279,8 +281,8 @@ public class EntrantPaymentRepository {
   }
 
   /**
-   * Finds single of {@link EntrantPayment} entity for the passed params. If none is found,
-   * {@link Optional#empty()} is returned. If more then one found throws {@link
+   * Finds single of {@link EntrantPayment} entity for the passed params. If none is found, {@link
+   * Optional#empty()} is returned. If more then one found throws {@link
    * NotUniqueVehicleEntrantPaymentFoundException}.
    *
    * @param cleanZoneId provided Clean Air Zone ID.
@@ -319,8 +321,9 @@ public class EntrantPaymentRepository {
   }
 
   /**
-   * Finds a list of {@link EntrantPayment}s based on {@code cleanZoneId}, {@code vrn} and
-   * {@code cazEntryDates}.
+   * Finds a list of {@link EntrantPayment}s based on {@code cleanZoneId}, {@code vrn} and {@code
+   * cazEntryDates}.
+   *
    * @return A {@link List} of matching {@link EntrantPayment}s.
    */
   public List<EntrantPayment> findByVrnAndCazEntryDates(UUID cleanZoneId, String vrn,
@@ -407,8 +410,8 @@ public class EntrantPaymentRepository {
           .internalPaymentStatus(InternalPaymentStatus.valueOf(
               resultSet.getString("payment_status")))
           .vehicleEntrantCaptured(resultSet.getBoolean("vehicle_entrant_captured"))
-          .caseReference(resultSet.getString("case_reference"))
           .updateActor(EntrantPaymentUpdateActor.valueOf(resultSet.getString("update_actor")))
+          .caseReference(resultSet.getString("case_reference"))
           .build();
     }
   }

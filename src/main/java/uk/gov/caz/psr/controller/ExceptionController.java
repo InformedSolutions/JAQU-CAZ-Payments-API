@@ -3,11 +3,13 @@ package uk.gov.caz.psr.controller;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -123,6 +125,16 @@ public class ExceptionController extends GlobalExceptionHandler {
     log.warn("Argument type mismatch exception: ", e);
     return ResponseEntity.badRequest()
         .body(createTypeMismatchErrorResponse(e));
+  }
+
+  /**
+   * Exception handler that returns 400 error on invalid input format.
+   */
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity handleException(ConstraintViolationException exception) {
+    log.warn("ConstraintViolationException occurred: ", exception);
+    // TODO: Error messages?
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
 
   /**

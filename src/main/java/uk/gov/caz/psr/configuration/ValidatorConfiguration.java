@@ -3,6 +3,7 @@ package uk.gov.caz.psr.configuration;
 import javax.validation.Validator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 /**
@@ -16,6 +17,7 @@ public class ValidatorConfiguration {
    * Creates a new instance of {@link Validator}.
    */
   @Bean
+  @Primary
   public Validator localValidatorFactoryBean() {
     return new LocalValidatorFactoryBean();
   }

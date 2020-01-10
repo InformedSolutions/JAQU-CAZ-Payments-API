@@ -92,13 +92,30 @@ class EntrantPaymentServiceTest {
     verify(entrantPaymentRepository).update(buildCazEntrantPayment(true));
   }
 
-  private VehicleEntrantDto buildVehicleEntrantDto() {
-    return VehicleEntrantDto
-        .builder()
-        .vrn(ANY_VRN)
-        .cazEntryTimestamp(LocalDateTime.parse(ANY_TIMESTAMP))
-        .cleanZoneId(UUID.fromString(ANY_UUID))
-        .build();
+  @Test
+  public void shouldCallRepositoryAndReturnCollectionWhenRecordDoesNotExist() {
+    // given
+    VehicleEntrantDto dto = buildVehicleEntrantDto();
+    List<VehicleEntrantDto> cazEntrantPaymentDtos = Arrays.asList(dto);
+    mockEmptyCazEntryPaymentRepositoryResponse();
+
+    // when
+    List<EntrantPaymentDto> response = entrantPaymentService
+        .bulkProcess(cazEntrantPaymentDtos);
+
+    // then
+    assertThat(response).isNotEmpty();
+    verify(entrantPaymentRepository).insert(buildCazEntrantPaymentToInsert());
+  }
+
+  private void mockEmptyCazEntryPaymentRepositoryResponse() {
+    when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
+        .thenReturn(Optional.empty());
+    when(entrantPaymentRepository.insert(buildCazEntrantPaymentToInsert())).thenReturn(
+        buildCazEntrantPaymentToInsert().toBuilder()
+            .cleanAirZoneEntrantPaymentId(UUID.fromString(ANY_UUID))
+            .build()
+    );
   }
 
   private void mockNonEmptyCapturedCazEntryPaymentRepositoryResponse() {
@@ -111,6 +128,15 @@ class EntrantPaymentServiceTest {
         .thenReturn(Optional.of(buildCazEntrantPayment(false)));
   }
 
+  private VehicleEntrantDto buildVehicleEntrantDto() {
+    return VehicleEntrantDto
+        .builder()
+        .vrn(ANY_VRN)
+        .cazEntryTimestamp(LocalDateTime.parse(ANY_TIMESTAMP))
+        .cleanZoneId(UUID.fromString(ANY_UUID))
+        .build();
+  }
+
   private EntrantPayment buildCazEntrantPayment(boolean vehicleEntrantCaptured) {
     return EntrantPayment.builder()
         .cleanAirZoneId(UUID.fromString(ANY_UUID))
@@ -119,6 +145,17 @@ class EntrantPaymentServiceTest {
         .vehicleEntrantCaptured(vehicleEntrantCaptured)
         .tariffCode("any-tariff-code")
         .charge(50)
+        .travelDate(LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate())
+        .updateActor(EntrantPaymentUpdateActor.VCCS_API)
+        .build();
+  }
+
+  private EntrantPayment buildCazEntrantPaymentToInsert() {
+    return EntrantPayment.builder()
+        .cleanAirZoneId(UUID.fromString(ANY_UUID))
+        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
+        .vrn(ANY_VRN)
+        .vehicleEntrantCaptured(true)
         .travelDate(LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate())
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .build();

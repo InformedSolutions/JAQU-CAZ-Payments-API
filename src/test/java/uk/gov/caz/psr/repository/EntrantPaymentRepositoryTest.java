@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.VehicleEntrant;
+import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 
 @ExtendWith(MockitoExtension.class)
 class EntrantPaymentRepositoryTest {
@@ -27,7 +28,7 @@ class EntrantPaymentRepositoryTest {
   private EntrantPaymentRepository entrantPaymentRepository;
 
   @Nested
-  class Insert {
+  class InsertList {
 
     @Test
     public void shouldThrowNullPointerExceptionWhenInsertListIsNull() {
@@ -53,6 +54,40 @@ class EntrantPaymentRepositoryTest {
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("Entrant payments cannot be empty");
+    }
+  }
+
+  @Nested
+  class Insert {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenObjectIsNull() {
+      // given
+      EntrantPayment cazEntrantPayment = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository.insert(cazEntrantPayment));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Entrant payment cannot be null");
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenObjectHasIdAssigned() {
+      // given
+      UUID id = UUID.fromString("b37d37e0-ff12-420c-bc75-4dfe8080ac45");
+      EntrantPayment cazEntrantPayment = EntrantPayments.anyNotPaid().toBuilder()
+          .cleanAirZoneEntrantPaymentId(id).build();
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository.insert(cazEntrantPayment));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Entrant payment cannot have non-null ID");
     }
   }
 
