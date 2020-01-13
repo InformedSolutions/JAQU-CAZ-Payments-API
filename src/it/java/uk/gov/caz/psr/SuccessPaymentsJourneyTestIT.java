@@ -2,6 +2,7 @@ package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
@@ -23,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpRequest;
@@ -42,28 +42,20 @@ import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.dto.GetAndUpdatePaymentStatusResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
-@Disabled("Because of ERD updates")
 @FullyRunningServerIntegrationTest
-@Sql(
-    scripts = {"classpath:data/sql/clear-all-payments.sql",
-        "classpath:data/sql/add-vehicle-entrants.sql"},
+@Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(
-    scripts = {"classpath:data/sql/clear-all-payments.sql",
-        "classpath:data/sql/clear-all-vehicle-entrants.sql"},
+@Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 public class SuccessPaymentsJourneyTestIT {
 
-  @Value("${services.gov-uk-pay.root-url}")
-  private String rootUrl;
-  @Value("${services.gov-uk-pay.api-key}")
-  private String apiKey;
   @Value("${services.sqs.new-queue-name}")
   private String emailSqsQueueName;
 
@@ -86,7 +78,7 @@ public class SuccessPaymentsJourneyTestIT {
 
   @Value("${aws.secret-name}")
   private String secretName;
-  
+
   private String cazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
 
   @BeforeEach
@@ -127,18 +119,27 @@ public class SuccessPaymentsJourneyTestIT {
     externalPaymentServiceCreatesPaymentWithId(externalPaymentId);
     andReturnsSuccessStatus();
 
-    given().initiatePaymentRequest(initiatePaymentRequest(dateWithEntityInDB)).whenSubmitted()
+    given()
+        .initiatePaymentRequest(initiatePaymentRequest(dateWithEntityInDB))
+        .whenSubmitted()
 
-        .then().paymentEntityIsCreatedInDatabase().withExternalIdEqualTo(externalPaymentId)
-        .withNullPaymentAuthorisedTimestamp().andResponseIsReturnedWithMatchingInternalId()
+        .then()
+        .paymentEntityIsCreatedInDatabase()
+        .withExternalIdEqualTo(externalPaymentId)
+        .withNullPaymentAuthorisedTimestamp()
+        .andResponseIsReturnedWithMatchingInternalId();
 
-        .and().whenRequestedToGetAndUpdateStatus()
-
-        .then().paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
-        .connectsEntityToPaymentIfEntityWasFound(dateWithEntityInDB)
-        .doesNotConnectEntityToPaymentIfEntityWasNotFound(dateWithoutEntityInDB)
-        .withNonNullPaymentAuthorisedTimestamp().andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
+    // TODO FIX in stories related to finishing payment processing
+//        .and()
+//        .whenRequestedToGetAndUpdateStatus()
+//
+//        .then()
+//        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+//        .connectsEntityToPaymentIfEntityWasFound(dateWithEntityInDB)
+//        .doesNotConnectEntityToPaymentIfEntityWasNotFound(dateWithoutEntityInDB)
+//        .withNonNullPaymentAuthorisedTimestamp()
+//        .andStatusResponseIsReturnedWithMatchinInternalId()
+//        .andPaymentReceiptIsSent();
   }
 
   private PaymentJourneyAssertion given() {
@@ -189,14 +190,14 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion withExternalIdEqualTo(String externalPaymentId) {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
           "payment_provider_id = '" + externalPaymentId + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
 
     public PaymentJourneyAssertion andResponseIsReturnedWithMatchingInternalId() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
           "payment_id = '" + initPaymentResponse.getPaymentId().toString() + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
@@ -264,18 +265,21 @@ public class SuccessPaymentsJourneyTestIT {
 
     private void verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(
         ExternalPaymentStatus status) {
-      int vehicleEntrantPaymentsCount =
-          JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "vehicle_entrant_payment",
-              "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
-                  + "travel_date in (" + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
-                  + "payment_status = '" + InternalPaymentStatus.from(status).name() + "'");
+      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "caz_payment.t_clean_air_zone_entrant_payment",
+          "clean_air_zone_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
+              + "travel_date in (" + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
+              + "tariff_code = '" + initiatePaymentRequest.getTariffCode() + "' AND "
+              + "vehicle_entrant_captured is false AND "
+              + "update_actor = '" + EntrantPaymentUpdateActor.USER.name() + "' AND "
+              + "payment_status = '" + InternalPaymentStatus.from(status).name() + "'");
       assertThat(initiatePaymentRequest.getDays()).hasSize(vehicleEntrantPaymentsCount);
     }
 
     private void verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
-          "payment_method = '" + PaymentMethod.CREDIT_DEBIT_CARD.name() + "' AND " + "total_paid = "
-              + initiatePaymentRequest.getAmount());
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
+          "payment_method = '" + PaymentMethod.CREDIT_DEBIT_CARD.name() + "' AND "
+              + "total_paid = " + initiatePaymentRequest.getAmount());
       assertThat(paymentsCount).isEqualTo(1);
     }
 
@@ -291,7 +295,7 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion withNullPaymentAuthorisedTimestamp() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
           "payment_authorised_timestamp is null");
       assertThat(paymentsCount).isEqualTo(1);
       return this;

@@ -2,7 +2,6 @@ package uk.gov.caz.psr.util;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +13,7 @@ import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.model.CazEntrantPayment;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -74,13 +74,17 @@ public class TestObjectFactory {
     public List<CazEntrantPayment> build() {
       int charge = amount / travelDates.size();
       return travelDates.stream()
-          .map(travelDate -> CazEntrantPayment.builder().cleanAirZoneEntrantPaymentId(withId ? UUID.randomUUID() : null)
+          .map(travelDate -> CazEntrantPayment.builder()
+              .cleanAirZoneEntrantPaymentId(withId ? UUID.randomUUID() : null)
               .internalPaymentStatus(status)
               .charge(charge)
               .travelDate(travelDate)
+              .updateActor(EntrantPaymentUpdateActor.USER)
               .tariffCode("TARIFF_CODE")
               .cleanAirZoneId(cleanAirZoneId == null ? ANY_CLEAN_AIR_ZONE : cleanAirZoneId)
-              .vrn(vrn == null ? randomVrn() : vrn).caseReference(null).build())
+              .vrn(vrn == null ? randomVrn() : vrn)
+              .caseReference(null)
+              .build())
           .collect(Collectors.toList());
     }
 
@@ -143,8 +147,10 @@ public class TestObjectFactory {
 
     public static Payment forRequest(InitiatePaymentRequest request) {
       List<CazEntrantPayment> cazEntrantPayments = CazEntrantPaymentsBuilder
-          .forDays(request.getDays()).withTotal(request.getAmount())
-          .withVrn(request.getVrn()).withStatus(InternalPaymentStatus.NOT_PAID)
+          .forDays(request.getDays())
+          .withTotal(request.getAmount())
+          .withVrn(request.getVrn())
+          .withStatus(InternalPaymentStatus.NOT_PAID)
           .withCazId(request.getCleanAirZoneId()).build();
 
       return createPaymentWith(cazEntrantPayments, null, null);

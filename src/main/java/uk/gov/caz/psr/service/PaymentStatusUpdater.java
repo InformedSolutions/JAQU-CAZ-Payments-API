@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
+import uk.gov.caz.psr.repository.PaymentRepository;
 
 /**
  * Updates the external status of a {@link Payment} instance.
@@ -16,8 +17,7 @@ import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 public class PaymentStatusUpdater {
 
   private final PaymentWithExternalPaymentDetailsBuilder paymentWithExternalPaymentDetailsBuilder;
-  //  private final PaymentRepository internalPaymentsRepository;
-  private final TransientVehicleEntrantsLinker transientVehicleEntrantsLinker;
+  private final PaymentRepository internalPaymentsRepository;
   private final ApplicationEventPublisher applicationEventPublisher;
 
   /**
@@ -27,13 +27,12 @@ public class PaymentStatusUpdater {
       ExternalPaymentDetails externalPaymentDetails) {
     checkPreconditions(payment, externalPaymentDetails);
 
-    Payment paymentWithNewStatus = paymentWithExternalPaymentDetailsBuilder
+    Payment updatedPayment = paymentWithExternalPaymentDetailsBuilder
         .buildPaymentWithExternalPaymentDetails(payment, externalPaymentDetails);
 
-    Payment updatedPayment = transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(
-        paymentWithNewStatus);
-    //    TODO: Fix with the payment updates CAZ-1716
-    //    internalPaymentsRepository.update(updatedPayment);
+    // TODO fix the logic here if applicable - linking was done here previously
+
+    internalPaymentsRepository.update(updatedPayment);
 
     publishPaymentStatusUpdatedEvent(updatedPayment);
 
@@ -60,8 +59,7 @@ public class PaymentStatusUpdater {
         externalPaymentDetails.getExternalPaymentStatus() != payment.getExternalPaymentStatus(),
         "Status cannot be equal to the existing status ('%s' != '%s')",
         externalPaymentDetails.getExternalPaymentStatus(), payment.getExternalPaymentStatus());
-    //    TODO: Fix with the payment updates CAZ-1716
-    //    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
-    //        "vehicle entrant payments cannot be empty");
+    Preconditions.checkArgument(!payment.getCazEntrantPayments().isEmpty(),
+        "vehicle entrant payments cannot be empty");
   }
 }
