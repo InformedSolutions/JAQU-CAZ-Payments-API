@@ -66,10 +66,11 @@ public class CazEntrantPayment {
    * A flag used in scenario where an advance payment has been attempted but declined followed by
    * user abandonment.
    */
-  Boolean vehicleEntrantCaptured;
+  boolean vehicleEntrantCaptured;
 
   /**
-   * actor who initiated the last update. Example values: VCCS_API, LA, User.
+   * An actor who initiated the last update.
    */
-  String updateActor;
+  @NonNull
+  EntrantPaymentUpdateActor updateActor;
 }

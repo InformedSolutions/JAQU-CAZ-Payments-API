@@ -87,6 +87,11 @@ databaseChangeLog:
                   defaultValueComputed: CURRENT_TIMESTAMP
                   constraints:
                     nullable: false
+        - addUniqueConstraint:
+            schemaName: CAZ_PAYMENT
+            columnNames: TRAVEL_DATE,CLEAN_AIR_ZONE_ID,VRN
+            constraintName: t_clean_air_zone_entrant_payment_travel_date_clean_air_zone_id_vrn_key
+            tableName: t_clean_air_zone_entrant_payment
         - createTable:
             tableName: T_PAYMENT
             schemaName: CAZ_PAYMENT

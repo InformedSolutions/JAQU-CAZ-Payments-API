@@ -12,6 +12,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.model.CazEntrantPayment;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 
 @IntegrationTest
@@ -36,7 +37,7 @@ public class CazEntrantPaymentRespositoryTestIT {
         .tariffCode("TARIFF_CODE")
         .caseReference("Case Reference")
         .vehicleEntrantCaptured(true)
-        .updateActor("API")
+        .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .build();
 
     // when

@@ -90,7 +90,6 @@ public class CazEntrantPaymentRepository {
   private static final String UPDATE_SQL = "UPDATE caz_payment.t_clean_air_zone_entrant_payment "
       + "SET payment_status = ?, "
       + "case_reference = ?, "
-      + "case_reference = ?, "
       + "update_actor = ? "
       + "WHERE clean_air_zone_entrant_payment_id = ?";
 
@@ -149,7 +148,7 @@ public class CazEntrantPaymentRepository {
         .addValue("tariff_code", cazEntrantPayment.getTariffCode())
         .addValue("charge", cazEntrantPayment.getCharge())
         .addValue("payment_status", cazEntrantPayment.getInternalPaymentStatus().name())
-        .addValue("vehicle_entrant_captured", cazEntrantPayment.getVehicleEntrantCaptured())
+        .addValue("vehicle_entrant_captured", cazEntrantPayment.isVehicleEntrantCaptured())
         .addValue("update_actor", cazEntrantPayment.getUpdateActor());
   }
 
@@ -183,7 +182,7 @@ public class CazEntrantPaymentRepository {
       preparedStatementSetter.setString(1, cazEntrantPayment.getInternalPaymentStatus()
           .name());
       preparedStatementSetter.setString(2, cazEntrantPayment.getCaseReference());
-      preparedStatementSetter.setString(3, cazEntrantPayment.getUpdateActor());
+      preparedStatementSetter.setString(3, cazEntrantPayment.getUpdateActor().name());
       preparedStatementSetter.setObject(4, cazEntrantPayment.getCleanAirZoneEntrantPaymentId());
     });
   }
