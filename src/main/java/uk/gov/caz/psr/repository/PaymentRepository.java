@@ -51,7 +51,7 @@ public class PaymentRepository {
       VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository) {
     this.jdbcTemplate = jdbcTemplate;
     this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("payment")
-        .usingGeneratedKeyColumns("payment_id")
+        .usingGeneratedKeyColumns("payment_id", "central_reference_number")
         .usingColumns("payment_method", "total_paid", "payment_provider_status");
     this.vehicleEntrantPaymentRepository = vehicleEntrantPaymentRepository;
   }
@@ -82,6 +82,7 @@ public class PaymentRepository {
         simpleJdbcInsert.executeAndReturnKeyHolder(toSqlParametersForExternalInsert(payment));
 
     UUID paymentId = (UUID) keyHolder.getKeys().get("payment_id");
+    Long referenceNumber = (Long) keyHolder.getKeys().get("central_reference_number");
 
     List<VehicleEntrantPayment> vehicleEntrantPayments =
         payment.getVehicleEntrantPayments().stream()
@@ -91,7 +92,10 @@ public class PaymentRepository {
     List<VehicleEntrantPayment> vehicleEntrantPaymentsWithIds =
         vehicleEntrantPaymentRepository.insert(vehicleEntrantPayments);
 
-    return payment.toBuilder().id(paymentId).vehicleEntrantPayments(vehicleEntrantPaymentsWithIds)
+    return payment.toBuilder()
+        .id(paymentId)
+        .referenceNumber(referenceNumber)
+        .vehicleEntrantPayments(vehicleEntrantPaymentsWithIds)
         .build();
   }
 
@@ -194,8 +198,9 @@ public class PaymentRepository {
             + "update_timestamp = CURRENT_TIMESTAMP " + "WHERE payment_id = ?";
 
     private static final String ALL_PAYMENT_ATTRIBUTES =
-        "payment_id, payment_method, payment_provider_id, total_paid, payment_provider_status, "
-            + "payment_submitted_timestamp, payment_authorised_timestamp ";
+        "payment_id, payment_method, payment_provider_id, central_reference_number, "
+        + "total_paid, payment_provider_status, payment_submitted_timestamp, " 
+        + "payment_authorised_timestamp ";
 
     static final String SELECT_DANGLING_PAYMENTS =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM payment " + "WHERE "
@@ -228,6 +233,7 @@ public class PaymentRepository {
       return Payment.builder().id(UUID.fromString(resultSet.getString("payment_id")))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
           .externalId(resultSet.getString("payment_provider_id"))
+          .referenceNumber(resultSet.getLong("central_reference_number"))
           .externalPaymentStatus(
               externalStatus == null ? null : ExternalPaymentStatus.valueOf(externalStatus))
           .totalPaid(resultSet.getInt("total_paid"))

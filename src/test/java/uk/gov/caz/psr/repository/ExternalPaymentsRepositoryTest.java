@@ -177,7 +177,7 @@ class ExternalPaymentsRepositoryTest {
 
     private Payment createPayment(UUID paymentId) {
       return Payments.forDays(Arrays.asList(LocalDate.now(), LocalDate.now().plusDays(1)),
-          paymentId);
+          paymentId).toBuilder().referenceNumber((long) 1).build();
     }
   }
 

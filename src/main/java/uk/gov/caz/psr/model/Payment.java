@@ -24,6 +24,11 @@ public class Payment {
    * The unique payment identifier from GOV UK Pay service.
    */
   String externalId;
+  
+  /**
+   * The central reference number of the payment.
+   */
+  Long referenceNumber;
 
   /**
    * The method of payment.
@@ -92,8 +97,9 @@ public class Payment {
           "authorisedTimestamp is null and external payment status is not 'SUCCESS' or "
               + "authorisedTimestamp is not null and external payment status is 'SUCCESS'");
 
-      return new Payment(id, externalId, paymentMethod, totalPaid, vehicleEntrantPayments,
-          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl, emailAddress);
+      return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, 
+          vehicleEntrantPayments,  externalPaymentStatus, submittedTimestamp, authorisedTimestamp, 
+          nextUrl, emailAddress);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

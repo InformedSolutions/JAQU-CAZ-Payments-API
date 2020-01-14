@@ -98,7 +98,7 @@ class PaymentRepositoryTest {
     private Payment paymentWithTwoDifferentVehicleEntrantStatuses() {
       Payment payment =
           Payments.forDays(Arrays.asList(LocalDate.now(), LocalDate.now().plusDays(1)),
-              UUID.randomUUID(), "ext-id", null);
+              null, null, null);
       Iterator<VehicleEntrantPayment> it = payment.getVehicleEntrantPayments().iterator();
       List<VehicleEntrantPayment> updatedVehicleEntrantPayments =
           Arrays.asList(InternalPaymentStatus.PAID, InternalPaymentStatus.CHARGEBACK).stream()
