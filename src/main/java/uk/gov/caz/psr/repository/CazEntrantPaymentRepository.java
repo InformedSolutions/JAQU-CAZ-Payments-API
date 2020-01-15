@@ -56,7 +56,7 @@ public class CazEntrantPaymentRepository {
       + "WHERE travel_date = ? AND clean_air_zone_id = ? AND vrn = ? AND payment_status = ?";
 
   @VisibleForTesting
-  static final String SELECT_BY_VRN_CAZ_ENTRY_DATE_AND_STATUS_SQL = "SELECT "
+  static final String SELECT_BY_VRN_CAZ_ENTRY_DATE_SQL = "SELECT "
       + "clean_air_zone_entrant_payment_id, "
       + "vrn, "
       + "clean_air_zone_id, "
@@ -64,9 +64,10 @@ public class CazEntrantPaymentRepository {
       + "tariff_code, "
       + "charge, "
       + "payment_status, "
+      + "vehicle_entrant_captured, "
       + "case_reference "
       + "FROM caz_payment.t_clean_air_zone_entrant_payment "
-      + "WHERE clean_air_zone_id = ? AND vrn = ? AND travel_date = ? AND payment_status = ?";
+      + "WHERE clean_air_zone_id = ? AND vrn = ? AND travel_date = ?";
 
   //    @VisibleForTesting
   //    static final String SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL = "SELECT "
@@ -88,9 +89,7 @@ public class CazEntrantPaymentRepository {
   //        + "payment.payment_provider_id = ?";
 
   private static final String UPDATE_SQL = "UPDATE caz_payment.t_clean_air_zone_entrant_payment "
-      + "SET payment_status = ?, "
-      + "case_reference = ?, "
-      + "update_actor = ? "
+      + "SET vehicle_entrant_captured = ? "
       + "WHERE clean_air_zone_entrant_payment_id = ?";
 
   private final JdbcTemplate jdbcTemplate;
@@ -179,11 +178,8 @@ public class CazEntrantPaymentRepository {
     Preconditions.checkNotNull(cazEntrantPayment, "CAZ entrant payments cannot be null");
 
     jdbcTemplate.update(UPDATE_SQL, preparedStatementSetter -> {
-      preparedStatementSetter.setString(1, cazEntrantPayment.getInternalPaymentStatus()
-          .name());
-      preparedStatementSetter.setString(2, cazEntrantPayment.getCaseReference());
-      preparedStatementSetter.setString(3, cazEntrantPayment.getUpdateActor().name());
-      preparedStatementSetter.setObject(4, cazEntrantPayment.getCleanAirZoneEntrantPaymentId());
+      preparedStatementSetter.setBoolean(1, cazEntrantPayment.isVehicleEntrantCaptured());
+      preparedStatementSetter.setObject(2, cazEntrantPayment.getCleanAirZoneEntrantPaymentId());
     });
   }
 
@@ -245,19 +241,18 @@ public class CazEntrantPaymentRepository {
    * @throws NotUniqueVehicleEntrantPaymentFoundException if method found more than one
    *     VehicleEntrantPayment.
    */
-  public Optional<CazEntrantPayment> findOnePaidByVrnAndCazEntryDate(UUID cleanZoneId,
+  public Optional<CazEntrantPayment> findOneByVrnAndCazEntryDate(UUID cleanZoneId,
       String vrn, LocalDate cazEntryDate) {
     Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
     Preconditions.checkNotNull(cazEntryDate, "cazEntryDate cannot be null");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
 
     List<CazEntrantPayment> results = jdbcTemplate
-        .query(SELECT_BY_VRN_CAZ_ENTRY_DATE_AND_STATUS_SQL,
+        .query(SELECT_BY_VRN_CAZ_ENTRY_DATE_SQL,
             preparedStatement -> {
               preparedStatement.setObject(1, cleanZoneId);
               preparedStatement.setString(2, vrn);
               preparedStatement.setObject(3, cazEntryDate);
-              preparedStatement.setString(4, InternalPaymentStatus.PAID.name());
             },
             ROW_MAPPER
         );
@@ -326,7 +321,8 @@ public class CazEntrantPaymentRepository {
     @Override
     public CazEntrantPayment mapRow(ResultSet resultSet, int i) throws SQLException {
       return CazEntrantPayment.builder()
-          .cleanAirZoneId(UUID.fromString(resultSet.getString("clean_air_zone_entrant_payment_id")))
+          .cleanAirZoneEntrantPaymentId(
+              UUID.fromString(resultSet.getString("clean_air_zone_entrant_payment_id")))
           .vrn(resultSet.getString("vrn"))
           .cleanAirZoneId(UUID.fromString(resultSet.getString("clean_air_zone_id")))
           .travelDate(LocalDate.parse(resultSet.getString("travel_date")))
@@ -334,6 +330,7 @@ public class CazEntrantPaymentRepository {
           .charge(resultSet.getInt("charge"))
           .internalPaymentStatus(InternalPaymentStatus.valueOf(
               resultSet.getString("payment_status")))
+          .vehicleEntrantCaptured(resultSet.getBoolean("vehicle_entrant_captured"))
           .caseReference(resultSet.getString("case_reference"))
           .build();
     }

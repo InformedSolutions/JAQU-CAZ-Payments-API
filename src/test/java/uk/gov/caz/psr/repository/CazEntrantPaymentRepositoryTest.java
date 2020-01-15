@@ -109,7 +109,7 @@ class CazEntrantPaymentRepositoryTest {
     }
 
     @Nested
-    class FindOnePaidByVrnAndCazEntryDate {
+    class FindOneByVrnAndCazEntryDate {
 
       @Test
       public void shouldThrowNullPointerExceptionWhenCleanZoneIdIsNull() {
@@ -119,7 +119,7 @@ class CazEntrantPaymentRepositoryTest {
         // when
         Throwable throwable = catchThrowable(
             () -> cazEntrantPaymentRepository
-                .findOnePaidByVrnAndCazEntryDate(cleanZoneId, "VRN123", LocalDate.now()));
+                .findOneByVrnAndCazEntryDate(cleanZoneId, "VRN123", LocalDate.now()));
 
         // then
         assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -134,7 +134,7 @@ class CazEntrantPaymentRepositoryTest {
         // when
         Throwable throwable = catchThrowable(
             () -> cazEntrantPaymentRepository
-                .findOnePaidByVrnAndCazEntryDate(UUID.randomUUID(), "VRN123", cazEntryDate));
+                .findOneByVrnAndCazEntryDate(UUID.randomUUID(), "VRN123", cazEntryDate));
 
         // then
         assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -149,12 +149,26 @@ class CazEntrantPaymentRepositoryTest {
         // when
         Throwable throwable = catchThrowable(
             () -> cazEntrantPaymentRepository
-                .findOnePaidByVrnAndCazEntryDate(UUID.randomUUID(), "", LocalDate.now()));
+                .findOneByVrnAndCazEntryDate(UUID.randomUUID(), "", LocalDate.now()));
 
         // then
         assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
             .hasMessage("VRN cannot be empty");
       }
+//    @Test
+//    public void shouldThrowNIllegalArgumentExceptionWhenVrnIsEmpty() {
+//      // given
+//      String vrn = null;
+//
+//      // when
+//      Throwable throwable = catchThrowable(
+//          () -> cazEntrantPaymentRepository
+//              .findOneByVrnAndCazEntryDate(UUID.randomUUID(), "", LocalDate.now()));
+//
+//      // then
+//      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+//          .hasMessage("VRN cannot be empty");
+//    }
 
 //    TODO: Fix with the payment updates CAZ-1716
 //    @Test
