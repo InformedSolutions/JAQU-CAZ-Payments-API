@@ -10,6 +10,7 @@ import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
 
 /**
@@ -21,7 +22,7 @@ import uk.gov.caz.psr.util.GetPaymentResultConverter;
 public class GetAndUpdatePaymentsService {
 
   private final ExternalPaymentsRepository externalPaymentsRepository;
-  //  private final PaymentRepository internalPaymentsRepository;
+  private final PaymentRepository internalPaymentsRepository;
   private final PaymentStatusUpdater paymentStatusUpdater;
   private final GetPaymentResultConverter getPaymentResultConverter;
 
@@ -35,11 +36,9 @@ public class GetAndUpdatePaymentsService {
    */
   public Optional<Payment> getExternalPaymentAndUpdateStatus(UUID id) {
     Preconditions.checkNotNull(id, "ID cannot be null");
-    //    TODO: Fix with the payment updates CAZ-1716
-    //    Payment payment = internalPaymentsRepository.findById(id).orElse(null);
-    Payment payment = Payment.builder().build();
+    Payment payment = internalPaymentsRepository.findById(id).orElse(null);
     if (payment == null) {
-      log.warn("Payment '{}' is absent in the database", id);
+      log.warn("Payment '{}' not found in the database", id);
       return Optional.empty();
     }
 
@@ -89,8 +88,8 @@ public class GetAndUpdatePaymentsService {
    * @return a {@link UUID} representing a Clean Air Zone.
    */
   private UUID getCleanAirZoneId(Payment payment) {
-    Preconditions.checkArgument(!payment.getCazEntrantPayments().isEmpty(),
+    Preconditions.checkArgument(!payment.getEntrantPayments().isEmpty(),
         "CAZ entrant payments should not be empty");
-    return payment.getCazEntrantPayments().iterator().next().getCleanAirZoneId();
+    return payment.getEntrantPayments().iterator().next().getCleanAirZoneId();
   }
 }

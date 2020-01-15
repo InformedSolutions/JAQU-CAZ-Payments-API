@@ -16,7 +16,7 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 @AllArgsConstructor
 public class PaymentStatusUpdater {
 
-  private final PaymentWithExternalPaymentDetailsBuilder paymentWithExternalPaymentDetailsBuilder;
+  private final PaymentUpdateStatusBuilder paymentUpdateStatusBuilder;
   private final PaymentRepository internalPaymentsRepository;
   private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -27,10 +27,8 @@ public class PaymentStatusUpdater {
       ExternalPaymentDetails externalPaymentDetails) {
     checkPreconditions(payment, externalPaymentDetails);
 
-    Payment updatedPayment = paymentWithExternalPaymentDetailsBuilder
-        .buildPaymentWithExternalPaymentDetails(payment, externalPaymentDetails);
-
-    // TODO fix the logic here if applicable - linking was done here previously
+    Payment updatedPayment = paymentUpdateStatusBuilder
+        .buildWithExternalPaymentDetails(payment, externalPaymentDetails);
 
     internalPaymentsRepository.update(updatedPayment);
 
@@ -49,8 +47,7 @@ public class PaymentStatusUpdater {
 
   /**
    * Verifies passed arguments if they are valid when invoking {@link
-   * PaymentStatusUpdater#updateWithExternalPaymentDetails(uk.gov.caz.psr.model.Payment,
-   * uk.gov.caz.psr.model.ExternalPaymentDetails)}.
+   * PaymentStatusUpdater#updateWithExternalPaymentDetails(Payment, ExternalPaymentDetails)}.
    */
   private void checkPreconditions(Payment payment, ExternalPaymentDetails externalPaymentDetails) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
@@ -59,7 +56,7 @@ public class PaymentStatusUpdater {
         externalPaymentDetails.getExternalPaymentStatus() != payment.getExternalPaymentStatus(),
         "Status cannot be equal to the existing status ('%s' != '%s')",
         externalPaymentDetails.getExternalPaymentStatus(), payment.getExternalPaymentStatus());
-    Preconditions.checkArgument(!payment.getCazEntrantPayments().isEmpty(),
-        "vehicle entrant payments cannot be empty");
+    Preconditions.checkArgument(!payment.getEntrantPayments().isEmpty(),
+        "Entrant payments cannot be empty");
   }
 }
