@@ -134,7 +134,8 @@ swagger:
         clean-zone-id: Clean Air Zone identifier
         amount: Amount to pay
         return-url: Front end URL used as return URL after payment.
-
+      payments-get-status:
+        clean-air-zone-name: Clean Air Zone name
 
   operations:
     payments:

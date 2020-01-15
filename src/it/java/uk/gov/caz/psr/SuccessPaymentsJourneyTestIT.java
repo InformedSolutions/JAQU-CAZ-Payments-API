@@ -38,9 +38,10 @@ import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
-import uk.gov.caz.psr.dto.GetAndUpdatePaymentStatusResponse;
+import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
+import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentMethod;
@@ -153,7 +154,7 @@ public class SuccessPaymentsJourneyTestIT {
 
     private InitiatePaymentRequest initiatePaymentRequest;
     private InitiatePaymentResponse initPaymentResponse;
-    private GetAndUpdatePaymentStatusResponse getAndUpdatePaymentResponse;
+    private ReconcilePaymentResponse getAndUpdatePaymentResponse;
 
     public PaymentJourneyAssertion initiatePaymentRequest(InitiatePaymentRequest request) {
       this.initiatePaymentRequest = request;
@@ -206,13 +207,16 @@ public class SuccessPaymentsJourneyTestIT {
 
     public PaymentJourneyAssertion whenRequestedToGetAndUpdateStatus() {
       String correlationId = "e879d028-2882-4f0b-b3b3-06d7fbcd8537";
+      ReconcilePaymentRequest request = ReconcilePaymentRequest.builder()
+          .cleanAirZoneName("Leeds").build();
       this.getAndUpdatePaymentResponse = RestAssured.given()
           .accept(MediaType.APPLICATION_JSON.toString())
+          .body(request)
           .contentType(MediaType.APPLICATION_JSON.toString())
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId).when()
-          .get(initPaymentResponse.getPaymentId().toString()).then()
+          .put(initPaymentResponse.getPaymentId().toString()).then()
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .statusCode(HttpStatus.OK.value()).extract().as(GetAndUpdatePaymentStatusResponse.class);
+          .statusCode(HttpStatus.OK.value()).extract().as(ReconcilePaymentResponse.class);
       return this;
     }
 

@@ -77,6 +77,12 @@ public class Payment {
    * payment. A transient field, not saved in the database.
    */
   String emailAddress;
+  
+  /**
+   * The name of the Clean Air Zone the payment is being made to. A transient field, not saved
+   * in the database.
+   */
+  String cleanAirZoneName;
 
   /**
    * An overridden lombok's builder.
@@ -99,7 +105,7 @@ public class Payment {
 
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, 
           vehicleEntrantPayments,  externalPaymentStatus, submittedTimestamp, authorisedTimestamp, 
-          nextUrl, emailAddress);
+          nextUrl, emailAddress, cleanAirZoneName);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

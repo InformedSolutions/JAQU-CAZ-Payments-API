@@ -10,7 +10,7 @@ import uk.gov.caz.psr.model.Payment;
  * update the status.
  */
 @Value
-public class GetAndUpdatePaymentStatusResponse {
+public class ReconcilePaymentResponse {
   @NonNull
   UUID paymentId;
   
@@ -28,8 +28,8 @@ public class GetAndUpdatePaymentStatusResponse {
   /**
    * Creates an instance of this class based on the passed {@link Payment} instance.
    */
-  public static GetAndUpdatePaymentStatusResponse from(Payment payment) {
-    return new GetAndUpdatePaymentStatusResponse(payment.getId(), payment.getReferenceNumber(),
+  public static ReconcilePaymentResponse from(Payment payment) {
+    return new ReconcilePaymentResponse(payment.getId(), payment.getReferenceNumber(),
         payment.getExternalId(), 
         SuccessFailurePaymentStatus.from(payment.getExternalPaymentStatus()),
         payment.getEmailAddress());

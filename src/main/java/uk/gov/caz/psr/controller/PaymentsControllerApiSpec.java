@@ -12,16 +12,17 @@ import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import uk.gov.caz.psr.dto.GetAndUpdatePaymentStatusResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
+import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
+import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 
 @RequestMapping(
     value = PaymentsController.BASE_PATH,
@@ -54,7 +55,8 @@ public interface PaymentsControllerApiSpec {
   ResponseEntity<InitiatePaymentResponse> initiatePayment(
       @Valid @RequestBody InitiatePaymentRequest request);
 
-  @GetMapping("/{id}")
-  ResponseEntity<GetAndUpdatePaymentStatusResponse> getExternalPaymentAndUpdateStatus(
-      @PathVariable UUID id);
+  @PutMapping("/{id}")
+  @ResponseStatus(HttpStatus.OK)
+  ResponseEntity<ReconcilePaymentResponse> reconcilePaymentStatus(
+      @PathVariable UUID id, @RequestBody ReconcilePaymentRequest request);
 }

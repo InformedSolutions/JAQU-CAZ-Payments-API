@@ -19,7 +19,7 @@ import uk.gov.caz.psr.util.GetPaymentResultConverter;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class GetAndUpdatePaymentsService {
+public class ReconcilePaymentStatusService {
 
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final PaymentRepository internalPaymentsRepository;
@@ -34,14 +34,17 @@ public class GetAndUpdatePaymentsService {
    *
    * @throws NullPointerException if {@code id} is null
    */
-  public Optional<Payment> getExternalPaymentAndUpdateStatus(UUID id) {
+  public Optional<Payment> reconcilePaymentStatus(UUID id, String cleanAirZoneName) {
     Preconditions.checkNotNull(id, "ID cannot be null");
 
-    Payment payment = internalPaymentsRepository.findById(id).orElse(null);
+    Payment internalPayment = internalPaymentsRepository.findById(id).orElse(null);
+    Payment payment;
 
-    if (payment == null) {
+    if (internalPayment == null) {
       log.warn("Payment '{}' is absent in the database", id);
       return Optional.empty();
+    } else {
+      payment = internalPayment.toBuilder().cleanAirZoneName(cleanAirZoneName).build();
     }
 
     String externalPaymentId = payment.getExternalId();

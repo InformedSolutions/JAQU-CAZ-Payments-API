@@ -1,6 +1,7 @@
 package uk.gov.caz.psr;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.UUID;
@@ -27,9 +28,10 @@ import uk.gov.caz.psr.util.TestObjectFactory;
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 @IntegrationTest
 @AutoConfigureMockMvc
-public class GetAndUpdatePaymentStatusTestIT {
+public class ReconcilePaymentStatusTestIT {
 
   private static final String URL_TEMPLATE = PaymentsController.BASE_PATH + "/{id}";
+  private static final String BODY = "{\"cleanAirZoneName\": \"Leeds\"}";
   @Autowired
   private MockMvc mockMvc;
 
@@ -41,7 +43,9 @@ public class GetAndUpdatePaymentStatusTestIT {
   public void shouldReturn400StatusWhenIdHasInvalidFormat(String id) throws Exception {
     String correlationId = "31f69f26-fb99-11e9-8483-9fcf0b2b434f";
     mockMvc
-        .perform(get(URL_TEMPLATE, id).header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+        .perform(put(URL_TEMPLATE, id).content(BODY)
+            .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .header("content-type", MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isBadRequest());
@@ -53,8 +57,9 @@ public class GetAndUpdatePaymentStatusTestIT {
 
     String correlationId = "542de1b5-4aab-45eb-bccc-6ec91f1d6d51";
     mockMvc
-        .perform(get(URL_TEMPLATE, notExistingId)
+        .perform(put(URL_TEMPLATE, notExistingId).content(BODY)
             .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .header("content-type", MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
@@ -67,7 +72,9 @@ public class GetAndUpdatePaymentStatusTestIT {
     String correlationId = "939898b0-fb9e-11e9-8483-cb50ccd05275";
     mockMvc
         .perform(
-            get(URL_TEMPLATE, paymentId).header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            put(URL_TEMPLATE, paymentId).content(BODY)
+            .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .header("content-type", MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
