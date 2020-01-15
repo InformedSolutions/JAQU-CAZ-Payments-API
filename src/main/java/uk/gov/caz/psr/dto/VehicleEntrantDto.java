@@ -14,7 +14,7 @@ import uk.gov.caz.psr.model.VehicleEntrant;
  */
 @Value
 @Builder
-public class VehicleEntrantRequest {
+public class VehicleEntrantDto {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.vehicle-entrant.clean-zone-id}")
   @NotNull
