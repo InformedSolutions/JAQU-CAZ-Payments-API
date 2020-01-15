@@ -127,19 +127,17 @@ public class SuccessPaymentsJourneyTestIT {
         .paymentEntityIsCreatedInDatabase()
         .withExternalIdEqualTo(externalPaymentId)
         .withNullPaymentAuthorisedTimestamp()
-        .andResponseIsReturnedWithMatchingInternalId();
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
 
-    // TODO FIX in stories related to finishing payment processing
-//        .and()
-//        .whenRequestedToGetAndUpdateStatus()
-//
-//        .then()
-//        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
 //        .connectsEntityToPaymentIfEntityWasFound(dateWithEntityInDB)
 //        .doesNotConnectEntityToPaymentIfEntityWasNotFound(dateWithoutEntityInDB)
-//        .withNonNullPaymentAuthorisedTimestamp()
-//        .andStatusResponseIsReturnedWithMatchinInternalId()
-//        .andPaymentReceiptIsSent();
+        .withNonNullPaymentAuthorisedTimestamp()
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptIsSent();
   }
 
   private PaymentJourneyAssertion given() {
@@ -224,39 +222,37 @@ public class SuccessPaymentsJourneyTestIT {
       return this;
     }
 
-    public PaymentJourneyAssertion doesNotConnectEntityToPaymentIfEntityWasNotFound(
-        LocalDate date) {
-      verifyThatPaymentWasNotAssignedToEntity(date);
-      return this;
-    }
-
-    public void verifyThatPaymentWasNotAssignedToEntity(LocalDate date) {
-      int vehicleEntrantPaymentsCount =
-          JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "vehicle_entrant_payment",
-              "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
-                  + "travel_date = '" + date.toString() + "' AND " + "payment_id = '"
-                  + getAndUpdatePaymentResponse.getPaymentId() + "' AND "
-                  + "vehicle_entrant_id is not NULL");
-
-      assertThat(vehicleEntrantPaymentsCount).isEqualTo(0);
-    }
-
-
-    public PaymentJourneyAssertion connectsEntityToPaymentIfEntityWasFound(LocalDate date) {
-      verifyThatPaymentWasAssignedToEntity(date);
-      return this;
-    }
-
-    public void verifyThatPaymentWasAssignedToEntity(LocalDate date) {
-      int vehicleEntrantPaymentsCount =
-          JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "vehicle_entrant_payment",
-              "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
-                  + "travel_date = '" + date.toString() + "' AND " + "payment_id = '"
-                  + getAndUpdatePaymentResponse.getPaymentId() + "' AND "
-                  + "vehicle_entrant_id is not NULL");
-
-      assertThat(vehicleEntrantPaymentsCount).isEqualTo(1);
-    }
+    //  TODO: Fix with CAZ-1716 check if exisitng entrantPayments assigned when implemented.
+    //
+    //    public PaymentJourneyAssertion doesNotConnectEntityToPaymentIfEntityWasNotFound(
+    //        LocalDate date) {
+    //      verifyThatPaymentWasNotAssignedToEntity(date);
+    //      return this;
+    //    }
+    //
+    //    public void verifyThatPaymentWasNotAssignedToEntity(LocalDate date) {
+    //      int vehicleEntrantPaymentsCount =
+    //          JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "vehicle_entrant_payment",
+    //              "caz_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
+    //                  + "travel_date = '" + date.toString() + "' AND " + "payment_id = '"
+    //                  + getAndUpdatePaymentResponse.getPaymentId() + "' AND "
+    //                  + "vehicle_entrant_id is not NULL");
+    //
+    //      assertThat(vehicleEntrantPaymentsCount).isEqualTo(0);
+    //    }
+    //
+    //    public PaymentJourneyAssertion connectsEntityToPaymentIfEntityWasFound(LocalDate date) {
+    //      verifyThatPaymentWasAssignedToEntity(date);
+    //      return this;
+    //    }
+    //    public void verifyThatPaymentWasAssignedToEntity(LocalDate date) {
+    //      int vehicleEntrantPaymentsCount = JdbcTestUtils
+    //          .countRowsInTableWhere(jdbcTemplate, "caz_payment.t_clean_air_zone_entrant_payment",
+    //              "clean_air_zone_entrant_payment_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
+    //                  + "travel_date = '" + date.toString() + "'");
+    //
+    //      assertThat(vehicleEntrantPaymentsCount).isEqualTo(1);
+    //    }
 
     private void verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus status) {
       verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod();
@@ -265,7 +261,7 @@ public class SuccessPaymentsJourneyTestIT {
 
     private void verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(
         ExternalPaymentStatus status) {
-      int vehicleEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+      int entrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment.t_clean_air_zone_entrant_payment",
           "clean_air_zone_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
               + "travel_date in (" + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
@@ -273,7 +269,7 @@ public class SuccessPaymentsJourneyTestIT {
               + "vehicle_entrant_captured is false AND "
               + "update_actor = '" + EntrantPaymentUpdateActor.USER.name() + "' AND "
               + "payment_status = '" + InternalPaymentStatus.from(status).name() + "'");
-      assertThat(initiatePaymentRequest.getDays()).hasSize(vehicleEntrantPaymentsCount);
+      assertThat(initiatePaymentRequest.getDays()).hasSize(entrantPaymentsCount);
     }
 
     private void verifyThatPaymentExistsWithMatchingAmountAndCreditCardPaymentMethod() {
@@ -302,7 +298,7 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion withNonNullPaymentAuthorisedTimestamp() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "payment",
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
           "payment_authorised_timestamp is not null");
       assertThat(paymentsCount).isEqualTo(1);
       return this;

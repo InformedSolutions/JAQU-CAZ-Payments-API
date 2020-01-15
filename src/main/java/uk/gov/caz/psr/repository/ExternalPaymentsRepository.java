@@ -53,14 +53,14 @@ public class ExternalPaymentsRepository {
   }
 
   /**
-   * Filters through a {@link Payment}'s {@link uk.gov.caz.psr.model.CazEntrantPayment}s to retrieve
+   * Filters through a {@link Payment}'s {@link uk.gov.caz.psr.model.EntrantPayment}s to retrieve
    * a Clean Air Zone ID.
    *
    * @param payment an instance of a {@link Payment} object
    * @return the API key
    */
   private String getApiKeyFor(Payment payment) {
-    UUID cleanAirZoneId = payment.getCazEntrantPayments().iterator().next().getCleanAirZoneId();
+    UUID cleanAirZoneId = payment.getEntrantPayments().iterator().next().getCleanAirZoneId();
     return getApiKeyFor(cleanAirZoneId);
   }
 

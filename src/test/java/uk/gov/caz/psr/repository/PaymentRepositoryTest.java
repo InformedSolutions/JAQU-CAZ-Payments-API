@@ -1,29 +1,27 @@
-//TODO: Fix with the payment updates CAZ-1716
-//package uk.gov.caz.psr.repository;
-//
-//import static org.assertj.core.api.Assertions.assertThat;
-//import static org.assertj.core.api.Assertions.catchThrowable;
-//
-//import java.util.UUID;
-//import org.junit.jupiter.api.Nested;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.springframework.jdbc.core.JdbcTemplate;
-//import uk.gov.caz.psr.model.Payment;
-//import uk.gov.caz.psr.util.TestObjectFactory.Payments;
-//
-//@ExtendWith(MockitoExtension.class)
-//class PaymentRepositoryTest {
-//
-//  @Mock
-//  private JdbcTemplate jdbcTemplate;
-//
-//  @InjectMocks
-//  private PaymentRepository paymentRepository;
-//
+package uk.gov.caz.psr.repository;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+
+import java.util.UUID;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+import uk.gov.caz.psr.model.Payment;
+
+@ExtendWith(MockitoExtension.class)
+class PaymentRepositoryTest {
+
+  @Mock
+  private JdbcTemplate jdbcTemplate;
+
+  @InjectMocks
+  private PaymentRepository paymentRepository;
+
 //  @Nested
 //  class Insert {
 //
@@ -103,36 +101,36 @@
 //          .build();
 //    }
 //  }
-//
-//  @Nested
-//  class Update {
-//    @Test
-//    public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
-//      // given
-//      Payment payment = null;
-//
-//      // when
-//      Throwable throwable = catchThrowable(() -> paymentRepository.update(payment));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(NullPointerException.class)
-//          .hasMessage("Payment cannot be null");
-//    }
-//  }
-//
-//  @Nested
-//  class FindById {
-//    @Test
-//    public void shouldThrowNullPointerExceptionWhenIdIsNull() {
-//      // given
-//      UUID id = null;
-//
-//      // when
-//      Throwable throwable = catchThrowable(() -> paymentRepository.findById(id));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(NullPointerException.class)
-//          .hasMessage("ID cannot be null");
-//    }
-//  }
-//}
+
+  @Nested
+  class Update {
+    @Test
+    public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
+      // given
+      Payment payment = null;
+
+      // when
+      Throwable throwable = catchThrowable(() -> paymentRepository.update(payment));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Payment cannot be null");
+    }
+  }
+
+  @Nested
+  class FindById {
+    @Test
+    public void shouldThrowNullPointerExceptionWhenIdIsNull() {
+      // given
+      UUID id = null;
+
+      // when
+      Throwable throwable = catchThrowable(() -> paymentRepository.findById(id));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("ID cannot be null");
+    }
+  }
+}

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import uk.gov.caz.correlationid.Constants;
-import uk.gov.caz.psr.dto.CazEntrantPaymentDto;
+import uk.gov.caz.psr.dto.EntrantPaymentDto;
 import uk.gov.caz.psr.dto.VehicleEntrantDto;
 
 /**
@@ -53,6 +53,6 @@ public interface VehicleEntrantControllerApiSpec {
   })
   @PostMapping(VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS)
   @ResponseStatus(HttpStatus.OK)
-  ResponseEntity<List<CazEntrantPaymentDto>> createVehicleEntrantAndGetPaymentDetails(
+  ResponseEntity<List<EntrantPaymentDto>> createVehicleEntrantAndGetPaymentDetails(
       @RequestBody @Valid List<VehicleEntrantDto> vehicleEntrants);
 }

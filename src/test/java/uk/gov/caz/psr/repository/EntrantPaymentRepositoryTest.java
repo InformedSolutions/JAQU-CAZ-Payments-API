@@ -14,17 +14,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import uk.gov.caz.psr.model.CazEntrantPayment;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.VehicleEntrant;
 
 @ExtendWith(MockitoExtension.class)
-class CazEntrantPaymentRepositoryTest {
+class EntrantPaymentRepositoryTest {
 
   @Mock
   private JdbcTemplate jdbcTemplate;
 
   @InjectMocks
-  private CazEntrantPaymentRepository cazEntrantPaymentRepository;
+  private EntrantPaymentRepository entrantPaymentRepository;
 
   @Nested
   class Insert {
@@ -32,129 +32,130 @@ class CazEntrantPaymentRepositoryTest {
     @Test
     public void shouldThrowNullPointerExceptionWhenInsertListIsNull() {
       // given
-      List<CazEntrantPayment> input = null;
+      List<EntrantPayment> input = null;
 
       // when
-      Throwable throwable = catchThrowable(() -> cazEntrantPaymentRepository.insert(input));
+      Throwable throwable = catchThrowable(() -> entrantPaymentRepository.insert(input));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
-          .hasMessage("CAZ entrant payments cannot be null");
+          .hasMessage("Entrant payments cannot be null");
     }
 
     @Test
     public void shouldThrowIllegalArgumentExceptionWhenInsertListIsEmpty() {
       // given
-      List<CazEntrantPayment> input = Collections.emptyList();
+      List<EntrantPayment> input = Collections.emptyList();
 
       // when
-      Throwable throwable = catchThrowable(() -> cazEntrantPaymentRepository.insert(input));
+      Throwable throwable = catchThrowable(() -> entrantPaymentRepository.insert(input));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-          .hasMessage("CAZ entrant payments cannot be empty");
+          .hasMessage("Entrant payments cannot be empty");
+    }
+  }
+
+  @Nested
+  class UpdateList {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenListIsNull() {
+      // given
+      List<EntrantPayment> input = null;
+
+      // when
+      Throwable throwable = catchThrowable(() -> entrantPaymentRepository.update(input));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Entrant payments cannot be null");
+    }
+  }
+
+  @Nested
+  class Update {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenCazEntrantPaymentIsNull() {
+      // given
+      EntrantPayment entrantPayment = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository.update(entrantPayment));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Entrant payments cannot be null");
+    }
+  }
+
+  @Nested
+  class FindSuccessfullyPaid {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenCazEntrantIsNull() {
+      // given
+      VehicleEntrant vehicleEntrant = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository.findSuccessfullyPaid(vehicleEntrant));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Vehicle Entrant cannot be null");
+    }
+  }
+
+  @Nested
+  class FindOneByVrnAndCazEntryDate {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenCleanZoneIdIsNull() {
+      // given
+      UUID cleanZoneId = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository
+              .findOneByVrnAndCazEntryDate(cleanZoneId, "VRN123", LocalDate.now()));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("cleanZoneId cannot be null");
     }
 
-    @Nested
-    class UpdateList {
+    @Test
+    public void shouldThrowNullPointerExceptionWhenCazEntryDateIsNull() {
+      // given
+      LocalDate cazEntryDate = null;
 
-      @Test
-      public void shouldThrowNullPointerExceptionWhenListIsNull() {
-        // given
-        List<CazEntrantPayment> input = null;
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository
+              .findOneByVrnAndCazEntryDate(UUID.randomUUID(), "VRN123", cazEntryDate));
 
-        // when
-        Throwable throwable = catchThrowable(() -> cazEntrantPaymentRepository.update(input));
-
-        // then
-        assertThat(throwable).isInstanceOf(NullPointerException.class)
-            .hasMessage("CAZ entrant payments cannot be null");
-      }
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("cazEntryDate cannot be null");
     }
 
-    @Nested
-    class Update {
+    @Test
+    public void shouldThrowNIllegalArgumentExceptionWhenVrnIsEmpty() {
+      // given
+      String vrn = null;
 
-      @Test
-      public void shouldThrowNullPointerExceptionWhenCazEntrantPaymentIsNull() {
-        // given
-        CazEntrantPayment cazEntrantPayment = null;
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository
+              .findOneByVrnAndCazEntryDate(UUID.randomUUID(), "", LocalDate.now()));
 
-        // when
-        Throwable throwable = catchThrowable(
-            () -> cazEntrantPaymentRepository.update(cazEntrantPayment));
-
-        // then
-        assertThat(throwable).isInstanceOf(NullPointerException.class)
-            .hasMessage("CAZ entrant payments cannot be null");
-      }
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("VRN cannot be empty");
     }
-
-    @Nested
-    class FindSuccessfullyPaid {
-
-      @Test
-      public void shouldThrowNullPointerExceptionWhenCazEntrantIsNull() {
-        // given
-        VehicleEntrant vehicleEntrant = null;
-
-        // when
-        Throwable throwable = catchThrowable(
-            () -> cazEntrantPaymentRepository.findSuccessfullyPaid(vehicleEntrant));
-
-        // then
-        assertThat(throwable).isInstanceOf(NullPointerException.class)
-            .hasMessage("Vehicle Entrant cannot be null");
-      }
-    }
-
-    @Nested
-    class FindOneByVrnAndCazEntryDate {
-
-      @Test
-      public void shouldThrowNullPointerExceptionWhenCleanZoneIdIsNull() {
-        // given
-        UUID cleanZoneId = null;
-
-        // when
-        Throwable throwable = catchThrowable(
-            () -> cazEntrantPaymentRepository
-                .findOneByVrnAndCazEntryDate(cleanZoneId, "VRN123", LocalDate.now()));
-
-        // then
-        assertThat(throwable).isInstanceOf(NullPointerException.class)
-            .hasMessage("cleanZoneId cannot be null");
-      }
-
-      @Test
-      public void shouldThrowNullPointerExceptionWhenCazEntryDateIsNull() {
-        // given
-        LocalDate cazEntryDate = null;
-
-        // when
-        Throwable throwable = catchThrowable(
-            () -> cazEntrantPaymentRepository
-                .findOneByVrnAndCazEntryDate(UUID.randomUUID(), "VRN123", cazEntryDate));
-
-        // then
-        assertThat(throwable).isInstanceOf(NullPointerException.class)
-            .hasMessage("cazEntryDate cannot be null");
-      }
-
-      @Test
-      public void shouldThrowNIllegalArgumentExceptionWhenVrnIsEmpty() {
-        // given
-        String vrn = null;
-
-        // when
-        Throwable throwable = catchThrowable(
-            () -> cazEntrantPaymentRepository
-                .findOneByVrnAndCazEntryDate(UUID.randomUUID(), "", LocalDate.now()));
-
-        // then
-        assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("VRN cannot be empty");
-      }
 //    @Test
 //    public void shouldThrowNIllegalArgumentExceptionWhenVrnIsEmpty() {
 //      // given
@@ -198,55 +199,72 @@ class CazEntrantPaymentRepositoryTest {
 //      // then
 //      assertThat(response).isEqualTo(Optional.empty());
 //    }
+  }
+
+  @Nested
+  class FindOnePaidByCazEntryDateAndExternalPaymentId {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenCleanZoneIdIsNull() {
+      // given
+      UUID cleanZoneId = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository
+              .findOnePaidByCazEntryDateAndExternalPaymentId(cleanZoneId, LocalDate.now(),
+                  "external_payment_id"));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("cleanZoneId cannot be null");
     }
 
-    @Nested
-    class FindOnePaidByCazEntryDateAndExternalPaymentId {
+    @Test
+    public void shouldThrowNullPointerExceptionWhenCazEntryDateIsNull() {
+      // given
+      LocalDate cazEntryDate = null;
 
-      @Test
-      public void shouldThrowNullPointerExceptionWhenCleanZoneIdIsNull() {
-        // given
-        UUID cleanZoneId = null;
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository
+              .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), cazEntryDate,
+                  "external_payment_id"));
 
-        // when
-        Throwable throwable = catchThrowable(
-            () -> cazEntrantPaymentRepository
-                .findOnePaidByCazEntryDateAndExternalPaymentId(cleanZoneId, LocalDate.now(),
-                    "external_payment_id"));
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("cazEntryDate cannot be null");
+    }
 
-        // then
-        assertThat(throwable).isInstanceOf(NullPointerException.class)
-            .hasMessage("cleanZoneId cannot be null");
-      }
+    @Test
+    public void shouldThrowNIllegalArgumentExceptionWhenExternalPaymentIsEmpty() {
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository
+              .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), LocalDate.now(),
+                  ""));
 
-      @Test
-      public void shouldThrowNullPointerExceptionWhenCazEntryDateIsNull() {
-        // given
-        LocalDate cazEntryDate = null;
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("externalPaymentId cannot be empty");
+    }
+  }
 
-        // when
-        Throwable throwable = catchThrowable(
-            () -> cazEntrantPaymentRepository
-                .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), cazEntryDate,
-                    "external_payment_id"));
+  @Nested
+  class FindByPaymentId {
 
-        // then
-        assertThat(throwable).isInstanceOf(NullPointerException.class)
-            .hasMessage("cazEntryDate cannot be null");
-      }
+    @Test
+    public void shouldThrowNullPointerExceptionWhenPaymentIdIsNull() {
+      // given
+      UUID paymentId = null;
 
-      @Test
-      public void shouldThrowNIllegalArgumentExceptionWhenExternalPaymentIsEmpty() {
-        // when
-        Throwable throwable = catchThrowable(
-            () -> cazEntrantPaymentRepository
-                .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), LocalDate.now(),
-                    ""));
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository.findByPaymentId(paymentId));
 
-        // then
-        assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("externalPaymentId cannot be empty");
-      }
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("'paymentId' cannot be null");
     }
   }
 }

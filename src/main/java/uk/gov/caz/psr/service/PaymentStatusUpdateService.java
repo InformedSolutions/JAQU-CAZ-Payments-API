@@ -5,26 +5,26 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.model.CazEntrantPayment;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
-import uk.gov.caz.psr.repository.CazEntrantPaymentRepository;
+import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 
 /**
- * A service which updates {@code paymentStatus} for all found {@link CazEntrantPayment}.
+ * A service which updates {@code paymentStatus} for all found {@link EntrantPayment}.
  */
 @Service
 @Slf4j
 @AllArgsConstructor
 public class PaymentStatusUpdateService {
 
-  private final CazEntrantPaymentRepository cazEntrantPaymentRepository;
+  private final EntrantPaymentRepository entrantPaymentRepository;
 
   /**
-   * Process update of the {@link CazEntrantPayment} with provided details.
+   * Process update of the {@link EntrantPayment} with provided details.
    *
    * @param vehicleEntrantPaymentStatusUpdates list of {@link VehicleEntrantPaymentStatusUpdate}
    *                                           which contains data to find and update {@link
-   *                                           CazEntrantPayment}.
+   *                                           EntrantPayment}.
    */
   public void processUpdate(
       List<VehicleEntrantPaymentStatusUpdate> vehicleEntrantPaymentStatusUpdates) {

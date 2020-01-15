@@ -17,7 +17,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.caz.psr.model.CazEntrantPayment;
+import uk.gov.caz.psr.model.EntrantPayment;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
@@ -26,22 +27,27 @@ import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundEx
  * A class which handles managing data in {@code T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT} table.
  */
 @Repository
-public class CazEntrantPaymentRepository {
+public class EntrantPaymentRepository {
 
-  private static final CazEntrantPaymentRowMapper ROW_MAPPER =
-      new CazEntrantPaymentRowMapper();
+  private static final EntrantPaymentRowMapper ROW_MAPPER =
+      new EntrantPaymentRowMapper();
 
-  //  private static final String SELECT_BY_PAYMENT_ID_SQL = "SELECT "
-  //      + "vehicle_entrant_payment_id, "
-  //      + "vrn, "
-  //      + "clean_air_zone_id, "
-  //      + "travel_date, "
-  //      + "tariff_code, "
-  //      + "charge, "
-  //      + "payment_status, "
-  //      + "case_reference "
-  //      + "FROM vehicle_entrant_payment "
-  //      + "WHERE payment_id = ?";
+  private static final String SELECT_BY_PAYMENT_ID_SQL = "SELECT "
+      + "entrant_payment.clean_air_zone_entrant_payment_id, "
+      + "entrant_payment.vrn, "
+      + "entrant_payment.clean_air_zone_id, "
+      + "entrant_payment.travel_date, "
+      + "entrant_payment.tariff_code, "
+      + "entrant_payment.charge, "
+      + "entrant_payment.payment_status, "
+      + "entrant_payment.update_actor, "
+      + "entrant_payment.vehicle_entrant_captured, "
+      + "entrant_payment.case_reference "
+      + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
+      + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
+      + "ON entrant_payment_match.clean_air_zone_entrant_payment_id = "
+      + "entrant_payment.clean_air_zone_entrant_payment_id "
+      + "WHERE entrant_payment_match.payment_id = ?";
 
   private static final String SELECT_PAID_SQL = "SELECT "
       + "clean_air_zone_entrant_payment_id, "
@@ -51,6 +57,7 @@ public class CazEntrantPaymentRepository {
       + "tariff_code, "
       + "charge, "
       + "payment_status, "
+      + "vehicle_entrant_captured, "
       + "case_reference "
       + "FROM caz_payment.t_clean_air_zone_entrant_payment "
       + "WHERE travel_date = ? AND clean_air_zone_id = ? AND vrn = ? AND payment_status = ?";
@@ -89,7 +96,10 @@ public class CazEntrantPaymentRepository {
   //        + "payment.payment_provider_id = ?";
 
   private static final String UPDATE_SQL = "UPDATE caz_payment.t_clean_air_zone_entrant_payment "
-      + "SET vehicle_entrant_captured = ? "
+      + "SET payment_status = ?, "
+      + "case_reference = ?, "
+      + "update_actor = ?, "
+      + "vehicle_entrant_captured = ? "
       + "WHERE clean_air_zone_entrant_payment_id = ?";
 
   private final JdbcTemplate jdbcTemplate;
@@ -98,7 +108,7 @@ public class CazEntrantPaymentRepository {
   /**
    * Creates a new instance of this class.
    */
-  public CazEntrantPaymentRepository(JdbcTemplate jdbcTemplate) {
+  public EntrantPaymentRepository(JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
     this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
         .withSchemaName("caz_payment")
@@ -111,107 +121,109 @@ public class CazEntrantPaymentRepository {
   /**
    * Inserts the passed {@code vehicleEntrantPayments} into the database.
    *
-   * @param cazEntrantPayments A list of {@link CazEntrantPayment} instances.
-   * @return A list of {@link CazEntrantPayment} with their internal identifiers set.
+   * @param entrantPayments A list of {@link EntrantPayment} instances.
+   * @return A list of {@link EntrantPayment} with their internal identifiers set.
    * @throws NullPointerException if {@code vehicleEntrantPayments} is null.
    * @throws IllegalArgumentException if {@code vehicleEntrantPayments} is empty.
    * @throws IllegalArgumentException if {@code vehicleEntrantPayments} contains at least one
    *     object whose payment id is null.
    */
   @Transactional
-  public List<CazEntrantPayment> insert(List<CazEntrantPayment> cazEntrantPayments) {
-    Preconditions.checkNotNull(cazEntrantPayments, "CAZ entrant payments cannot be null");
-    Preconditions.checkArgument(!cazEntrantPayments.isEmpty(), "CAZ entrant payments "
+  public List<EntrantPayment> insert(List<EntrantPayment> entrantPayments) {
+    Preconditions.checkNotNull(entrantPayments, "Entrant payments cannot be null");
+    Preconditions.checkArgument(!entrantPayments.isEmpty(), "Entrant payments "
         + "cannot be empty");
     // TODO check if payments assigned??
 
-    List<CazEntrantPayment> result = new ArrayList<>(cazEntrantPayments.size());
-    for (CazEntrantPayment cazEntrantPayment : cazEntrantPayments) {
+    List<EntrantPayment> result = new ArrayList<>(entrantPayments.size());
+    for (EntrantPayment entrantPayment : entrantPayments) {
       KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
-          toSqlParameters(cazEntrantPayment));
+          toSqlParameters(entrantPayment));
       UUID id = (UUID) keyHolder.getKeys().get("clean_air_zone_entrant_payment_id");
-      result.add(cazEntrantPayment.toBuilder().cleanAirZoneEntrantPaymentId(id).build());
+      result.add(entrantPayment.toBuilder().cleanAirZoneEntrantPaymentId(id).build());
     }
     return result;
   }
 
   /**
-   * Converts the passed {@code cazEntrantPayment} to a map of parameters that will be used for
+   * Converts the passed {@code entrantPayment} to a map of parameters that will be used for
    * database operations.
    */
-  private MapSqlParameterSource toSqlParameters(CazEntrantPayment cazEntrantPayment) {
+  private MapSqlParameterSource toSqlParameters(EntrantPayment entrantPayment) {
     return new MapSqlParameterSource()
-        .addValue("vrn", cazEntrantPayment.getVrn())
-        .addValue("clean_air_zone_id", cazEntrantPayment.getCleanAirZoneId())
-        .addValue("travel_date", cazEntrantPayment.getTravelDate())
-        .addValue("tariff_code", cazEntrantPayment.getTariffCode())
-        .addValue("charge", cazEntrantPayment.getCharge())
-        .addValue("payment_status", cazEntrantPayment.getInternalPaymentStatus().name())
-        .addValue("vehicle_entrant_captured", cazEntrantPayment.isVehicleEntrantCaptured())
-        .addValue("update_actor", cazEntrantPayment.getUpdateActor());
+        .addValue("vrn", entrantPayment.getVrn())
+        .addValue("clean_air_zone_id", entrantPayment.getCleanAirZoneId())
+        .addValue("travel_date", entrantPayment.getTravelDate())
+        .addValue("tariff_code", entrantPayment.getTariffCode())
+        .addValue("charge", entrantPayment.getCharge())
+        .addValue("payment_status", entrantPayment.getInternalPaymentStatus().name())
+        .addValue("vehicle_entrant_captured", entrantPayment.isVehicleEntrantCaptured())
+        .addValue("update_actor", entrantPayment.getUpdateActor());
   }
 
   /**
-   * Updates the database with the passed {@link CazEntrantPayment} instances.
+   * Updates the database with the passed {@link EntrantPayment} instances.
    *
-   * @param cazEntrantPayments A list of {@link CazEntrantPayment} which are to be updated in
-   *     the database.
-   * @throws NullPointerException if {@code cazEntrantPayment} is null
+   * @param entrantPayments A list of {@link EntrantPayment} which are to be updated in the
+   *     database.
+   * @throws NullPointerException if {@code EntrantPayment} is null
    */
   @Transactional
-  public void update(List<CazEntrantPayment> cazEntrantPayments) {
-    Preconditions.checkNotNull(cazEntrantPayments, "CAZ entrant payments cannot be null");
+  public void update(List<EntrantPayment> entrantPayments) {
+    Preconditions.checkNotNull(entrantPayments, "Entrant payments cannot be null");
 
-    for (CazEntrantPayment cazEntrantPayment : cazEntrantPayments) {
-      update(cazEntrantPayment);
+    for (EntrantPayment entrantPayment : entrantPayments) {
+      update(entrantPayment);
     }
   }
 
   /**
-   * Updates the database with the passed {@link CazEntrantPayment} instance.
+   * Updates the database with the passed {@link EntrantPayment} instance.
    *
-   * @param cazEntrantPayment An instance of {@link CazEntrantPayment} which is to be updated in
-   *     the database.
-   * @throws NullPointerException if {@code cazEntrantPayment} is null.
+   * @param entrantPayment An instance of {@link EntrantPayment} which is to be updated in the
+   *     database.
+   * @throws NullPointerException if {@code entrantPayment} is null.
    */
-  public void update(CazEntrantPayment cazEntrantPayment) {
-    Preconditions.checkNotNull(cazEntrantPayment, "CAZ entrant payments cannot be null");
+  public void update(EntrantPayment entrantPayment) {
+    Preconditions.checkNotNull(entrantPayment, "Entrant payments cannot be null");
 
     jdbcTemplate.update(UPDATE_SQL, preparedStatementSetter -> {
-      preparedStatementSetter.setBoolean(1, cazEntrantPayment.isVehicleEntrantCaptured());
-      preparedStatementSetter.setObject(2, cazEntrantPayment.getCleanAirZoneEntrantPaymentId());
+      preparedStatementSetter.setString(1, entrantPayment.getInternalPaymentStatus()
+          .name());
+      preparedStatementSetter.setString(2, entrantPayment.getCaseReference());
+      preparedStatementSetter.setString(3, entrantPayment.getUpdateActor().name());
+      preparedStatementSetter.setBoolean(4, entrantPayment.isVehicleEntrantCaptured());
+      preparedStatementSetter.setObject(5, entrantPayment.getCleanAirZoneEntrantPaymentId());
     });
   }
 
   /**
-   * Finds all {@link CazEntrantPayment} entities by the passed {@code paymentId} (an identifier of
-   * the payment for which entries in VEHICLE_ENTRANT_PAYMENT table are populated). If none is find,
-   * an empty list is returned.
+   * Finds all {@link EntrantPayment} entities by the passed {@code paymentId} (an identifier of the
+   * payment for which entries in T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT table are populated).
+   * If none is find, an empty list is returned.
    *
    * @param paymentId The payment identifier against which the search is to be performed.
-   * @return A list of matching {@link CazEntrantPayment} entities.
+   * @return A list of matching {@link EntrantPayment} entities.
    * @throws NullPointerException if {@code paymentId} is null.
    */
-  public List<CazEntrantPayment> findByPaymentId(UUID paymentId) {
+  public List<EntrantPayment> findByPaymentId(UUID paymentId) {
     Preconditions.checkNotNull(paymentId, "'paymentId' cannot be null");
-    //    TODO: Fix with the payment updates CAZ-1716
-    //    return jdbcTemplate.query(SELECT_BY_PAYMENT_ID_SQL,
-    //        preparedStatement -> preparedStatement.setObject(1, paymentId), ROW_MAPPER);
-    return new ArrayList<>();
+    return jdbcTemplate.query(SELECT_BY_PAYMENT_ID_SQL,
+        preparedStatement -> preparedStatement.setObject(1, paymentId), ROW_MAPPER);
   }
 
   /**
-   * Finds single {@link CazEntrantPayment} entity for the passed {@link VehicleEntrant} whose
-   * status is equal to 'PAID'. If none is found, {@link Optional#empty()} is returned.
+   * Finds single {@link EntrantPayment} entity for the passed {@link VehicleEntrant} whose status
+   * is equal to 'PAID'. If none is found, {@link Optional#empty()} is returned.
    *
    * @param vehicleEntrant provided VehicleEntrant object.
-   * @return An optional containing {@link CazEntrantPayment} entity.
+   * @return An optional containing {@link EntrantPayment} entity.
    * @throws NullPointerException if {@code vehicleEntrant} is null.
    */
-  public Optional<CazEntrantPayment> findSuccessfullyPaid(VehicleEntrant vehicleEntrant) {
+  public Optional<EntrantPayment> findSuccessfullyPaid(VehicleEntrant vehicleEntrant) {
     Preconditions.checkNotNull(vehicleEntrant, "Vehicle Entrant cannot be null");
 
-    List<CazEntrantPayment> results = jdbcTemplate.query(SELECT_PAID_SQL,
+    List<EntrantPayment> results = jdbcTemplate.query(SELECT_PAID_SQL,
         preparedStatement -> {
           preparedStatement.setObject(1, vehicleEntrant.getCazEntryDate());
           preparedStatement.setObject(2, vehicleEntrant.getCleanZoneId());
@@ -227,27 +239,27 @@ public class CazEntrantPaymentRepository {
   }
 
   /**
-   * Finds single of {@link CazEntrantPayment} entity for the passed params. If none is found,
+   * Finds single of {@link EntrantPayment} entity for the passed params. If none is found,
    * {@link Optional#empty()} is returned. If more then one found throws {@link
    * NotUniqueVehicleEntrantPaymentFoundException}.
    *
    * @param cleanZoneId provided Clean Air Zone ID.
    * @param vrn provided VRN number
    * @param cazEntryDate Date of entry to provided CAZ
-   * @return list of found {@link CazEntrantPayment}.
+   * @return list of found {@link EntrantPayment}.
    * @throws NullPointerException if {@code cleanZoneId} is null.
    * @throws NullPointerException if {@code cazEntryDate} is null.
    * @throws IllegalArgumentException if {@code vrn} is empty.
    * @throws NotUniqueVehicleEntrantPaymentFoundException if method found more than one
    *     VehicleEntrantPayment.
    */
-  public Optional<CazEntrantPayment> findOneByVrnAndCazEntryDate(UUID cleanZoneId,
+  public Optional<EntrantPayment> findOneByVrnAndCazEntryDate(UUID cleanZoneId,
       String vrn, LocalDate cazEntryDate) {
     Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
     Preconditions.checkNotNull(cazEntryDate, "cazEntryDate cannot be null");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
 
-    List<CazEntrantPayment> results = jdbcTemplate
+    List<EntrantPayment> results = jdbcTemplate
         .query(SELECT_BY_VRN_CAZ_ENTRY_DATE_SQL,
             preparedStatement -> {
               preparedStatement.setObject(1, cleanZoneId);
@@ -258,7 +270,7 @@ public class CazEntrantPaymentRepository {
         );
     if (results.size() > 1) {
       throw new NotUniqueVehicleEntrantPaymentFoundException(vrn,
-          "Not able to find unique VehicleEntrantPayment");
+          "Not able to find unique EntrantPayment");
     }
     if (results.isEmpty()) {
       return Optional.empty();
@@ -267,21 +279,21 @@ public class CazEntrantPaymentRepository {
   }
 
   /**
-   * Finds single of {@link CazEntrantPayment} entity for the passed params. If none is found,
-   * {@link Optional#empty()} is returned. If more then one found throws {@link
+   * Finds single of {@link EntrantPayment} entity for the passed params. If none is found, {@link
+   * Optional#empty()} is returned. If more then one found throws {@link
    * NotUniqueVehicleEntrantPaymentFoundException}.
    *
    * @param cleanZoneId provided Clean Air Zone ID
    * @param cazEntryDate Date of entry to provided CAZ
    * @param externalPaymentId Payment Id from GOV.UK PAY
-   * @return list of found {@link CazEntrantPayment}.
+   * @return list of found {@link EntrantPayment}.
    * @throws NullPointerException if {@code cleanZoneId} is null.
    * @throws NullPointerException if {@code cazEntryDate} is null.
    * @throws IllegalArgumentException if {@code vrn} is empty.
    * @throws NotUniqueVehicleEntrantPaymentFoundException if method found more than one
    *     VehicleEntrantPayment.
    */
-  public Optional<CazEntrantPayment> findOnePaidByCazEntryDateAndExternalPaymentId(
+  public Optional<EntrantPayment> findOnePaidByCazEntryDateAndExternalPaymentId(
       UUID cleanZoneId, LocalDate cazEntryDate, String externalPaymentId) {
     Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
     Preconditions.checkNotNull(cazEntryDate, "cazEntryDate cannot be null");
@@ -310,17 +322,16 @@ public class CazEntrantPaymentRepository {
   }
 
   /**
-   * A class that maps the row returned from the database to an instance of {@link
-   * CazEntrantPayment}.
+   * A class that maps the row returned from the database to an instance of {@link EntrantPayment}.
    */
-  static class CazEntrantPaymentRowMapper implements RowMapper<CazEntrantPayment> {
+  static class EntrantPaymentRowMapper implements RowMapper<EntrantPayment> {
 
     /**
-     * Maps {@link ResultSet} to {@link CazEntrantPayment}.
+     * Maps {@link ResultSet} to {@link EntrantPayment}.
      */
     @Override
-    public CazEntrantPayment mapRow(ResultSet resultSet, int i) throws SQLException {
-      return CazEntrantPayment.builder()
+    public EntrantPayment mapRow(ResultSet resultSet, int i) throws SQLException {
+      return EntrantPayment.builder()
           .cleanAirZoneEntrantPaymentId(
               UUID.fromString(resultSet.getString("clean_air_zone_entrant_payment_id")))
           .vrn(resultSet.getString("vrn"))
@@ -332,6 +343,7 @@ public class CazEntrantPaymentRepository {
               resultSet.getString("payment_status")))
           .vehicleEntrantCaptured(resultSet.getBoolean("vehicle_entrant_captured"))
           .caseReference(resultSet.getString("case_reference"))
+          .updateActor(EntrantPaymentUpdateActor.valueOf(resultSet.getString("update_actor")))
           .build();
     }
   }

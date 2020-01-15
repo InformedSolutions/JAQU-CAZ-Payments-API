@@ -11,7 +11,7 @@ import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.repository.CazEntrantPaymentRepository;
+import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
 
@@ -26,7 +26,7 @@ public class CleanupDanglingPaymentService {
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final GetPaymentResultConverter getPaymentResultConverter;
   private final PaymentStatusUpdater paymentStatusUpdater;
-  private final CazEntrantPaymentRepository cazEntrantPaymentRepository;
+  private final EntrantPaymentRepository entrantPaymentRepository;
 
   /**
    * Processes the passed {@code danglingPayment}: gets the external status and updates it in the
@@ -71,8 +71,8 @@ public class CleanupDanglingPaymentService {
   private void checkPreconditions(Payment danglingPayment) {
     Preconditions.checkNotNull(danglingPayment, "Payment cannot be null");
     Preconditions.checkNotNull(danglingPayment.getExternalId(), "External id cannot be null");
-    Preconditions.checkArgument(danglingPayment.getCazEntrantPayments().isEmpty(),
-        "CAZ entrant payments should be empty");
+    Preconditions.checkArgument(danglingPayment.getEntrantPayments().isEmpty(),
+        "Entrant payments should be empty");
   }
 
   /**
@@ -82,7 +82,7 @@ public class CleanupDanglingPaymentService {
    */
   private Payment loadVehicleEntrantPayments(Payment payment) {
     return payment.toBuilder()
-        .cazEntrantPayments(cazEntrantPaymentRepository.findByPaymentId(payment.getId()))
+        .entrantPayments(entrantPaymentRepository.findByPaymentId(payment.getId()))
         .build();
   }
   
@@ -92,8 +92,8 @@ public class CleanupDanglingPaymentService {
    * @return a {@link UUID} representing a Clean Air Zone.
    */
   private UUID getCleanAirZoneId(Payment payment) {
-    Preconditions.checkArgument(! payment.getCazEntrantPayments().isEmpty(),
+    Preconditions.checkArgument(! payment.getEntrantPayments().isEmpty(),
         "Vehicle entrant payments should not be empty");
-    return payment.getCazEntrantPayments().iterator().next().getCleanAirZoneId();
+    return payment.getEntrantPayments().iterator().next().getCleanAirZoneId();
   }
 }

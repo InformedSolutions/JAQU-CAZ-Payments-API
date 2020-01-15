@@ -17,21 +17,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.dto.CazEntrantPaymentDto;
+import uk.gov.caz.psr.dto.EntrantPaymentDto;
 import uk.gov.caz.psr.dto.VehicleEntrantDto;
-import uk.gov.caz.psr.model.CazEntrantPayment;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.repository.CazEntrantPaymentRepository;
+import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 
 @ExtendWith(MockitoExtension.class)
-class CazEntrantPaymentServiceTest {
+class EntrantPaymentServiceTest {
 
   @Mock
-  private CazEntrantPaymentRepository cazEntrantPaymentRepository;
+  private EntrantPaymentRepository entrantPaymentRepository;
 
   @InjectMocks
-  private CazEntrantPaymentService cazEntrantPaymentService;
+  private EntrantPaymentService entrantPaymentService;
 
   private final static String ANY_VRN = "CAS123";
   private final static String ANY_UUID = "6bea485b-7fa6-4b78-9703-b721c98f4b15";
@@ -43,7 +43,7 @@ class CazEntrantPaymentServiceTest {
     List<VehicleEntrantDto> cazEntrantPaymentDtos = new ArrayList<>();
 
     // when
-    List<CazEntrantPaymentDto> response = cazEntrantPaymentService
+    List<EntrantPaymentDto> response = entrantPaymentService
         .bulkProcess(cazEntrantPaymentDtos);
 
     // then
@@ -58,17 +58,17 @@ class CazEntrantPaymentServiceTest {
     mockNonEmptyCapturedCazEntryPaymentRepositoryResponse();
 
     // when
-    List<CazEntrantPaymentDto> response = cazEntrantPaymentService
+    List<EntrantPaymentDto> response = entrantPaymentService
         .bulkProcess(cazEntrantPaymentDtos);
 
     // then
     assertThat(response).isNotEmpty();
-    verify(cazEntrantPaymentRepository).findOneByVrnAndCazEntryDate(
+    verify(entrantPaymentRepository).findOneByVrnAndCazEntryDate(
         UUID.fromString(ANY_UUID),
         ANY_VRN,
         LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate()
     );
-    verify(cazEntrantPaymentRepository, never()).update(buildCazEntrantPayment(true));
+    verify(entrantPaymentRepository, never()).update(buildCazEntrantPayment(true));
   }
 
   @Test
@@ -79,17 +79,17 @@ class CazEntrantPaymentServiceTest {
     mockNonEmptyNotCapturedCazEntryPaymentRepositoryResponse();
 
     // when
-    List<CazEntrantPaymentDto> response = cazEntrantPaymentService
+    List<EntrantPaymentDto> response = entrantPaymentService
         .bulkProcess(cazEntrantPaymentDtos);
 
     // then
     assertThat(response).isNotEmpty();
-    verify(cazEntrantPaymentRepository).findOneByVrnAndCazEntryDate(
+    verify(entrantPaymentRepository).findOneByVrnAndCazEntryDate(
         UUID.fromString(ANY_UUID),
         ANY_VRN,
         LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate()
     );
-    verify(cazEntrantPaymentRepository).update(buildCazEntrantPayment(true));
+    verify(entrantPaymentRepository).update(buildCazEntrantPayment(true));
   }
 
   private VehicleEntrantDto buildVehicleEntrantDto() {
@@ -102,17 +102,17 @@ class CazEntrantPaymentServiceTest {
   }
 
   private void mockNonEmptyCapturedCazEntryPaymentRepositoryResponse() {
-    when(cazEntrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
+    when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
         .thenReturn(Optional.of(buildCazEntrantPayment(true)));
   }
 
   private void mockNonEmptyNotCapturedCazEntryPaymentRepositoryResponse() {
-    when(cazEntrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
+    when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
         .thenReturn(Optional.of(buildCazEntrantPayment(false)));
   }
 
-  private CazEntrantPayment buildCazEntrantPayment(boolean vehicleEntrantCaptured) {
-    return CazEntrantPayment.builder()
+  private EntrantPayment buildCazEntrantPayment(boolean vehicleEntrantCaptured) {
+    return EntrantPayment.builder()
         .cleanAirZoneId(UUID.fromString(ANY_UUID))
         .internalPaymentStatus(InternalPaymentStatus.PAID)
         .vrn(ANY_VRN)

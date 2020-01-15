@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.model.CazEntrantPayment;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -56,7 +56,7 @@ public class InitiatePaymentService {
   private Payment buildPayment(InitiatePaymentRequest request) {
     int chargePerDay = chargeCalculator.calculateCharge(request.getAmount(),
         request.getDays().size());
-    List<CazEntrantPayment> vehicleEntrantPayments = request.getDays()
+    List<EntrantPayment> entrantPayments = request.getDays()
         .stream()
         .map(day -> toEntrantPayment(day, request, chargePerDay))
         .collect(Collectors.toList());
@@ -65,16 +65,16 @@ public class InitiatePaymentService {
         .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
         .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
         .totalPaid(request.getAmount())
-        .cazEntrantPayments(vehicleEntrantPayments).build();
+        .entrantPayments(entrantPayments).build();
   }
 
   /**
    * Maps a data from {@link InitiatePaymentRequest} to an instance of
-   * {@link CazEntrantPayment}.
+   * {@link EntrantPayment}.
    */
-  private CazEntrantPayment toEntrantPayment(LocalDate travelDate,
+  private EntrantPayment toEntrantPayment(LocalDate travelDate,
       InitiatePaymentRequest request, int chargePerDay) {
-    return CazEntrantPayment.builder()
+    return EntrantPayment.builder()
         .vrn(normalizeVrn(request.getVrn()))
         .cleanAirZoneId(request.getCleanAirZoneId())
         .travelDate(travelDate)

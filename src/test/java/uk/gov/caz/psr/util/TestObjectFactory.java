@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
-import uk.gov.caz.psr.model.CazEntrantPayment;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
@@ -49,7 +49,7 @@ public class TestObjectFactory {
     return (char) (random.nextInt(26) + (int) ('a'));
   }
 
-  private static class CazEntrantPaymentsBuilder {
+  private static class EntrantPaymentsBuilder {
 
     private final Collection<LocalDate> travelDates;
     private InternalPaymentStatus status;
@@ -58,23 +58,23 @@ public class TestObjectFactory {
     private String vrn;
     private UUID cleanAirZoneId;
 
-    private CazEntrantPaymentsBuilder(Collection<LocalDate> travelDates) {
+    private EntrantPaymentsBuilder(Collection<LocalDate> travelDates) {
       this.travelDates = travelDates;
     }
 
-    public static CazEntrantPaymentsBuilder forDays(Collection<LocalDate> days) {
-      return new CazEntrantPaymentsBuilder(days);
+    public static EntrantPaymentsBuilder forDays(Collection<LocalDate> days) {
+      return new EntrantPaymentsBuilder(days);
     }
 
-    public CazEntrantPaymentsBuilder withStatus(InternalPaymentStatus status) {
+    public EntrantPaymentsBuilder withStatus(InternalPaymentStatus status) {
       this.status = status;
       return this;
     }
 
-    public List<CazEntrantPayment> build() {
+    public List<EntrantPayment> build() {
       int charge = amount / travelDates.size();
       return travelDates.stream()
-          .map(travelDate -> CazEntrantPayment.builder()
+          .map(travelDate -> EntrantPayment.builder()
               .cleanAirZoneEntrantPaymentId(withId ? UUID.randomUUID() : null)
               .internalPaymentStatus(status)
               .charge(charge)
@@ -88,17 +88,17 @@ public class TestObjectFactory {
           .collect(Collectors.toList());
     }
 
-    public CazEntrantPaymentsBuilder withTotal(Integer amount) {
+    public EntrantPaymentsBuilder withTotal(Integer amount) {
       this.amount = amount;
       return this;
     }
 
-    public CazEntrantPaymentsBuilder withVrn(String vrn) {
+    public EntrantPaymentsBuilder withVrn(String vrn) {
       this.vrn = vrn;
       return this;
     }
 
-    public CazEntrantPaymentsBuilder withCazId(UUID cleanAirZoneId) {
+    public EntrantPaymentsBuilder withCazId(UUID cleanAirZoneId) {
       this.cleanAirZoneId = cleanAirZoneId;
       return this;
     }
@@ -139,49 +139,49 @@ public class TestObjectFactory {
 
     public static Payment forDays(Collection<LocalDate> travelDates, UUID paymentId,
         String externalId, UUID cazIdentifier) {
-        List<CazEntrantPayment> cazEntrantPayments = CazEntrantPaymentsBuilder.forDays(travelDates).withTotal(travelDates.size() * 800)
+        List<EntrantPayment> entrantPayments = EntrantPaymentsBuilder.forDays(travelDates).withTotal(travelDates.size() * 800)
             .withVrn(randomVrn())
             .withStatus(InternalPaymentStatus.NOT_PAID).withCazId(cazIdentifier).build();
-      return createPaymentWith(cazEntrantPayments, paymentId, externalId);
+      return createPaymentWith(entrantPayments, paymentId, externalId);
     }
 
     public static Payment forRequest(InitiatePaymentRequest request) {
-      List<CazEntrantPayment> cazEntrantPayments = CazEntrantPaymentsBuilder
+      List<EntrantPayment> entrantPayments = EntrantPaymentsBuilder
           .forDays(request.getDays())
           .withTotal(request.getAmount())
           .withVrn(request.getVrn())
           .withStatus(InternalPaymentStatus.NOT_PAID)
           .withCazId(request.getCleanAirZoneId()).build();
 
-      return createPaymentWith(cazEntrantPayments, null, null);
+      return createPaymentWith(entrantPayments, null, null);
     }
 
-    private static Payment createPaymentWith(List<CazEntrantPayment> cazEntrantPayments,
+    private static Payment createPaymentWith(List<EntrantPayment> entrantPayments,
         UUID paymentId, String externalId) {
       return Payment.builder().id(paymentId).externalId(externalId)
           .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
-          .totalPaid(cazEntrantPayments.stream().map(CazEntrantPayment::getCharge)
+          .totalPaid(entrantPayments.stream().map(EntrantPayment::getCharge)
               .reduce(0, Integer::sum))
-          .cazEntrantPayments(cazEntrantPayments)
+          .entrantPayments(entrantPayments)
           .externalPaymentStatus(ExternalPaymentStatus.INITIATED).build();
     }
   }
 
-  public static class CazEntrantPayments {
+  public static class EntrantPayments {
 
-    public static CazEntrantPayment anyNotPaid() {
-      return CazEntrantPayment.builder().charge(100).travelDate(LocalDate.now())
+    public static EntrantPayment anyNotPaid() {
+      return EntrantPayment.builder().charge(100).travelDate(LocalDate.now())
           .cleanAirZoneId(UUID.randomUUID()).vrn("VRN123")
           .internalPaymentStatus(InternalPaymentStatus.NOT_PAID).build();
     }
 
-    public static CazEntrantPayment anyPaid() {
-      return CazEntrantPayment.builder().charge(100).travelDate(LocalDate.now())
+    public static EntrantPayment anyPaid() {
+      return EntrantPayment.builder().charge(100).travelDate(LocalDate.now())
           .cleanAirZoneId(UUID.randomUUID()).vrn("VRN123")
           .internalPaymentStatus(InternalPaymentStatus.PAID).build();
     }
 
-    public static List<CazEntrantPayment> forRandomDays() {
+    public static List<EntrantPayment> forRandomDays() {
       int daysSize = 5;
       LocalDate today = LocalDate.now();
       Set<LocalDate> localDates = new HashSet<>();
@@ -189,7 +189,7 @@ public class TestObjectFactory {
         localDates.add(today.plusDays(random.nextInt(7)));
       }
 
-      return CazEntrantPaymentsBuilder.forDays(localDates)
+      return EntrantPaymentsBuilder.forDays(localDates)
           .withStatus(InternalPaymentStatus.PAID).build();
     }
   }
