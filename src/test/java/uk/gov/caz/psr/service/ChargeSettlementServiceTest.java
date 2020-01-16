@@ -45,24 +45,9 @@ class ChargeSettlementServiceTest {
   }
 
   @Test
-  void shouldThrowIllegalStateExceptionWhenRepositoryReturnsMoreThanOnePaidPaymentStatus() {
+  void shouldReturnPaidPaymentStatusWhenPaidEntrantPaymentExists() {
     // given
-    mockMultiplePaidPaymentStatuses();
-
-    //when
-    Throwable throwable = catchThrowable(() ->
-        chargeSettlementService.findChargeSettlement(ANY_CAZ_ID, ANY_VRN, ANY_DATE)
-    );
-
-    //then
-    assertThat(throwable).isInstanceOf(IllegalStateException.class)
-        .hasMessage("More than one paid VehicleEntrantPayment found");
-  }
-
-  @Test
-  void shouldReturnPaidPaymentStatusWhenHasOnePaidAndOtherPaymentStatusesWithDifferentStatuses() {
-    // given
-    mockMultiplePaymentStatusesButOnlyOnePaid();
+    mockSingleEntrantPaymentForStatus(InternalPaymentStatus.PAID);
 
     // when
     PaymentStatus paymentStatus = chargeSettlementService
@@ -75,7 +60,19 @@ class ChargeSettlementServiceTest {
   @Test
   void shouldReturnTheExistingPaymentStatusWhenThereIsNoPaidOne() {
     //given
-    mockSingleNotPaidPaymentStatus();
+    mockSingleEntrantPaymentForStatus(InternalPaymentStatus.NOT_PAID);
+
+    //when
+    PaymentStatus paymentStatus = chargeSettlementService
+        .findChargeSettlement(ANY_CAZ_ID, ANY_VRN, ANY_DATE);
+
+    assertThat(paymentStatus.getStatus()).isEqualTo(InternalPaymentStatus.NOT_PAID);
+  }
+
+  @Test
+  void shouldReturnTheExistingPaymentStatusWhenThereIsRefundedOne() {
+    //given
+    mockSingleEntrantPaymentForStatus(InternalPaymentStatus.REFUNDED);
 
     //when
     PaymentStatus paymentStatus = chargeSettlementService
@@ -84,30 +81,26 @@ class ChargeSettlementServiceTest {
     assertThat(paymentStatus.getStatus()).isEqualTo(InternalPaymentStatus.REFUNDED);
   }
 
+  @Test
+  void shouldReturnTheExistingPaymentStatusWhenThereIsChargebackOne() {
+    //given
+    mockSingleEntrantPaymentForStatus(InternalPaymentStatus.CHARGEBACK);
+
+    //when
+    PaymentStatus paymentStatus = chargeSettlementService
+        .findChargeSettlement(ANY_CAZ_ID, ANY_VRN, ANY_DATE);
+
+    assertThat(paymentStatus.getStatus()).isEqualTo(InternalPaymentStatus.CHARGEBACK);
+  }
+
   private void mockEmptyCollection() {
     when(paymentStatusRepository.findByCazIdAndVrnAndEntryDate(ANY_CAZ_ID, ANY_VRN, ANY_DATE))
         .thenReturn(Collections.emptyList());
   }
 
-  private void mockMultiplePaidPaymentStatuses() {
-    when(paymentStatusRepository.findByCazIdAndVrnAndEntryDate(ANY_CAZ_ID, ANY_VRN, ANY_DATE))
-        .thenReturn(Arrays.asList(
-            PaymentStatusFactory.anyWithStatus(InternalPaymentStatus.PAID),
-            PaymentStatusFactory.anyWithStatus(InternalPaymentStatus.PAID)));
-  }
-
-  private void mockMultiplePaymentStatusesButOnlyOnePaid() {
-    when(paymentStatusRepository.findByCazIdAndVrnAndEntryDate(ANY_CAZ_ID, ANY_VRN, ANY_DATE))
-        .thenReturn((Arrays.asList(
-            PaymentStatusFactory.anyWithStatus(InternalPaymentStatus.NOT_PAID),
-            PaymentStatusFactory.anyWithStatus(InternalPaymentStatus.REFUNDED),
-            PaymentStatusFactory.anyWithStatus(InternalPaymentStatus.CHARGEBACK),
-            PaymentStatusFactory.anyWithStatus(InternalPaymentStatus.PAID))));
-  }
-
-  private void mockSingleNotPaidPaymentStatus() {
+  private void mockSingleEntrantPaymentForStatus(InternalPaymentStatus status) {
     when(paymentStatusRepository.findByCazIdAndVrnAndEntryDate(ANY_CAZ_ID, ANY_VRN, ANY_DATE))
         .thenReturn(
-            Arrays.asList(PaymentStatusFactory.anyWithStatus(InternalPaymentStatus.REFUNDED)));
+            Arrays.asList(PaymentStatusFactory.anyWithStatus(status)));
   }
 }

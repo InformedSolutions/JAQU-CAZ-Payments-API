@@ -4,13 +4,10 @@ import com.google.common.collect.Iterables;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.PaymentStatusRepository;
-import uk.gov.caz.psr.service.exception.TooManyPaidPaymentStatusesException;
 
 /**
  * Class responsible to call internal repository for payment info.
@@ -19,8 +16,6 @@ import uk.gov.caz.psr.service.exception.TooManyPaidPaymentStatusesException;
 @AllArgsConstructor
 public class ChargeSettlementService {
 
-  private static final String TOO_MANY_PAID_STATUSES_MESSAGE =
-      "More than one paid VehicleEntrantPayment found";
   private final PaymentStatusRepository paymentStatusRepository;
 
   /**
@@ -38,45 +33,7 @@ public class ChargeSettlementService {
 
     Collection<PaymentStatus> paymentStatuses = paymentStatusRepository
         .findByCazIdAndVrnAndEntryDate(cazId, vrn, dateOfCazEntry);
-    Collection<PaymentStatus> paidPaymentStatuses = getPaidPaymentStatuses(paymentStatuses);
 
-    if (paidPaymentStatuses.size() > 1) {
-      throw new TooManyPaidPaymentStatusesException(
-          vrn, TOO_MANY_PAID_STATUSES_MESSAGE
-      );
-    }
-
-    return getPaymentStatusToReturn(paymentStatuses, paidPaymentStatuses);
-  }
-
-  /**
-   * Method receives a collection of PaymentStatuses and returns only those with status PAID.
-   *
-   * @param paymentStatuses all PaymentStatuses to filter
-   * @return collection of {@link PaymentStatus} with PAID statuses
-   */
-  private Collection<PaymentStatus> getPaidPaymentStatuses(
-      Collection<PaymentStatus> paymentStatuses) {
-
-    return paymentStatuses
-        .stream()
-        .filter(p -> p.getStatus() == InternalPaymentStatus.PAID)
-        .collect(Collectors.toList());
-  }
-
-  /**
-   * Method decides which PaymentStatus object should be returned.
-   *
-   * @param allPaymentStatuses  all PaymentStatuses returned by repository
-   * @param paidPaymentStatuses filtered PaymentStatuses with PAID status
-   * @return {@link PaymentStatus}
-   */
-  private PaymentStatus getPaymentStatusToReturn(Collection<PaymentStatus> allPaymentStatuses,
-      Collection<PaymentStatus> paidPaymentStatuses) {
-    if (paidPaymentStatuses.size() == 1) {
-      return paidPaymentStatuses.iterator().next();
-    }
-
-    return Iterables.getFirst(allPaymentStatuses, PaymentStatus.getEmptyPaymentStatusResponse());
+    return Iterables.getFirst(paymentStatuses, PaymentStatus.getEmptyPaymentStatusResponse());
   }
 }
