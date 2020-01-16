@@ -1,8 +1,8 @@
 INSERT INTO payment(
-	payment_id, payment_method, payment_provider_id, total_paid, payment_submitted_timestamp, payment_authorised_timestamp)
+	payment_id, payment_method, payment_provider_id, total_paid, payment_submitted_timestamp, payment_authorised_timestamp, central_reference_number)
 	VALUES
-	  ('b71b72a5-902f-4a16-a91d-1a4463b801db', 'CREDIT_DEBIT_CARD', '12345test', 100, now(), now()),
-	  ('b73a9b3c-d692-4e7e-b094-1715c5e4a036', 'CREDIT_DEBIT_CARD', '54321test', 200, now(), now());
+	  ('b71b72a5-902f-4a16-a91d-1a4463b801db', 'CREDIT_DEBIT_CARD', '12345test', 100, now(), now(), 3000),
+	  ('b73a9b3c-d692-4e7e-b094-1715c5e4a036', 'CREDIT_DEBIT_CARD', '54321test', 200, now(), now(), 3001);
 
 INSERT INTO vehicle_entrant_payment(
 	vehicle_entrant_payment_id, vehicle_entrant_id, payment_id, vrn, caz_id, travel_date, charge_paid, payment_status, case_reference)

@@ -52,6 +52,7 @@ swagger:
     descriptions:
       payment-status:
         payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
+        caz-payment-reference: The central reference for the payment
         payment-provider-id: GOV.UK Pay unique payment identifier
         case-reference: >-
           A unique identifier that provides traceability between the central CAZ Service and Local Authority case management
@@ -62,6 +63,7 @@ swagger:
         results: An array containig details about payments of queried VRNs
         vrn: Vehicle registration number
         payments: An array containing information about particular payments of the given VRN
+        caz-payment-reference: The central reference for the payment
         payment-provider-id: GOV.UK Pay unique payment identifier
         total-paid: >-
           The total GBP value of the payment linked to the paymentProviderId.

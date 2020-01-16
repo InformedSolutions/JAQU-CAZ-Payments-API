@@ -30,6 +30,9 @@ public class PaymentInfo {
   @Enumerated(EnumType.STRING)
   private ExternalPaymentStatus externalPaymentStatus;
 
+  @Column(name = "central_reference_number")
+  private Long referenceNumber;
+
   @Column(name = "payment_submitted_timestamp")
   private LocalDateTime submittedTimestamp;
 }

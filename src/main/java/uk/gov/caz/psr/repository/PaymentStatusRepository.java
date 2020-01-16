@@ -25,7 +25,8 @@ public class PaymentStatusRepository {
   static final String SELECT_BY_ENTRY_DATE_AND_VRN_AND_CAZ_ID_SQL = "SELECT "
       + "vehicle_entrant_payment.payment_status, "
       + "vehicle_entrant_payment.case_reference, "
-      + "payment.payment_provider_id "
+      + "payment.payment_provider_id, "
+      + "payment.central_reference_number "
       + "FROM vehicle_entrant_payment "
       + "INNER JOIN payment on vehicle_entrant_payment.payment_id = payment.payment_id "
       + "WHERE vehicle_entrant_payment.caz_id = ? AND "
@@ -68,6 +69,7 @@ public class PaymentStatusRepository {
     public PaymentStatus mapRow(ResultSet resultSet, int i) throws SQLException {
       return PaymentStatus.builder()
           .externalId(resultSet.getString("payment_provider_id"))
+          .paymentReference(resultSet.getLong("central_reference_number"))
           .status(InternalPaymentStatus.valueOf(
               resultSet.getString("payment_status")))
           .caseReference(resultSet.getString("case_reference"))

@@ -80,6 +80,7 @@ public class VehicleEntrantPaymentInfoConverter {
   private SinglePaymentInfo toSinglePaymentInfo(PaymentInfo paymentInfo,
       List<VehicleEntrantPaymentInfo> entrantPaymentInfoList) {
     return SinglePaymentInfo.builder()
+        .cazPaymentReference(paymentInfo.getReferenceNumber())
         .paymentDate(toLocalDate(paymentInfo.getSubmittedTimestamp()))
         .paymentProviderId(paymentInfo.getExternalId())
         .totalPaid(currencyFormatter.parsePenniesToBigDecimal(paymentInfo.getTotalPaid()))
