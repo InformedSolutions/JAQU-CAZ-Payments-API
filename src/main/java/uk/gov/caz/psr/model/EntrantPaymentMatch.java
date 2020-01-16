@@ -15,4 +15,6 @@ public class EntrantPaymentMatch {
   UUID paymentId;
 
   UUID vehicleEntrantPaymentId;
+
+  boolean latest;
 }

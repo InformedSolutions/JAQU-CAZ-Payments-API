@@ -38,9 +38,9 @@ public class EntrantPayment {
   LocalDate travelDate;
 
   /**
-   * An tariff code used to calculate payment.
+   * An tariff code used to calculate payment. Null for entrant payments that were created before
+   * a payment was made.
    */
-  @NonNull
   String tariffCode;
 
   /**
