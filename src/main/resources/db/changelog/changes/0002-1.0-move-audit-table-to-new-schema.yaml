@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0002-1.0
+      author: informed
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0002-1.0-create_new_audit_table_schema.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
