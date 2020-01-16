@@ -7,8 +7,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
@@ -139,7 +139,7 @@ class ExternalPaymentsRepositoryTest {
       UUID paymentId = UUID.fromString("9d4fc418-fbae-11e9-8f23-cf92e47420e6");
       mockRestTemplateResultWithUnrecognizedStatus();
       Payment payment = createPayment(paymentId);
-      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
+      when(credentialRetrievalManager.getApiKey(payment.getCleanAirZoneId())).thenReturn(Optional.of("test-api-key"));
 
       // when
       Payment result = paymentsRepository.create(payment, ANY_RETURN_URL);

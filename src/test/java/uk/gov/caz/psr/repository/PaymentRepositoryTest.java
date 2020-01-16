@@ -32,7 +32,7 @@ class PaymentRepositoryTest {
 //
 //      // when
 //      Throwable throwable =
-//          catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+//          catchThrowable(() -> paymentRepository.insert(payment));
 //
 //      // then
 //      assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -47,7 +47,7 @@ class PaymentRepositoryTest {
 //
 //      // when
 //      Throwable throwable =
-//          catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+//          catchThrowable(() -> paymentRepository.insert(payment));
 //
 //      // then
 //      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -61,7 +61,7 @@ class PaymentRepositoryTest {
 //
 //      // when
 //      Throwable throwable =
-//          catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+//          catchThrowable(() -> paymentRepository.insert(payment));
 //
 //      // then
 //      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -75,7 +75,7 @@ class PaymentRepositoryTest {
 //
 //      // when
 //      Throwable throwable =
-//          catchThrowable(() -> paymentRepository.insertWithExternalStatus(payment));
+//          catchThrowable(() -> paymentRepository.insert(payment));
 //
 //      // then
 //      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)

@@ -1,19 +1,12 @@
 
 package uk.gov.caz.psr.service;
 
-import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collections;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.model.EntrantPayment;
-import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
-import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
@@ -26,9 +19,10 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 @AllArgsConstructor
 public class InitiatePaymentService {
 
-  private final VehicleEntrantPaymentChargeCalculator chargeCalculator;
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final PaymentRepository paymentRepository;
+
+  private final InitiateEntrantPaymentsService initiateEntrantPaymentsService;
 
   /**
    * Creates Payment in GOV.UK PAY Inserts Payment details into database.
@@ -38,50 +32,32 @@ public class InitiatePaymentService {
   @Transactional
   public Payment createPayment(InitiatePaymentRequest request) {
     Payment payment = buildPayment(request);
-    Payment paymentWithInternalId = paymentRepository.insertWithExternalStatus(payment);
+
+    Payment paymentWithInternalId = paymentRepository.insert(payment);
     Payment paymentWithExternalId = externalPaymentsRepository.create(paymentWithInternalId,
         request.getReturnUrl());
-    paymentRepository.update(paymentWithExternalId);
+    initiateEntrantPaymentsService.processEntrantPaymentsForPayment(paymentWithInternalId.getId(),
+        request.getAmount(), request.getDays(), request.getTariffCode(), request.getVrn(),
+        request.getCleanAirZoneId()
+    );
 
-    // TODO case when EntrantPayment exists
+    paymentRepository.update(paymentWithExternalId);
     return paymentWithExternalId;
   }
 
   /**
-   * Builds Payment object based on request data.
+   * Builds Payment object without based on request data.
    *
    * @param request A data which need to be used to create the payment.
    */
 
   private Payment buildPayment(InitiatePaymentRequest request) {
-    int chargePerDay = chargeCalculator.calculateCharge(request.getAmount(),
-        request.getDays().size());
-    List<EntrantPayment> entrantPayments = request.getDays()
-        .stream()
-        .map(day -> toEntrantPayment(day, request, chargePerDay))
-        .collect(Collectors.toList());
-
     return Payment.builder()
         .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
         .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
         .totalPaid(request.getAmount())
-        .entrantPayments(entrantPayments).build();
-  }
-
-  /**
-   * Maps a data from {@link InitiatePaymentRequest} to an instance of
-   * {@link EntrantPayment}.
-   */
-  private EntrantPayment toEntrantPayment(LocalDate travelDate,
-      InitiatePaymentRequest request, int chargePerDay) {
-    return EntrantPayment.builder()
-        .vrn(normalizeVrn(request.getVrn()))
+        .entrantPayments(Collections.emptyList())
         .cleanAirZoneId(request.getCleanAirZoneId())
-        .travelDate(travelDate)
-        .charge(chargePerDay)
-        .updateActor(EntrantPaymentUpdateActor.USER)
-        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
-        .tariffCode(request.getTariffCode())
         .build();
   }
 }

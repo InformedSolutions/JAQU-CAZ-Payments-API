@@ -39,8 +39,8 @@ public class PaymentReceiptSender {
     log.info("Processing email event for payment with ID: {}", payment.getId());
 
     try {
-      SendEmailRequest sendEmailRequest =
-          paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount);
+      SendEmailRequest sendEmailRequest = paymentReceiptService.buildSendEmailRequest(
+          payment.getEmailAddress(), totalAmount);
       messagingClient.publishMessage(sendEmailRequest);
     } catch (Exception e) {
       log.error("Payment receipt not sent to recipient with payment ID: {}", payment.getId(), e);
@@ -50,6 +50,6 @@ public class PaymentReceiptSender {
   private void checkPreconditions(PaymentStatusUpdatedEvent event) {
     Payment payment = event.getPayment();
     Preconditions.checkArgument(!Strings.isNullOrEmpty(payment.getEmailAddress()),
-        "Email address " + "cannot be null or empty");
+        "Email address cannot be null or empty");
   }
 }
