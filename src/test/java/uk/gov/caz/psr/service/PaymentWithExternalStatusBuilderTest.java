@@ -14,9 +14,9 @@ import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
 
 @ExtendWith(MockitoExtension.class)
-class PaymentWithExternalStatusBuilderTest {
+class PaymentUpdateStatusBuilderTest {
 
-  private PaymentWithExternalPaymentDetailsBuilder builder = new PaymentWithExternalPaymentDetailsBuilder();
+  private PaymentUpdateStatusBuilder builder = new PaymentUpdateStatusBuilder();
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
@@ -26,7 +26,7 @@ class PaymentWithExternalStatusBuilderTest {
 
     // when
     Throwable throwable = catchThrowable(
-        () -> builder.buildPaymentWithExternalPaymentDetails(payment, externalPaymentDetails));
+        () -> builder.buildWithExternalPaymentDetails(payment, externalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -41,7 +41,7 @@ class PaymentWithExternalStatusBuilderTest {
 
     // when
     Throwable throwable = catchThrowable(
-        () -> builder.buildPaymentWithExternalPaymentDetails(payment, externalPaymentDetails));
+        () -> builder.buildWithExternalPaymentDetails(payment, externalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -59,7 +59,7 @@ class PaymentWithExternalStatusBuilderTest {
 
     // when
     Throwable throwable = catchThrowable(
-        () -> builder.buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails));
+        () -> builder.buildWithExternalPaymentDetails(payment, newExternalPaymentDetails));
 
     // then
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -67,7 +67,7 @@ class PaymentWithExternalStatusBuilderTest {
   }
 
   @Test
-  public void shouldCreateNewPaymentWithPassedStatus() {
+  public void shouldCreateNewPaymentObjectWithPassedStatus() {
     // given
     ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
         .anyWithStatus(ExternalPaymentStatus.INITIATED);
@@ -77,16 +77,50 @@ class PaymentWithExternalStatusBuilderTest {
 
     // when
     Payment result = builder
-        .buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails);
+        .buildWithExternalPaymentDetails(payment, newExternalPaymentDetails);
 
     // then
     assertThat(result.getExternalPaymentStatus())
         .isEqualTo(newExternalPaymentDetails.getExternalPaymentStatus());
     assertThat(result.getAuthorisedTimestamp()).isNull();
-    assertThat(result.getVehicleEntrantPayments()).allSatisfy((vehicleEntrantPayment -> {
-      assertThat(vehicleEntrantPayment.getInternalPaymentStatus())
+    assertThat(result.getEntrantPayments()).allSatisfy((entrantPayment -> {
+      assertThat(entrantPayment.getInternalPaymentStatus())
           .isEqualTo(InternalPaymentStatus.NOT_PAID);
     }));
+  }
+
+  @Test
+  public void shouldReturnEmptyListOfEntrantPaymentWhenStatusNotPaid() {
+    ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment = anyPaymentWithStatus(initExternalPaymentDetails.getExternalPaymentStatus());
+    ExternalPaymentDetails newExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.CREATED);
+
+    // when
+    Payment result = builder
+        .buildWithExternalPaymentDetails(payment, newExternalPaymentDetails);
+
+    // then
+    assertThat(payment.getEntrantPayments()).isNotEmpty();
+    assertThat(result.getEntrantPayments()).isEmpty();
+  }
+
+
+  @Test
+  public void shouldReturnUpdatedListOfEntrantPaymentWhenStatusPaid() {
+    ExternalPaymentDetails initExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.INITIATED);
+    Payment payment = anyPaymentWithStatus(initExternalPaymentDetails.getExternalPaymentStatus());
+    ExternalPaymentDetails newExternalPaymentDetails = ExternalPaymentDetailsFactory
+        .anyWithStatus(ExternalPaymentStatus.SUCCESS);
+
+    // when
+    Payment result = builder
+        .buildWithExternalPaymentDetails(payment, newExternalPaymentDetails);
+
+    // then
+    assertThat(result.getEntrantPayments()).isNotEmpty();
   }
 
   @Test
@@ -100,14 +134,14 @@ class PaymentWithExternalStatusBuilderTest {
 
     // when
     Payment result = builder
-        .buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails);
+        .buildWithExternalPaymentDetails(payment, newExternalPaymentDetails);
 
     // then
     assertThat(result.getExternalPaymentStatus())
         .isEqualTo(newExternalPaymentDetails.getExternalPaymentStatus());
     assertThat(result.getAuthorisedTimestamp()).isNotNull();
-    assertThat(result.getVehicleEntrantPayments()).allSatisfy((vehicleEntrantPayment -> {
-      assertThat(vehicleEntrantPayment.getInternalPaymentStatus())
+    assertThat(result.getEntrantPayments()).allSatisfy((entrantPayment -> {
+      assertThat(entrantPayment.getInternalPaymentStatus())
           .isEqualTo(InternalPaymentStatus.PAID);
     }));
   }

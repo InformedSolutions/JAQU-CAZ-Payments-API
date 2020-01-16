@@ -1,2 +1,2 @@
-CREATE SEQUENCE IF NOT EXISTS public.reference_number START WITH 1627;
-ALTER TABLE public.payment ADD COLUMN central_reference_number bigint DEFAULT nextval('public.reference_number') NOT NULL;
+CREATE SEQUENCE IF NOT EXISTS CAZ_PAYMENT.reference_number START WITH 1627;
+ALTER TABLE CAZ_PAYMENT.t_payment ADD COLUMN central_reference_number bigint DEFAULT nextval('CAZ_PAYMENT.reference_number') NOT NULL;

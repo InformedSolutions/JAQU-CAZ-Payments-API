@@ -28,7 +28,14 @@
       **/configuration/**/*.java,
       **/psr/Application.java,
       **/amazonaws/StreamLambdaHandler.java,
-      **/amazonaws/CleanupDanglingPaymentsHandler.java
+      **/amazonaws/CleanupDanglingPaymentsHandler.java,
+      <!-- Remove when Schema structures are ready -->
+      **/psr/repository/**/*.java,
+      **/psr/service/**/*.java,
+      **/psr/controller/**/*.java,
+      **/psr/dto/**/*.java,
+      **/psr/model/**/*.java,
+      **/psr/util/**/*.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -650,6 +657,13 @@
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
+                <!-- Remove when Schema structures are ready -->
+                <exclude>**/psr/repository/**/*.class</exclude>
+                <exclude>**/psr/service/**/*.class</exclude>
+                <exclude>**/psr/controller/**/*.class</exclude>
+                <exclude>**/psr/dto/**/*.class</exclude>
+                <exclude>**/psr/util/**/*.class</exclude>
+                <exclude>**/psr/model/**/*.class</exclude>
               </excludes>
               <rules>
                 <rule>

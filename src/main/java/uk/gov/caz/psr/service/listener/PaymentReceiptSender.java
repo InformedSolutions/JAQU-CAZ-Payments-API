@@ -39,7 +39,7 @@ public class PaymentReceiptSender {
     log.info("Processing email event for payment with ID: {}", payment.getId());
     
     String cazName = payment.getCleanAirZoneName();
-    String vrn = payment.getVehicleEntrantPayments().iterator().next().getVrn();
+    String vrn = payment.getEntrantPayments().iterator().next().getVrn();
     
     try {
       SendEmailRequest sendEmailRequest =

@@ -8,11 +8,11 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,7 +24,6 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
-import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,9 +34,6 @@ public class InitiatePaymentServiceTest {
 
   @Mock
   private PaymentRepository internalPaymentsRepository;
-
-  @Mock
-  private CredentialRetrievalManager credentialRetrievalManager;
 
   @Mock
   private VehicleEntrantPaymentChargeCalculator chargeCalculator;
@@ -86,8 +82,14 @@ public class InitiatePaymentServiceTest {
   private InitiatePaymentRequest createRequest() {
     List<LocalDate> days = Arrays.asList(LocalDate.of(2019, 1, 1), LocalDate.of(2019, 1, 3));
 
-    return InitiatePaymentRequest.builder().cleanAirZoneId(UUID.randomUUID()).days(days)
-        .vrn("VRN123").amount(700).returnUrl("https://example.return.url").build();
+    return InitiatePaymentRequest.builder()
+        .cleanAirZoneId(UUID.randomUUID())
+        .days(days)
+        .vrn("VRN123")
+        .amount(700)
+        .returnUrl("https://example.return.url")
+        .tariffCode("TARIFF_CODE")
+        .build();
   }
 
   private Payment createPaymentWithoutId(InitiatePaymentRequest request) {
@@ -117,10 +119,8 @@ public class InitiatePaymentServiceTest {
   private Payment toPaymentWithId(Payment payment) {
     UUID paymentID = UUID.randomUUID();
 
-    return payment.toBuilder().id(paymentID)
-        .vehicleEntrantPayments(payment.getVehicleEntrantPayments().stream().map(
-            vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder().paymentId(paymentID).build())
-            .collect(Collectors.toList()))
+    return payment.toBuilder()
+        .id(paymentID)
         .build();
   }
 

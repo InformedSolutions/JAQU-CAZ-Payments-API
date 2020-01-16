@@ -24,11 +24,9 @@ import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
 class PaymentStatusUpdaterTest {
 
   @Mock
-  private PaymentWithExternalPaymentDetailsBuilder paymentWithExternalPaymentDetailsBuilder;
+  private PaymentUpdateStatusBuilder paymentUpdateStatusBuilder;
   @Mock
   private PaymentRepository internalPaymentsRepository;
-  @Mock
-  private TransientVehicleEntrantsLinker transientVehicleEntrantsLinker;
   @Mock
   private ApplicationEventPublisher applicationEventPublisher;
 
@@ -79,7 +77,7 @@ class PaymentStatusUpdaterTest {
 
     // then
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("vehicle entrant payments cannot be empty");
+        .hasMessage("Entrant payments cannot be empty");
   }
 
   @Test
@@ -116,9 +114,8 @@ class PaymentStatusUpdaterTest {
     // then
     assertThat(result).isEqualTo(newPayment);
 
-    verify(paymentWithExternalPaymentDetailsBuilder)
-        .buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails);
-    verify(transientVehicleEntrantsLinker).associateExistingVehicleEntrantsWith(any());
+    verify(paymentUpdateStatusBuilder)
+        .buildWithExternalPaymentDetails(payment, newExternalPaymentDetails);
     verify(applicationEventPublisher).publishEvent(any());
     verify(internalPaymentsRepository).update(any());
   }
@@ -126,17 +123,15 @@ class PaymentStatusUpdaterTest {
   private Payment paymentWithEmptyVehicleEntrants() {
     return TestObjectFactory.Payments.existing()
         .toBuilder()
-        .vehicleEntrantPayments(Collections.emptyList())
+        .entrantPayments(Collections.emptyList())
         .build();
   }
 
   private Payment mockCallsToServices(Payment payment,
       ExternalPaymentDetails newExternalPaymentDetails) {
     Payment newPayment = anyPaymentWithStatus(newExternalPaymentDetails.getExternalPaymentStatus());
-    given(paymentWithExternalPaymentDetailsBuilder
-        .buildPaymentWithExternalPaymentDetails(payment, newExternalPaymentDetails))
-        .willReturn(newPayment);
-    given(transientVehicleEntrantsLinker.associateExistingVehicleEntrantsWith(newPayment))
+    given(paymentUpdateStatusBuilder
+        .buildWithExternalPaymentDetails(payment, newExternalPaymentDetails))
         .willReturn(newPayment);
     return newPayment;
   }

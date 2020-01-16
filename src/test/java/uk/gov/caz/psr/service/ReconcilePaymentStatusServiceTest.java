@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,7 +21,6 @@ import uk.gov.caz.psr.dto.external.PaymentState;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
@@ -168,12 +168,11 @@ class ReconcilePaymentStatusServiceTest {
     mockInternalPaymentWith(paymentId, "ext-id",
         initExternalPaymentDetails.getExternalPaymentStatus(), null, CLEAN_AIR_ZONE_NAME);
     
-
     // when
     Throwable throwable =
         catchThrowable(() -> reconcilePaymentStatusService.reconcilePaymentStatus(paymentId,CLEAN_AIR_ZONE_NAME));
 
-    assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessage("Vehicle entrant payments should not be empty");
+    assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessage("CAZ entrant payments should not be empty");
   }
 
   private void mockStatusUpdaterWithSuccess(Payment payment,
@@ -192,7 +191,7 @@ class ReconcilePaymentStatusServiceTest {
 
   private void mockInternalPaymentInDatabase(UUID paymentId, Payment payment, UUID cazIdentifier) {
     if (cazIdentifier == null) {
-      payment = payment.toBuilder().vehicleEntrantPayments(new ArrayList<VehicleEntrantPayment>()).build();
+      payment = payment.toBuilder().entrantPayments(new ArrayList<>()).build();
     }
     given(internalPaymentsRepository.findById(paymentId)).willReturn(Optional.of(payment));
   }

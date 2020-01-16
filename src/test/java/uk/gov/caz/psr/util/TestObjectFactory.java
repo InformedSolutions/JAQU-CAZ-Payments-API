@@ -2,7 +2,6 @@ package uk.gov.caz.psr.util;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +12,8 @@ import java.util.stream.Collectors;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
+import uk.gov.caz.psr.model.EntrantPayment;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -20,7 +21,6 @@ import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
-import uk.gov.caz.psr.model.VehicleEntrantPayment;
 import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 
 public class TestObjectFactory {
@@ -49,56 +49,56 @@ public class TestObjectFactory {
     return (char) (random.nextInt(26) + (int) ('a'));
   }
 
-  private static class VehicleEntrantPaymentsBuilder {
+  private static class EntrantPaymentsBuilder {
 
     private final Collection<LocalDate> travelDates;
-    private UUID paymentId;
     private InternalPaymentStatus status;
     private int amount;
     private boolean withId;
     private String vrn;
     private UUID cleanAirZoneId;
 
-    private VehicleEntrantPaymentsBuilder(Collection<LocalDate> travelDates) {
+    private EntrantPaymentsBuilder(Collection<LocalDate> travelDates) {
       this.travelDates = travelDates;
     }
 
-    public static VehicleEntrantPaymentsBuilder forDays(Collection<LocalDate> days) {
-      return new VehicleEntrantPaymentsBuilder(days);
+    public static EntrantPaymentsBuilder forDays(Collection<LocalDate> days) {
+      return new EntrantPaymentsBuilder(days);
     }
 
-    public VehicleEntrantPaymentsBuilder withPaymentId(UUID paymentId) {
-      this.paymentId = paymentId;
-      return this;
-    }
-
-    public VehicleEntrantPaymentsBuilder withStatus(InternalPaymentStatus status) {
+    public EntrantPaymentsBuilder withStatus(InternalPaymentStatus status) {
       this.status = status;
       return this;
     }
 
-    public List<VehicleEntrantPayment> build() {
+    public List<EntrantPayment> build() {
       int charge = amount / travelDates.size();
       return travelDates.stream()
-          .map(travelDate -> VehicleEntrantPayment.builder().id(withId ? UUID.randomUUID() : null)
-              .paymentId(paymentId).internalPaymentStatus(status).chargePaid(charge)
+          .map(travelDate -> EntrantPayment.builder()
+              .cleanAirZoneEntrantPaymentId(withId ? UUID.randomUUID() : null)
+              .internalPaymentStatus(status)
+              .charge(charge)
               .travelDate(travelDate)
-              .cleanZoneId(cleanAirZoneId == null ? ANY_CLEAN_AIR_ZONE : cleanAirZoneId)
-              .vrn(vrn == null ? randomVrn() : vrn).caseReference(null).build())
+              .updateActor(EntrantPaymentUpdateActor.USER)
+              .tariffCode("TARIFF_CODE")
+              .cleanAirZoneId(cleanAirZoneId == null ? ANY_CLEAN_AIR_ZONE : cleanAirZoneId)
+              .vrn(vrn == null ? randomVrn() : vrn)
+              .caseReference(null)
+              .build())
           .collect(Collectors.toList());
     }
 
-    public VehicleEntrantPaymentsBuilder withTotal(Integer amount) {
+    public EntrantPaymentsBuilder withTotal(Integer amount) {
       this.amount = amount;
       return this;
     }
 
-    public VehicleEntrantPaymentsBuilder withVrn(String vrn) {
+    public EntrantPaymentsBuilder withVrn(String vrn) {
       this.vrn = vrn;
       return this;
     }
 
-    public VehicleEntrantPaymentsBuilder withCazId(UUID cleanAirZoneId) {
+    public EntrantPaymentsBuilder withCazId(UUID cleanAirZoneId) {
       this.cleanAirZoneId = cleanAirZoneId;
       return this;
     }
@@ -139,47 +139,49 @@ public class TestObjectFactory {
 
     public static Payment forDays(Collection<LocalDate> travelDates, UUID paymentId,
         String externalId, UUID cazIdentifier) {
-        List<VehicleEntrantPayment> vehicleEntrantPayments = VehicleEntrantPaymentsBuilder.forDays(travelDates).withTotal(travelDates.size() * 800)
-            .withPaymentId(paymentId).withVrn(randomVrn())
+        List<EntrantPayment> entrantPayments = EntrantPaymentsBuilder.forDays(travelDates).withTotal(travelDates.size() * 800)
+            .withVrn(randomVrn())
             .withStatus(InternalPaymentStatus.NOT_PAID).withCazId(cazIdentifier).build();
-      return createPaymentWith(vehicleEntrantPayments, paymentId, externalId);
+      return createPaymentWith(entrantPayments, paymentId, externalId);
     }
 
     public static Payment forRequest(InitiatePaymentRequest request) {
-      List<VehicleEntrantPayment> vehicleEntrantPayments = VehicleEntrantPaymentsBuilder
-          .forDays(request.getDays()).withTotal(request.getAmount()).withPaymentId(null)
-          .withVrn(request.getVrn()).withStatus(InternalPaymentStatus.NOT_PAID)
+      List<EntrantPayment> entrantPayments = EntrantPaymentsBuilder
+          .forDays(request.getDays())
+          .withTotal(request.getAmount())
+          .withVrn(request.getVrn())
+          .withStatus(InternalPaymentStatus.NOT_PAID)
           .withCazId(request.getCleanAirZoneId()).build();
 
-      return createPaymentWith(vehicleEntrantPayments, null, null);
+      return createPaymentWith(entrantPayments, null, null);
     }
 
-    private static Payment createPaymentWith(List<VehicleEntrantPayment> vehicleEntrantPayments,
+    private static Payment createPaymentWith(List<EntrantPayment> entrantPayments,
         UUID paymentId, String externalId) {
       return Payment.builder().id(paymentId).externalId(externalId)
           .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
-          .totalPaid(vehicleEntrantPayments.stream().map(VehicleEntrantPayment::getChargePaid)
+          .totalPaid(entrantPayments.stream().map(EntrantPayment::getCharge)
               .reduce(0, Integer::sum))
-          .vehicleEntrantPayments(vehicleEntrantPayments)
+          .entrantPayments(entrantPayments)
           .externalPaymentStatus(ExternalPaymentStatus.INITIATED).build();
     }
   }
 
-  public static class VehicleEntrantPayments {
+  public static class EntrantPayments {
 
-    public static VehicleEntrantPayment anyNotPaid() {
-      return VehicleEntrantPayment.builder().chargePaid(100).travelDate(LocalDate.now())
-          .cleanZoneId(UUID.randomUUID()).vrn("VRN123")
+    public static EntrantPayment anyNotPaid() {
+      return EntrantPayment.builder().charge(100).travelDate(LocalDate.now())
+          .cleanAirZoneId(UUID.randomUUID()).vrn("VRN123")
           .internalPaymentStatus(InternalPaymentStatus.NOT_PAID).build();
     }
 
-    public static VehicleEntrantPayment anyPaid() {
-      return VehicleEntrantPayment.builder().chargePaid(100).travelDate(LocalDate.now())
-          .cleanZoneId(UUID.randomUUID()).vrn("VRN123")
+    public static EntrantPayment anyPaid() {
+      return EntrantPayment.builder().charge(100).travelDate(LocalDate.now())
+          .cleanAirZoneId(UUID.randomUUID()).vrn("VRN123")
           .internalPaymentStatus(InternalPaymentStatus.PAID).build();
     }
 
-    public static List<VehicleEntrantPayment> forRandomDays() {
+    public static List<EntrantPayment> forRandomDays() {
       int daysSize = 5;
       LocalDate today = LocalDate.now();
       Set<LocalDate> localDates = new HashSet<>();
@@ -187,7 +189,7 @@ public class TestObjectFactory {
         localDates.add(today.plusDays(random.nextInt(7)));
       }
 
-      return VehicleEntrantPaymentsBuilder.forDays(localDates)
+      return EntrantPaymentsBuilder.forDays(localDates)
           .withStatus(InternalPaymentStatus.PAID).build();
     }
   }

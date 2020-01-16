@@ -6,7 +6,7 @@ databaseChangeLog:
         - onFail: MARK_RAN
         - not:
             sequenceExists:
-              schemaName: public
+              schemaName: caz_payment
               sequenceName: central_reference
       changes:
         - sqlFile:

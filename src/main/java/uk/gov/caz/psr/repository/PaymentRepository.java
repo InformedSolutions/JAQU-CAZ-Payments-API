@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +20,12 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import uk.gov.caz.psr.model.EntrantPayment;
+import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
 /**
  * A class which handles managing data in {@code PAYMENT} table.
@@ -39,63 +39,83 @@ public class PaymentRepository {
 
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
-  private final VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository;
+  private final EntrantPaymentRepository entrantPaymentRepository;
+  private final EntrantPaymentMatchRepository entrantPaymentMatchRepository;
+
+  private static final String TABLE_NAME = "t_payment";
+  private static final String SCHEMA_NAME = "CAZ_PAYMENT";
+
+  private static class Columns {
+
+    private static final String PAYMENT_ID = "payment_id";
+    private static final String PAYMENT_METHOD = "payment_method";
+    private static final String TOTAL_PAID = "total_paid";
+    private static final String PAYMENT_PROVIDER_STATUS = "payment_provider_status";
+    private static final String REFERENCE_NUMBER = "central_reference_number";
+  }
 
   /**
    * Creates an instance of {@link PaymentRepository}.
    *
    * @param jdbcTemplate An instance of {@link JdbcTemplate}.
-   * @param vehicleEntrantPaymentRepository An instance of {@link VehicleEntrantPaymentRepository}.
+   * @param entrantPaymentRepository An instance of {@link EntrantPaymentRepository}.
    */
   public PaymentRepository(JdbcTemplate jdbcTemplate,
-      VehicleEntrantPaymentRepository vehicleEntrantPaymentRepository) {
+      EntrantPaymentRepository entrantPaymentRepository,
+      EntrantPaymentMatchRepository entrantPaymentMatchRepository) {
     this.jdbcTemplate = jdbcTemplate;
-    this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("payment")
-        .usingGeneratedKeyColumns("payment_id", "central_reference_number")
-        .usingColumns("payment_method", "total_paid", "payment_provider_status");
-    this.vehicleEntrantPaymentRepository = vehicleEntrantPaymentRepository;
+    this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+        .withSchemaName(SCHEMA_NAME)
+        .withTableName(TABLE_NAME)
+        .usingGeneratedKeyColumns(Columns.PAYMENT_ID, Columns.REFERENCE_NUMBER)
+        .usingColumns(Columns.PAYMENT_METHOD, Columns.TOTAL_PAID, Columns.PAYMENT_PROVIDER_STATUS);
+    this.entrantPaymentRepository = entrantPaymentRepository;
+    this.entrantPaymentMatchRepository = entrantPaymentMatchRepository;
   }
 
   /**
-   * Inserts {@code payment} (with the external status set alongside the same status of vehicle
-   * entrant payments) into database.
+   * Inserts {@code payment} (with the external status set alongside the same status of entrant
+   * payments) into database.
    *
    * @param payment An entity object which is supposed to be saved in the database.
    * @return An instance of {@link Payment} with its internal identifier set.
    * @throws NullPointerException if {@code payment} is null
    * @throws NullPointerException if {@link Payment#getExternalPaymentStatus()} is null
    * @throws IllegalArgumentException if {@link Payment#getId()} is not null
-   * @throws IllegalArgumentException if {@link Payment#getVehicleEntrantPayments()} ()} do not have
-   *         the same payment status.
+   * @throws IllegalArgumentException if {@link Payment#getEntrantPayments()} ()} do not have the
+   *     same payment status.
    */
   public Payment insertWithExternalStatus(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
     Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
     Preconditions.checkNotNull(payment.getExternalPaymentStatus(),
         "External payment status cannot be null");
-    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
-        "Vehicle entrant " + "payments cannot be empty");
-    Preconditions.checkArgument(haveSameStatus(payment.getVehicleEntrantPayments()),
-        "Vehicle entrant payments do not have one common status");
+    Preconditions.checkArgument(!payment.getEntrantPayments().isEmpty(),
+        "Vehicle entrant payments cannot be empty");
+    Preconditions.checkArgument(haveSameStatus(payment.getEntrantPayments()),
+        "Entrant payments do not have one common status");
 
-    KeyHolder keyHolder =
-        simpleJdbcInsert.executeAndReturnKeyHolder(toSqlParametersForExternalInsert(payment));
+    KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
+        toSqlParametersForExternalInsert(payment));
 
     UUID paymentId = (UUID) keyHolder.getKeys().get("payment_id");
     Long referenceNumber = (Long) keyHolder.getKeys().get("central_reference_number");
 
-    List<VehicleEntrantPayment> vehicleEntrantPayments =
-        payment.getVehicleEntrantPayments().stream()
-            .map(vehicleEntrantPayment -> updateWithPaymentId(vehicleEntrantPayment, paymentId))
-            .collect(Collectors.toList());
+    List<EntrantPayment> entrantPaymentsWithIds =
+        entrantPaymentRepository.insert(payment.getEntrantPayments());
 
-    List<VehicleEntrantPayment> vehicleEntrantPaymentsWithIds =
-        vehicleEntrantPaymentRepository.insert(vehicleEntrantPayments);
+    entrantPaymentsWithIds.forEach(cazEntrantPayment -> {
+      EntrantPaymentMatch entrantPaymentMatch = EntrantPaymentMatch.builder()
+          .paymentId(paymentId)
+          .vehicleEntrantPaymentId(cazEntrantPayment.getCleanAirZoneEntrantPaymentId())
+          .build();
+      entrantPaymentMatchRepository.insert(entrantPaymentMatch);
+    });
 
     return payment.toBuilder()
         .id(paymentId)
         .referenceNumber(referenceNumber)
-        .vehicleEntrantPayments(vehicleEntrantPaymentsWithIds)
+        .entrantPayments(entrantPaymentsWithIds)
         .build();
   }
 
@@ -117,7 +137,7 @@ public class PaymentRepository {
       preparedStatementSetter.setObject(4, payment.getAuthorisedTimestamp());
       preparedStatementSetter.setObject(5, payment.getId());
     });
-    vehicleEntrantPaymentRepository.update(payment.getVehicleEntrantPayments());
+    entrantPaymentRepository.update(payment.getEntrantPayments());
   }
 
   /**
@@ -125,17 +145,17 @@ public class PaymentRepository {
    *
    * @param id An internal identifier of the payment.
    * @return An instance of {@link Payment} class wrapped in {@link Optional} if the payment is
-   *         found, {@link Optional#empty()} otherwise.
+   *     found, {@link Optional#empty()} otherwise.
    * @throws NullPointerException if {@code id} is null
    */
   public Optional<Payment> findById(UUID id) {
     Preconditions.checkNotNull(id, "ID cannot be null");
 
-    List<VehicleEntrantPayment> vehicleEntrantPayments =
-        vehicleEntrantPaymentRepository.findByPaymentId(id);
+    List<EntrantPayment> entrantPayments =
+        entrantPaymentRepository.findByPaymentId(id);
     List<Payment> results = jdbcTemplate.query(Sql.SELECT_BY_ID,
         preparedStatement -> preparedStatement.setObject(1, id),
-        new PaymentFindByIdMapper(vehicleEntrantPayments));
+        new PaymentFindByIdMapper(entrantPayments));
     if (results.isEmpty()) {
       return Optional.empty();
     }
@@ -167,24 +187,16 @@ public class PaymentRepository {
   /**
    * Predicate which checks whether all vehicle entrant payments have the same status..
    *
-   * @param vehicleEntrantPayments A list of {@link VehicleEntrantPayment}.
+   * @param vehicleEntrantPayments A list of {@link EntrantPayment}.
    * @return true if {@code vehicleEntrantPayments} is not empty and all vehicle entrant payments
-   *         have the same status.
+   *     have the same status.
    */
-  private boolean haveSameStatus(List<VehicleEntrantPayment> vehicleEntrantPayments) {
+  private boolean haveSameStatus(List<EntrantPayment> vehicleEntrantPayments) {
     InternalPaymentStatus status =
         vehicleEntrantPayments.iterator().next().getInternalPaymentStatus();
-    return vehicleEntrantPayments.stream().map(VehicleEntrantPayment::getInternalPaymentStatus)
+    return vehicleEntrantPayments.stream()
+        .map(EntrantPayment::getInternalPaymentStatus)
         .allMatch(localStatus -> localStatus == status);
-  }
-
-  /**
-   * Creates a new instance of {@link VehicleEntrantPayment} with {@code
-   * VehicleEntrantPayment#paymentId} set to the passed {@code paymentId} value.
-   */
-  private VehicleEntrantPayment updateWithPaymentId(VehicleEntrantPayment vehicleEntrantPayment,
-      UUID paymentId) {
-    return vehicleEntrantPayment.toBuilder().paymentId(paymentId).build();
   }
 
   /**
@@ -192,10 +204,13 @@ public class PaymentRepository {
    */
   private static class Sql {
 
-    static final String UPDATE =
-        "UPDATE payment " + "SET payment_provider_id = ?, " + "payment_submitted_timestamp = ?, "
-            + "payment_provider_status = ?, " + "payment_authorised_timestamp = ?, "
-            + "update_timestamp = CURRENT_TIMESTAMP " + "WHERE payment_id = ?";
+    static final String UPDATE = "UPDATE caz_payment.t_payment "
+        + "SET payment_provider_id = ?, "
+        + "payment_submitted_timestamp = ?, "
+        + "payment_provider_status = ?, "
+        + "payment_authorised_timestamp = ?, "
+        + "update_timestamp = CURRENT_TIMESTAMP "
+        + "WHERE payment_id = ?";
 
     private static final String ALL_PAYMENT_ATTRIBUTES =
         "payment_id, payment_method, payment_provider_id, central_reference_number, "
@@ -203,7 +218,7 @@ public class PaymentRepository {
         + "payment_authorised_timestamp ";
 
     static final String SELECT_DANGLING_PAYMENTS =
-        "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM payment " + "WHERE "
+        "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE "
             // only GOV UK Pay payment
             + "payment_provider_id IS NOT NULL "
             // only the one which is submitted more than 90 minutes ago; if
@@ -214,7 +229,7 @@ public class PaymentRepository {
             + "AND payment_provider_status NOT IN ('SUCCESS', 'FAILED', 'CANCELLED', 'ERROR')";
 
     static final String SELECT_BY_ID =
-        "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM payment " + "WHERE payment_id = ?";
+        "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE payment_id = ?";
   }
 
   /**
@@ -225,7 +240,7 @@ public class PaymentRepository {
   private static class PaymentFindByIdMapper implements RowMapper<Payment> {
 
     @NonNull
-    List<VehicleEntrantPayment> vehicleEntrantPayments;
+    List<EntrantPayment> entrantPayments;
 
     @Override
     public Payment mapRow(ResultSet resultSet, int i) throws SQLException {
@@ -241,7 +256,8 @@ public class PaymentRepository {
               fromTimestampToLocalDateTime(resultSet, "payment_submitted_timestamp"))
           .authorisedTimestamp(
               fromTimestampToLocalDateTime(resultSet, "payment_authorised_timestamp"))
-          .vehicleEntrantPayments(vehicleEntrantPayments).build();
+          .entrantPayments(entrantPayments)
+          .build();
     }
 
     private LocalDateTime fromTimestampToLocalDateTime(ResultSet resultSet, String columnLabel)

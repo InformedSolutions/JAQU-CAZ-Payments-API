@@ -129,6 +129,9 @@ swagger:
         caz-entry-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
         clean-zone-id: Clean Air Zone identifier
       vehicle-entrant-response:
+        caz-entrant-payments: Collection of created or updated CAZ_ENTRANT_PAYMENT records
+      caz-entrant-payment:
+        entrant-payment-id: Id of created or updated record
         status: Payment Status of created Vehicle Entrant
       payments-initiate:
         vrn: Vehicle registration number
@@ -143,8 +146,8 @@ swagger:
     payments:
       create-vehicle-entrant:
         description: >-
-          Creates (unless it exists) an entry in the database that represents an entrant of a vehicle into a CAZ.
-          Upon completion of this operation the status of the payment associated with the entry is returned
+          Creates (unless it exists) a collection of entries in the database that represents an entrances of a vehicles into a CAZ.
+          Upon completion of this operation the collection of caz entrant payments is returned
     charge-settlement:
       payment-status-update:
         description: >-

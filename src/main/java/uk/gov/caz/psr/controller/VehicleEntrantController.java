@@ -1,13 +1,13 @@
 package uk.gov.caz.psr.controller;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.caz.psr.dto.VehicleEntrantRequest;
-import uk.gov.caz.psr.dto.VehicleEntrantResponse;
-import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.service.VehicleEntrantService;
+import uk.gov.caz.psr.dto.EntrantPaymentDto;
+import uk.gov.caz.psr.dto.VehicleEntrantDto;
+import uk.gov.caz.psr.service.EntrantPaymentService;
 
 /**
  * A controller which deals with requests that informs about a vehicle entering a CAZ.
@@ -22,13 +22,15 @@ public class VehicleEntrantController implements VehicleEntrantControllerApiSpec
   public static final String CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS =
       "vehicle-entrants";
 
-  private final VehicleEntrantService vehicleEntrantService;
+  private final EntrantPaymentService entrantPaymentService;
 
   @Override
-  public ResponseEntity<VehicleEntrantResponse> createVehicleEntrantAndGetPaymentDetails(
-      VehicleEntrantRequest request) {
-    InternalPaymentStatus paymentStatus = vehicleEntrantService
-        .registerVehicleEntrant(request.toVehicleEntrant());
-    return ResponseEntity.ok(VehicleEntrantResponse.from(paymentStatus));
+  public ResponseEntity<List<EntrantPaymentDto>> createVehicleEntrantAndGetPaymentDetails(
+      List<VehicleEntrantDto> vehicleEntrants) {
+
+    List<EntrantPaymentDto> cazEntrantPaymentDtos = entrantPaymentService
+        .bulkProcess(vehicleEntrants);
+
+    return ResponseEntity.ok(cazEntrantPaymentDtos);
   }
 }

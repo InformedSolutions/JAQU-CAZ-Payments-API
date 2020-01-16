@@ -98,10 +98,10 @@ localstack-run:
 	SPRING_PROFILES_ACTIVE='localstack,development' AWS_PROFILE='localstack' AWS_REGION='eu-west-2' ./mvnw spring-boot:run
 
 local-integration-up:
-	SERVICES='s3,sqs,sns' docker-compose -f docker/docker-compose-integration.yml -p localstack_docker up -d
+	docker-compose -f src/it/resources/docker-compose-it.yml up -d
 
 local-integration-down:
-	docker-compose -f docker/docker-compose-integration.yml -p localstack_docker down
+	docker-compose -f src/it/resources/docker-compose-it.yml down
 
 docker-stop:
 	docker stop `docker ps -a -q`

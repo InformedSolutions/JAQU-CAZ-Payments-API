@@ -36,12 +36,12 @@ public class ReconcilePaymentStatusService {
    */
   public Optional<Payment> reconcilePaymentStatus(UUID id, String cleanAirZoneName) {
     Preconditions.checkNotNull(id, "ID cannot be null");
-
     Payment internalPayment = internalPaymentsRepository.findById(id).orElse(null);
     Payment payment;
 
     if (internalPayment == null) {
-      log.warn("Payment '{}' is absent in the database", id);
+      log.warn("Payment '{}' not found in the database", id);
+
       return Optional.empty();
     } else {
       payment = internalPayment.toBuilder().cleanAirZoneName(cleanAirZoneName).build();
@@ -93,8 +93,8 @@ public class ReconcilePaymentStatusService {
    * @return a {@link UUID} representing a Clean Air Zone.
    */
   private UUID getCleanAirZoneId(Payment payment) {
-    Preconditions.checkArgument(! payment.getVehicleEntrantPayments().isEmpty(),
-        "Vehicle entrant payments should not be empty");
-    return payment.getVehicleEntrantPayments().iterator().next().getCleanZoneId();
+    Preconditions.checkArgument(!payment.getEntrantPayments().isEmpty(),
+        "CAZ entrant payments should not be empty");
+    return payment.getEntrantPayments().iterator().next().getCleanAirZoneId();
   }
 }
