@@ -46,7 +46,6 @@ public class EntrantPayment {
   /**
    * The amount of money paid for the vehicle entrant on a given date to the given CAZ.
    */
-  @NonNull
   Integer charge;
 
   /**

@@ -49,15 +49,9 @@ databaseChangeLog:
               - column:
                   name: TARIFF_CODE
                   type: varchar(255)
-                  constraints:
-                    # null when a vehicle enters CAZ and the payment has not been made
-                    nullable: true
               - column:
                   name: CHARGE
                   type: integer
-                  constraints:
-                    # null when a vehicle enters CAZ and the payment has not been made
-                    nullable: true
               - column:
                   name: PAYMENT_STATUS
                   type: varchar(64)
