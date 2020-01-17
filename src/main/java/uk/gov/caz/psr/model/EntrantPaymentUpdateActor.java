@@ -2,7 +2,7 @@ package uk.gov.caz.psr.model;
 
 /**
  * Describes the entity which is responsible for updating the state of an instance of {@link
- * CazEntrantPayment}.
+ * EntrantPayment}.
  */
 public enum EntrantPaymentUpdateActor {
   USER,

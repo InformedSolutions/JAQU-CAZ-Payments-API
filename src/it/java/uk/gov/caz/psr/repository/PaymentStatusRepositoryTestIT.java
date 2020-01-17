@@ -13,14 +13,13 @@ import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.model.PaymentStatus;
 
-@Disabled("Because of ERD updates")
 @IntegrationTest
 class PaymentStatusRepositoryTestIT {
 
   @Autowired
   private PaymentStatusRepository repository;
 
-  @Sql(scripts = {"classpath:data/sql/add-payments.sql"},
+  @Sql(scripts = "classpath:data/sql/add-payments-for-payment-status.sql",
       executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
   @Sql(scripts = {"classpath:data/sql/clear-all-payments.sql"},
       executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
