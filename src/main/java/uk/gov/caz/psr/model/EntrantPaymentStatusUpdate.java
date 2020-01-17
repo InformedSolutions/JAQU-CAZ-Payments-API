@@ -10,7 +10,7 @@ import lombok.Value;
  */
 @Value
 @Builder
-public class VehicleEntrantPaymentStatusUpdate {
+public class EntrantPaymentStatusUpdate {
   /**
    * The internal unique identifier of Clean Air Zone.
    */
@@ -30,11 +30,6 @@ public class VehicleEntrantPaymentStatusUpdate {
    * Payment Status to be updated.
    */
   InternalPaymentStatus paymentStatus;
-
-  /**
-   * ID of payment in GOV.UK PAY.
-   */
-  String externalPaymentId;
 
   /**
    * Provided Case Reference.

@@ -14,6 +14,7 @@ import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.model.EntrantPayment;
+import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
@@ -22,7 +23,6 @@ import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.model.VehicleEntrant;
-import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 
 public class TestObjectFactory {
 
@@ -231,60 +231,41 @@ public class TestObjectFactory {
     public static PaymentStatusUpdateDetails anyWithStatus(ChargeSettlementPaymentStatus status) {
       return PaymentStatusUpdateDetails.builder()
           .caseReference("CaseReference")
-          .chargeSettlementPaymentStatus(status)
+          .paymentStatus(status)
           .dateOfCazEntry(LocalDate.now())
-          .paymentProviderId("TestPaymentId")
           .build();
     }
 
     public static PaymentStatusUpdateDetails refundedWithDateOfCazEntry(LocalDate date) {
       return PaymentStatusUpdateDetails.builder().caseReference("CaseReference")
-          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
           .dateOfCazEntry(date).build();
-    }
-
-    public static PaymentStatusUpdateDetails refundedWithDateOfCazEntryAndPaymentId(LocalDate date,
-        String paymentID) {
-      return PaymentStatusUpdateDetails.builder().caseReference("CaseReference")
-          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
-          .paymentProviderId(paymentID)
-          .dateOfCazEntry(date)
-          .build();
     }
 
     public static PaymentStatusUpdateDetails anyInvalid() {
       return PaymentStatusUpdateDetails.builder()
-          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
-          .paymentProviderId("paymentID")
-          .dateOfCazEntry(LocalDate.now())
-          .build();
-    }
-
-    public static PaymentStatusUpdateDetails withPaymentId(String paymentId) {
-      return PaymentStatusUpdateDetails.builder()
-          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
-          .caseReference("caseReference")
-          .paymentProviderId(paymentId)
+          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
           .dateOfCazEntry(LocalDate.now())
           .build();
     }
 
     public static PaymentStatusUpdateDetails withCaseReference(String caseReference) {
       return PaymentStatusUpdateDetails.builder()
-          .chargeSettlementPaymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
           .caseReference(caseReference)
-          .paymentProviderId("paymentID")
           .dateOfCazEntry(LocalDate.now())
           .build();
     }
   }
 
-  public static class VehicleEntrantPaymentStatusUpdates {
+  public static class EntrantPaymentStatusUpdates {
 
-    public static VehicleEntrantPaymentStatusUpdate any() {
-      return VehicleEntrantPaymentStatusUpdate.builder().caseReference("CaseReference")
-          .externalPaymentId("test payment id").paymentStatus(InternalPaymentStatus.REFUNDED)
-          .vrn("VRN123").dateOfCazEntry(LocalDate.now()).cleanAirZoneId(UUID.randomUUID()).build();
+    public static EntrantPaymentStatusUpdate any() {
+      return EntrantPaymentStatusUpdate.builder().caseReference("CaseReference")
+          .paymentStatus(InternalPaymentStatus.REFUNDED)
+          .vrn("VRN123").dateOfCazEntry(LocalDate.now())
+          .cleanAirZoneId(UUID.randomUUID())
+          .build();
     }
   }
 

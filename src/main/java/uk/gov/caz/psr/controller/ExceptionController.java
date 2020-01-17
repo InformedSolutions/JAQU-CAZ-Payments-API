@@ -27,7 +27,6 @@ import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
 import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.ValidationError.ValidationErrorBuilder;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
-import uk.gov.caz.psr.service.exception.MissingVehicleEntrantPaymentException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,21 +38,6 @@ public class ExceptionController extends GlobalExceptionHandler {
 
   private final MessageSource messageSource;
 
-  /**
-   * Method to handle Exception while VehicleEntrantPayment was not found and failed with {@link
-   * MissingVehicleEntrantPaymentException}.
-   *
-   * @param e Exception object.
-   */
-  @ExceptionHandler(MissingVehicleEntrantPaymentException.class)
-  ResponseEntity<PaymentStatusErrorsResponse> handleMissingVehicleEntrantPaymentException(
-      MissingVehicleEntrantPaymentException e) {
-
-    log.info("MissingVehicleEntrantPaymentException occurred", e);
-    return ResponseEntity.badRequest()
-        .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(e.getVrn(),
-            e.getMessage()));
-  }
 
   /**
    * Method to handle Exception while VehicleEntrantPayment was not found and failed with {@link
