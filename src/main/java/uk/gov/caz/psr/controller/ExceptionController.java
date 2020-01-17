@@ -133,7 +133,6 @@ public class ExceptionController extends GlobalExceptionHandler {
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity handleException(ConstraintViolationException exception) {
     log.warn("ConstraintViolationException occurred: ", exception);
-    // TODO: Error messages?
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
 

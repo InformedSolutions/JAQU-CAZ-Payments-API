@@ -16,7 +16,7 @@ public class EntrantPaymentDto {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.caz-entrant-payment.vehicle-entrant-id")
   @NotNull
-  UUID cleanAirZoneEntrantPaymentId;
+  UUID entrantPaymentId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.caz-entrant-payment.status}")
   @NotNull
@@ -30,7 +30,7 @@ public class EntrantPaymentDto {
   public static EntrantPaymentDto from(EntrantPayment entrantPayment) {
     return EntrantPaymentDto
         .builder()
-        .cleanAirZoneEntrantPaymentId(entrantPayment.getCleanAirZoneEntrantPaymentId())
+        .entrantPaymentId(entrantPayment.getCleanAirZoneEntrantPaymentId())
         .paymentStatus(entrantPayment.getInternalPaymentStatus().toString())
         .build();
   }
