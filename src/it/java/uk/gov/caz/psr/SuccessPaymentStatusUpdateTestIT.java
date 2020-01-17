@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +45,8 @@ import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
 
-@Disabled("Because of ERD updates")
 @FullyRunningServerIntegrationTest
-@Sql(scripts = "classpath:data/sql/add-payments.sql",
+@Sql(scripts = "classpath:data/sql/add-payments-for-payment-status.sql",
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
@@ -82,7 +81,16 @@ public class SuccessPaymentStatusUpdateTestIT {
         .paymentStatusUpdateRequest(paymentStatusUpdateRequest(vrn))
         .whenSubmitted()
         .then()
-        .vehicleEntrantPaymentsAreUpdatedInTheDatabse();
+        .entrantPaymentsAreUpdatedInTheDatabse();
+  }
+
+  @Test
+  public void successPaymentStatusUpdateForNonExistingEntrantPaymentJourney() {
+    given()
+        .paymentStatusUpdateRequest(paymentStatusUpdateRequestForNonExistingParams())
+        .whenSubmitted()
+        .then()
+        .entrantPaymentIsCreatedInTheDatabase();
   }
 
   private PaymentStatusUpdateJourneyAssertion given() {
@@ -92,6 +100,13 @@ public class SuccessPaymentStatusUpdateTestIT {
   private PaymentStatusUpdateRequest paymentStatusUpdateRequest(String vrn) {
     return PaymentStatusUpdateRequest.builder()
         .vrn(vrn)
+        .statusUpdates(validStatusUpdates())
+        .build();
+  }
+
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestForNonExistingParams() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn("MARYSIA")
         .statusUpdates(validStatusUpdates())
         .build();
   }
@@ -154,18 +169,31 @@ public class SuccessPaymentStatusUpdateTestIT {
       return objectMapper.writeValueAsString(request);
     }
 
-    public PaymentStatusUpdateJourneyAssertion vehicleEntrantPaymentsAreUpdatedInTheDatabse() {
-      verifyThatRefundedVehicleEntrantPaymentsExists();
+    public PaymentStatusUpdateJourneyAssertion entrantPaymentsAreUpdatedInTheDatabse() {
+      verifyThatRefundedEntrantPaymentsExists();
       return this;
     }
 
-    private void verifyThatRefundedVehicleEntrantPaymentsExists() {
+    public PaymentStatusUpdateJourneyAssertion entrantPaymentIsCreatedInTheDatabase() {
+      verifyThatNewEntrantPaymentWasCreated();
+      return this;
+    }
+
+    private void verifyThatRefundedEntrantPaymentsExists() {
       int vehicleEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "caz_id = '" + cleanAirZoneId.toString() + "' AND "
+          "caz_payment.t_clean_air_zone_entrant_payment",
+          "clean_air_zone_id = '" + cleanAirZoneId.toString() + "' AND "
               + "vrn = 'ND84VSX' AND "
               + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
-      assertThat(vehicleEntrantCount).isEqualTo(2);
+      assertThat(vehicleEntrantCount).isEqualTo(3);
+    }
+
+    private void verifyThatNewEntrantPaymentWasCreated() {
+      int entrantPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "caz_payment.t_clean_air_zone_entrant_payment",
+          "vrn = 'MARYSIA'"
+      );
+      assertThat(entrantPaymentCount).isEqualTo(2);
     }
   }
 }
