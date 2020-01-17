@@ -21,9 +21,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.model.EntrantPayment;
-import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
-import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 
@@ -40,7 +38,6 @@ public class PaymentRepository {
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
   private final EntrantPaymentRepository entrantPaymentRepository;
-  private final EntrantPaymentMatchRepository entrantPaymentMatchRepository;
 
   private static final String TABLE_NAME = "t_payment";
   private static final String SCHEMA_NAME = "CAZ_PAYMENT";
@@ -61,8 +58,7 @@ public class PaymentRepository {
    * @param entrantPaymentRepository An instance of {@link EntrantPaymentRepository}.
    */
   public PaymentRepository(JdbcTemplate jdbcTemplate,
-      EntrantPaymentRepository entrantPaymentRepository,
-      EntrantPaymentMatchRepository entrantPaymentMatchRepository) {
+      EntrantPaymentRepository entrantPaymentRepository) {
     this.jdbcTemplate = jdbcTemplate;
     this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
         .withSchemaName(SCHEMA_NAME)
@@ -70,52 +66,33 @@ public class PaymentRepository {
         .usingGeneratedKeyColumns(Columns.PAYMENT_ID, Columns.REFERENCE_NUMBER)
         .usingColumns(Columns.PAYMENT_METHOD, Columns.TOTAL_PAID, Columns.PAYMENT_PROVIDER_STATUS);
     this.entrantPaymentRepository = entrantPaymentRepository;
-    this.entrantPaymentMatchRepository = entrantPaymentMatchRepository;
   }
 
   /**
-   * Inserts {@code payment} (with the external status set alongside the same status of entrant
-   * payments) into database.
+   * Inserts {@code payment} into database.
    *
    * @param payment An entity object which is supposed to be saved in the database.
    * @return An instance of {@link Payment} with its internal identifier set.
    * @throws NullPointerException if {@code payment} is null
    * @throws NullPointerException if {@link Payment#getExternalPaymentStatus()} is null
    * @throws IllegalArgumentException if {@link Payment#getId()} is not null
-   * @throws IllegalArgumentException if {@link Payment#getEntrantPayments()} ()} do not have the
-   *     same payment status.
+   * @throws IllegalArgumentException if {@link Payment#getEntrantPayments()} ()} is NOT empty
    */
-  public Payment insertWithExternalStatus(Payment payment) {
+  public Payment insert(Payment payment) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
     Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
     Preconditions.checkNotNull(payment.getExternalPaymentStatus(),
         "External payment status cannot be null");
-    Preconditions.checkArgument(!payment.getEntrantPayments().isEmpty(),
-        "Vehicle entrant payments cannot be empty");
-    Preconditions.checkArgument(haveSameStatus(payment.getEntrantPayments()),
-        "Entrant payments do not have one common status");
+    Preconditions.checkArgument(payment.getEntrantPayments().isEmpty(),
+        "Vehicle entrant payments must be empty");
 
     KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
         toSqlParametersForExternalInsert(payment));
-
     UUID paymentId = (UUID) keyHolder.getKeys().get("payment_id");
     Long referenceNumber = (Long) keyHolder.getKeys().get("central_reference_number");
-
-    List<EntrantPayment> entrantPaymentsWithIds =
-        entrantPaymentRepository.insert(payment.getEntrantPayments());
-
-    entrantPaymentsWithIds.forEach(cazEntrantPayment -> {
-      EntrantPaymentMatch entrantPaymentMatch = EntrantPaymentMatch.builder()
-          .paymentId(paymentId)
-          .vehicleEntrantPaymentId(cazEntrantPayment.getCleanAirZoneEntrantPaymentId())
-          .build();
-      entrantPaymentMatchRepository.insert(entrantPaymentMatch);
-    });
-
     return payment.toBuilder()
         .id(paymentId)
         .referenceNumber(referenceNumber)
-        .entrantPayments(entrantPaymentsWithIds)
         .build();
   }
 
@@ -182,21 +159,6 @@ public class PaymentRepository {
     return new MapSqlParameterSource().addValue("total_paid", payment.getTotalPaid())
         .addValue("payment_provider_status", payment.getExternalPaymentStatus().name())
         .addValue("payment_method", payment.getPaymentMethod().name());
-  }
-
-  /**
-   * Predicate which checks whether all vehicle entrant payments have the same status..
-   *
-   * @param vehicleEntrantPayments A list of {@link EntrantPayment}.
-   * @return true if {@code vehicleEntrantPayments} is not empty and all vehicle entrant payments
-   *     have the same status.
-   */
-  private boolean haveSameStatus(List<EntrantPayment> vehicleEntrantPayments) {
-    InternalPaymentStatus status =
-        vehicleEntrantPayments.iterator().next().getInternalPaymentStatus();
-    return vehicleEntrantPayments.stream()
-        .map(EntrantPayment::getInternalPaymentStatus)
-        .allMatch(localStatus -> localStatus == status);
   }
 
   /**

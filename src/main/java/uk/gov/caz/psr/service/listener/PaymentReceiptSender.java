@@ -54,6 +54,6 @@ public class PaymentReceiptSender {
   private void checkPreconditions(PaymentStatusUpdatedEvent event) {
     Payment payment = event.getPayment();
     Preconditions.checkArgument(!Strings.isNullOrEmpty(payment.getEmailAddress()),
-        "Email address " + "cannot be null or empty");
+        "Email address cannot be null or empty");
   }
 }

@@ -3,6 +3,7 @@ package uk.gov.caz.psr.repository;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -76,6 +78,20 @@ public class EntrantPaymentRepository {
       + "FROM caz_payment.t_clean_air_zone_entrant_payment "
       + "WHERE clean_air_zone_id = ? AND vrn = ? AND travel_date = ?";
 
+  private static final String SELECT_BY_VRN_CAZ_ENTRY_DATES_SQL = "SELECT "
+      + "clean_air_zone_entrant_payment_id, "
+      + "vrn, "
+      + "clean_air_zone_id, "
+      + "travel_date, "
+      + "tariff_code, "
+      + "charge, "
+      + "payment_status, "
+      + "vehicle_entrant_captured, "
+      + "update_actor, "
+      + "case_reference "
+      + "FROM caz_payment.t_clean_air_zone_entrant_payment "
+      + "WHERE clean_air_zone_id = ? AND vrn = ? AND travel_date = ANY (?)";
+
   //    @VisibleForTesting
   //    static final String SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL = "SELECT "
   //        + "t_clean_air_zone_entrant_payment.payment_id, "
@@ -99,7 +115,10 @@ public class EntrantPaymentRepository {
       + "SET payment_status = ?, "
       + "case_reference = ?, "
       + "update_actor = ?, "
-      + "vehicle_entrant_captured = ? "
+      + "tariff_code = ?, "
+      + "vehicle_entrant_captured = ?, "
+      + "charge = ?, "
+      + "update_timestamp = CURRENT_TIMESTAMP "
       + "WHERE clean_air_zone_entrant_payment_id = ?";
 
   private final JdbcTemplate jdbcTemplate;
@@ -137,12 +156,31 @@ public class EntrantPaymentRepository {
 
     List<EntrantPayment> result = new ArrayList<>(entrantPayments.size());
     for (EntrantPayment entrantPayment : entrantPayments) {
-      KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
-          toSqlParameters(entrantPayment));
-      UUID id = (UUID) keyHolder.getKeys().get("clean_air_zone_entrant_payment_id");
-      result.add(entrantPayment.toBuilder().cleanAirZoneEntrantPaymentId(id).build());
+      EntrantPayment insertedEntrantPayment = insert(entrantPayment);
+      result.add(insertedEntrantPayment);
     }
     return result;
+  }
+
+  /**
+   * Inserts the passed {@code entrantPayment} into the database.
+   *
+   * @param entrantPayment An instance of {@link EntrantPayment}.
+   * @return An instance of {@link EntrantPayment} with its internal identifiers set.
+   * @throws NullPointerException if {@code entrantPayment} is null.
+   * @throws IllegalArgumentException if {@code entrantPayment} has a non-null entrant payment id.
+   */
+  public EntrantPayment insert(EntrantPayment entrantPayment) {
+    Preconditions.checkNotNull(entrantPayment, "Entrant payment cannot be null");
+    Preconditions.checkArgument(entrantPayment.getCleanAirZoneEntrantPaymentId() == null,
+        "Entrant payment cannot have non-null ID");
+
+    KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
+        toSqlParameters(entrantPayment));
+    UUID id = (UUID) keyHolder.getKeys().get("clean_air_zone_entrant_payment_id");
+    return entrantPayment.toBuilder()
+        .cleanAirZoneEntrantPaymentId(id)
+        .build();
   }
 
   /**
@@ -192,8 +230,10 @@ public class EntrantPaymentRepository {
           .name());
       preparedStatementSetter.setString(2, entrantPayment.getCaseReference());
       preparedStatementSetter.setString(3, entrantPayment.getUpdateActor().name());
-      preparedStatementSetter.setBoolean(4, entrantPayment.isVehicleEntrantCaptured());
-      preparedStatementSetter.setObject(5, entrantPayment.getCleanAirZoneEntrantPaymentId());
+      preparedStatementSetter.setString(4, entrantPayment.getTariffCode());
+      preparedStatementSetter.setBoolean(5, entrantPayment.isVehicleEntrantCaptured());
+      preparedStatementSetter.setInt(6, entrantPayment.getCharge());
+      preparedStatementSetter.setObject(7, entrantPayment.getCleanAirZoneEntrantPaymentId());
     });
   }
 
@@ -276,6 +316,31 @@ public class EntrantPaymentRepository {
       return Optional.empty();
     }
     return Optional.of(results.iterator().next());
+  }
+
+  /**
+   * Finds a list of {@link EntrantPayment}s based on {@code cleanZoneId}, {@code vrn} and
+   * {@code cazEntryDates}.
+   * @return A {@link List} of matching {@link EntrantPayment}s.
+   */
+  public List<EntrantPayment> findByVrnAndCazEntryDates(UUID cleanZoneId, String vrn,
+      List<LocalDate> cazEntryDates) {
+    Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
+    Preconditions.checkArgument(!CollectionUtils.isEmpty(cazEntryDates),
+        "cazEntryDate cannot be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
+
+    List<EntrantPayment> results = jdbcTemplate.query(connection -> {
+      PreparedStatement preparedStatement = connection.prepareStatement(
+          SELECT_BY_VRN_CAZ_ENTRY_DATES_SQL);
+      preparedStatement.setObject(1, cleanZoneId);
+      preparedStatement.setString(2, vrn);
+      preparedStatement.setArray(3,
+          connection.createArrayOf("date", cazEntryDates.toArray()));
+      return preparedStatement;
+    }, ROW_MAPPER);
+
+    return results;
   }
 
   /**

@@ -3,6 +3,7 @@ package uk.gov.caz.psr.util;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -107,6 +108,7 @@ public class TestObjectFactory {
   public static class Payments {
 
     private static final Random random = new Random();
+    private static final UUID ANY_CAZ_ID = UUID.fromString("dff092a3-7b80-4432-a4de-c09715743d06");
 
     public static Payment existing() {
       UUID paymentId = UUID.randomUUID();
@@ -134,7 +136,7 @@ public class TestObjectFactory {
     }
 
     public static Payment forDays(Collection<LocalDate> travelDates, UUID paymentId) {
-      return forDays(travelDates, paymentId, null, null);
+      return forDays(travelDates, paymentId, null, ANY_CAZ_ID);
     }
 
     public static Payment forDays(Collection<LocalDate> travelDates, UUID paymentId,
@@ -142,28 +144,30 @@ public class TestObjectFactory {
         List<EntrantPayment> entrantPayments = EntrantPaymentsBuilder.forDays(travelDates).withTotal(travelDates.size() * 800)
             .withVrn(randomVrn())
             .withStatus(InternalPaymentStatus.NOT_PAID).withCazId(cazIdentifier).build();
-      return createPaymentWith(entrantPayments, paymentId, externalId);
+      return createPaymentWith(entrantPayments, paymentId, externalId, cazIdentifier);
     }
 
     public static Payment forRequest(InitiatePaymentRequest request) {
-      List<EntrantPayment> entrantPayments = EntrantPaymentsBuilder
-          .forDays(request.getDays())
-          .withTotal(request.getAmount())
-          .withVrn(request.getVrn())
-          .withStatus(InternalPaymentStatus.NOT_PAID)
-          .withCazId(request.getCleanAirZoneId()).build();
+      List<EntrantPayment> entrantPayments = Collections.emptyList();
 
-      return createPaymentWith(entrantPayments, null, null);
+      return createPaymentWith(entrantPayments, null, null, request.getCleanAirZoneId())
+          .toBuilder()
+          .totalPaid(request.getAmount())
+          .build();
     }
 
     private static Payment createPaymentWith(List<EntrantPayment> entrantPayments,
-        UUID paymentId, String externalId) {
-      return Payment.builder().id(paymentId).externalId(externalId)
+        UUID paymentId, String externalId, UUID cazIdentifier) {
+      return Payment.builder()
+          .id(paymentId)
+          .externalId(externalId)
           .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
           .totalPaid(entrantPayments.stream().map(EntrantPayment::getCharge)
               .reduce(0, Integer::sum))
           .entrantPayments(entrantPayments)
-          .externalPaymentStatus(ExternalPaymentStatus.INITIATED).build();
+          .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
+          .cleanAirZoneId(cazIdentifier)
+          .build();
     }
   }
 

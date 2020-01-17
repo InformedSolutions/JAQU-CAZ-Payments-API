@@ -43,8 +43,8 @@ public class Payment {
   Integer totalPaid;
 
   /**
-   * A list of {@link EntrantPayment} instances associated with this object. It can be empty
-   * in cases when we don't want to eagerly fetch all associated entities with this payment.
+   * A list of {@link EntrantPayment} instances associated with this object. It can be empty in
+   * cases when we don't want to eagerly fetch all associated entities with this payment.
    */
   @NonNull
   List<EntrantPayment> entrantPayments;
@@ -85,6 +85,12 @@ public class Payment {
   String cleanAirZoneName;
 
   /**
+   * An identifier of the Clean Air Zone. A transient field, not saved in the database. This value
+   * is non-null only when a new payment is initiated.
+   */
+  UUID cleanAirZoneId;
+
+  /**
    * An overridden lombok's builder.
    */
   public static class PaymentBuilder {
@@ -105,7 +111,7 @@ public class Payment {
 
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
           externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl, 
-          emailAddress, cleanAirZoneName);
+          emailAddress, cleanAirZoneName, cleanAirZoneId);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

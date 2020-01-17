@@ -50,12 +50,14 @@ databaseChangeLog:
                   name: TARIFF_CODE
                   type: varchar(255)
                   constraints:
-                    nullable: false
+                    # null when a vehicle enters CAZ and the payment has not been made
+                    nullable: true
               - column:
                   name: CHARGE
                   type: integer
                   constraints:
-                    nullable: false
+                    # null when a vehicle enters CAZ and the payment has not been made
+                    nullable: true
               - column:
                   name: PAYMENT_STATUS
                   type: varchar(64)
@@ -104,13 +106,6 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
                     primaryKeyName: payment_payment_id_pkey
-              - column:
-                  name: CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID
-                  type: uuid
-                  constraints:
-                    nullable: true
-                    references: CAZ_PAYMENT.T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT(CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID)
-                    foreignKeyName: fk_clean_air_zone_entrant_payment_id
               - column:
                   name: USER_ID
                   type: uuid
@@ -193,3 +188,8 @@ databaseChangeLog:
                     nullable: false
                     references: CAZ_PAYMENT.T_PAYMENT(PAYMENT_ID)
                     foreignKeyName: fk_payment_id
+              - column:
+                  name: LATEST
+                  type: boolean
+                  constraints:
+                    nullable: false

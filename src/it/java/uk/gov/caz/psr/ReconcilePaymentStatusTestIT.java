@@ -85,6 +85,6 @@
 //  private UUID insertIntoDatabasePaymentWithoutExternalId() {
 //    Payment withoutId = TestObjectFactory.Payments.forRandomDays().toBuilder()
 //        .externalPaymentStatus(ExternalPaymentStatus.INITIATED).build();
-//    return paymentRepository.insertWithExternalStatus(withoutId).getId();
+//    return paymentRepository.insert(withoutId).getId();
 //  }
 //}

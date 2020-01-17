@@ -60,7 +60,7 @@ public class ExternalPaymentsRepository {
    * @return the API key
    */
   private String getApiKeyFor(Payment payment) {
-    UUID cleanAirZoneId = payment.getEntrantPayments().iterator().next().getCleanAirZoneId();
+    UUID cleanAirZoneId = payment.getCleanAirZoneId();
     return getApiKeyFor(cleanAirZoneId);
   }
 
