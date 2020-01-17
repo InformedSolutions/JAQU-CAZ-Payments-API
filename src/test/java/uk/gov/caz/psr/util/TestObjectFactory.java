@@ -176,12 +176,14 @@ public class TestObjectFactory {
     public static EntrantPayment anyNotPaid() {
       return EntrantPayment.builder().charge(100).travelDate(LocalDate.now())
           .cleanAirZoneId(UUID.randomUUID()).vrn("VRN123")
+          .updateActor(EntrantPaymentUpdateActor.VCCS_API)
           .internalPaymentStatus(InternalPaymentStatus.NOT_PAID).build();
     }
 
     public static EntrantPayment anyPaid() {
       return EntrantPayment.builder().charge(100).travelDate(LocalDate.now())
           .cleanAirZoneId(UUID.randomUUID()).vrn("VRN123")
+          .updateActor(EntrantPaymentUpdateActor.VCCS_API)
           .internalPaymentStatus(InternalPaymentStatus.PAID).build();
     }
 

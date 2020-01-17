@@ -32,7 +32,7 @@ import uk.gov.caz.psr.model.PaymentMethod;
 @Slf4j
 public class PaymentRepository {
 
-  private static final PaymentFindByIdMapper DANGLING_PAYMENT_ROW_MAPPER =
+  private static final PaymentFindByIdMapper PAYMENT_ROW_MAPPER =
       new PaymentFindByIdMapper(Collections.emptyList());
 
   private final JdbcTemplate jdbcTemplate;
@@ -142,13 +142,34 @@ public class PaymentRepository {
   }
 
   /**
+   * Finds the latest {@link Payment} associated with the {@link EntrantPayment} by the entrant
+   * payment's id.
+   *
+   * @return {@link Optional#empty()} if payment is not found, {@link Payment} wrapped in {@link
+   *     Optional} otherwise.
+   * @throws IllegalStateException if more than one payment is found.
+   */
+  public Optional<Payment> findByEntrantPayment(UUID entrantPaymentId) {
+    List<Payment> result = jdbcTemplate.query(Sql.FIND_BY_ENTRANT_PAYMENT_ID_SQL,
+        preparedStatement -> preparedStatement.setObject(1, entrantPaymentId),
+        PAYMENT_ROW_MAPPER
+    );
+
+    if (result.size() > 1) {
+      throw new IllegalStateException("Found more than one payments for entrant payment id = "
+          + entrantPaymentId);
+    }
+    return result.isEmpty() ? Optional.empty() : Optional.of(result.iterator().next());
+  }
+
+  /**
    * Finds all unfinished payments done in GOV UK Pay service.
    *
    * @return A list of {@link Payment} which were done in GOV UK Pay service, but were not finished.
    */
   public List<Payment> findDanglingPayments() {
     return jdbcTemplate.query(Sql.SELECT_DANGLING_PAYMENTS, (PreparedStatementSetter) null,
-        DANGLING_PAYMENT_ROW_MAPPER);
+        PAYMENT_ROW_MAPPER);
   }
 
   /**
@@ -156,7 +177,8 @@ public class PaymentRepository {
    * external payment.
    */
   private MapSqlParameterSource toSqlParametersForExternalInsert(Payment payment) {
-    return new MapSqlParameterSource().addValue("total_paid", payment.getTotalPaid())
+    return new MapSqlParameterSource()
+        .addValue("total_paid", payment.getTotalPaid())
         .addValue("payment_provider_status", payment.getExternalPaymentStatus().name())
         .addValue("payment_method", payment.getPaymentMethod().name());
   }
@@ -165,6 +187,23 @@ public class PaymentRepository {
    * An inner static class that acts as a 'container' for SQL queries/statements.
    */
   private static class Sql {
+
+    static final String FIND_BY_ENTRANT_PAYMENT_ID_SQL = "SELECT "
+        + "payment.payment_id, "
+        + "payment.payment_method, "
+        + "payment.total_paid, "
+        + "payment.payment_submitted_timestamp, "
+        + "payment.payment_authorised_timestamp, "
+        + "payment.payment_provider_status, "
+        + "payment.payment_provider_id "
+        + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
+        + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
+        + "ON entrant_payment.clean_air_zone_entrant_payment_id = "
+        + "entrant_payment_match.clean_air_zone_entrant_payment_id "
+        + "AND entrant_payment_match.latest IS TRUE "
+        + "INNER JOIN caz_payment.t_payment payment "
+        + "ON entrant_payment_match.payment_id = payment.payment_id "
+        + "WHERE entrant_payment.clean_air_zone_entrant_payment_id = ?";
 
     static final String UPDATE = "UPDATE caz_payment.t_payment "
         + "SET payment_provider_id = ?, "
@@ -207,7 +246,8 @@ public class PaymentRepository {
     @Override
     public Payment mapRow(ResultSet resultSet, int i) throws SQLException {
       String externalStatus = resultSet.getString("payment_provider_status");
-      return Payment.builder().id(UUID.fromString(resultSet.getString("payment_id")))
+      return Payment.builder()
+          .id(UUID.fromString(resultSet.getString("payment_id")))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
           .externalId(resultSet.getString("payment_provider_id"))
           .referenceNumber(resultSet.getLong("central_reference_number"))

@@ -29,7 +29,7 @@ import uk.gov.caz.psr.util.TestObjectFactory;
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 @IntegrationTest
 @AutoConfigureMockMvc
-public class GetAndUpdatePaymentStatusTestIT {
+public class ReconcilePaymentStatusTestIT {
 
   private static final String URL_TEMPLATE = PaymentsController.BASE_PATH + "/{id}";
   @Autowired
