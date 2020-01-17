@@ -26,6 +26,7 @@ import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.EntrantPaymentStatusUpdateConverter;
+import uk.gov.caz.psr.service.exception.PaymentNotProcessedException;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPaymentStatusUpdates;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -90,7 +91,7 @@ public class PaymentStatusUpdateServiceTest {
         EntrantPaymentStatusUpdates.any(), EntrantPaymentStatusUpdates.any()
     );
     mockEntrantPaymentFound();
-    mockPaymentFound();
+    mockFinishedPaymentFound();
 
     // when
     paymentStatusUpdateService.process(entrantPaymentStatusUpdatesList);
@@ -108,7 +109,7 @@ public class PaymentStatusUpdateServiceTest {
     );
     EntrantPayment foundVehicleEntrantPayment = EntrantPayments.anyPaid();
     mockEntrantPaymentFoundWith(foundVehicleEntrantPayment);
-    mockPaymentFound();
+    mockFinishedPaymentFound();
     EntrantPayment expectedEntrantPayment = foundVehicleEntrantPayment.toBuilder()
         .internalPaymentStatus(entrantPaymentStatusUpdate.getPaymentStatus())
         .caseReference(entrantPaymentStatusUpdate.getCaseReference())
@@ -139,6 +140,22 @@ public class PaymentStatusUpdateServiceTest {
     verify(entrantPaymentRepository).insert(expectedEntrantPayment);
   }
 
+  @Test
+  public void shouldThrowPaymentNotProcessedExceptionWhenPaymentIsNotFinished() {
+    // given
+    EntrantPaymentStatusUpdate statusUpdate = EntrantPaymentStatusUpdates.any();
+    List<EntrantPaymentStatusUpdate> statusUpdates = Arrays.asList(statusUpdate);
+    mockEntrantPaymentFound();
+    mockNotFinishedPaymentFound();
+
+    // when
+    Throwable throwable = catchThrowable(() -> paymentStatusUpdateService.process(statusUpdates));
+
+    // then
+    assertThat(throwable).isInstanceOf(PaymentNotProcessedException.class)
+        .hasMessage("Payment is still being processed");
+  }
+
   private EntrantPayment buildExpectedEntrantPaymentFrom(EntrantPaymentStatusUpdate statusUpdate) {
     return entrantPaymentStatusUpdateConverter.convert(statusUpdate);
   }
@@ -164,7 +181,16 @@ public class PaymentStatusUpdateServiceTest {
     given(paymentRepository.findByEntrantPayment(any())).willReturn(Optional.empty());
   }
 
-  private void mockPaymentFound() {
+  private void mockNotFinishedPaymentFound() {
+    Payment payment = Payments.existing().toBuilder()
+        .externalPaymentStatus(ExternalPaymentStatus.CREATED)
+        .build();
+
+    given(paymentRepository.findByEntrantPayment(any())).willReturn(
+        java.util.Optional.ofNullable(payment));
+  }
+
+  private void mockFinishedPaymentFound() {
     Payment payment = Payments.existing().toBuilder()
         .externalPaymentStatus(ExternalPaymentStatus.SUCCESS)
         .authorisedTimestamp(LocalDateTime.now())
