@@ -14,6 +14,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.io.Resources;
 import io.restassured.RestAssured;
+import io.restassured.response.ValidatableResponse;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,11 +60,10 @@ public class SuccessPaymentsJourneyTestIT {
   private static final String EXTERNAL_PAYMENT_ID = "kac1ksqi26f9t2h7q3henmlamc";
   private static final String CAZ_ID = "53e03a28-0627-11ea-9511-ffaaee87e375";
 
-  @Autowired
-  private DataSource dataSource;
-
   @Value("${services.sqs.new-queue-name}")
   private String emailSqsQueueName;
+  @Value("${aws.secret-name}")
+  private String secretName;
 
   @LocalServerPort
   int randomServerPort;
@@ -73,14 +73,13 @@ public class SuccessPaymentsJourneyTestIT {
   @Autowired
   private JdbcTemplate jdbcTemplate;
   @Autowired
+  private DataSource dataSource;
+  @Autowired
   private AmazonSQS sqsClient;
   @Autowired
   private SecretsManagerInitialisation secretsManagerInitialisation;
 
   private ClientAndServer mockServer;
-
-  @Value("${aws.secret-name}")
-  private String secretName;
 
   @Test
   public void testPaymentJourneys() {
@@ -88,7 +87,139 @@ public class SuccessPaymentsJourneyTestIT {
 
     testPaymentJourneyWhenEntrantPaymentsExist();
 
-    testPaymentJourneyWhenFailedPaymentExistsForSameDays();
+    testPaymentJourneyWhenFailedPaymentExistsExactlyForSameDays();
+
+    testPaymentJourneyWhenFailedPaymentExistsCoversSomeDaysOfNewPayment();
+
+    testPaymentJourneyWhenPendingPaymentExistsExactlyForSameDays();
+
+    testPaymentJourneyWhenPaidPaymentExistsExactlyForSameDays();
+  }
+
+  private void testPaymentJourneyWhenPaidPaymentExistsExactlyForSameDays() {
+    executeSqlFrom("data/sql/clear-all-payments.sql");
+    executeSqlFrom("data/sql/add-finished-payment-for-two-days.sql");
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequest())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpInternalServerErrorStatusCode()
+        .andNoNewPaymentEntityIsCreatedInDatabase();
+  }
+
+  private void testPaymentJourneyWhenPendingPaymentExistsExactlyForSameDays() {
+    executeSqlFrom("data/sql/clear-all-payments.sql");
+    executeSqlFrom("data/sql/add-not-finished-payment-for-two-days.sql");
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequest())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpInternalServerErrorStatusCode()
+        .andNoNewPaymentEntityIsCreatedInDatabase();
+  }
+
+  private void testPaymentJourneyWhenFailedPaymentExistsCoversSomeDaysOfNewPayment() {
+    executeSqlFrom("data/sql/clear-all-payments.sql");
+    executeSqlFrom("data/sql/add-failed-payment-for-three-days.sql");
+
+    // failed payment exists for 2019-11-{10,11,12} so  the 'latest' flag is updated
+    // only for 2019-11-10
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequest())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpCreatedStatusCode()
+        .paymentEntityIsCreatedInDatabase()
+        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
+        .withNullPaymentAuthorisedTimestamp()
+        .withMatchedEntrantPayments()
+        .andMatchRecordsCountWithLatestSetToFalseIsEqualTo(1)
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
+
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptIsSent();
+  }
+
+  private void testPaymentJourneyWhenFailedPaymentExistsExactlyForSameDays() {
+    executeSqlFrom("data/sql/clear-all-payments.sql");
+    executeSqlFrom("data/sql/add-failed-payment-for-two-days.sql");
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequest())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpCreatedStatusCode()
+        .paymentEntityIsCreatedInDatabase()
+        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
+        .withNullPaymentAuthorisedTimestamp()
+        .withMatchedEntrantPayments()
+        .andPreviouslyPaymentMatchRecordsHaveLatestSetToFalse()
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
+
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptIsSent();
+  }
+
+  private void testPaymentJourneyWhenEntrantPaymentsExist() {
+    executeSqlFrom("data/sql/clear-all-payments.sql");
+    executeSqlFrom("data/sql/add-only-caz-entrant-payments.sql");
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequest())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpCreatedStatusCode()
+        .paymentEntityIsCreatedInDatabase()
+        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
+        .withNullPaymentAuthorisedTimestamp()
+        .withMatchedEntrantPayments()
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
+
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .withNonNullPaymentAuthorisedTimestamp()
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptIsSent();
+  }
+
+  private void testPaymentJourneyWithEmptyDatabase() {
+    given()
+        .initiatePaymentRequest(initiatePaymentRequest())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpCreatedStatusCode()
+        .paymentEntityIsCreatedInDatabase()
+        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
+        .withNullPaymentAuthorisedTimestamp()
+        .withMatchedEntrantPayments()
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
+
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .withNonNullPaymentAuthorisedTimestamp()
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptIsSent();
   }
 
   @BeforeEach
@@ -120,75 +251,6 @@ public class SuccessPaymentsJourneyTestIT {
   public void deleteQueue() {
     GetQueueUrlResult queueUrlResult = sqsClient.getQueueUrl(emailSqsQueueName);
     sqsClient.deleteQueue(queueUrlResult.getQueueUrl());
-  }
-
-  private void testPaymentJourneyWhenFailedPaymentExistsForSameDays() {
-    executeSqlFrom("data/sql/clear-all-payments.sql");
-    executeSqlFrom("data/sql/add-failed-payment.sql");
-
-    given()
-        .initiatePaymentRequest(initiatePaymentRequest())
-        .whenSubmitted()
-
-        .then()
-        .paymentEntityIsCreatedInDatabase()
-        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
-        .withNullPaymentAuthorisedTimestamp()
-        .withMatchedEntrantPayments()
-        .andPreviouslyPaymentMatchRecordsHaveLatestSetToFalse()
-        .andResponseIsReturnedWithMatchingInternalId()
-        .and()
-        .whenRequestedToGetAndUpdateStatus()
-
-        .then()
-        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
-        .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
-  }
-
-  private void testPaymentJourneyWhenEntrantPaymentsExist() {
-    executeSqlFrom("data/sql/clear-all-payments.sql");
-    executeSqlFrom("data/sql/add-only-caz-entrant-payments.sql");
-
-    given()
-        .initiatePaymentRequest(initiatePaymentRequest())
-        .whenSubmitted()
-
-        .then()
-        .paymentEntityIsCreatedInDatabase()
-        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
-        .withNullPaymentAuthorisedTimestamp()
-        .withMatchedEntrantPayments()
-        .andResponseIsReturnedWithMatchingInternalId()
-        .and()
-        .whenRequestedToGetAndUpdateStatus()
-
-        .then()
-        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
-        .withNonNullPaymentAuthorisedTimestamp()
-        .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
-  }
-
-  private void testPaymentJourneyWithEmptyDatabase() {
-    given()
-        .initiatePaymentRequest(initiatePaymentRequest())
-        .whenSubmitted()
-
-        .then()
-        .paymentEntityIsCreatedInDatabase()
-        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
-        .withNullPaymentAuthorisedTimestamp()
-        .withMatchedEntrantPayments()
-        .andResponseIsReturnedWithMatchingInternalId()
-        .and()
-        .whenRequestedToGetAndUpdateStatus()
-
-        .then()
-        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
-        .withNonNullPaymentAuthorisedTimestamp()
-        .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
   }
 
   @AfterEach
@@ -225,6 +287,7 @@ public class SuccessPaymentsJourneyTestIT {
     private InitiatePaymentRequest initiatePaymentRequest;
     private InitiatePaymentResponse initPaymentResponse;
     private GetAndUpdatePaymentStatusResponse getAndUpdatePaymentResponse;
+    private ValidatableResponse validatableResponse;
 
     public PaymentJourneyAssertion initiatePaymentRequest(InitiatePaymentRequest request) {
       this.initiatePaymentRequest = request;
@@ -239,13 +302,25 @@ public class SuccessPaymentsJourneyTestIT {
       this.initialPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, "caz_payment.t_payment");
 
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
-      this.initPaymentResponse = RestAssured.given().accept(MediaType.APPLICATION_JSON.toString())
+      this.validatableResponse = RestAssured.given()
+          .accept(MediaType.APPLICATION_JSON.toString())
           .contentType(MediaType.APPLICATION_JSON.toString())
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
           .body(toJsonString(initiatePaymentRequest)).when().post().then()
-          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .statusCode(HttpStatus.CREATED.value()).extract().response()
+          .header(Constants.X_CORRELATION_ID_HEADER, correlationId);
+      return this;
+    }
+
+    public PaymentJourneyAssertion expectHttpCreatedStatusCode() {
+      this.initPaymentResponse = validatableResponse.statusCode(HttpStatus.CREATED.value())
+          .extract()
+          .response()
           .as(InitiatePaymentResponse.class);
+      return this;
+    }
+
+    public PaymentJourneyAssertion expectHttpInternalServerErrorStatusCode() {
+      validatableResponse.statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
       return this;
     }
 
@@ -256,9 +331,14 @@ public class SuccessPaymentsJourneyTestIT {
 
     public PaymentJourneyAssertion paymentEntityIsCreatedInDatabase() {
       int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, "caz_payment.t_payment");
-      assertThat(currentPaymentsCount > initialPaymentsCount).isTrue();
-
+      assertThat(currentPaymentsCount).isGreaterThan(initialPaymentsCount);
       verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus.CREATED);
+      return this;
+    }
+
+    public PaymentJourneyAssertion andNoNewPaymentEntityIsCreatedInDatabase() {
+      int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, "caz_payment.t_payment");
+      assertThat(currentPaymentsCount).isEqualTo(initialPaymentsCount);
       return this;
     }
 
@@ -321,12 +401,16 @@ public class SuccessPaymentsJourneyTestIT {
       assertThat(entrantPaymentsCount).isEqualTo(initiatePaymentRequest.getDays().size());
     }
 
-    public PaymentJourneyAssertion andPreviouslyPaymentMatchRecordsHaveLatestSetToFalse() {
+    public PaymentJourneyAssertion andMatchRecordsCountWithLatestSetToFalseIsEqualTo(int expectedCnt) {
       int entrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment.t_clean_air_zone_entrant_payment_match",
           "latest is false");
-      assertThat(entrantPaymentsCount).isEqualTo(initiatePaymentRequest.getDays().size());
+      assertThat(entrantPaymentsCount).isEqualTo(expectedCnt);
       return this;
+    }
+
+    public PaymentJourneyAssertion andPreviouslyPaymentMatchRecordsHaveLatestSetToFalse() {
+      return andMatchRecordsCountWithLatestSetToFalseIsEqualTo(initiatePaymentRequest.getDays().size());
     }
 
     private String joinWithCommas(List<LocalDate> days) {
@@ -342,7 +426,8 @@ public class SuccessPaymentsJourneyTestIT {
 
     public PaymentJourneyAssertion withNullPaymentAuthorisedTimestamp() {
       int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
-          "payment_authorised_timestamp is null");
+          "payment_id = '" + initPaymentResponse.getPaymentId().toString() + "' AND "
+              + "payment_authorised_timestamp is null");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }

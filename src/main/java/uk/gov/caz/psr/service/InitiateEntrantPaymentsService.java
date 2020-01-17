@@ -11,9 +11,12 @@ import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentMatchRepository;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
+import uk.gov.caz.psr.repository.PaymentRepository;
 
 /**
  * Processes {@link EntrantPayment}s when a new payment is initiated.
@@ -25,6 +28,7 @@ public class InitiateEntrantPaymentsService {
   private final EntrantPaymentRepository entrantPaymentRepository;
   private final EntrantPaymentMatchRepository entrantPaymentMatchRepository;
   private final VehicleEntrantPaymentChargeCalculator chargeCalculator;
+  private final PaymentRepository paymentRepository;
 
   /**
    * Processes {@link EntrantPayment}s when a new payment is initiated by inserting or updating
@@ -42,7 +46,7 @@ public class InitiateEntrantPaymentsService {
           currentEntrantPayments);
       UUID cleanAirZoneEntrantPaymentId;
       if (entrantPayment.isPresent()) {
-        // TODO CAZ-1719 check if entrant payment is paid or pending
+        verifyRelatedPaymentIsFinished(entrantPayment.get());
         cleanAirZoneEntrantPaymentId = updateEntrantPayment(tariffCode, chargePerDay,
             entrantPayment.get());
         entrantPaymentMatchRepository.updateLatestToFalseFor(cleanAirZoneEntrantPaymentId);
@@ -51,6 +55,27 @@ public class InitiateEntrantPaymentsService {
             chargePerDay, travelDate);
       }
       matchPaymentWithEntrantPayment(paymentId, cleanAirZoneEntrantPaymentId);
+    }
+  }
+
+  /**
+   * Checks whether the associated payment for {@code entrantPayment} is finished or the payment
+   * has already been successfully completed.
+   */
+  private void verifyRelatedPaymentIsFinished(EntrantPayment entrantPayment) {
+    if (InternalPaymentStatus.PAID == entrantPayment.getInternalPaymentStatus()) {
+      throw new IllegalStateException("Cannot process the payment as the entrant on "
+          + entrantPayment.getTravelDate() + " has already been paid");
+    }
+
+    ExternalPaymentStatus paymentStatus = paymentRepository.findByEntrantPayment(
+        entrantPayment.getCleanAirZoneEntrantPaymentId())
+        .map(Payment::getExternalPaymentStatus)
+        .orElse(null);
+
+    if (paymentStatus != null && paymentStatus.isNotFinished()) {
+      throw new IllegalStateException("The corresponding payment has not finished yet, its state"
+          + " is equal to " + paymentStatus);
     }
   }
 

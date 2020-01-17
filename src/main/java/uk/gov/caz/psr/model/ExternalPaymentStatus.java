@@ -17,5 +17,15 @@ public enum ExternalPaymentStatus {
   CANCELLED,
   ERROR,
 
-  UNKNOWN,
+  UNKNOWN;
+
+  /**
+   * Returns true if {@code paymentStatus} represents a pending payment status, false otherwise.
+   */
+  public boolean isNotFinished() {
+    return ExternalPaymentStatus.INITIATED == this
+        || ExternalPaymentStatus.STARTED == this
+        || ExternalPaymentStatus.SUBMITTED == this
+        || ExternalPaymentStatus.CREATED == this;
+  }
 }
