@@ -8,8 +8,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Nested;
@@ -24,18 +27,20 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.correlationid.Constants;
-import uk.gov.caz.psr.dto.VehicleEntrantRequest;
+import uk.gov.caz.psr.dto.EntrantPaymentDto;
+import uk.gov.caz.psr.dto.VehicleEntrantDto;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.model.VehicleEntrantPayment;
-import uk.gov.caz.psr.service.VehicleEntrantService;
-import uk.gov.caz.psr.util.TestObjectFactory.VehicleEntrantPayments;
+import uk.gov.caz.psr.service.EntrantPaymentService;
+import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 
-@ContextConfiguration(classes = {Configuration.class, VehicleEntrantController.class})
+@ContextConfiguration(classes = {Configuration.class, VehicleEntrantController.class,
+    ExceptionController.class})
 @WebMvcTest
 class VehicleEntrantControllerTest {
 
   @MockBean
-  private VehicleEntrantService vehicleEntrantService;
+  private EntrantPaymentService entrantPaymentService;
 
   @Autowired
   private MockMvc mockMvc;
@@ -65,7 +70,7 @@ class VehicleEntrantControllerTest {
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
 
-      verify(vehicleEntrantService, never()).registerVehicleEntrant(any());
+      verify(entrantPaymentService, never()).bulkProcess(any());
     }
 
     @Test
@@ -80,7 +85,7 @@ class VehicleEntrantControllerTest {
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
 
-      verify(vehicleEntrantService, never()).registerVehicleEntrant(any());
+      verify(entrantPaymentService, never()).bulkProcess(any());
     }
 
     @Test
@@ -95,7 +100,7 @@ class VehicleEntrantControllerTest {
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
 
-      verify(vehicleEntrantService, never()).registerVehicleEntrant(any());
+      verify(entrantPaymentService, never()).bulkProcess(any());
     }
 
     @ParameterizedTest
@@ -111,16 +116,14 @@ class VehicleEntrantControllerTest {
           .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
       // TODO add assertions for a message
 
-      verify(vehicleEntrantService, never()).registerVehicleEntrant(any());
+      verify(entrantPaymentService, never()).bulkProcess(any());
     }
   }
 
   @Test
   public void shouldReturn200StatusCodeAndPaymentStatusNotPaidWhenNotPaid() throws Exception {
     String payload = requestWithValidBody();
-    VehicleEntrantPayment foundVehicleEntrantPayment = VehicleEntrantPayments.anyNotPaid();
-    given(vehicleEntrantService.registerVehicleEntrant(any()))
-        .willReturn(foundVehicleEntrantPayment.getInternalPaymentStatus());
+    mockValidScenarioWithUnpaidRecordFound();
 
     mockMvc
         .perform(post(PATH).content(payload)
@@ -128,17 +131,15 @@ class VehicleEntrantControllerTest {
             .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(jsonPath("$.status").value(InternalPaymentStatus.NOT_PAID.name()));
+        .andExpect(jsonPath("$[0].paymentStatus").value(InternalPaymentStatus.NOT_PAID.name()));
 
-    verify(vehicleEntrantService).registerVehicleEntrant(any());
+    verify(entrantPaymentService).bulkProcess(any());
   }
 
   @Test
   public void shouldReturn200StatusCodeAndPaymentStatusNotPaidWhenPaidPayment() throws Exception {
     String payload = requestWithValidBody();
-    VehicleEntrantPayment foundVehicleEntrantPayment = VehicleEntrantPayments.anyPaid();
-    given(vehicleEntrantService.registerVehicleEntrant(any()))
-        .willReturn(foundVehicleEntrantPayment.getInternalPaymentStatus());
+    mockValidScenarioWithPaidRecordFound();
 
     mockMvc
         .perform(post(PATH).content(payload)
@@ -146,13 +147,13 @@ class VehicleEntrantControllerTest {
             .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(jsonPath("$.status").value(InternalPaymentStatus.PAID.name()));
+        .andExpect(jsonPath("$[0].paymentStatus").value(InternalPaymentStatus.PAID.name()));
 
-    verify(vehicleEntrantService).registerVehicleEntrant(any());
+    verify(entrantPaymentService).bulkProcess(any());
   }
 
   @SneakyThrows
-  private String toJson(VehicleEntrantRequest request) {
+  private String toJson(List<VehicleEntrantDto> request) {
     return objectMapper.writeValueAsString(request);
   }
 
@@ -161,28 +162,53 @@ class VehicleEntrantControllerTest {
   }
 
   private String requestWithCleanZoneId(UUID cleanZoneId) {
-    VehicleEntrantRequest request = baseRequestBuilder().cleanZoneId(cleanZoneId).build();
+    List<VehicleEntrantDto> request = Arrays.asList(
+        baseVehicleEntrantDtoBuilder().cleanZoneId(cleanZoneId).build()
+    );
     return toJson(request);
   }
 
   private String requestWithCazEntryTimestamp(LocalDateTime cazEntryTimestamp) {
-    VehicleEntrantRequest request =
-        baseRequestBuilder().cazEntryTimestamp(cazEntryTimestamp).build();
+    List<VehicleEntrantDto> request = Arrays.asList(
+        baseVehicleEntrantDtoBuilder().cazEntryTimestamp(cazEntryTimestamp).build()
+    );
     return toJson(request);
   }
 
   private String requestWithVrn(String vrn) {
-    VehicleEntrantRequest request = baseRequestBuilder().vrn(vrn).build();
+    List<VehicleEntrantDto> request = Arrays.asList(
+        baseVehicleEntrantDtoBuilder().vrn(vrn).build()
+    );
     return toJson(request);
   }
 
   private String requestWithValidBody() {
-    VehicleEntrantRequest request = baseRequestBuilder().build();
+    List<VehicleEntrantDto> request = Arrays.asList(baseVehicleEntrantDtoBuilder().build());
     return toJson(request);
   }
 
-  private VehicleEntrantRequest.VehicleEntrantRequestBuilder baseRequestBuilder() {
-    return VehicleEntrantRequest.builder().cleanZoneId(ANY_CLEAN_ZONE_ID).vrn(ANY_VALID_VRN)
-        .cazEntryTimestamp(todayDateTime());
+  private void mockValidScenarioWithPaidRecordFound() {
+    EntrantPayment foundVehicleEntrantPayment = EntrantPayments.anyPaid();
+    List<EntrantPaymentDto> listWithPaidCazEntrantPaymentDto = Arrays.asList(
+        EntrantPaymentDto.from(foundVehicleEntrantPayment)
+    );
+    given(entrantPaymentService.bulkProcess(any()))
+        .willReturn(listWithPaidCazEntrantPaymentDto);
+  }
+
+  private void mockValidScenarioWithUnpaidRecordFound() {
+    EntrantPayment foundVehicleEntrantPayment = EntrantPayments.anyNotPaid();
+    List<EntrantPaymentDto> listWithUnpaidCazEntrantPaymentDto = Arrays.asList(
+        EntrantPaymentDto.from(foundVehicleEntrantPayment)
+    );
+    given(entrantPaymentService.bulkProcess(any()))
+        .willReturn(listWithUnpaidCazEntrantPaymentDto);
+  }
+
+  private VehicleEntrantDto.VehicleEntrantDtoBuilder baseVehicleEntrantDtoBuilder() {
+    return VehicleEntrantDto.builder()
+        .cazEntryTimestamp(todayDateTime())
+        .vrn(ANY_VALID_VRN)
+        .cleanZoneId(ANY_CLEAN_ZONE_ID);
   }
 }

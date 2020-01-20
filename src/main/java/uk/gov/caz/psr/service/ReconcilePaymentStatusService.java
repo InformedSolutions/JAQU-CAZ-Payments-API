@@ -19,7 +19,7 @@ import uk.gov.caz.psr.util.GetPaymentResultConverter;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class GetAndUpdatePaymentsService {
+public class ReconcilePaymentStatusService {
 
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final PaymentRepository internalPaymentsRepository;
@@ -34,14 +34,17 @@ public class GetAndUpdatePaymentsService {
    *
    * @throws NullPointerException if {@code id} is null
    */
-  public Optional<Payment> getExternalPaymentAndUpdateStatus(UUID id) {
+  public Optional<Payment> reconcilePaymentStatus(UUID id, String cleanAirZoneName) {
     Preconditions.checkNotNull(id, "ID cannot be null");
+    Payment internalPayment = internalPaymentsRepository.findById(id).orElse(null);
+    Payment payment;
 
-    Payment payment = internalPaymentsRepository.findById(id).orElse(null);
+    if (internalPayment == null) {
+      log.warn("Payment '{}' not found in the database", id);
 
-    if (payment == null) {
-      log.warn("Payment '{}' is absent in the database", id);
       return Optional.empty();
+    } else {
+      payment = internalPayment.toBuilder().cleanAirZoneName(cleanAirZoneName).build();
     }
 
     String externalPaymentId = payment.getExternalId();
@@ -90,8 +93,8 @@ public class GetAndUpdatePaymentsService {
    * @return a {@link UUID} representing a Clean Air Zone.
    */
   private UUID getCleanAirZoneId(Payment payment) {
-    Preconditions.checkArgument(! payment.getVehicleEntrantPayments().isEmpty(),
-        "Vehicle entrant payments should not be empty");
-    return payment.getVehicleEntrantPayments().iterator().next().getCleanZoneId();
+    Preconditions.checkArgument(!payment.getEntrantPayments().isEmpty(),
+        "CAZ entrant payments should not be empty");
+    return payment.getEntrantPayments().iterator().next().getCleanAirZoneId();
   }
 }

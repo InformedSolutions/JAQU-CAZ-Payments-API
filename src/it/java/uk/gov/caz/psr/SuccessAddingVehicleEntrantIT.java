@@ -17,6 +17,8 @@ import static uk.gov.caz.security.SecurityHeadersInjector.X_FRAME_OPTIONS_VALUE;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -33,13 +35,13 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.VehicleEntrantController;
-import uk.gov.caz.psr.dto.VehicleEntrantRequest;
+import uk.gov.caz.psr.dto.VehicleEntrantDto;
 
 @FullyRunningServerIntegrationTest
-@Sql(scripts = "classpath:data/sql/add-payments.sql",
+@Sql(scripts = "classpath:data/sql/add-entrant-payments.sql",
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
-    "classpath:data/sql/clear-all-vehicle-entrants.sql"},
+    "classpath:data/sql/clear-all-caz-entrant-payments.sql"},
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 public class SuccessAddingVehicleEntrantIT {
 
@@ -60,43 +62,43 @@ public class SuccessAddingVehicleEntrantIT {
   }
 
   @Test
-  public void createVehicleEntrantJourney() {
-    LocalDateTime paidDay = LocalDateTime.of(2019, 11, 2, 15, 50);
-    LocalDateTime notPaidDay = LocalDateTime.of(2019, 11, 10, 15, 50);
+  public void createEntrantPaymentJourney() {
+    LocalDateTime dayWithoutEntrantPayment = LocalDateTime.of(2020, 1, 1, 12, 0);
 
     given()
-        .vehicleEntrantRequest(vehicleEntrantRequest(notPaidDay))
+        .vehicleEntrantRequest(vehicleEntrantRequest(dayWithoutEntrantPayment))
         .whenSubmitted()
         .then()
-        .vehicleEntrantIsCreatedInDatabase()
-        .vehicleEntrantIsNotConnectedToVehicleEntrantPayments();
+        .entrantPaymentMatchIsNotCreatedInDatabase()
+        .entrantPaymentIsCreatedInDatabase()
+        .andHasVehicleEntrantCapturedSetToTrue();
+  }
 
-    // a request for the same day, vrn and CAZ is made again
-    given()
-        .vehicleEntrantRequest(vehicleEntrantRequest(notPaidDay))
-        .whenSubmitted()
-        .then()
-        .vehicleEntrantIsFoundInDatabase()
-        .vehicleEntrantIsNotConnectedToVehicleEntrantPayments();
+  @Test
+  public void fetchEntrantPaymentJourney() {
+    LocalDateTime notCapturedDay = LocalDateTime.of(2020, 1, 13, 12, 30);
 
     given()
-        .vehicleEntrantRequest(vehicleEntrantRequest(paidDay))
+        .vehicleEntrantRequest(vehicleEntrantRequest(notCapturedDay))
         .whenSubmitted()
         .then()
-        .vehicleEntrantIsCreatedInDatabase()
-        .vehicleEntrantIsConnectedToVehicleEntrantPayments();
+        .entrantPaymentMatchIsNotCreatedInDatabase()
+        .entrantPaymentIsFoundInDatabase()
+        .andHasVehicleEntrantCapturedSetToTrue();
   }
 
   private VehicleEntrantJourneyAssertion given() {
     return new VehicleEntrantJourneyAssertion(objectMapper, jdbcTemplate);
   }
 
-  private VehicleEntrantRequest vehicleEntrantRequest(LocalDateTime cazEntry) {
-    return VehicleEntrantRequest.builder()
+  private List<VehicleEntrantDto> vehicleEntrantRequest(LocalDateTime cazEntry) {
+    VehicleEntrantDto vehicleEntrantDto = VehicleEntrantDto.builder()
         .cleanZoneId(UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4"))
         .cazEntryTimestamp(cazEntry)
         .vrn("ND84VSX")
         .build();
+
+    return Arrays.asList(vehicleEntrantDto);
   }
 
   @RequiredArgsConstructor
@@ -105,10 +107,10 @@ public class SuccessAddingVehicleEntrantIT {
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
 
-    private VehicleEntrantRequest vehicleEntrantRequest;
+    private List<VehicleEntrantDto> vehicleEntrantDtos;
 
-    public VehicleEntrantJourneyAssertion vehicleEntrantRequest(VehicleEntrantRequest request) {
-      this.vehicleEntrantRequest = request;
+    public VehicleEntrantJourneyAssertion vehicleEntrantRequest(List<VehicleEntrantDto> request) {
+      this.vehicleEntrantDtos = request;
       return this;
     }
 
@@ -123,7 +125,7 @@ public class SuccessAddingVehicleEntrantIT {
           .accept(MediaType.APPLICATION_JSON.toString())
           .contentType(MediaType.APPLICATION_JSON.toString())
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .body(toJsonString(vehicleEntrantRequest))
+          .body(toJsonString(vehicleEntrantDtos))
           .when()
           .post()
           .then()
@@ -138,61 +140,52 @@ public class SuccessAddingVehicleEntrantIT {
       return this;
     }
 
-    @SneakyThrows
-    private String toJsonString(Object request) {
-      return objectMapper.writeValueAsString(request);
-    }
-
-    public VehicleEntrantJourneyAssertion vehicleEntrantIsCreatedInDatabase() {
+    public VehicleEntrantJourneyAssertion entrantPaymentIsCreatedInDatabase() {
       verifyThatVehicleEntrantExists();
       return this;
     }
 
+    public VehicleEntrantJourneyAssertion entrantPaymentMatchIsNotCreatedInDatabase() {
+      verifyThatNoEntrantPaymentMatchIsCreated();
+      return this;
+    }
+
+    public VehicleEntrantJourneyAssertion entrantPaymentIsFoundInDatabase() {
+      return entrantPaymentIsCreatedInDatabase();
+    }
+
+    public VehicleEntrantJourneyAssertion andHasVehicleEntrantCapturedSetToTrue() {
+      verifyEntrantPaymentCaptured();
+      return this;
+    }
+
+    private void verifyEntrantPaymentCaptured() {
+      int capturedVehiclesCount = JdbcTestUtils
+          .countRowsInTableWhere(jdbcTemplate, "caz_payment.t_clean_air_zone_entrant_payment",
+              "vehicle_entrant_captured = 'false'");
+      assertThat(capturedVehiclesCount).isEqualTo(1);
+    }
+
+    private void verifyThatNoEntrantPaymentMatchIsCreated() {
+      int entrantPaymentMatchCount = JdbcTestUtils
+          .countRowsInTable(jdbcTemplate, "caz_payment.t_clean_air_zone_entrant_payment_match");
+      assertThat(entrantPaymentMatchCount).isEqualTo(0);
+    }
+
     private void verifyThatVehicleEntrantExists() {
-      int vehicleEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant",
-          "caz_id = '" + vehicleEntrantRequest.getCleanZoneId().toString() + "' AND "
-              + "caz_entry_timestamp = '" + vehicleEntrantRequest.getCazEntryTimestamp() + " ' AND "
-              + "vrn = '" + vehicleEntrantRequest.getVrn() + "'");
-      assertThat(vehicleEntrantCount).isEqualTo(1);
-    }
-
-    public VehicleEntrantJourneyAssertion vehicleEntrantIsNotConnectedToVehicleEntrantPayments() {
-      verifyThatNoVehicleEntrantPaymentsIsAssigned();
-      return this;
-    }
-
-    private void verifyThatNoVehicleEntrantPaymentsIsAssigned() {
-      int vehicleEntrantPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "caz_id = '" + vehicleEntrantRequest.getCleanZoneId().toString() + "' AND "
-              + "travel_date = '" + vehicleEntrantRequest.getCazEntryTimestamp().toLocalDate()
+      VehicleEntrantDto createdRecordData = vehicleEntrantDtos.get(0);
+      int cazEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "caz_payment.t_clean_air_zone_entrant_payment",
+          "clean_air_zone_id = '" + createdRecordData.getCleanZoneId().toString() + "' AND "
+              + "travel_date = '" + createdRecordData.getCazEntryTimestamp().toLocalDate()
               + " ' AND "
-              + "vrn = '" + vehicleEntrantRequest.getVrn() + "' AND "
-              + "payment_status = 'PAID' AND "
-              + "vehicle_entrant_id is not null");
-      assertThat(vehicleEntrantPaymentCount).isEqualTo(0);
+              + "vrn = '" + createdRecordData.getVrn() + "'");
+      assertThat(cazEntrantPaymentsCount).isEqualTo(1);
     }
 
-    public VehicleEntrantJourneyAssertion vehicleEntrantIsConnectedToVehicleEntrantPayments() {
-      verifyThatVehicleEntrantPaymentsIsAssigned();
-      return this;
-    }
-
-    private void verifyThatVehicleEntrantPaymentsIsAssigned() {
-      int vehicleEntrantPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "caz_id = '" + vehicleEntrantRequest.getCleanZoneId().toString() + "' AND "
-              + "travel_date = '" + vehicleEntrantRequest.getCazEntryTimestamp().toLocalDate()
-              + " ' AND "
-              + "vrn = '" + vehicleEntrantRequest.getVrn() + "' AND "
-              + "payment_status = 'PAID' AND "
-              + "vehicle_entrant_id is not null");
-      assertThat(vehicleEntrantPaymentCount).isEqualTo(1);
-    }
-
-    public VehicleEntrantJourneyAssertion vehicleEntrantIsFoundInDatabase() {
-      return vehicleEntrantIsCreatedInDatabase();
+    @SneakyThrows
+    private String toJsonString(Object request) {
+      return objectMapper.writeValueAsString(request);
     }
   }
 }

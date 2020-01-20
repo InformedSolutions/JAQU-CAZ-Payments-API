@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0003-1.0
+      author: informed
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            sequenceExists:
+              schemaName: caz_payment
+              sequenceName: central_reference
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0003-1.0-add_central_reference_number_seqence.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true

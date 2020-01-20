@@ -1,9 +1,12 @@
 package uk.gov.caz.psr;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Collections;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -13,9 +16,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import org.springframework.test.web.servlet.MockMvc;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.controller.PaymentsController;
+import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -27,7 +33,7 @@ import uk.gov.caz.psr.util.TestObjectFactory;
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 @IntegrationTest
 @AutoConfigureMockMvc
-public class GetAndUpdatePaymentStatusTestIT {
+public class ReconcilePaymentStatusTestIT {
 
   private static final String URL_TEMPLATE = PaymentsController.BASE_PATH + "/{id}";
   @Autowired
@@ -35,13 +41,25 @@ public class GetAndUpdatePaymentStatusTestIT {
 
   @Autowired
   private PaymentRepository paymentRepository;
+  
+  String body;
+  
+  @BeforeEach
+  public void init() throws JsonProcessingException {
+    ObjectMapper om = new ObjectMapper();
+    ReconcilePaymentRequest request = ReconcilePaymentRequest.builder().cleanAirZoneName("Leeds").build();
+    body = om.writeValueAsString(request);
+  }
 
   @ParameterizedTest
   @ValueSource(strings = {"a", "1111", "a-1-b-2"})
   public void shouldReturn400StatusWhenIdHasInvalidFormat(String id) throws Exception {
     String correlationId = "31f69f26-fb99-11e9-8483-9fcf0b2b434f";
     mockMvc
-        .perform(get(URL_TEMPLATE, id).header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+        .perform(put(URL_TEMPLATE, id)
+            .content(body)
+            .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .header("content-type", MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isBadRequest());
@@ -53,8 +71,10 @@ public class GetAndUpdatePaymentStatusTestIT {
 
     String correlationId = "542de1b5-4aab-45eb-bccc-6ec91f1d6d51";
     mockMvc
-        .perform(get(URL_TEMPLATE, notExistingId)
+        .perform(put(URL_TEMPLATE, notExistingId)
+            .content(body)
             .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .header("content-type", MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
@@ -66,16 +86,19 @@ public class GetAndUpdatePaymentStatusTestIT {
 
     String correlationId = "939898b0-fb9e-11e9-8483-cb50ccd05275";
     mockMvc
-        .perform(
-            get(URL_TEMPLATE, paymentId).header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-                .accept(MediaType.APPLICATION_JSON))
+        .perform(put(URL_TEMPLATE, paymentId)
+            .content(body)
+            .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+            .header("content-type", MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON))
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, correlationId))
         .andExpect(status().isNotFound());
   }
 
   private UUID insertIntoDatabasePaymentWithoutExternalId() {
     Payment withoutId = TestObjectFactory.Payments.forRandomDays().toBuilder()
-        .externalPaymentStatus(ExternalPaymentStatus.INITIATED).build();
-    return paymentRepository.insertWithExternalStatus(withoutId).getId();
+        .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
+        .entrantPayments(Collections.emptyList()).build();
+    return paymentRepository.insert(withoutId).getId();
   }
 }

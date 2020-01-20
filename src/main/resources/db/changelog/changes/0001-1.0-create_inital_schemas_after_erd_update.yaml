@@ -11,55 +11,64 @@ databaseChangeLog:
             sql: create extension if not exists "uuid-ossp";
   - changeSet:
       id: 0001.2-1.0
-      author: radoslaw.morytko
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            tableExists:
-              schemaName: audit
-              tableName: logged_actions
+      author: dawid.ratka
       changes:
-        - sqlFile:
+        - sql:
+            comment: Create schema for payments
             dbms: postgresql
-            encoding: utf8
             endDelimiter: ;GO
-            path: ../rawSql/0001-1.0-create_audit_log_table_and_trigger.sql
-            relativeToChangelogFile: true
             splitStatements: true
-            stripComments: true
-  - changeSet:
-      id: 0001.3-1.0
-      author: radoslaw.morytko
-      changes:
+            sql: CREATE SCHEMA CAZ_PAYMENT;
         - createTable:
-            tableName: VEHICLE_ENTRANT
+            tableName: T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT
+            schemaName: CAZ_PAYMENT
             columns:
               - column:
-                  name: VEHICLE_ENTRANT_ID
+                  name: CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID
                   type: uuid
                   defaultValueComputed: uuid_generate_v1mc()
                   constraints:
                     primaryKey: true
                     nullable: false
-                    primaryKeyName: vehicle_entrant_vehicle_entrant_id_pkey
-              - column:
-                  name: CAZ_ENTRY_TIMESTAMP
-                  type: datetime
-                  constraints:
-                    nullable: false
-              - column:
-                  name: CAZ_ID
-                  type: uuid
-                  constraints:
-                    nullable: false
+                    primaryKeyName: clean_air_zone_entrant_payment_clean_air_zone_entrant_payment_id_pkey
               - column:
                   name: VRN
                   type: varchar(15)
                   constraints:
                     nullable: false
               - column:
-                  name: CAZ_ENTRY_DATE
+                  name: CLEAN_AIR_ZONE_ID
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: TRAVEL_DATE
                   type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: TARIFF_CODE
+                  type: varchar(255)
+              - column:
+                  name: CHARGE
+                  type: integer
+              - column:
+                  name: PAYMENT_STATUS
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: CASE_REFERENCE
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: VEHICLE_ENTRANT_CAPTURED
+                  type: boolean
+                  defaultValueComputed: false
+              - column:
+                  name: UPDATE_ACTOR
+                  type: varchar(32)
                   constraints:
                     nullable: false
               - column:
@@ -68,12 +77,20 @@ databaseChangeLog:
                   defaultValueComputed: CURRENT_TIMESTAMP
                   constraints:
                     nullable: false
+              - column:
+                  name: UPDATE_TIMESTAMP
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
         - addUniqueConstraint:
-            columnNames: CAZ_ENTRY_DATE,CAZ_ID,VRN
-            constraintName: vehicle_entrant_caz_entry_date_caz_id_vrn_key
-            tableName: VEHICLE_ENTRANT
+            schemaName: CAZ_PAYMENT
+            columnNames: TRAVEL_DATE,CLEAN_AIR_ZONE_ID,VRN
+            constraintName: t_clean_air_zone_entrant_payment_travel_date_clean_air_zone_id_vrn_key
+            tableName: t_clean_air_zone_entrant_payment
         - createTable:
-            tableName: PAYMENT
+            tableName: T_PAYMENT
+            schemaName: CAZ_PAYMENT
             columns:
               - column:
                   name: PAYMENT_ID
@@ -124,8 +141,8 @@ databaseChangeLog:
                   constraints:
                     nullable: true
                   remarks: >-
-                          Timestamp indicating the date/time on which a payment was authorised by GOV.UK Pay (SUCCESS response).
-                          The Vehicle_Entrant_Payment.payment_status field will only be assigned a status of 'paid' when this field is populated.
+                    Timestamp indicating the date/time on which a payment was authorised by GOV.UK Pay (SUCCESS response).
+                    The Vehicle_Entrant_Payment.payment_status field will only be assigned a status of 'paid' when this field is populated.
               - column:
                   name: INSERT_TIMESTAMP
                   type: timestamp
@@ -139,92 +156,34 @@ databaseChangeLog:
                   constraints:
                     nullable: false
         - createTable:
-            tableName: VEHICLE_ENTRANT_PAYMENT
+            tableName: T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_MATCH
+            schemaName: CAZ_PAYMENT
             columns:
               - column:
-                  name: VEHICLE_ENTRANT_PAYMENT_ID
+                  name: ID
                   type: uuid
                   defaultValueComputed: uuid_generate_v1mc()
                   constraints:
+                    unique: true
                     primaryKey: true
                     nullable: false
-                    primaryKeyName: vehicle_entrant_payment_vehicle_entrant_payment_id_pkey
+                    primaryKeyName: clean_air_zone_entrant_payment_match_id_pkey
               - column:
-                  name: VEHICLE_ENTRANT_ID
+                  name: CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID
                   type: uuid
                   constraints:
-                    foreignKeyName: vehicle_entrant_vehicle_entrant_id_fkey
-                    references: VEHICLE_ENTRANT(VEHICLE_ENTRANT_ID)
-                    nullable: true
-                    unique: true
-                  remarks: This field is non-null when a matching row in VEHICLE_ENTRANT is found and payment is successful
+                    nullable: false
+                    references: CAZ_PAYMENT.T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT(CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID)
+                    foreignKeyName: fk_clean_air_zone_entrant_payment_id
               - column:
                   name: PAYMENT_ID
                   type: uuid
                   constraints:
-                    foreignKeyName: payment_payment_id
-                    references: PAYMENT(PAYMENT_ID)
                     nullable: false
+                    references: CAZ_PAYMENT.T_PAYMENT(PAYMENT_ID)
+                    foreignKeyName: fk_payment_id
               - column:
-                  name: VRN
-                  type: varchar(15)
+                  name: LATEST
+                  type: boolean
                   constraints:
                     nullable: false
-              - column:
-                  name: CAZ_ID
-                  type: uuid
-                  constraints:
-                    nullable: false
-              - column:
-                  name: TRAVEL_DATE
-                  type: date
-                  constraints:
-                    nullable: false
-              - column:
-                  name: CHARGE_PAID
-                  type: integer
-                  constraints:
-                    nullable: false
-              - column:
-                  name: PAYMENT_STATUS
-                  type: varchar(64)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: CASE_REFERENCE
-                  type: varchar(255)
-                  constraints:
-                    nullable: true
-              - column:
-                  name: INSERT_TIMESTAMP
-                  type: timestamp
-                  defaultValueComputed: CURRENT_TIMESTAMP
-                  constraints:
-                    nullable: false
-              - column:
-                  name: UPDATE_TIMESTAMP
-                  type: timestamp
-                  defaultValueComputed: CURRENT_TIMESTAMP
-                  constraints:
-                    nullable: false
-  - changeSet:
-      id: 0001.4-1.0
-      author: radoslaw.morytko
-      changes:
-        - sql:
-            comment: Create Audit Trigger on PAYMENT, VEHICLE_ENTRANT and VEHICLE_ENTRANT_PAYMENT
-            dbms: postgresql
-            endDelimiter: ;GO
-            splitStatements: true
-            sql: CREATE TRIGGER PAYMENT_AUDIT
-              AFTER INSERT OR UPDATE OR DELETE ON PAYMENT
-              FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();
-
-              CREATE TRIGGER VEHICLE_ENTRANT_AUDIT
-              AFTER INSERT OR UPDATE OR DELETE ON VEHICLE_ENTRANT
-              FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();
-
-              CREATE TRIGGER VEHICLE_ENTRANT_PAYMENT_AUDIT
-              AFTER INSERT OR UPDATE OR DELETE ON VEHICLE_ENTRANT_PAYMENT
-              FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();
-            stripComments: true

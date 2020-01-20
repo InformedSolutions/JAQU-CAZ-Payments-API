@@ -2,27 +2,32 @@ package uk.gov.caz.psr.service;
 
 import com.google.common.base.Preconditions;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import uk.gov.caz.psr.model.EntrantPayment;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.model.VehicleEntrantPayment;
 
 /**
- * Creates a new instance of {@link Payment} with the new external status set and a mapped internal
- * one in associated vehicle entrant payments.
+ * Creates a new instance of {@link Payment} used to update status of payment in DB.
+ * Returns payment with the new external status set and when a mapped internal status is 'PAID'
+ * then all associated entrant payments are assigned with updated attributes
+ * when the status is not 'PAID' then it returns empty list of entrant payments
+ * to don't update them in DB.
  */
 @Service
-public class PaymentWithExternalPaymentDetailsBuilder {
+public class PaymentUpdateStatusBuilder {
 
   /**
    * Creates a new instance of {@link Payment} based on the passed {@code payment} with {@code
-   * newStatus} set and mapped internal one in associated vehicle entrant payments.
+   * newStatus} set and mapped internal one in associated entrant payments if status is PAID.
    */
-  public Payment buildPaymentWithExternalPaymentDetails(Payment payment,
+  public Payment buildWithExternalPaymentDetails(Payment payment,
       ExternalPaymentDetails externalPaymentDetails) {
     checkPreconditions(payment, externalPaymentDetails);
     ExternalPaymentStatus newStatus = externalPaymentDetails.getExternalPaymentStatus();
@@ -31,16 +36,15 @@ public class PaymentWithExternalPaymentDetailsBuilder {
         .externalPaymentStatus(newStatus)
         .emailAddress(externalPaymentDetails.getEmail())
         .authorisedTimestamp(getAuthorisedTimestamp(payment, newStatus))
-        .vehicleEntrantPayments(buildVehicleEntrantPaymentsWith(newStatus,
-            payment.getVehicleEntrantPayments())
+        .entrantPayments(buildEntrantPaymentsWith(InternalPaymentStatus.from(newStatus),
+            payment.getEntrantPayments())
         )
         .build();
   }
 
   /**
    * Verifies whether passed {@code payment} and {@status} are in valid state when calling {@link
-   * PaymentWithExternalPaymentDetailsBuilder#buildPaymentWithExternalPaymentDetails(
-   * uk.gov.caz.psr.model.Payment, uk.gov.caz.psr.model.ExternalPaymentDetails)}.
+   * PaymentUpdateStatusBuilder#buildWithExternalPaymentDetails(Payment, ExternalPaymentDetails)}.
    */
   private void checkPreconditions(Payment payment, ExternalPaymentDetails externalPaymentDetails) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
@@ -52,15 +56,22 @@ public class PaymentWithExternalPaymentDetailsBuilder {
   }
 
   /**
-   * Creates a new list of {@link VehicleEntrantPayment} with an internal status mapped from {@code
+   * Creates a new list of {@link EntrantPayment} with an internal status mapped from {@code
    * status}.
+   * When status is 'PAID' then it returns list of Entrant Payments with updated details.
+   * When status is not 'PAID' then it returns empty array, to don't update them in DB.
    */
-  private List<VehicleEntrantPayment> buildVehicleEntrantPaymentsWith(ExternalPaymentStatus status,
-      List<VehicleEntrantPayment> vehicleEntrantPayments) {
-    return vehicleEntrantPayments
+  private List<EntrantPayment> buildEntrantPaymentsWith(
+      InternalPaymentStatus status,
+      List<EntrantPayment> entrantPayments) {
+    if (!status.equals(InternalPaymentStatus.PAID)) {
+      return Collections.emptyList();
+    }
+    return entrantPayments
         .stream()
-        .map(vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder()
-            .internalPaymentStatus(InternalPaymentStatus.from(status))
+        .map(entrantPayment -> entrantPayment.toBuilder()
+            .internalPaymentStatus(status)
+            .updateActor(EntrantPaymentUpdateActor.USER)
             .build())
         .collect(Collectors.toList());
   }

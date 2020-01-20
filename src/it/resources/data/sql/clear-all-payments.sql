@@ -1,2 +1,3 @@
-DELETE FROM vehicle_entrant_payment cascade;
-DELETE FROM payment;
+DELETE FROM caz_payment.t_clean_air_zone_entrant_payment_match;
+DELETE FROM caz_payment.t_clean_air_zone_entrant_payment cascade;
+DELETE FROM caz_payment.t_payment;

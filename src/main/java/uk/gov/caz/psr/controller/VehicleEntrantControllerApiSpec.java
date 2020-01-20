@@ -5,26 +5,29 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.List;
 import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import uk.gov.caz.correlationid.Constants;
-import uk.gov.caz.psr.dto.VehicleEntrantRequest;
-import uk.gov.caz.psr.dto.VehicleEntrantResponse;
+import uk.gov.caz.psr.dto.EntrantPaymentDto;
+import uk.gov.caz.psr.dto.VehicleEntrantDto;
 
 /**
- * API specification (swagger) for a controller which deals with requests that informs about
- * a vehicle entering a CAZ.
+ * API specification (swagger) for a controller which deals with requests that informs about a
+ * vehicle entering a CAZ.
  */
 @RequestMapping(
     value = VehicleEntrantController.BASE_PATH,
     produces = MediaType.APPLICATION_JSON_VALUE
 )
+@Validated
 public interface VehicleEntrantControllerApiSpec {
 
   /**
@@ -34,7 +37,8 @@ public interface VehicleEntrantControllerApiSpec {
    */
   @ApiOperation(
       value = "${swagger.operations.payments.create-vehicle-entrant.description}",
-      response = VehicleEntrantResponse.class
+      response = VehicleEntrantDto.class,
+      responseContainer = "List"
   )
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
@@ -51,6 +55,6 @@ public interface VehicleEntrantControllerApiSpec {
   })
   @PostMapping(VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS)
   @ResponseStatus(HttpStatus.OK)
-  ResponseEntity<VehicleEntrantResponse> createVehicleEntrantAndGetPaymentDetails(
-      @Valid @RequestBody VehicleEntrantRequest request);
+  ResponseEntity<List<EntrantPaymentDto>> createVehicleEntrantAndGetPaymentDetails(
+      @RequestBody List<@Valid VehicleEntrantDto> vehicleEntrants);
 }

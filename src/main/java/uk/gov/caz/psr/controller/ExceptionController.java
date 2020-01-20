@@ -3,6 +3,7 @@ package uk.gov.caz.psr.controller;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -27,7 +28,6 @@ import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.ValidationError.ValidationErrorBuilder;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 import uk.gov.caz.psr.service.exception.MissingVehicleEntrantPaymentException;
-import uk.gov.caz.psr.service.exception.TooManyPaidPaymentStatusesException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -69,22 +69,6 @@ public class ExceptionController extends GlobalExceptionHandler {
     return ResponseEntity.badRequest()
         .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(e.getVrn(),
             e.getMessage()));
-  }
-
-  /**
-   * Method to handle Exception when multiple {@link uk.gov.caz.psr.model.PaymentStatus} were found
-   * for cazId, vrn and cazEntryDate.
-   *
-   * @param exception Exception object.
-   */
-  @ExceptionHandler(TooManyPaidPaymentStatusesException.class)
-  ResponseEntity<PaymentStatusErrorsResponse> handleTooManyPaidPaymentStatusesException(
-      TooManyPaidPaymentStatusesException exception) {
-
-    log.info("TooManyPaidPaymentStatusesException occurred", exception);
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(exception.getVrn(),
-            exception.getMessage()));
   }
 
   /**
@@ -141,6 +125,15 @@ public class ExceptionController extends GlobalExceptionHandler {
     log.warn("Argument type mismatch exception: ", e);
     return ResponseEntity.badRequest()
         .body(createTypeMismatchErrorResponse(e));
+  }
+
+  /**
+   * Exception handler that returns 400 error on invalid input format.
+   */
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity handleException(ConstraintViolationException exception) {
+    log.warn("ConstraintViolationException occurred: ", exception);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
 
   /**

@@ -2,7 +2,9 @@ package uk.gov.caz.psr.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Collections;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,15 +34,23 @@ public class PaymentReceiptService {
    * @return SendEmailRequest
    * @throws JsonProcessingException if the amount cannot be serialized into a json string
    */
-  public SendEmailRequest buildSendEmailRequest(String email, double amount)
+  public SendEmailRequest buildSendEmailRequest(String email, double amount, 
+      String cazName, String reference, String vrn)
       throws JsonProcessingException {
     return SendEmailRequest.builder().emailAddress(email)
-        .personalisation(createPersonalisationPayload(amount)).templateId(templateId).build();
+        .personalisation(createPersonalisationPayload(amount, cazName, reference, vrn))
+        .templateId(templateId).build();
   }
 
-  private String createPersonalisationPayload(double amount) throws JsonProcessingException {
-    Map<String, String> personalisationMap = Collections.singletonMap("amount",
-        String.format(Locale.UK, "%.2f", amount));
+  private String createPersonalisationPayload(double amount, String cazName, 
+      String reference, String vrn) throws JsonProcessingException {
+    Map<String, String> personalisationMap = new HashMap<String, String>();    
+    personalisationMap.put("amount", String.format(Locale.UK, "%.2f", amount));
+    personalisationMap.put("caz", cazName);
+    personalisationMap.put("date", 
+        LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMMM YYYY")));
+    personalisationMap.put("reference", reference);
+    personalisationMap.put("vrn", vrn);
     return objectMapper.writeValueAsString(personalisationMap);
   }
 }

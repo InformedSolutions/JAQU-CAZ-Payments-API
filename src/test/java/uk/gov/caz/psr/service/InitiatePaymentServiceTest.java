@@ -3,16 +3,14 @@ package uk.gov.caz.psr.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,7 +22,6 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
-import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,10 +34,7 @@ public class InitiatePaymentServiceTest {
   private PaymentRepository internalPaymentsRepository;
 
   @Mock
-  private CredentialRetrievalManager credentialRetrievalManager;
-
-  @Mock
-  private VehicleEntrantPaymentChargeCalculator chargeCalculator;
+  private InitiateEntrantPaymentsService initiateEntrantPaymentsService;
 
   @InjectMocks
   private InitiatePaymentService initiatePaymentService;
@@ -52,16 +46,19 @@ public class InitiatePaymentServiceTest {
     Payment paymentWithoutInternalId = createPaymentWithoutId(request);
     Payment paymentWithInternalId = mockPaymentWithoutExternalDetails(paymentWithoutInternalId);
     Payment paymentWithExternalId = mockSuccessPaymentCreation(paymentWithInternalId, request);
-    mockChargeCalculator(request);
 
     // when
     Payment result = initiatePaymentService.createPayment(request);
 
     // then
     assertThat(result).isEqualTo(paymentWithExternalId);
-    verify(internalPaymentsRepository).insertWithExternalStatus(paymentWithoutInternalId);
+    verify(internalPaymentsRepository).insert(paymentWithoutInternalId);
     verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository).update(paymentWithExternalId);
+    verify(initiateEntrantPaymentsService).processEntrantPaymentsForPayment(
+        paymentWithInternalId.getId(), request.getAmount(), request.getDays(),
+        request.getTariffCode(), request.getVrn(), request.getCleanAirZoneId()
+    );
   }
 
   @Test
@@ -71,23 +68,32 @@ public class InitiatePaymentServiceTest {
     Payment paymentWithoutInternalId = createPaymentWithoutId(request);
     Payment paymentWithInternalId = mockPaymentWithoutExternalDetails(paymentWithoutInternalId);
     mockFailedPaymentCreation(paymentWithInternalId, request);
-    mockChargeCalculator(request);
 
     // when
     Throwable throwable = catchThrowable(() -> initiatePaymentService.createPayment(request));
 
     // then
     assertThat(throwable).isInstanceOf(RestClientException.class);
-    verify(internalPaymentsRepository).insertWithExternalStatus(paymentWithoutInternalId);
+    verify(internalPaymentsRepository).insert(paymentWithoutInternalId);
     verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository, never()).update(any());
+    verify(initiateEntrantPaymentsService, never()).processEntrantPaymentsForPayment(
+        paymentWithInternalId.getId(), request.getAmount(), request.getDays(),
+        request.getTariffCode(), request.getVrn(), request.getCleanAirZoneId()
+    );
   }
 
   private InitiatePaymentRequest createRequest() {
     List<LocalDate> days = Arrays.asList(LocalDate.of(2019, 1, 1), LocalDate.of(2019, 1, 3));
 
-    return InitiatePaymentRequest.builder().cleanAirZoneId(UUID.randomUUID()).days(days)
-        .vrn("VRN123").amount(700).returnUrl("https://example.return.url").build();
+    return InitiatePaymentRequest.builder()
+        .cleanAirZoneId(UUID.randomUUID())
+        .days(days)
+        .vrn("VRN123")
+        .amount(700)
+        .returnUrl("https://example.return.url")
+        .tariffCode("TARIFF_CODE")
+        .build();
   }
 
   private Payment createPaymentWithoutId(InitiatePaymentRequest request) {
@@ -96,7 +102,7 @@ public class InitiatePaymentServiceTest {
 
   private Payment mockPaymentWithoutExternalDetails(Payment paymentWithoutId) {
     Payment paymentWithId = toPaymentWithId(paymentWithoutId);
-    given(internalPaymentsRepository.insertWithExternalStatus(paymentWithoutId))
+    given(internalPaymentsRepository.insert(paymentWithoutId))
         .willReturn(paymentWithId);
     return paymentWithId;
   }
@@ -117,20 +123,13 @@ public class InitiatePaymentServiceTest {
   private Payment toPaymentWithId(Payment payment) {
     UUID paymentID = UUID.randomUUID();
 
-    return payment.toBuilder().id(paymentID)
-        .vehicleEntrantPayments(payment.getVehicleEntrantPayments().stream().map(
-            vehicleEntrantPayment -> vehicleEntrantPayment.toBuilder().paymentId(paymentID).build())
-            .collect(Collectors.toList()))
+    return payment.toBuilder()
+        .id(paymentID)
         .build();
   }
 
   private Payment toPaymentWithExternalPaymentDetails(Payment payment) {
     return payment.toBuilder().externalId("ANY_EXTERNAL_ID")
         .externalPaymentStatus(ExternalPaymentStatus.CREATED).build();
-  }
-
-  private void mockChargeCalculator(InitiatePaymentRequest request) {
-    when(chargeCalculator.calculateCharge(anyInt(), anyInt()))
-        .thenReturn(request.getAmount() / request.getDays().size());
   }
 }

@@ -24,6 +24,11 @@ public class Payment {
    * The unique payment identifier from GOV UK Pay service.
    */
   String externalId;
+  
+  /**
+   * The central reference number of the payment.
+   */
+  Long referenceNumber;
 
   /**
    * The method of payment.
@@ -38,11 +43,11 @@ public class Payment {
   Integer totalPaid;
 
   /**
-   * A list of {@link VehicleEntrantPayment} instances associated with this object. It can be empty
-   * in cases when we don't want to eagerly fetch all associated entities with this payment.
+   * A list of {@link EntrantPayment} instances associated with this object. It can be empty in
+   * cases when we don't want to eagerly fetch all associated entities with this payment.
    */
   @NonNull
-  List<VehicleEntrantPayment> vehicleEntrantPayments;
+  List<EntrantPayment> entrantPayments;
 
   /**
    * Status of the payment as stored in GOV UK Pay.
@@ -72,6 +77,18 @@ public class Payment {
    * payment. A transient field, not saved in the database.
    */
   String emailAddress;
+  
+  /**
+   * The name of the Clean Air Zone the payment is being made to. A transient field, not saved
+   * in the database.
+   */
+  String cleanAirZoneName;
+
+  /**
+   * An identifier of the Clean Air Zone. A transient field, not saved in the database. This value
+   * is non-null only when a new payment is initiated.
+   */
+  UUID cleanAirZoneId;
 
   /**
    * An overridden lombok's builder.
@@ -92,8 +109,9 @@ public class Payment {
           "authorisedTimestamp is null and external payment status is not 'SUCCESS' or "
               + "authorisedTimestamp is not null and external payment status is 'SUCCESS'");
 
-      return new Payment(id, externalId, paymentMethod, totalPaid, vehicleEntrantPayments,
-          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl, emailAddress);
+      return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
+          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl, 
+          emailAddress, cleanAirZoneName, cleanAirZoneId);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

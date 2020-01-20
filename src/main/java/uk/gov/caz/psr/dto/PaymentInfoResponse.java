@@ -28,6 +28,9 @@ public class PaymentInfoResponse {
   @Value
   @Builder
   public static class SinglePaymentInfo {
+    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.caz-payment-reference}")
+    Long cazPaymentReference;
+    
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-provider-id}")
     String paymentProviderId;
 

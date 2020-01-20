@@ -23,14 +23,20 @@ public class PaymentStatusRepository {
       new PaymentStatusRowMapper();
 
   static final String SELECT_BY_ENTRY_DATE_AND_VRN_AND_CAZ_ID_SQL = "SELECT "
-      + "vehicle_entrant_payment.payment_status, "
-      + "vehicle_entrant_payment.case_reference, "
-      + "payment.payment_provider_id "
-      + "FROM vehicle_entrant_payment "
-      + "INNER JOIN payment on vehicle_entrant_payment.payment_id = payment.payment_id "
-      + "WHERE vehicle_entrant_payment.caz_id = ? AND "
-      + "vehicle_entrant_payment.vrn = ? AND "
-      + "vehicle_entrant_payment.travel_date = ?";
+      + "entrant_payment.payment_status, "
+      + "entrant_payment.case_reference, "
+      + "payment.payment_provider_id, "
+      + "payment.central_reference_number "
+      + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
+      + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
+      + "ON entrant_payment.clean_air_zone_entrant_payment_id = "
+      + "entrant_payment_match.clean_air_zone_entrant_payment_id "
+      + "AND entrant_payment_match.latest = true "
+      + "INNER JOIN caz_payment.t_payment payment "
+      + "ON entrant_payment_match.payment_id = payment.payment_id "
+      + "WHERE entrant_payment.clean_air_zone_id = ? AND "
+      + "entrant_payment.vrn = ? AND "
+      + "entrant_payment.travel_date = ?";
 
   /**
    * Finds collection of matching records in join table. To represent the found records
@@ -68,6 +74,7 @@ public class PaymentStatusRepository {
     public PaymentStatus mapRow(ResultSet resultSet, int i) throws SQLException {
       return PaymentStatus.builder()
           .externalId(resultSet.getString("payment_provider_id"))
+          .paymentReference(resultSet.getLong("central_reference_number"))
           .status(InternalPaymentStatus.valueOf(
               resultSet.getString("payment_status")))
           .caseReference(resultSet.getString("case_reference"))

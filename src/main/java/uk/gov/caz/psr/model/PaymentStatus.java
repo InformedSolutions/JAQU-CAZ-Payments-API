@@ -15,6 +15,11 @@ public class PaymentStatus {
    * The unique payment ID coming from GOV UK Pay services.
    */
   String externalId;
+  
+  /**
+   * The internal reference for the payment.
+   */
+  Long paymentReference;
 
   /**
    * Status of the payment.
