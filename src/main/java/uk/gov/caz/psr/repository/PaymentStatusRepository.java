@@ -25,7 +25,7 @@ public class PaymentStatusRepository {
   static final String SELECT_BY_ENTRY_DATE_AND_VRN_AND_CAZ_ID_SQL = "SELECT "
       + "entrant_payment.payment_status, "
       + "entrant_payment.case_reference, "
-      + "payment.payment_provider_id "
+      + "payment.payment_provider_id, "
       + "payment.central_reference_number "
       + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
       + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "

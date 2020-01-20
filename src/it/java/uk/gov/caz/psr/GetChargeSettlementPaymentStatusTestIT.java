@@ -48,6 +48,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private static final String VALID_EXTERNAL_ID_FOR_PAID = "54321test";
   private static final String VALID_CASE_REFERENCE = "case-reference123";
   private static final Long VALID_PAYMENT_REFERENCE = (long) 3001;
+  private static final Long PAYMENT_REFERENCE_UNPAID = (long) 3000;
   private static final String PAYMENT_STATUS_GET_PATH = ChargeSettlementController.BASE_PATH +
       ChargeSettlementController.PAYMENT_STATUS_PATH;
 
@@ -119,7 +120,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.NOT_PAID, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_NOT_PAID, VALID_PAYMENT_REFERENCE)));
+                VALID_EXTERNAL_ID_FOR_NOT_PAID, PAYMENT_REFERENCE_UNPAID)));
   }
 
   @ParameterizedTest

@@ -195,6 +195,7 @@ public class PaymentRepository {
         + "payment.payment_submitted_timestamp, "
         + "payment.payment_authorised_timestamp, "
         + "payment.payment_provider_status, "
+        + "payment.central_reference_number, "
         + "payment.payment_provider_id "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
         + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
