@@ -37,10 +37,14 @@ public class PaymentReceiptSender {
     double totalAmount = currencyFormatter.parsePennies(payment.getTotalPaid());
 
     log.info("Processing email event for payment with ID: {}", payment.getId());
-
+    
+    String cazName = payment.getCleanAirZoneName();
+    String vrn = payment.getEntrantPayments().iterator().next().getVrn();
+    
     try {
-      SendEmailRequest sendEmailRequest = paymentReceiptService.buildSendEmailRequest(
-          payment.getEmailAddress(), totalAmount);
+      SendEmailRequest sendEmailRequest =
+          paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount, 
+              cazName, payment.getReferenceNumber().toString(), vrn);
       messagingClient.publishMessage(sendEmailRequest);
     } catch (Exception e) {
       log.error("Payment receipt not sent to recipient with payment ID: {}", payment.getId(), e);

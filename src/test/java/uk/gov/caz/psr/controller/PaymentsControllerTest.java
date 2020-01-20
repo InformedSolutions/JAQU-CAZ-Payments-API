@@ -30,7 +30,7 @@ import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
-import uk.gov.caz.psr.service.GetAndUpdatePaymentsService;
+import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
@@ -42,7 +42,7 @@ class PaymentsControllerTest {
   private InitiatePaymentService initiatePaymentService;
 
   @MockBean
-  private GetAndUpdatePaymentsService getAndUpdatePaymentsService;
+  private ReconcilePaymentStatusService reconcilePaymentStatusService;
 
   @MockBean
   private ExternalPaymentsRepository externalPaymentsRepository;

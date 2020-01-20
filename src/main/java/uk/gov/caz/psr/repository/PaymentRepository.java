@@ -48,6 +48,7 @@ public class PaymentRepository {
     private static final String PAYMENT_METHOD = "payment_method";
     private static final String TOTAL_PAID = "total_paid";
     private static final String PAYMENT_PROVIDER_STATUS = "payment_provider_status";
+    private static final String REFERENCE_NUMBER = "central_reference_number";
   }
 
   /**
@@ -62,7 +63,7 @@ public class PaymentRepository {
     this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
         .withSchemaName(SCHEMA_NAME)
         .withTableName(TABLE_NAME)
-        .usingGeneratedKeyColumns(Columns.PAYMENT_ID)
+        .usingGeneratedKeyColumns(Columns.PAYMENT_ID, Columns.REFERENCE_NUMBER)
         .usingColumns(Columns.PAYMENT_METHOD, Columns.TOTAL_PAID, Columns.PAYMENT_PROVIDER_STATUS);
     this.entrantPaymentRepository = entrantPaymentRepository;
   }
@@ -88,8 +89,10 @@ public class PaymentRepository {
     KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
         toSqlParametersForExternalInsert(payment));
     UUID paymentId = (UUID) keyHolder.getKeys().get("payment_id");
+    Long referenceNumber = (Long) keyHolder.getKeys().get("central_reference_number");
     return payment.toBuilder()
         .id(paymentId)
+        .referenceNumber(referenceNumber)
         .build();
   }
 
@@ -192,6 +195,7 @@ public class PaymentRepository {
         + "payment.payment_submitted_timestamp, "
         + "payment.payment_authorised_timestamp, "
         + "payment.payment_provider_status, "
+        + "payment.central_reference_number, "
         + "payment.payment_provider_id "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
         + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
@@ -211,8 +215,9 @@ public class PaymentRepository {
         + "WHERE payment_id = ?";
 
     private static final String ALL_PAYMENT_ATTRIBUTES =
-        "payment_id, payment_method, payment_provider_id, total_paid, payment_provider_status, "
-            + "payment_submitted_timestamp, payment_authorised_timestamp ";
+        "payment_id, payment_method, payment_provider_id, central_reference_number, "
+        + "total_paid, payment_provider_status, payment_submitted_timestamp, " 
+        + "payment_authorised_timestamp ";
 
     static final String SELECT_DANGLING_PAYMENTS =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE "
@@ -246,6 +251,7 @@ public class PaymentRepository {
           .id(UUID.fromString(resultSet.getString("payment_id")))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
           .externalId(resultSet.getString("payment_provider_id"))
+          .referenceNumber(resultSet.getLong("central_reference_number"))
           .externalPaymentStatus(
               externalStatus == null ? null : ExternalPaymentStatus.valueOf(externalStatus))
           .totalPaid(resultSet.getInt("total_paid"))

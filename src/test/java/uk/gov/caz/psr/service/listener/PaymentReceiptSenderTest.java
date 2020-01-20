@@ -31,12 +31,17 @@
 //
 //  private static final String ANY_VALID_EMAIL = "test@test.com";
 //  private static final int ANY_AMOUNT = 800;
+//  private static final String ANY_CAZ = "";
+//  private static final Long ANY_REFERENCE = (long) 1001;
+//  private static final String ANY_VRN = "VRN123";
 //  private static final Payment ANY_PAYMENT = Payment.builder()
 //      .id(UUID.randomUUID())
 //      .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+//      .referenceNumber(ANY_REFERENCE)
 //      .totalPaid(ANY_AMOUNT)
 //      .vehicleEntrantPayments(Collections.emptyList())
-//      .emailAddress(ANY_VALID_EMAIL).build();
+//      .emailAddress(ANY_VALID_EMAIL)
+//      .cleanAirZoneName(ANY_CAZ).build();
 //
 //  @Mock
 //  CurrencyFormatter currencyFormatter;
@@ -82,7 +87,7 @@
 //    SendEmailRequest sendEmailRequest = anyValidRequest();
 //    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
 //    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(8.0);
-//    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, 8.0))
+//    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, 8.0, ANY_CAZ, ANY_REFERENCE.toString(), ANY_VRN))
 //        .thenReturn(sendEmailRequest);
 //
 //    // when
@@ -98,9 +103,8 @@
 //    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
 //    double amount = 8.0;
 //    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(amount);
-//    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, amount))
+//    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, amount, ANY_CAZ, ANY_REFERENCE.toString(), ANY_VRN))
 //        .thenThrow(new JsonMappingException(null, "test exception"));
-//    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
 //
 //    // when
 //    paymentReceiptSender.onPaymentStatusUpdated(event);
@@ -115,7 +119,7 @@
 //    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
 //    SendEmailRequest sendEmailRequest = anyValidRequest();
 //    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(8.0);
-//    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, 8.0))
+//    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, 8.0, ANY_CAZ, ANY_REFERENCE.toString(), ANY_VRN))
 //        .thenReturn(sendEmailRequest);
 //
 //    // when

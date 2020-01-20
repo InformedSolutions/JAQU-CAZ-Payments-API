@@ -29,7 +29,7 @@ import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
 
 @ExtendWith(MockitoExtension.class)
-class GetAndUpdatePaymentsServiceTest {
+class ReconcilePaymentStatusServiceTest {
 
   @Mock
   private PaymentRepository internalPaymentsRepository;
@@ -47,9 +47,10 @@ class GetAndUpdatePaymentsServiceTest {
   private GetPaymentResultConverter getPaymentResultConverter;
 
   @InjectMocks
-  private GetAndUpdatePaymentsService getAndUpdatePaymentsService;
+  private ReconcilePaymentStatusService reconcilePaymentStatusService;
 
   private final UUID cazIdentifier = UUID.fromString("ab3e9f4b-4076-4154-b6dd-97c5d4800b47");
+  private final static String CLEAN_AIR_ZONE_NAME = "Leeds";
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPassedNullValue() {
@@ -58,7 +59,7 @@ class GetAndUpdatePaymentsServiceTest {
 
     // when
     Throwable throwable =
-        catchThrowable(() -> getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(id));
+        catchThrowable(() -> reconcilePaymentStatusService.reconcilePaymentStatus(id, CLEAN_AIR_ZONE_NAME));
 
     assertThat(throwable).isInstanceOf(NullPointerException.class).hasMessage("ID cannot be null");
   }
@@ -73,7 +74,7 @@ class GetAndUpdatePaymentsServiceTest {
 
     // when
     Throwable throwable = catchThrowable(
-        () -> getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId));
+        () -> reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME));
 
     // then
     assertThat(throwable).isInstanceOf(IllegalStateException.class)
@@ -88,7 +89,7 @@ class GetAndUpdatePaymentsServiceTest {
 
     // when
     Optional<Payment> result =
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME);
 
     // then
     assertThat(result).isEmpty();
@@ -105,7 +106,7 @@ class GetAndUpdatePaymentsServiceTest {
 
     // when
     Optional<Payment> result =
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME);
 
     // then
     assertThat(result).isEmpty();
@@ -118,12 +119,13 @@ class GetAndUpdatePaymentsServiceTest {
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     String externalId = "ext-id";
     Payment payment = mockInternalPaymentWith(paymentId, externalId);
+    payment = payment.toBuilder().cleanAirZoneName(CLEAN_AIR_ZONE_NAME).build();
     mockSameExternalStatusFor(payment);
     mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
 
     // when
     Optional<Payment> result =
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME);
 
     // then
     assertThat(result).contains(payment);
@@ -141,7 +143,7 @@ class GetAndUpdatePaymentsServiceTest {
     String email = "example@email.com";
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
-        initExternalPaymentDetails.getExternalPaymentStatus(), this.cazIdentifier);
+        initExternalPaymentDetails.getExternalPaymentStatus(), this.cazIdentifier, CLEAN_AIR_ZONE_NAME);
     Payment paymentWithEmail = payment.toBuilder().emailAddress(email).build();
     mockSuccessStatusFor(payment, email);
     mockStatusUpdaterWithSuccess(paymentWithEmail, newExternalPaymentDetails);
@@ -149,7 +151,7 @@ class GetAndUpdatePaymentsServiceTest {
 
     // when
     Optional<Payment> result =
-        getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId);
+        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME);
 
     // then
     assertThat(result).contains(paymentWithEmail);
@@ -164,12 +166,11 @@ class GetAndUpdatePaymentsServiceTest {
 
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     mockInternalPaymentWith(paymentId, "ext-id",
-        initExternalPaymentDetails.getExternalPaymentStatus(), null);
-
-
+        initExternalPaymentDetails.getExternalPaymentStatus(), null, CLEAN_AIR_ZONE_NAME);
+    
     // when
     Throwable throwable =
-        catchThrowable(() -> getAndUpdatePaymentsService.getExternalPaymentAndUpdateStatus(paymentId));
+        catchThrowable(() -> reconcilePaymentStatusService.reconcilePaymentStatus(paymentId,CLEAN_AIR_ZONE_NAME));
 
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessage("CAZ entrant payments should not be empty");
   }
@@ -181,9 +182,9 @@ class GetAndUpdatePaymentsServiceTest {
   }
 
   private Payment mockInternalPaymentWith(UUID paymentId, String externalId,
-      ExternalPaymentStatus newStatus, UUID cazIdentifier) {
+      ExternalPaymentStatus newStatus, UUID cazIdentifier, String cazName) {
     Payment payment = TestObjectFactory.Payments.forRandomDaysWithId(paymentId, externalId, cazIdentifier)
-        .toBuilder().externalPaymentStatus(newStatus).build();
+        .toBuilder().externalPaymentStatus(newStatus).cleanAirZoneName(cazName).build();
     mockInternalPaymentInDatabase(paymentId, payment, cazIdentifier);
     return payment;
   }

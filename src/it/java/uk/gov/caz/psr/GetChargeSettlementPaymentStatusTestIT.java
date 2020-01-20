@@ -23,6 +23,7 @@ import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
+import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.repository.PaymentStatusRepository;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusFactory;
 
@@ -46,6 +47,8 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private static final String VALID_EXTERNAL_ID_FOR_NOT_PAID = "12345test";
   private static final String VALID_EXTERNAL_ID_FOR_PAID = "54321test";
   private static final String VALID_CASE_REFERENCE = "case-reference123";
+  private static final Long VALID_PAYMENT_REFERENCE = (long) 3001;
+  private static final Long PAYMENT_REFERENCE_UNPAID = (long) 3000;
   private static final String PAYMENT_STATUS_GET_PATH = ChargeSettlementController.BASE_PATH +
       ChargeSettlementController.PAYMENT_STATUS_PATH;
 
@@ -55,6 +58,8 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private PaymentStatusRepository paymentStatusRepository;
+  @Autowired
+  private PaymentRepository paymentsRepository;
 
   @Test
   public void shouldReturn200WithNotPaidStatusWhenDoesNotExistInDatabase() throws Exception {
@@ -92,7 +97,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .param("dateOfCazEntry", PAID_DATE_STRING))
         .andExpect(status().isOk())
         .andExpect(content().json(
-            getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE, VALID_EXTERNAL_ID_FOR_PAID)));
+            getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE, VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
   }
 
   @ParameterizedTest
@@ -115,7 +120,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.NOT_PAID, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_NOT_PAID)));
+                VALID_EXTERNAL_ID_FOR_NOT_PAID, PAYMENT_REFERENCE_UNPAID)));
   }
 
   @ParameterizedTest
@@ -137,7 +142,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.REFUNDED, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_PAID)));
+                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
   }
 
   @ParameterizedTest
@@ -159,7 +164,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_PAID)));
+                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
   }
 
   private String getNotPaidResponse() {
@@ -170,12 +175,13 @@ public class GetChargeSettlementPaymentStatusTestIT {
   }
 
   private String getResponseWith(InternalPaymentStatus internalPaymentStatus, String caseReference,
-      String externalId) {
+      String externalId, Long paymentReference) {
     PaymentStatusResponse paymentStatusResponse = PaymentStatusResponse
         .from(PaymentStatusFactory.with(
             internalPaymentStatus,
             caseReference,
-            externalId
+            externalId,
+            paymentReference
         ));
 
     return toJsonString(paymentStatusResponse);
