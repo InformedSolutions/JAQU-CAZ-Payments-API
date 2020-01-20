@@ -120,7 +120,7 @@ $ make deploy-to-aws S3_BUCKET_NAME=name_of_your_bucket STACK_NAME=name_of_your_
 
 #### ERDs
 ##### Conceptual model
-![ERD](documentation-assets/ERD-conceptual-model.png)
+![ERD](documentation-assets/ERD-conceptual-model.jpg)
 ##### Physical model
 ![ERD](documentation-assets/ERD-physical-model.png)
 
