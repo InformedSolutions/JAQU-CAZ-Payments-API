@@ -11,7 +11,6 @@ import lombok.Value;
 @Value
 public class SendEmailRequest {
   String reference = UUID.randomUUID().toString();
-
   String templateId;
   String emailAddress;
   String personalisation;

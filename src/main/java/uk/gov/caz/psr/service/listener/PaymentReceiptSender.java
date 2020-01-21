@@ -44,7 +44,7 @@ public class PaymentReceiptSender {
     try {
       SendEmailRequest sendEmailRequest =
           paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount, 
-              cazName, payment.getReferenceNumber().toString(), vrn);
+              cazName, payment.getReferenceNumber().toString(), vrn, payment.getExternalId());
       messagingClient.publishMessage(sendEmailRequest);
     } catch (Exception e) {
       log.error("Payment receipt not sent to recipient with payment ID: {}", payment.getId(), e);
