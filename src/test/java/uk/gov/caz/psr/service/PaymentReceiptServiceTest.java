@@ -35,7 +35,8 @@ public class PaymentReceiptServiceTest {
     String testEmail = "test@test.com";
 
     // when
-    SendEmailRequest request = paymentReceiptService.buildSendEmailRequest(testEmail, 1.0, "Leeds", "1001", "CAS300");
+    SendEmailRequest request = paymentReceiptService.buildSendEmailRequest(
+        testEmail, 1.0, "Leeds", "1001", "CAS300", "externalidentifier");
 
     // then
     assertNotNull(request);

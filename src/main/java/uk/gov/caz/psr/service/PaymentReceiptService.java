@@ -35,15 +35,15 @@ public class PaymentReceiptService {
    * @throws JsonProcessingException if the amount cannot be serialized into a json string
    */
   public SendEmailRequest buildSendEmailRequest(String email, double amount, 
-      String cazName, String reference, String vrn)
+      String cazName, String reference, String vrn, String externalId)
       throws JsonProcessingException {
     return SendEmailRequest.builder().emailAddress(email)
-        .personalisation(createPersonalisationPayload(amount, cazName, reference, vrn))
+        .personalisation(createPersonalisationPayload(amount, cazName, reference, vrn, externalId))
         .templateId(templateId).build();
   }
 
   private String createPersonalisationPayload(double amount, String cazName, 
-      String reference, String vrn) throws JsonProcessingException {
+      String reference, String vrn, String externalId) throws JsonProcessingException {
     Map<String, String> personalisationMap = new HashMap<String, String>();    
     personalisationMap.put("amount", String.format(Locale.UK, "%.2f", amount));
     personalisationMap.put("caz", cazName);
@@ -51,6 +51,7 @@ public class PaymentReceiptService {
         LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMMM YYYY")));
     personalisationMap.put("reference", reference);
     personalisationMap.put("vrn", vrn);
+    personalisationMap.put("external_id", externalId);
     return objectMapper.writeValueAsString(personalisationMap);
   }
 }
