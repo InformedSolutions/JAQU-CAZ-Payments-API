@@ -6,9 +6,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
-import uk.gov.caz.psr.model.info.PaymentInfo;
-import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
-import uk.gov.caz.psr.repository.jpa.VehicleEntrantPaymentInfoRepository;
+import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
+import uk.gov.caz.psr.repository.jpa.EntrantPaymentMatchInfoRepository;
 import uk.gov.caz.psr.service.paymentinfo.CazIdSpecification;
 import uk.gov.caz.psr.service.paymentinfo.OmitNotPaidPaymentInfoSpecification;
 import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
@@ -20,32 +19,34 @@ import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
 @AllArgsConstructor
 public class ChargeSettlementPaymentInfoService {
 
-  private final VehicleEntrantPaymentInfoRepository vehicleEntrantPaymentInfoRepository;
+  private static final OmitNotPaidPaymentInfoSpecification OMIT_NOT_PAID_PAYMENT_INFO_SPECIFICATION
+      = new OmitNotPaidPaymentInfoSpecification();
 
+  private final EntrantPaymentMatchInfoRepository entrantPaymentMatchInfoRepository;
   private final List<PaymentInfoSpecification> specifications;
 
   /**
-   * Method which filter payments based on PaymentInfoRequest.
+   * Finds payment information based on {@code attributes} and {@code cazId}.
    *
    * @param attributes {@link PaymentInfoRequestAttributes}
    * @param cazId for payment
-   * @return  list of {@link PaymentInfo}
+   * @return A list of {@link EntrantPaymentMatchInfo}
    */
-  public List<VehicleEntrantPaymentInfo> findPaymentInfo(PaymentInfoRequestAttributes attributes,
+  public List<EntrantPaymentMatchInfo> findPaymentInfo(PaymentInfoRequestAttributes attributes,
       UUID cazId) {
-    Specification<VehicleEntrantPaymentInfo> specification = specifications.stream()
+    Specification<EntrantPaymentMatchInfo> specification = specifications.stream()
         .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(attributes))
         .map(paymentInfoSpecification -> paymentInfoSpecification.create(attributes))
         .reduce(initialSpecification(cazId), Specification::and);
 
-    return vehicleEntrantPaymentInfoRepository.findAll(specification);
+    return entrantPaymentMatchInfoRepository.findAll(specification);
   }
 
   /**
    * Returns the initial specification that selects entries for a given {@code cazId} and
    * does not include payments with {@code notPaid} status.
    */
-  private Specification<VehicleEntrantPaymentInfo> initialSpecification(UUID cazId) {
-    return CazIdSpecification.forCaz(cazId).and(new OmitNotPaidPaymentInfoSpecification());
+  private Specification<EntrantPaymentMatchInfo> initialSpecification(UUID cazId) {
+    return CazIdSpecification.forCaz(cazId).and(OMIT_NOT_PAID_PAYMENT_INFO_SPECIFICATION);
   }
 }

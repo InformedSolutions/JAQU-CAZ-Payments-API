@@ -20,7 +20,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,7 +38,6 @@ import uk.gov.caz.psr.controller.ChargeSettlementController;
 import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.util.AttributesNormaliser;
 
-@Disabled("Because of ERD updates")
 @FullyRunningServerIntegrationTest
 class ChargeSettlementPaymentInfoTestIT {
 
@@ -793,6 +791,8 @@ class ChargeSettlementPaymentInfoTestIT {
 
   private static class PaymentInfoAssertion {
 
+    private static final String TOTAL_LINE_ITEMS_CNT = "results.collect { it.payments.collect "
+        + "{ it.lineItems.size() }.sum() }.sum()";
     private RequestSpecification requestSpecification = commonRequestSpecification();
     private ValidatableResponse validatableResponse;
 
@@ -841,10 +841,12 @@ class ChargeSettlementPaymentInfoTestIT {
     }
 
     public PaymentInfoAssertion totalLineItemsCountIsEqualTo(int lineItemsCount) {
-      validatableResponse
-          .body("results.collect { it.payments.collect { it.lineItems.size() }.sum() }.sum()",
-              equalTo(lineItemsCount));
+      validatableResponse.body(TOTAL_LINE_ITEMS_CNT, equalTo(normalize(lineItemsCount)));
       return this;
+    }
+
+    private Integer normalize(int lineItemsCount) {
+      return lineItemsCount == 0 ? null : lineItemsCount;
     }
 
     public PaymentInfoAssertion containsOnePaymentWithProviderIdEqualTo(String paymentProviderId) {
@@ -920,11 +922,11 @@ class ChargeSettlementPaymentInfoTestIT {
         Arguments.of("2019-11-01", "2019-11-02", 2),
         Arguments.of("2019-10-31", "2019-11-02", 2),
         Arguments.of("1993-04-18", "2019-11-02", 2),
-        Arguments.of("2019-11-02", "2019-11-06", 5),
-        Arguments.of("2019-11-03", "2019-11-07", 5),
-        Arguments.of("2019-11-07", "2019-11-08", 2),
-        Arguments.of("2019-11-07", "2025-02-19", 2),
-        Arguments.of("2019-11-07", "2031-09-22", 2)
+        Arguments.of("2019-11-02", "2019-11-06", 4),
+        Arguments.of("2019-11-03", "2019-11-07", 3),
+        Arguments.of("2019-11-03", "2019-11-08", 3),
+        Arguments.of("2019-11-03", "2025-02-19", 3),
+        Arguments.of("2019-11-03", "2031-09-22", 3)
     );
   }
 
@@ -944,11 +946,10 @@ class ChargeSettlementPaymentInfoTestIT {
         Arguments.of("2019-11-01", "2019-11-02", 4),
         Arguments.of("2019-10-31", "2019-11-02", 4),
         Arguments.of("1993-04-18", "2019-11-02", 4),
-        Arguments.of("2019-11-02", "2019-11-06", 6),
-        Arguments.of("2019-11-03", "2019-11-07", 5),
-        Arguments.of("2019-11-07", "2019-11-08", 2),
-        Arguments.of("2019-11-07", "2025-02-19", 2),
-        Arguments.of("2019-11-07", "2031-09-22", 2)
+        Arguments.of("2019-11-02", "2019-11-06", 5),
+        Arguments.of("2019-11-03", "2019-11-07", 3),
+        Arguments.of("2019-11-07", "2025-02-19", 0),
+        Arguments.of("2019-11-07", "2031-09-22", 0)
     );
   }
 
@@ -959,10 +960,7 @@ class ChargeSettlementPaymentInfoTestIT {
         Arguments.of("2019-11-03", "ND84VSX"),
         Arguments.of("2019-11-03", "AB11CDE"),
         Arguments.of("2019-11-04", "ND84VSX"),
-        Arguments.of("2019-11-05", "ND84VSX"),
-        Arguments.of("2019-11-06", "ND84VSX"),
-        Arguments.of("2019-11-07", "ND84VSX"),
-        Arguments.of("2019-11-08", "ND84VSX")
+        Arguments.of("2019-11-05", "ND84VSX")
     );
   }
 
@@ -974,9 +972,7 @@ class ChargeSettlementPaymentInfoTestIT {
         Arguments.of("2019-11-02", "AB11CDE"),
         Arguments.of("2019-11-03", "ND84VSX"),
         Arguments.of("2019-11-04", "ND84VSX"),
-        Arguments.of("2019-11-05", "ND84VSX"),
-        Arguments.of("2019-11-06", "ND84VSX"),
-        Arguments.of("2019-11-07", "ND84VSX")
+        Arguments.of("2019-11-05", "ND84VSX")
     );
   }
 }

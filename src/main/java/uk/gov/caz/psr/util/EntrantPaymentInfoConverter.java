@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.util;
 
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Preconditions;
@@ -15,32 +16,32 @@ import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
 import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
 import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo;
+import uk.gov.caz.psr.model.info.EntrantPaymentInfo;
+import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.model.info.PaymentInfo;
-import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 
 /**
- * A utility class that converts a collection of {@link VehicleEntrantPaymentInfo} into {@link
+ * A utility class that converts a collection of {@link EntrantPaymentInfo} into {@link
  * PaymentInfoResponse}.
  */
 @Component
 @AllArgsConstructor
-public class VehicleEntrantPaymentInfoConverter {
+public class EntrantPaymentInfoConverter {
 
   private final CurrencyFormatter currencyFormatter;
 
   /**
-   * Converts the passed {@code vehicleEntrantPaymentInfos} into an instance of {@link
+   * Converts the passed {@code entrantPaymentMatchInfos} into an instance of {@link
    * PaymentInfoResponse}.
    *
-   * @param vehicleEntrantPaymentInfos A collection of {@link VehicleEntrantPaymentInfo}.
+   * @param entrantPaymentMatchInfos A collection of {@link EntrantPaymentInfo}.
    * @return An instance of {@link PaymentInfoResponse}.
    */
   public PaymentInfoResponse toPaymentInfoResponse(
-      Collection<VehicleEntrantPaymentInfo> vehicleEntrantPaymentInfos) {
-    Preconditions.checkNotNull(vehicleEntrantPaymentInfos,
-        "vehicleEntrantPaymentInfos cannot be null");
+      Collection<EntrantPaymentMatchInfo> entrantPaymentMatchInfos) {
+    Preconditions.checkNotNull(entrantPaymentMatchInfos, "entrantPaymentMatchInfos cannot be null");
 
-    List<PaymentsInfo> paymentsInfo = groupByVrnAndPayment(vehicleEntrantPaymentInfos)
+    List<PaymentsInfo> paymentsInfo = groupByVrnAndPayment(entrantPaymentMatchInfos)
         .entrySet()
         .stream()
         .map(vrnWithVehicleEntrantPayments -> toPaymentsInfo(
@@ -55,7 +56,7 @@ public class VehicleEntrantPaymentInfoConverter {
    * vrnWithVehicleEntrantPayments}.
    */
   private PaymentsInfo toPaymentsInfo(String vrn, Map<PaymentInfo,
-      List<VehicleEntrantPaymentInfo>> vrnWithVehicleEntrantPayments) {
+      List<EntrantPaymentInfo>> vrnWithVehicleEntrantPayments) {
     return new PaymentsInfo(vrn, toSinglePaymentInfos(vrnWithVehicleEntrantPayments));
   }
 
@@ -63,7 +64,7 @@ public class VehicleEntrantPaymentInfoConverter {
    * Creates a list of {@link SinglePaymentInfo} from passed {@code vrnWithVehicleEntrantPayments}.
    */
   private List<SinglePaymentInfo> toSinglePaymentInfos(
-      Map<PaymentInfo, List<VehicleEntrantPaymentInfo>> vrnWithVehicleEntrantPayments) {
+      Map<PaymentInfo, List<EntrantPaymentInfo>> vrnWithVehicleEntrantPayments) {
     return vrnWithVehicleEntrantPayments
         .entrySet()
         .stream()
@@ -78,7 +79,7 @@ public class VehicleEntrantPaymentInfoConverter {
    * entrantPaymentInfoList}.
    */
   private SinglePaymentInfo toSinglePaymentInfo(PaymentInfo paymentInfo,
-      List<VehicleEntrantPaymentInfo> entrantPaymentInfoList) {
+      List<EntrantPaymentInfo> entrantPaymentInfoList) {
     return SinglePaymentInfo.builder()
         .cazPaymentReference(paymentInfo.getReferenceNumber())
         .paymentDate(toLocalDate(paymentInfo.getSubmittedTimestamp()))
@@ -100,7 +101,7 @@ public class VehicleEntrantPaymentInfoConverter {
    * entrantPaymentInfoList}.
    */
   private List<SinglePaymentInfo.VehicleEntrantPaymentInfo> toVehicleEntrantPayments(
-      List<VehicleEntrantPaymentInfo> entrantPaymentInfoList) {
+      List<EntrantPaymentInfo> entrantPaymentInfoList) {
     return entrantPaymentInfoList.stream()
         .map(this::toVehicleEntrantPaymentInfo)
         .collect(toList());
@@ -108,32 +109,34 @@ public class VehicleEntrantPaymentInfoConverter {
 
   /**
    * Creates an instance of {@link SinglePaymentInfo.VehicleEntrantPaymentInfo} from passed {@code
-   * vehicleEntrantPaymentInfo}.
+   * entrantPaymentInfo}.
    */
   private SinglePaymentInfo.VehicleEntrantPaymentInfo toVehicleEntrantPaymentInfo(
-      VehicleEntrantPaymentInfo vehicleEntrantPaymentInfo) {
+      EntrantPaymentInfo entrantPaymentInfo) {
     return SinglePaymentInfo.VehicleEntrantPaymentInfo
         .builder()
-        .travelDate(vehicleEntrantPaymentInfo.getTravelDate())
-        .caseReference(vehicleEntrantPaymentInfo.getCaseReference())
+        .travelDate(entrantPaymentInfo.getTravelDate())
+        .caseReference(entrantPaymentInfo.getCaseReference())
         .chargePaid(currencyFormatter.parsePenniesToBigDecimal(
-            vehicleEntrantPaymentInfo.getChargePaid()))
+            entrantPaymentInfo.getChargePaid()))
         .paymentStatus(ChargeSettlementPaymentStatus
-            .from(vehicleEntrantPaymentInfo.getPaymentStatus()))
+            .from(entrantPaymentInfo.getPaymentStatus()))
         .build();
   }
 
   /**
-   * Groups the passed {@code vehicleEntrantPaymentInfos} by vrn and payment info and return the
+   * Groups the passed {@code entrantPaymentInfos} by vrn and payment info and return the
    * result as a map.
    */
-  private Map<String, Map<PaymentInfo, List<VehicleEntrantPaymentInfo>>> groupByVrnAndPayment(
-      Collection<VehicleEntrantPaymentInfo> vehicleEntrantPaymentInfos) {
-    return vehicleEntrantPaymentInfos
+  private Map<String, Map<PaymentInfo, List<EntrantPaymentInfo>>> groupByVrnAndPayment(
+      Collection<EntrantPaymentMatchInfo> entrantPaymentInfos) {
+    return entrantPaymentInfos
         .stream()
         .collect(
-            groupingBy(VehicleEntrantPaymentInfo::getVrn,
-                groupingBy(VehicleEntrantPaymentInfo::getPaymentInfo)
+            groupingBy(e -> e.getEntrantPaymentInfo().getVrn(),
+                groupingBy(EntrantPaymentMatchInfo::getPaymentInfo,
+                    mapping(EntrantPaymentMatchInfo::getEntrantPaymentInfo, toList())
+                )
             )
         );
   }

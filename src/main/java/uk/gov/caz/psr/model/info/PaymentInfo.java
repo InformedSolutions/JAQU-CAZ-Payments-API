@@ -11,8 +11,11 @@ import javax.persistence.Table;
 import lombok.Data;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 
+/**
+ * An entity that represents a payment made in GOV UK Pay service.
+ */
 @Entity
-@Table(name = "payment")
+@Table(schema = "caz_payment", name = "t_payment")
 @Data
 public class PaymentInfo {
 
