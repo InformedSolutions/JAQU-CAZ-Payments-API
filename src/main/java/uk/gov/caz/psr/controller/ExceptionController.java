@@ -11,6 +11,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -181,8 +182,10 @@ public class ExceptionController extends GlobalExceptionHandler {
    */
   private ValidationErrorBuilder createBaseValidationErrorBuilder(ObjectError error,
       String validationCode) {
+    String field = error instanceof FieldError ? ((FieldError) error).getField() : null;
     return ValidationError.builder()
         .detail(messageSource.getMessage(error, LOCALE))
+        .field(field)
         .title(messageSource.getMessage(validationCode, null, LOCALE));
   }
 }

@@ -17,6 +17,7 @@ public class PaymentStatusErrorResponse {
 
   String vrn;
   String title;
+  String field;
   String detail;
   int status = HttpStatus.BAD_REQUEST.value();
 
@@ -31,6 +32,7 @@ public class PaymentStatusErrorResponse {
     return PaymentStatusErrorResponse.builder()
         .vrn(validationError.getVrn())
         .title(validationError.getTitle())
+        .field(validationError.getField())
         .detail(validationError.getDetail())
         .build();
   }

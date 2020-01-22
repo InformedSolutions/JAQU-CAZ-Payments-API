@@ -9,5 +9,6 @@ import lombok.Value;
 public final class ValidationError {
   String vrn;
   String title;
+  String field;
   String detail;
 }
