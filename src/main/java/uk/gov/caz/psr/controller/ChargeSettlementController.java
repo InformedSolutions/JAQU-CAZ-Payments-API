@@ -85,8 +85,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentStatusDtoValidationException(request.getVrn(),
           "paymentStatusUpdate.validationErrorTitle", bindingResult);
     }
-    paymentStatusUpdateService.processUpdate(request.toVehicleEntrantPaymentStatusUpdates(
-        cleanAirZoneId));
+    paymentStatusUpdateService.process(request.toEntrantPaymentStatusUpdates(cleanAirZoneId));
     return new PaymentUpdateSuccessResponse();
   }
 }

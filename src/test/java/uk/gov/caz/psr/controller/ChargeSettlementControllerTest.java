@@ -581,30 +581,6 @@ class ChargeSettlementControllerTest {
     }
 
     @Test
-    public void invalidPaymentIdShouldResultIn400() throws Exception {
-      PaymentStatusUpdateRequest request = baseRequestBuilder()
-          .statusUpdates(Collections.singletonList(
-              PaymentStatusUpdateDetailsFactory.withPaymentId(
-                  Strings.repeat("a", 256))))
-          .build();
-      String payload = toJsonString(request);
-
-      mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
-          .content(payload)
-          .contentType(MediaType.APPLICATION_JSON)
-          .accept(MediaType.APPLICATION_JSON)
-          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
-          .header(Headers.X_API_KEY, UUID.randomUUID()))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
-          .andExpect(jsonPath("$.errors[0].vrn").value(request.getVrn()))
-          .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
-          .andExpect(jsonPath("$.errors[0].detail")
-              .value("\"statusUpdates[0].paymentProviderId\" size must be between 1 and 255"));
-    }
-
-    @Test
     public void validRequestShouldResultIn200() throws Exception {
       String payload = toJsonString(baseRequestBuilder().build());
 
