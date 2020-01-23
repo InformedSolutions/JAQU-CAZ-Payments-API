@@ -20,12 +20,12 @@ import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
 import uk.gov.caz.psr.model.PaymentStatus;
-import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
+import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.service.ChargeSettlementPaymentInfoService;
 import uk.gov.caz.psr.service.ChargeSettlementService;
 import uk.gov.caz.psr.service.PaymentStatusUpdateService;
+import uk.gov.caz.psr.util.EntrantPaymentInfoConverter;
 import uk.gov.caz.psr.util.PaymentInfoRequestConverter;
-import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
 
 /**
  * A controller which exposes endpoints dealing with charge settlement.
@@ -42,7 +42,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
   private final PaymentStatusUpdateService paymentStatusUpdateService;
   private final ChargeSettlementService chargeSettlementService;
   private final ChargeSettlementPaymentInfoService chargeSettlementPaymentInfoService;
-  private final VehicleEntrantPaymentInfoConverter vehicleEntrantPaymentInfoConverter;
+  private final EntrantPaymentInfoConverter entrantPaymentInfoConverter;
   private final PaymentInfoRequestConverter paymentInfoRequestConverter;
 
   @Override
@@ -52,13 +52,13 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
     }
-    List<VehicleEntrantPaymentInfo> result = chargeSettlementPaymentInfoService.findPaymentInfo(
+    List<EntrantPaymentMatchInfo> result = chargeSettlementPaymentInfoService.findPaymentInfo(
         paymentInfoRequestConverter.toPaymentInfoRequestAttributes(request),
         cleanAirZoneId
     );
     log.info("Found {} matching vehicle entrant payments for payment-info request {}",
         result.size(), request);
-    return ResponseEntity.ok(vehicleEntrantPaymentInfoConverter.toPaymentInfoResponse(result));
+    return ResponseEntity.ok(entrantPaymentInfoConverter.toPaymentInfoResponse(result));
   }
 
   @Override
@@ -85,8 +85,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentStatusDtoValidationException(request.getVrn(),
           "paymentStatusUpdate.validationErrorTitle", bindingResult);
     }
-    paymentStatusUpdateService.processUpdate(request.toVehicleEntrantPaymentStatusUpdates(
-        cleanAirZoneId));
+    paymentStatusUpdateService.process(request.toEntrantPaymentStatusUpdates(cleanAirZoneId));
     return new PaymentUpdateSuccessResponse();
   }
 }

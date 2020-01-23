@@ -2,12 +2,16 @@ package uk.gov.caz.psr.service;
 
 import com.google.common.base.Preconditions;
 import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.EntrantPayment;
-import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
+import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
+import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
+import uk.gov.caz.psr.repository.PaymentRepository;
 
 /**
  * A service which updates {@code paymentStatus} for all found {@link EntrantPayment}.
@@ -18,82 +22,77 @@ import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 public class PaymentStatusUpdateService {
 
   private final EntrantPaymentRepository entrantPaymentRepository;
+  private final PaymentRepository paymentRepository;
 
   /**
    * Process update of the {@link EntrantPayment} with provided details.
    *
-   * @param vehicleEntrantPaymentStatusUpdates list of {@link VehicleEntrantPaymentStatusUpdate}
-   *                                           which contains data to find and update {@link
-   *                                           EntrantPayment}.
+   * @param entrantPaymentStatusUpdates list of {@link EntrantPaymentStatusUpdate} which
+   *     contains data to find and update {@link EntrantPayment}.
    */
-  public void processUpdate(
-      List<VehicleEntrantPaymentStatusUpdate> vehicleEntrantPaymentStatusUpdates) {
-    Preconditions.checkNotNull(vehicleEntrantPaymentStatusUpdates,
-        "vehicleEntrantPaymentStatusUpdates cannot be null");
-    //  TODO: Fix with the payment updates CAZ-1716
-    //  List<VehicleEntrantPayment> vehicleEntrantPayments = prepareVehicleEntrantPayments(
-    //      vehicleEntrantPaymentStatusUpdates);
-    //  vehicleEntrantPaymentRepository.update(vehicleEntrantPayments);
+  public void process(
+      List<EntrantPaymentStatusUpdate> entrantPaymentStatusUpdates) {
+    Preconditions.checkNotNull(entrantPaymentStatusUpdates,
+        "entrantPaymentStatusUpdates cannot be null");
+
+    for (EntrantPaymentStatusUpdate entrantPaymentStatusUpdate : entrantPaymentStatusUpdates) {
+      Optional<EntrantPayment> entrantPayment = loadEntrantPayment(entrantPaymentStatusUpdate);
+
+      if (entrantPayment.isPresent()) {
+        handleUpdateEntrantPayment(entrantPayment.get(), entrantPaymentStatusUpdate);
+      } else {
+        handleNewEntrantPayment();
+      }
+    }
   }
 
-  //  /**
-  //   * Builds list of {@link VehicleEntrantPayment} to be updated.
-  //   *
-  //   * @param vehicleEntrantPaymentStatusUpdates list of {@link VehicleEntrantPaymentStatusUpdate}
-  //   *                                           which contains data to find and update {@link
-  //   *                                           VehicleEntrantPayment}.
-  //   */
-  //  private List<VehicleEntrantPayment> prepareVehicleEntrantPayments(
-  //      List<VehicleEntrantPaymentStatusUpdate> vehicleEntrantPaymentStatusUpdates) {
-  //
-  //    return vehicleEntrantPaymentStatusUpdates.stream()
-  //        .map(this::prepareVehicleEntrantPayment)
-  //        .collect(Collectors.toList());
-  //  }
-  //
-  //  /**
-  //   * Builds {@link VehicleEntrantPayment} with updated status.
-  //   *
-  //   * @param vehicleEntrantPaymentStatusUpdate {@link VehicleEntrantPaymentStatusUpdate} which
-  //   *                                          contains data to find and update {@link
-  //   *                                          VehicleEntrantPayment}.
-  //   */
-  //  private VehicleEntrantPayment prepareVehicleEntrantPayment(
-  //      VehicleEntrantPaymentStatusUpdate vehicleEntrantPaymentStatusUpdate) {
-  //    VehicleEntrantPayment vehicleEntrantPayment = loadVehicleEntrantPayment(
-  //        vehicleEntrantPaymentStatusUpdate).orElseThrow(
-  //          () -> new MissingVehicleEntrantPaymentException(
-  //              vehicleEntrantPaymentStatusUpdate.getVrn(),
-  //              "VehicleEntrantPayment not found for: " + vehicleEntrantPaymentStatusUpdate));
-  //
-  //    return vehicleEntrantPayment.toBuilder()
-  //        .internalPaymentStatus(vehicleEntrantPaymentStatusUpdate.getPaymentStatus())
-  //        .caseReference(vehicleEntrantPaymentStatusUpdate.getCaseReference())
-  //        .build();
-  //  }
-  //
-  //  /**
-  //   * Loads {@link VehicleEntrantPayment} from the repository for the provided details.
-  //   *
-  //   * @param vehicleEntrantPaymentStatusUpdate {@link VehicleEntrantPaymentStatusUpdate} which
-  //   *                                          contains data to find and update {@link
-  //   *                                          VehicleEntrantPayment}.
-  //   */
-  //  private Optional<VehicleEntrantPayment> loadVehicleEntrantPayment(
-  //      VehicleEntrantPaymentStatusUpdate vehicleEntrantPaymentStatusUpdate) {
-  //
-  //    if (Strings.isNullOrEmpty(vehicleEntrantPaymentStatusUpdate.getExternalPaymentId())) {
-  //      return vehicleEntrantPaymentRepository
-  //          .findOnePaidByVrnAndCazEntryDate(
-  //              vehicleEntrantPaymentStatusUpdate.getCleanAirZoneId(),
-  //              vehicleEntrantPaymentStatusUpdate.getVrn(),
-  //              vehicleEntrantPaymentStatusUpdate.getDateOfCazEntry());
-  //    }
-  //    return vehicleEntrantPaymentRepository
-  //        .findOnePaidByCazEntryDateAndExternalPaymentId(
-  //            vehicleEntrantPaymentStatusUpdate.getCleanAirZoneId(),
-  //            vehicleEntrantPaymentStatusUpdate.getDateOfCazEntry(),
-  //            vehicleEntrantPaymentStatusUpdate.getExternalPaymentId());
-  //
-  //  }
+  private void handleNewEntrantPayment() {
+    // TODO: Implement in CAZ-1723
+  }
+
+  private void handleUpdateEntrantPayment(EntrantPayment entrantPayment,
+      EntrantPaymentStatusUpdate entrantPaymentStatusUpdate) {
+    Optional<Payment> payment = paymentRepository
+        .findByEntrantPayment(entrantPayment.getCleanAirZoneEntrantPaymentId());
+
+    if (payment.isPresent() && payment.get().getExternalPaymentStatus().isNotFinished()) {
+      // TODO: Implement in CAZ-1725
+      log.info("To be implemented");
+    }
+
+    entrantPaymentRepository
+        .update(prepareUpdateEntrantPayment(entrantPayment, entrantPaymentStatusUpdate));
+  }
+
+  /**
+   * Builds {@link EntrantPayment} with updated status.
+   *
+   * @param entrantPayment {@link EntrantPayment} object which need to be updated.
+   * @param entrantPaymentStatusUpdate {@link EntrantPaymentStatusUpdate} which contains data to
+   *     find and update {@link EntrantPayment}.
+   */
+  private EntrantPayment prepareUpdateEntrantPayment(EntrantPayment entrantPayment,
+      EntrantPaymentStatusUpdate entrantPaymentStatusUpdate) {
+
+    return entrantPayment.toBuilder()
+        .internalPaymentStatus(entrantPaymentStatusUpdate.getPaymentStatus())
+        .caseReference(entrantPaymentStatusUpdate.getCaseReference())
+        .updateActor(EntrantPaymentUpdateActor.LA)
+        .build();
+  }
+
+  /**
+   * Loads {@link EntrantPayment} from the repository for the provided details.
+   *
+   * @param entrantPaymentStatusUpdate {@link EntrantPaymentStatusUpdate} which contains data to
+   *     find and update {@link EntrantPayment}.
+   */
+  private Optional<EntrantPayment> loadEntrantPayment(
+      EntrantPaymentStatusUpdate entrantPaymentStatusUpdate) {
+
+    return entrantPaymentRepository.findOneByVrnAndCazEntryDate(
+        entrantPaymentStatusUpdate.getCleanAirZoneId(),
+        entrantPaymentStatusUpdate.getVrn(),
+        entrantPaymentStatusUpdate.getDateOfCazEntry());
+  }
 }

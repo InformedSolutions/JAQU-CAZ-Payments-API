@@ -23,11 +23,12 @@ import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
 import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.info.EntrantPaymentInfo;
+import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.model.info.PaymentInfo;
-import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
 
 @ExtendWith(MockitoExtension.class)
-class VehicleEntrantPaymentInfoConverterTest {
+class EntrantPaymentInfoConverterTest {
 
   private static final String ANY_VRN = "YC31QBL";
   private static final String ANY_CASE_REFERENCE = "case-reference";
@@ -40,25 +41,25 @@ class VehicleEntrantPaymentInfoConverterTest {
   private CurrencyFormatter currencyFormatter;
 
   @InjectMocks
-  private VehicleEntrantPaymentInfoConverter converter;
+  private EntrantPaymentInfoConverter converter;
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPassedValueIsNull() {
     // given
-    Collection<VehicleEntrantPaymentInfo> input = null;
+    Collection<EntrantPaymentMatchInfo> input = null;
 
     // when
     Throwable throwable = catchThrowable(() -> converter.toPaymentInfoResponse(input));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
-        .hasMessage("vehicleEntrantPaymentInfos cannot be null");
+        .hasMessage("entrantPaymentMatchInfos cannot be null");
   }
 
   @Test
   public void shouldConvertPassedCollectionWhenSubmittedTimestampIsNull() {
     // given
-    Collection<VehicleEntrantPaymentInfo> input = singleVehicleEntrantPaymentInfoWithNullTimestamp();
+    Collection<EntrantPaymentMatchInfo> input = singleEntrantPaymentMatchInfoWithNullTimestamp();
     given(currencyFormatter.parsePenniesToBigDecimal(anyInt()))
         .willAnswer(answer -> BigDecimal.valueOf(74));
 
@@ -77,7 +78,7 @@ class VehicleEntrantPaymentInfoConverterTest {
   @Test
   public void shouldConvertPassedCollection() {
     // given
-    Collection<VehicleEntrantPaymentInfo> input = singleVehicleEntrantPaymentInfo();
+    Collection<EntrantPaymentMatchInfo> input = singleEntrantPaymentInfo();
     given(currencyFormatter.parsePenniesToBigDecimal(anyInt()))
         .willAnswer(answer -> BigDecimal.valueOf(74));
 
@@ -102,32 +103,40 @@ class VehicleEntrantPaymentInfoConverterTest {
     assertThat(lineItem.getPaymentStatus()).isEqualTo(ChargeSettlementPaymentStatus.REFUNDED);
   }
 
-  private Collection<VehicleEntrantPaymentInfo> singleVehicleEntrantPaymentInfo() {
-    VehicleEntrantPaymentInfo result = buildVehicleEntrantPaymentInfo();
+  private Collection<EntrantPaymentMatchInfo> singleEntrantPaymentInfo() {
+    EntrantPaymentMatchInfo result = buildEntrantPaymentMatchInfo();
     return Collections.singletonList(result);
   }
 
-  private Collection<VehicleEntrantPaymentInfo> singleVehicleEntrantPaymentInfoWithNullTimestamp() {
-    VehicleEntrantPaymentInfo result = buildVehicleEntrantPaymentInfoWithNullSubmittedTimestamp();
+  private Collection<EntrantPaymentMatchInfo> singleEntrantPaymentMatchInfoWithNullTimestamp() {
+    EntrantPaymentMatchInfo result = buildEntrantPaymentMatchInfoWithNullSubmittedTimestamp();
     return Collections.singletonList(result);
   }
 
-  private VehicleEntrantPaymentInfo buildVehicleEntrantPaymentInfo() {
-    VehicleEntrantPaymentInfo result = new VehicleEntrantPaymentInfo();
-    result.setId(UUID.fromString("0af851ef-870e-4c2e-b9aa-f84c1db35f24"));
-    result.setVrn(ANY_VRN);
-    result.setChargePaid(ANY_TOTAL_PAID);
-    result.setCaseReference(ANY_CASE_REFERENCE);
-    result.setPaymentStatus(InternalPaymentStatus.REFUNDED);
-    result.setTravelDate(ANY_TRAVEL_DATE);
-    result.setCleanAirZoneId(UUID.fromString("938cac88-1103-11ea-a1a6-33ad4299653d"));
+  private EntrantPaymentMatchInfo buildEntrantPaymentMatchInfo() {
+    EntrantPaymentMatchInfo result = new EntrantPaymentMatchInfo();
+    result.setId(UUID.fromString("7e2bf5c2-3cfc-11ea-b5aa-f7f8fb54cc82"));
+    result.setLatest(true);
+    result.setEntrantPaymentInfo(buildEntrantPaymentInfo());
     result.setPaymentInfo(buildPaymentInfo());
     return result;
   }
 
   @NotNull
-  private VehicleEntrantPaymentInfo buildVehicleEntrantPaymentInfoWithNullSubmittedTimestamp() {
-    VehicleEntrantPaymentInfo result = buildVehicleEntrantPaymentInfo();
+  private EntrantPaymentInfo buildEntrantPaymentInfo() {
+    EntrantPaymentInfo entrantPaymentInfo = new EntrantPaymentInfo();
+    entrantPaymentInfo.setId(UUID.fromString("0af851ef-870e-4c2e-b9aa-f84c1db35f24"));
+    entrantPaymentInfo.setVrn(ANY_VRN);
+    entrantPaymentInfo.setChargePaid(ANY_TOTAL_PAID);
+    entrantPaymentInfo.setCaseReference(ANY_CASE_REFERENCE);
+    entrantPaymentInfo.setPaymentStatus(InternalPaymentStatus.REFUNDED);
+    entrantPaymentInfo.setTravelDate(ANY_TRAVEL_DATE);
+    entrantPaymentInfo.setCleanAirZoneId(UUID.fromString("938cac88-1103-11ea-a1a6-33ad4299653d"));
+    return entrantPaymentInfo;
+  }
+
+  private EntrantPaymentMatchInfo buildEntrantPaymentMatchInfoWithNullSubmittedTimestamp() {
+    EntrantPaymentMatchInfo result = buildEntrantPaymentMatchInfo();
     result.setPaymentInfo(buildPaymentInfoWith(null));
     return result;
   }
@@ -140,7 +149,7 @@ class VehicleEntrantPaymentInfoConverterTest {
     PaymentInfo paymentInfo = new PaymentInfo();
     paymentInfo.setId(UUID.fromString("996c6c95-960d-4dfd-98a2-6effa9a1cbda"));
     paymentInfo.setExternalId(ANY_EXTERNAL_ID);
-    paymentInfo.setTotalPaid(VehicleEntrantPaymentInfoConverterTest.ANY_TOTAL_PAID);
+    paymentInfo.setTotalPaid(EntrantPaymentInfoConverterTest.ANY_TOTAL_PAID);
     paymentInfo.setExternalPaymentStatus(ExternalPaymentStatus.SUCCESS);
     paymentInfo.setSubmittedTimestamp(timestamp);
     return paymentInfo;

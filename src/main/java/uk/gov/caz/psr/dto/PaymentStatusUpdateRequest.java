@@ -12,8 +12,8 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
+import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.model.VehicleEntrantPaymentStatusUpdate;
 
 /**
  * A value object which is used as a request for updating payment status.
@@ -36,26 +36,25 @@ public class PaymentStatusUpdateRequest {
    * Maps this value object to list of the models.
    *
    * @param cleanAirZoneId Id of Clean Air Zone.
-   * @return An list of {@link VehicleEntrantPaymentStatusUpdate} whose parameters comes from this
+   * @return An list of {@link EntrantPaymentStatusUpdate} whose parameters comes from this
    *     object.
    */
-  public List<VehicleEntrantPaymentStatusUpdate> toVehicleEntrantPaymentStatusUpdates(
+  public List<EntrantPaymentStatusUpdate> toEntrantPaymentStatusUpdates(
       UUID cleanAirZoneId) {
     return statusUpdates.stream()
-        .map(singlePaymentDetails -> prepareVehicleEntrantPaymentStatusUpdate(cleanAirZoneId,
+        .map(singlePaymentDetails -> prepareEntrantPaymentStatusUpdate(cleanAirZoneId,
             singlePaymentDetails))
         .collect(Collectors.toList());
   }
 
-  private VehicleEntrantPaymentStatusUpdate prepareVehicleEntrantPaymentStatusUpdate(
+  private EntrantPaymentStatusUpdate prepareEntrantPaymentStatusUpdate(
       UUID cleanAirZoneId, PaymentStatusUpdateDetails paymentStatusUpdateDetail) {
-    return VehicleEntrantPaymentStatusUpdate.builder()
+    return EntrantPaymentStatusUpdate.builder()
         .cleanAirZoneId(cleanAirZoneId)
         .vrn(normalizeVrn(vrn))
         .dateOfCazEntry(paymentStatusUpdateDetail.getDateOfCazEntry())
         .paymentStatus(InternalPaymentStatus
-            .valueOf(paymentStatusUpdateDetail.getChargeSettlementPaymentStatus().name()))
-        .externalPaymentId(paymentStatusUpdateDetail.getPaymentProviderId())
+            .valueOf(paymentStatusUpdateDetail.getPaymentStatus().name()))
         .caseReference(paymentStatusUpdateDetail.getCaseReference())
         .build();
   }

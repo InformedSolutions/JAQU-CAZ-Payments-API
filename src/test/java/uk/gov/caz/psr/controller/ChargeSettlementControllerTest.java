@@ -48,10 +48,10 @@ import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.service.ChargeSettlementPaymentInfoService;
 import uk.gov.caz.psr.service.ChargeSettlementService;
 import uk.gov.caz.psr.service.PaymentStatusUpdateService;
+import uk.gov.caz.psr.util.EntrantPaymentInfoConverter;
 import uk.gov.caz.psr.util.PaymentInfoRequestConverter;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
-import uk.gov.caz.psr.util.VehicleEntrantPaymentInfoConverter;
 
 @ContextConfiguration(classes = {GlobalExceptionHandlerConfiguration.class, Configuration.class,
     ChargeSettlementController.class, ExceptionController.class, MessageBundleConfiguration.class})
@@ -71,7 +71,7 @@ class ChargeSettlementControllerTest {
   @MockBean
   private ChargeSettlementPaymentInfoService chargeSettlementPaymentInfoService;
   @MockBean
-  private VehicleEntrantPaymentInfoConverter vehicleEntrantPaymentInfoConverter;
+  private EntrantPaymentInfoConverter entrantPaymentInfoConverter;
   @MockBean
   private PaymentInfoRequestConverter paymentInfoRequestConverter;
 
@@ -578,30 +578,6 @@ class ChargeSettlementControllerTest {
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"statusUpdates[0].caseReference\" size must be between 1 and 15"));
-    }
-
-    @Test
-    public void invalidPaymentIdShouldResultIn400() throws Exception {
-      PaymentStatusUpdateRequest request = baseRequestBuilder()
-          .statusUpdates(Collections.singletonList(
-              PaymentStatusUpdateDetailsFactory.withPaymentId(
-                  Strings.repeat("a", 256))))
-          .build();
-      String payload = toJsonString(request);
-
-      mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
-          .content(payload)
-          .contentType(MediaType.APPLICATION_JSON)
-          .accept(MediaType.APPLICATION_JSON)
-          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
-          .header(Headers.X_API_KEY, UUID.randomUUID()))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
-          .andExpect(jsonPath("$.errors[0].vrn").value(request.getVrn()))
-          .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
-          .andExpect(jsonPath("$.errors[0].detail")
-              .value("\"statusUpdates[0].paymentProviderId\" size must be between 1 and 255"));
     }
 
     @Test

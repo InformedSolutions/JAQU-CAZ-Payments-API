@@ -16,15 +16,15 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
-import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
-import uk.gov.caz.psr.repository.jpa.VehicleEntrantPaymentInfoRepository;
+import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
+import uk.gov.caz.psr.repository.jpa.EntrantPaymentMatchInfoRepository;
 import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeSettlementPaymentInfoServiceTest {
 
   @Mock
-  private VehicleEntrantPaymentInfoRepository vehicleEntrantPaymentInfoRepository;
+  private EntrantPaymentMatchInfoRepository entrantPaymentMatchInfoRepository;
 
   @Spy
   private List<PaymentInfoSpecification> specifications = new ArrayList<>();
@@ -36,10 +36,10 @@ class ChargeSettlementPaymentInfoServiceTest {
   void shouldReturnListOfPaymentInfo() {
     // given
     PaymentInfoRequestAttributes input = PaymentInfoRequestAttributes.builder().build();
-    when(vehicleEntrantPaymentInfoRepository.findAll(Mockito.any(Specification.class))).thenReturn(emptyList());
+    when(entrantPaymentMatchInfoRepository.findAll(Mockito.any(Specification.class))).thenReturn(emptyList());
 
     //when
-    List<VehicleEntrantPaymentInfo> any = paymentInfoService.findPaymentInfo(input, UUID.randomUUID());
+    List<EntrantPaymentMatchInfo> any = paymentInfoService.findPaymentInfo(input, UUID.randomUUID());
 
     //then
     assertThat(any).isEqualTo(emptyList());

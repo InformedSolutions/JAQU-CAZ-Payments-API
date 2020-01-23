@@ -100,7 +100,7 @@ public class SuccessPaymentStatusUpdateTestIT {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 1)),
         PaymentStatusUpdateDetailsFactory
-            .refundedWithDateOfCazEntryAndPaymentId(LocalDate.of(2019, 11, 3), "12345test")
+            .refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 3))
     );
   }
 

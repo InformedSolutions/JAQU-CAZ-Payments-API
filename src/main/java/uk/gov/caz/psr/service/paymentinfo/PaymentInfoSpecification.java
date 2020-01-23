@@ -2,7 +2,7 @@ package uk.gov.caz.psr.service.paymentinfo;
 
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
-import uk.gov.caz.psr.model.info.VehicleEntrantPaymentInfo;
+import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 
 /**
  * Interface of Payment info specification, used to group all specifications.
@@ -23,5 +23,5 @@ public interface PaymentInfoSpecification {
    * @param attributes {@link PaymentInfoRequestAttributes}
    * @return {@link Specification}
    */
-  Specification<VehicleEntrantPaymentInfo> create(PaymentInfoRequestAttributes attributes);
+  Specification<EntrantPaymentMatchInfo> create(PaymentInfoRequestAttributes attributes);
 }
