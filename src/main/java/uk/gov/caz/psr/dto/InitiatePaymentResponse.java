@@ -10,12 +10,15 @@ import uk.gov.caz.psr.model.Payment;
 @Value
 public class InitiatePaymentResponse {
   UUID paymentId;
+  String paymentProviderId;
+  Long centralReference;
   String nextUrl;
 
   /**
    * Creates an instance of this class based on the passed instance of {@link Payment} class.
    */
   public static InitiatePaymentResponse from(Payment payment) {
-    return new InitiatePaymentResponse(payment.getId(), payment.getNextUrl());
+    return new InitiatePaymentResponse(payment.getId(), payment.getExternalId(), 
+        payment.getReferenceNumber(), payment.getNextUrl());
   }
 }
