@@ -9,6 +9,7 @@ import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.repository.jpa.EntrantPaymentMatchInfoRepository;
 import uk.gov.caz.psr.service.paymentinfo.CazIdSpecification;
+import uk.gov.caz.psr.service.paymentinfo.LatestPaymentInfoSpecification;
 import uk.gov.caz.psr.service.paymentinfo.OmitNotPaidPaymentInfoSpecification;
 import uk.gov.caz.psr.service.paymentinfo.PaymentInfoSpecification;
 
@@ -21,6 +22,8 @@ public class ChargeSettlementPaymentInfoService {
 
   private static final OmitNotPaidPaymentInfoSpecification OMIT_NOT_PAID_PAYMENT_INFO_SPECIFICATION
       = new OmitNotPaidPaymentInfoSpecification();
+  private static final LatestPaymentInfoSpecification LATEST_PAYMENT_INFO_SPECIFICATION =
+      new LatestPaymentInfoSpecification();
 
   private final EntrantPaymentMatchInfoRepository entrantPaymentMatchInfoRepository;
   private final List<PaymentInfoSpecification> specifications;
@@ -47,6 +50,8 @@ public class ChargeSettlementPaymentInfoService {
    * does not include payments with {@code notPaid} status.
    */
   private Specification<EntrantPaymentMatchInfo> initialSpecification(UUID cazId) {
-    return CazIdSpecification.forCaz(cazId).and(OMIT_NOT_PAID_PAYMENT_INFO_SPECIFICATION);
+    return CazIdSpecification.forCaz(cazId)
+        .and(LATEST_PAYMENT_INFO_SPECIFICATION)
+        .and(OMIT_NOT_PAID_PAYMENT_INFO_SPECIFICATION);
   }
 }

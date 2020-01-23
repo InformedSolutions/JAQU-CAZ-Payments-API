@@ -6,6 +6,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.greaterThan;
 import static uk.gov.caz.psr.controller.ChargeSettlementController.BASE_PATH;
 
 import io.restassured.RestAssured;
@@ -71,8 +72,9 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("toDatePaidFor", toDatePaidFor.toString())
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .doesNotContainNotPaidEntries()
+            .containsReferenceNumbers()
             .containsExactlyLineItemsWithTravelDates(expectedPaidEntrantDate.toString())
             .totalLineItemsCountIsEqualTo(2);
 
@@ -92,7 +94,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("toDatePaidFor", toDatePaidFor.toString())
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .containsEmptyResults();
 
         verifyResultsWereFetchedByOneDatabaseQuery();
@@ -115,8 +117,9 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("fromDatePaidFor", fromDatePaidFor.toString())
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .doesNotContainNotPaidEntries()
+            .containsReferenceNumbers()
             .containsExactlyLineItemsWithTravelDates(fromDatePaidForAsString)
             .totalLineItemsCountIsEqualTo(2);
 
@@ -136,7 +139,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("fromDatePaidFor", fromDatePaidFor.toString())
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .containsEmptyResults();
 
         verifyResultsWereFetchedByOneDatabaseQuery();
@@ -160,7 +163,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("toDatePaidFor", toDatePaidForAsString)
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .containsEmptyResults();
 
         verifyResultsWereFetchedByOneDatabaseQuery();
@@ -179,8 +182,9 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("toDatePaidFor", toDatePaidForAsString)
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .doesNotContainNotPaidEntries()
+            .containsReferenceNumbers()
             .totalLineItemsCountIsEqualTo(expectedLineItemsCount);
 
         verifyResultsWereFetchedByOneDatabaseQuery();
@@ -201,7 +205,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("vrn", nonExistingVrn)
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .containsEmptyResults();
 
         verifyResultsWereFetchedByOneDatabaseQuery();
@@ -221,7 +225,7 @@ class ChargeSettlementPaymentInfoTestIT {
               .withParam("vrn", nonExistingVrn)
               .then()
               .headerContainsCorrelationId()
-              .reponseHasOkStatus()
+              .responseHasOkStatus()
               .containsEmptyResults();
 
           verifyResultsWereFetchedByOneDatabaseQuery();
@@ -240,7 +244,7 @@ class ChargeSettlementPaymentInfoTestIT {
               .withParam("vrn", nonExistingVrn)
               .then()
               .headerContainsCorrelationId()
-              .reponseHasOkStatus()
+              .responseHasOkStatus()
               .containsEmptyResults();
 
           verifyResultsWereFetchedByOneDatabaseQuery();
@@ -259,7 +263,7 @@ class ChargeSettlementPaymentInfoTestIT {
               .withParam("vrn", nonExistingVrn)
               .then()
               .headerContainsCorrelationId()
-              .reponseHasOkStatus()
+              .responseHasOkStatus()
               .containsEmptyResults();
 
           verifyResultsWereFetchedByOneDatabaseQuery();
@@ -283,10 +287,11 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("vrn", vrn)
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .containsExactlyVrns(vrn)
             .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02")
             .doesNotContainNotPaidEntries()
+            .containsReferenceNumbers()
             .totalLineItemsCountIsEqualTo(2);
 
         verifyResultsWereFetchedByOneDatabaseQuery();
@@ -309,8 +314,9 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("vrn", vrn)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .doesNotContainNotPaidEntries()
+                .containsReferenceNumbers()
                 .containsExactlyVrns(vrn)
                 .containsExactlyLineItemsWithTravelDates(expectedPaidEntrantDate.toString())
                 .totalLineItemsCountIsEqualTo(1);
@@ -333,7 +339,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("vrn", vrn)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .containsEmptyResults();
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -355,8 +361,9 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("vrn", vrn)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .doesNotContainNotPaidEntries()
+                .containsReferenceNumbers()
                 .containsExactlyVrns(vrn)
                 .containsExactlyLineItemsWithTravelDates(fromDatePaidForAsString)
                 .totalLineItemsCountIsEqualTo(1);
@@ -378,7 +385,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("vrn", vrn)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .containsEmptyResults();
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -403,8 +410,9 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("toDatePaidFor", toDatePaidForAsString)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .doesNotContainNotPaidEntries()
+                .containsReferenceNumbers()
                 .totalLineItemsCountIsEqualTo(expectedLineItemsCount);
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -425,7 +433,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("toDatePaidFor", toDatePaidForAsString)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .containsEmptyResults();
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -448,7 +456,7 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("paymentProviderId", nonExistingPaymentProviderId)
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .containsEmptyResults();
 
         verifyResultsWereFetchedByOneDatabaseQuery();
@@ -466,7 +474,7 @@ class ChargeSettlementPaymentInfoTestIT {
               .withParam("paymentProviderId", nonExistingPaymentProviderId)
               .then()
               .headerContainsCorrelationId()
-              .reponseHasOkStatus()
+              .responseHasOkStatus()
               .containsEmptyResults();
 
           verifyResultsWereFetchedByOneDatabaseQuery();
@@ -488,7 +496,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("paymentProviderId", nonExistingPaymentProviderId)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .containsEmptyResults();
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -509,7 +517,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("paymentProviderId", nonExistingPaymentProviderId)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .containsEmptyResults();
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -530,7 +538,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("paymentProviderId", nonExistingPaymentProviderId)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .containsEmptyResults();
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -549,7 +557,7 @@ class ChargeSettlementPaymentInfoTestIT {
               .withParam("paymentProviderId", nonExistingPaymentProviderId)
               .then()
               .headerContainsCorrelationId()
-              .reponseHasOkStatus()
+              .responseHasOkStatus()
               .containsEmptyResults();
 
           verifyResultsWereFetchedByOneDatabaseQuery();
@@ -571,7 +579,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("paymentProviderId", nonExistingPaymentProviderId)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .containsEmptyResults();
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -590,8 +598,9 @@ class ChargeSettlementPaymentInfoTestIT {
             .withParam("paymentProviderId", paymentProviderId)
             .then()
             .headerContainsCorrelationId()
-            .reponseHasOkStatus()
+            .responseHasOkStatus()
             .doesNotContainNotPaidEntries()
+            .containsReferenceNumbers()
             .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
             .containsExactlyVrns("AB11CDE")
             .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02")
@@ -615,8 +624,9 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("vrn", matchingVrn)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .doesNotContainNotPaidEntries()
+                .containsReferenceNumbers()
                 .containsExactlyVrns(matchingVrn)
                 .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                 .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02", "2019-11-03",
@@ -641,9 +651,10 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("vrn", matchingVrn)
                   .withParam("paymentProviderId", paymentProviderId)
                   .then()
-                  .reponseHasOkStatus()
+                  .responseHasOkStatus()
                   .headerContainsCorrelationId()
                   .doesNotContainNotPaidEntries()
+                  .containsReferenceNumbers()
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-03", "2019-11-04",
@@ -667,8 +678,9 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("paymentProviderId", paymentProviderId)
                   .then()
                   .headerContainsCorrelationId()
-                  .reponseHasOkStatus()
+                  .responseHasOkStatus()
                   .doesNotContainNotPaidEntries()
+                  .containsReferenceNumbers()
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-03");
@@ -691,8 +703,9 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("paymentProviderId", paymentProviderId)
                   .then()
                   .headerContainsCorrelationId()
-                  .reponseHasOkStatus()
+                  .responseHasOkStatus()
                   .doesNotContainNotPaidEntries()
+                  .containsReferenceNumbers()
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyVrns(matchingVrn)
                   .containsExactlyLineItemsWithTravelDates("2019-11-02");
@@ -714,7 +727,7 @@ class ChargeSettlementPaymentInfoTestIT {
                 .withParam("paymentProviderId", existingPaymentProviderId)
                 .then()
                 .headerContainsCorrelationId()
-                .reponseHasOkStatus()
+                .responseHasOkStatus()
                 .containsEmptyResults();
 
             verifyResultsWereFetchedByOneDatabaseQuery();
@@ -736,7 +749,7 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("paymentProviderId", existingPaymentProviderId)
                   .then()
                   .headerContainsCorrelationId()
-                  .reponseHasOkStatus()
+                  .responseHasOkStatus()
                   .containsEmptyResults();
 
               verifyResultsWereFetchedByOneDatabaseQuery();
@@ -757,7 +770,7 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("paymentProviderId", existingPaymentProviderId)
                   .then()
                   .headerContainsCorrelationId()
-                  .reponseHasOkStatus()
+                  .responseHasOkStatus()
                   .containsEmptyResults();
 
               verifyResultsWereFetchedByOneDatabaseQuery();
@@ -778,7 +791,7 @@ class ChargeSettlementPaymentInfoTestIT {
                   .withParam("paymentProviderId", existingPaymentProviderId)
                   .then()
                   .headerContainsCorrelationId()
-                  .reponseHasOkStatus()
+                  .responseHasOkStatus()
                   .containsEmptyResults();
 
               verifyResultsWereFetchedByOneDatabaseQuery();
@@ -793,6 +806,9 @@ class ChargeSettlementPaymentInfoTestIT {
 
     private static final String TOTAL_LINE_ITEMS_CNT = "results.collect { it.payments.collect "
         + "{ it.lineItems.size() }.sum() }.sum()";
+    private static final String REFERENCE_NUMBERS_CNT = "results.payments.collect "
+        + "{ it.cazPaymentReference }.findAll().flatten().size()";
+
     private RequestSpecification requestSpecification = commonRequestSpecification();
     private ValidatableResponse validatableResponse;
 
@@ -816,7 +832,7 @@ class ChargeSettlementPaymentInfoTestIT {
       return this;
     }
 
-    public PaymentInfoAssertion reponseHasOkStatus() {
+    public PaymentInfoAssertion responseHasOkStatus() {
       validatableResponse = validatableResponse.statusCode(HttpStatus.OK.value());
       return this;
     }
@@ -841,12 +857,8 @@ class ChargeSettlementPaymentInfoTestIT {
     }
 
     public PaymentInfoAssertion totalLineItemsCountIsEqualTo(int lineItemsCount) {
-      validatableResponse.body(TOTAL_LINE_ITEMS_CNT, equalTo(normalize(lineItemsCount)));
+      validatableResponse.body(TOTAL_LINE_ITEMS_CNT, equalTo(lineItemsCount));
       return this;
-    }
-
-    private Integer normalize(int lineItemsCount) {
-      return lineItemsCount == 0 ? null : lineItemsCount;
     }
 
     public PaymentInfoAssertion containsOnePaymentWithProviderIdEqualTo(String paymentProviderId) {
@@ -866,6 +878,11 @@ class ChargeSettlementPaymentInfoTestIT {
     public PaymentInfoAssertion doesNotContainNotPaidEntries() {
       validatableResponse.body("results.payments.lineItems.findAll { it.paymentStatus == "
           + "'notPaid' }.paymentStatus.flatten().toSet().size()", equalTo(0));
+      return this;
+    }
+
+    public PaymentInfoAssertion containsReferenceNumbers() {
+      validatableResponse.body(REFERENCE_NUMBERS_CNT, greaterThan(0));
       return this;
     }
   }
@@ -937,7 +954,9 @@ class ChargeSettlementPaymentInfoTestIT {
         Arguments.of("1998-05-01", "2003-01-02"),
         Arguments.of("2019-11-09", "2019-11-09"),
         Arguments.of("2019-11-09", "2019-11-10"),
-        Arguments.of("2019-10-30", "2019-10-31")
+        Arguments.of("2019-10-30", "2019-10-31"),
+        Arguments.of("2019-11-07", "2025-02-19"),
+        Arguments.of("2019-11-07", "2031-09-22")
     );
   }
 
@@ -947,9 +966,8 @@ class ChargeSettlementPaymentInfoTestIT {
         Arguments.of("2019-10-31", "2019-11-02", 4),
         Arguments.of("1993-04-18", "2019-11-02", 4),
         Arguments.of("2019-11-02", "2019-11-06", 5),
-        Arguments.of("2019-11-03", "2019-11-07", 3),
-        Arguments.of("2019-11-07", "2025-02-19", 0),
-        Arguments.of("2019-11-07", "2031-09-22", 0)
+        Arguments.of("2019-11-03", "2019-11-07", 3)
+
     );
   }
 

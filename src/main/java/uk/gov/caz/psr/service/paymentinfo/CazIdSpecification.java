@@ -28,17 +28,15 @@ public class CazIdSpecification implements Specification<EntrantPaymentMatchInfo
     QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo);
     Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin =
         QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
-    return criteriaBuilder.and(
-        criteriaBuilder.isTrue(root.get(EntrantPaymentMatchInfo_.latest)), // TODO extract
-        criteriaBuilder.equal(
-            entrantPaymentInfoJoin.get(EntrantPaymentInfo_.cleanAirZoneId),
-            cazId
-        ));
+    return criteriaBuilder.equal(
+        entrantPaymentInfoJoin.get(EntrantPaymentInfo_.cleanAirZoneId),
+        cazId
+    );
   }
 
   /**
-   * Static factory method for creating {@link CazIdSpecification} instances with the passed
-   * {@code cazId}.
+   * Static factory method for creating {@link CazIdSpecification} instances with the passed {@code
+   * cazId}.
    */
   public static CazIdSpecification forCaz(UUID cazId) {
     return new CazIdSpecification(cazId);
