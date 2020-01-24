@@ -1,13 +1,13 @@
 package uk.gov.caz.psr.service;
 
 import com.google.common.base.Stopwatch;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.repository.PaymentRepository;
 
 /**
  * Service responsible for updating statuses of old, unfinished payments.
@@ -17,7 +17,7 @@ import uk.gov.caz.psr.model.Payment;
 @Slf4j
 public class CleanupDanglingPaymentsService {
 
-  //  private final PaymentRepository paymentRepository;
+  private final PaymentRepository paymentRepository;
   private final CleanupDanglingPaymentService cleanupDanglingPaymentService;
 
   /**
@@ -27,9 +27,7 @@ public class CleanupDanglingPaymentsService {
   public void updateStatusesOfDanglingPayments() {
     log.info("Cleaning up dangling payments - start");
     Stopwatch stopwatch = Stopwatch.createStarted();
-    //    TODO: Fix with the payment updates CAZ-1716
-    //    List<Payment> danglingPayments = paymentRepository.findDanglingPayments();
-    List<Payment> danglingPayments = new ArrayList<>();
+    List<Payment> danglingPayments = paymentRepository.findDanglingPayments();
     log.info("Found {} dangling payments", danglingPayments.size());
     for (Payment danglingPayment : danglingPayments) {
       processDanglingPayment(danglingPayment);
