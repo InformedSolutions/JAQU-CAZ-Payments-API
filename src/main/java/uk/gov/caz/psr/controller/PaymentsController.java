@@ -1,5 +1,8 @@
 package uk.gov.caz.psr.controller;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -9,9 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
+import uk.gov.caz.psr.dto.PaidPaymentsRequest;
+import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 
@@ -22,8 +29,12 @@ public class PaymentsController implements PaymentsControllerApiSpec {
 
   public static final String BASE_PATH = "/v1/payments";
 
+  @VisibleForTesting
+  public static final String GET_PAID_VEHICLE_ENTRANTS = "paid";
+
   private final InitiatePaymentService initiatePaymentService;
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
+  private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
 
   @Override
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(InitiatePaymentRequest request) {
@@ -40,5 +51,20 @@ public class PaymentsController implements PaymentsControllerApiSpec {
     return payment.map(ReconcilePaymentResponse::from)
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
+  }
+
+  @Override
+  public ResponseEntity<PaidPaymentsResponse> getPaidEntrantPayment(
+      PaidPaymentsRequest paymentsRequest, UUID cleanAirZoneId) {
+    paymentsRequest.validate();
+
+    Map<String, List<EntrantPayment>> results = getPaidEntrantPaymentsService.getResults(
+        paymentsRequest.getVrns(),
+        paymentsRequest.getStartDate(),
+        paymentsRequest.getEndDate(),
+        cleanAirZoneId
+    );
+
+    return ResponseEntity.ok(PaidPaymentsResponse.from(results));
   }
 }
