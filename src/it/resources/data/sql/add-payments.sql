@@ -6,10 +6,10 @@ INSERT INTO caz_payment.t_payment(
 	  ('dabc1391-ff31-427a-8000-69037deb2d3a', 'CREDIT_DEBIT_CARD', '98765test', 100, now(), now());
 
 INSERT INTO caz_payment.t_clean_air_zone_entrant_payment(
-	clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, charge, payment_status)
+	clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, charge, payment_status, update_actor)
 	VALUES
-	  ('43ea77cc-93cb-4df3-b731-5244c0de9cc8', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-01', 50, 'PAID'),
-	  ('688f8278-2f0f-4710-bb7c-6b0cca04c1bc', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-03', 50, 'PAID'),
-	  ('9cc2dd1a-905e-4eaf-af85-0b14f95aab89', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-02', 100, 'PAID'),
-	  ('00136ccf-e41b-4ce2-b044-7616aa589aa2', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-02', 100, 'PAID'),
-	  ('21b7049d-b978-482f-a882-4de6bb9d699c', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-04', 100, 'PAID');
+	  ('43ea77cc-93cb-4df3-b731-5244c0de9cc8', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-01', 50, 'PAID', 'VCCS_API'),
+	  ('688f8278-2f0f-4710-bb7c-6b0cca04c1bc', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-02', 50, 'PAID', 'VCCS_API'),
+	  ('9cc2dd1a-905e-4eaf-af85-0b14f95aab89', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-03', 100, 'PAID', 'VCCS_API'),
+	  ('00136ccf-e41b-4ce2-b044-7616aa589aa2', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-04', 100, 'PAID', 'VCCS_API'),
+	  ('21b7049d-b978-482f-a882-4de6bb9d699c', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-05', 100, 'PAID', 'VCCS_API');

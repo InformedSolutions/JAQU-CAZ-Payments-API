@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.model.EntrantPayment;
@@ -25,6 +25,7 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.util.EntrantPaymentStatusUpdateConverter;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPaymentStatusUpdates;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -38,8 +39,18 @@ public class PaymentStatusUpdateServiceTest {
   @Mock
   private PaymentRepository paymentRepository;
 
-  @InjectMocks
+  private EntrantPaymentStatusUpdateConverter entrantPaymentStatusUpdateConverter =
+      new EntrantPaymentStatusUpdateConverter();
+
   private PaymentStatusUpdateService paymentStatusUpdateService;
+
+  @BeforeEach
+  public void beforeEach() {
+    paymentStatusUpdateService = new PaymentStatusUpdateService(
+        entrantPaymentRepository,
+        paymentRepository,
+        entrantPaymentStatusUpdateConverter);
+  }
 
   @Test
   public void shouldThrowNullPointerExceptionWhenProvidedListIsNull() {
@@ -62,7 +73,7 @@ public class PaymentStatusUpdateServiceTest {
     // given
     List<EntrantPaymentStatusUpdate> entrantPaymentStatusUpdatesList = Arrays
         .asList(EntrantPaymentStatusUpdates.any());
-    mockVehicleEntrantPaymentFound();
+    mockEntrantPaymentFound();
     mockPaymentNotFound();
 
     // when
@@ -78,7 +89,7 @@ public class PaymentStatusUpdateServiceTest {
     List<EntrantPaymentStatusUpdate> entrantPaymentStatusUpdatesList = Arrays.asList(
         EntrantPaymentStatusUpdates.any(), EntrantPaymentStatusUpdates.any()
     );
-    mockVehicleEntrantPaymentFound();
+    mockEntrantPaymentFound();
     mockPaymentFound();
 
     // when
@@ -96,7 +107,7 @@ public class PaymentStatusUpdateServiceTest {
         entrantPaymentStatusUpdate
     );
     EntrantPayment foundVehicleEntrantPayment = EntrantPayments.anyPaid();
-    mockVehicleEntrantPaymentFoundWith(foundVehicleEntrantPayment);
+    mockEntrantPaymentFoundWith(foundVehicleEntrantPayment);
     mockPaymentFound();
     EntrantPayment expectedEntrantPayment = foundVehicleEntrantPayment.toBuilder()
         .internalPaymentStatus(entrantPaymentStatusUpdate.getPaymentStatus())
@@ -112,17 +123,41 @@ public class PaymentStatusUpdateServiceTest {
     verify(entrantPaymentRepository).update(expectedEntrantPayment);
   }
 
+  @Test
+  public void shouldCreateNewEntrantPaymentWhenNoEntrantPaymentFound() {
+    // given
+    EntrantPaymentStatusUpdate statusUpdate = EntrantPaymentStatusUpdates.any();
+    EntrantPayment expectedEntrantPayment = buildExpectedEntrantPaymentFrom(statusUpdate);
+    List<EntrantPaymentStatusUpdate> entrantPaymentStatusUpdates = Arrays
+        .asList(statusUpdate);
+    mockEntrantPaymentNotFound();
 
-  private void mockVehicleEntrantPaymentFoundWith(EntrantPayment entrantPayment) {
+    // when
+    paymentStatusUpdateService.process(entrantPaymentStatusUpdates);
+
+    // then
+    verify(entrantPaymentRepository).insert(expectedEntrantPayment);
+  }
+
+  private EntrantPayment buildExpectedEntrantPaymentFrom(EntrantPaymentStatusUpdate statusUpdate) {
+    return entrantPaymentStatusUpdateConverter.convert(statusUpdate);
+  }
+
+  private void mockEntrantPaymentFoundWith(EntrantPayment entrantPayment) {
     given(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
         .willReturn(java.util.Optional.ofNullable(entrantPayment));
   }
 
-  private void mockVehicleEntrantPaymentFound() {
+  private void mockEntrantPaymentFound() {
     EntrantPayment entrantPayment = EntrantPayments.anyPaid();
 
     given(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
         .willReturn(java.util.Optional.ofNullable(entrantPayment));
+  }
+
+  private void mockEntrantPaymentNotFound() {
+    given(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
+        .willReturn(Optional.empty());
   }
 
   private void mockPaymentNotFound() {
