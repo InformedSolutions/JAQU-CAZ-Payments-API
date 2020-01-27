@@ -17,6 +17,7 @@ import static uk.gov.caz.security.SecurityHeadersInjector.X_FRAME_OPTIONS_VALUE;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -71,6 +72,8 @@ public class SuccessAddingVehicleEntrantIT {
         .then()
         .entrantPaymentMatchIsNotCreatedInDatabase()
         .entrantPaymentIsCreatedInDatabase()
+		.masterRecordCreatedInDatabase()
+		.detailRecordCreatedInDatabase(dayWithoutEntrantPayment)
         .andHasVehicleEntrantCapturedSetToTrue();
   }
 
@@ -144,6 +147,17 @@ public class SuccessAddingVehicleEntrantIT {
       verifyThatVehicleEntrantExists();
       return this;
     }
+	
+	public VehicleEntrantJourneyAssertion masterRecordCreatedInDatabase() {
+	  verifyThatMasterTableUpdated();
+	  return this;
+	}
+
+    public VehicleEntrantJourneyAssertion detailRecordCreatedInDatabase(
+        LocalDateTime dayWithoutEntrantPayment) {
+      verifyThatDetailTableUpdated(dayWithoutEntrantPayment);
+      return this;
+    }
 
     public VehicleEntrantJourneyAssertion entrantPaymentMatchIsNotCreatedInDatabase() {
       verifyThatNoEntrantPaymentMatchIsCreated();
@@ -181,6 +195,22 @@ public class SuccessAddingVehicleEntrantIT {
               + " ' AND "
               + "vrn = '" + createdRecordData.getVrn() + "'");
       assertThat(cazEntrantPaymentsCount).isEqualTo(1);
+    }
+
+    private void verifyThatMasterTableUpdated() {
+      VehicleEntrantDto createdRecordData = vehicleEntrantDtos.get(0);
+      int masterRecordCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "caz_payment_audit.t_clean_air_zone_payment_master",
+          "clean_air_zone_id = '" + createdRecordData.getCleanZoneId().toString() + "' AND "
+              + "vrn = '" + createdRecordData.getVrn() + "'");
+      assertThat(masterRecordCount).isEqualTo(1);
+    }
+    
+    private void verifyThatDetailTableUpdated(LocalDateTime travelDate) {
+      int detailRecordCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "caz_payment_audit.t_clean_air_zone_payment_detail",
+          "travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE));
+      assertThat(detailRecordCount).isEqualTo(1);
     }
 
     @SneakyThrows
