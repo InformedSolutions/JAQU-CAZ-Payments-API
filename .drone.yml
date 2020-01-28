@@ -446,7 +446,7 @@ steps:
       - chmod +x ../../../../bin/tf
       - tf init
       - tf workspace select default
-      - tf plan -auto-approve
+      - tf plan
       - cd ../01.networking
       - tf init
       - tf workspace select st || tf workspace new st
@@ -468,7 +468,7 @@ steps:
         from_secret: github_private_key
     when:
       event:
-        - push
+        - pull_request
 
   # Invoke terraform scripts to deploy lambda function
   - name: deploy to st
