@@ -542,7 +542,7 @@ class ChargeSettlementControllerTest {
     @Test
     public void blankCaseReferenceShouldResultIn400() throws Exception {
       String payload = requestWithStatusUpdates(
-          Collections.singletonList(PaymentStatusUpdateDetailsFactory.anyInvalid()));
+          Collections.singletonList(PaymentStatusUpdateDetailsFactory.anyWithoutCaseReference()));
 
       mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
           .content(payload)

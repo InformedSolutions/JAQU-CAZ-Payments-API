@@ -12,6 +12,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
@@ -242,9 +243,23 @@ public class TestObjectFactory {
           .dateOfCazEntry(date).build();
     }
 
-    public static PaymentStatusUpdateDetails anyInvalid() {
+    public static PaymentStatusUpdateDetails anyWithoutCaseReference() {
       return PaymentStatusUpdateDetails.builder()
           .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .dateOfCazEntry(LocalDate.now())
+          .build();
+    }
+
+    public static PaymentStatusUpdateDetails anyWithoutDateOfCazEntry() {
+      return PaymentStatusUpdateDetails.builder()
+          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .caseReference("CaseReference")
+          .build();
+    }
+
+    public static PaymentStatusUpdateDetails anyWithoutPaymentStatus() {
+      return PaymentStatusUpdateDetails.builder()
+          .caseReference("CaseReference")
           .dateOfCazEntry(LocalDate.now())
           .build();
     }
@@ -280,6 +295,13 @@ public class TestObjectFactory {
         String caseReference, String externalId, Long paymentReference) {
       return PaymentStatus.builder().caseReference(caseReference).paymentReference(paymentReference).status(internalPaymentStatus)
           .externalId(externalId).build();
+    }
+  }
+  
+  public static class PaymentStatusErrorFactory {
+    public static PaymentStatusErrorResponse with(String title, String detail, String field) {
+      return PaymentStatusErrorResponse.builder().title(title).detail(detail)
+          .field(field).build();
     }
   }
 

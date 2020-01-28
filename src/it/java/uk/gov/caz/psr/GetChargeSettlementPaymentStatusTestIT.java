@@ -6,7 +6,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.SneakyThrows;
+import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -20,11 +23,14 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
 import uk.gov.caz.psr.dto.Headers;
+import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
+import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.repository.PaymentStatusRepository;
+import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusErrorFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusFactory;
 
 @Sql(scripts = "classpath:data/sql/add-payments-for-payment-status.sql",
@@ -51,6 +57,9 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private static final Long PAYMENT_REFERENCE_UNPAID = (long) 3000;
   private static final String PAYMENT_STATUS_GET_PATH = ChargeSettlementController.BASE_PATH +
       ChargeSettlementController.PAYMENT_STATUS_PATH;
+  
+  private static final String ERROR_RESPONSE_TITLE = "Parameter validation error";
+  private static final String ERROR_RESPONSE_DETAIL = "? is mandatory and cannot be blank";
 
   @Autowired
   private MockMvc mockMvc;
@@ -166,6 +175,18 @@ public class GetChargeSettlementPaymentStatusTestIT {
             getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
                 VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
   }
+  @Test
+  public void shouldReturn400WithoutVrnOrDateOfCazEntry() throws Exception {
+    mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
+        .header(Headers.X_API_KEY, VALID_CAZ_ID))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().json(
+            getErrorResponse()));
+  }
 
   private String getNotPaidResponse() {
     PaymentStatusResponse paymentStatusResponse = PaymentStatusResponse
@@ -185,6 +206,15 @@ public class GetChargeSettlementPaymentStatusTestIT {
         ));
 
     return toJsonString(paymentStatusResponse);
+  }
+  
+  private String getErrorResponse() {
+    PaymentStatusErrorsResponse paymentStatusErrorsResponse = PaymentStatusErrorsResponse
+        .from(new ArrayList<PaymentStatusErrorResponse>() {{
+          add(PaymentStatusErrorFactory.with(ERROR_RESPONSE_TITLE, ERROR_RESPONSE_DETAIL.replace("?", "\"dateOfCazEntry\""), "dateOfCazEntry"));
+          add(PaymentStatusErrorFactory.with(ERROR_RESPONSE_TITLE, ERROR_RESPONSE_DETAIL.replace("?", "\"vrn\""), "vrn"));
+        }});
+    return toJsonString(paymentStatusErrorsResponse);
   }
 
   @SneakyThrows

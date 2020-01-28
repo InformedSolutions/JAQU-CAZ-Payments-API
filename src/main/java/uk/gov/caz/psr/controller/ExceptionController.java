@@ -1,3 +1,4 @@
+
 package uk.gov.caz.psr.controller;
 
 import java.util.List;
@@ -75,7 +76,7 @@ public class ExceptionController extends GlobalExceptionHandler {
 
   /**
    * Method to handle Exception while validation of request DTO failed with {@link
-   * PaymentStatusDtoValidationException}.
+   * PaymentInfoDtoValidationException}.
    *
    * @param ex Exception object.
    */

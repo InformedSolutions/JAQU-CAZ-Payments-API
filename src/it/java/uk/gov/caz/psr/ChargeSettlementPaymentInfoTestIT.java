@@ -801,6 +801,18 @@ class ChargeSettlementPaymentInfoTestIT {
       }
     }
   }
+  
+  @Nested
+  class WhenInvalidRequest {
+    
+    @Test
+    public void shouldReturn400ResponseWhenNoParametersGiven() {
+      PaymentInfoAssertion.whenRequested()
+          .then()
+          .headerContainsCorrelationId()
+          .responseHasBadRequestStatus();
+    }    
+  }
 
   private static class PaymentInfoAssertion {
 
@@ -834,6 +846,11 @@ class ChargeSettlementPaymentInfoTestIT {
 
     public PaymentInfoAssertion responseHasOkStatus() {
       validatableResponse = validatableResponse.statusCode(HttpStatus.OK.value());
+      return this;
+    }
+    
+    public PaymentInfoAssertion responseHasBadRequestStatus() {
+      validatableResponse = validatableResponse.statusCode(HttpStatus.BAD_REQUEST.value());
       return this;
     }
 

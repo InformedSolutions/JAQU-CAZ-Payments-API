@@ -60,6 +60,10 @@ public class ErrorPaymentStatusUpdateTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private JdbcTemplate jdbcTemplate;
+  
+  private static final String TEST_VRN = "CAS300";
+  private static final String NOT_NULL = "must not be null";
+  private static final String NOT_EMPTY = " is mandatory and cannot be blank";
 
   @BeforeEach
   public void startMockServer() {
@@ -70,31 +74,94 @@ public class ErrorPaymentStatusUpdateTestIT {
   }
 
   @Test
-  public void errorsPaymentStatusUpdateJourney() {
+  public void paymentStatusUpdateWithoutVrn() {
     // when invalid request submitted
     given()
-        .paymentStatusUpdateRequest(invalidPaymentStatusUpdateRequest())
-        .whenInvalidRequestSubmitted()
+        .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutVrn())
+        .whenRequestSubmitted("vrn", NOT_EMPTY)
         .then()
         .noEntrantPaymentUpdatedInDatabase();
 
     // TODO: CAZ-1725
     // Test for EntrantPayment with associated Payment which has INPROGRESS status
   }
+  
+  @Test
+  public void paymentStatusUpdateWithoutDateOfCazEntry() {
+    given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutDateOfCazEntry())
+        .whenRequestSubmitted("statusUpdates[0].dateOfCazEntry", NOT_NULL)
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();
+  }
+  
+  @Test
+  public void paymentStatusUpdateWithoutPaymentStatus() {
+    given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutPaymentStatus())
+        .whenRequestSubmitted("statusUpdates[0].paymentStatus", NOT_NULL)
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();
+  }
+  
+  @Test
+  public void paymentStatusUpdateWithoutCaseReference() {
+    given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutCaseReference())
+        .whenRequestSubmitted("statusUpdates[0].caseReference", NOT_EMPTY)
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();
+  }
 
   private PaymentStatusUpdateJourneyAssertion given() {
     return new PaymentStatusUpdateJourneyAssertion(objectMapper, jdbcTemplate);
   }
 
-  private PaymentStatusUpdateRequest invalidPaymentStatusUpdateRequest() {
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithoutVrn() {
     return PaymentStatusUpdateRequest.builder()
         .statusUpdates(exampleStatusUpdates())
+        .build();
+  }
+
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithoutDateOfCazEntry() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn(TEST_VRN)
+        .statusUpdates(statusUpdatesWithoutDateOfCazEntry())
+        .build();
+  }
+
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithoutCaseReference() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn(TEST_VRN)
+        .statusUpdates(statusUpdatesWithoutCaseReference())
+        .build();
+  }
+
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithoutPaymentStatus() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn(TEST_VRN)
+        .statusUpdates(statusUpdatesWithoutPaymentStatus())
         .build();
   }
 
   private List<PaymentStatusUpdateDetails> exampleStatusUpdates() {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 2))
+    );
+  }
+  
+  private List<PaymentStatusUpdateDetails> statusUpdatesWithoutCaseReference() {
+    return Arrays.asList(
+        PaymentStatusUpdateDetailsFactory.anyWithoutCaseReference()
+    );
+  }
+  
+  private List<PaymentStatusUpdateDetails> statusUpdatesWithoutDateOfCazEntry() {
+    return Arrays.asList(
+        PaymentStatusUpdateDetailsFactory.anyWithoutDateOfCazEntry()
+    );
+  }
+  
+  private List<PaymentStatusUpdateDetails> statusUpdatesWithoutPaymentStatus() {
+    return Arrays.asList(
+        PaymentStatusUpdateDetailsFactory.anyWithoutPaymentStatus()
     );
   }
 
@@ -117,7 +184,7 @@ public class ErrorPaymentStatusUpdateTestIT {
       return this;
     }
 
-    public PaymentStatusUpdateJourneyAssertion whenInvalidRequestSubmitted() {
+    public PaymentStatusUpdateJourneyAssertion whenRequestSubmitted(String errorField, String msg) {
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
 
       RestAssured
@@ -139,9 +206,9 @@ public class ErrorPaymentStatusUpdateTestIT {
           .header(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_VALUE)
           .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
           .statusCode(HttpStatus.BAD_REQUEST.value())
-          .body("errors[0].vrn", equalTo(null))
-          .body("errors[0].field", containsString("vrn"))
-          .body("errors[0].detail", containsString("\"vrn\" is mandatory and cannot be blank"));
+          .body("errors[0].vrn", equalTo(errorField.equals("vrn") ? null : TEST_VRN))
+          .body("errors[0].field", equalTo(errorField))
+          .body("errors[0].detail", containsString(msg));
       return this;
     }
 
