@@ -37,6 +37,7 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.VehicleEntrantController;
 import uk.gov.caz.psr.dto.VehicleEntrantDto;
+import uk.gov.caz.psr.util.AuditTableWrapper;
 
 @FullyRunningServerIntegrationTest
 @Sql(scripts = "classpath:data/sql/add-entrant-payments.sql",
@@ -153,9 +154,11 @@ public class SuccessAddingVehicleEntrantIT {
 	  return this;
 	}
 
-    public VehicleEntrantJourneyAssertion detailRecordCreatedInDatabase(
-        LocalDateTime dayWithoutEntrantPayment) {
-      verifyThatDetailTableUpdated(dayWithoutEntrantPayment);
+    public VehicleEntrantJourneyAssertion detailRecordCreatedInDatabase(LocalDateTime travelDate) {
+      int detailRecordsBefore = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
+          "caz_payment_audit.t_clean_air_zone_payment_detail",
+          "travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
+      verifyThatDetailTableUpdated(travelDate, detailRecordsBefore);
       return this;
     }
 
@@ -206,10 +209,15 @@ public class SuccessAddingVehicleEntrantIT {
       assertThat(masterRecordCount).isEqualTo(1);
     }
     
-    private void verifyThatDetailTableUpdated(LocalDateTime travelDate) {
+    private void verifyThatDetailTableUpdated(LocalDateTime travelDate, int detailRecords) {
+      VehicleEntrantDto createdRecordData = vehicleEntrantDtos.get(0);
+      Object[] params = new Object[] {createdRecordData.getVrn(), createdRecordData.getCleanZoneId()};
+      UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, 
+          params, UUID.class);
       int detailRecordCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment_audit.t_clean_air_zone_payment_detail",
-          "travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE));
+          "clean_air_zone_payment_master_id = '" + masterId +
+          "' AND travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
       assertThat(detailRecordCount).isEqualTo(1);
     }
 
