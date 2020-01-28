@@ -403,36 +403,6 @@ steps:
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 
-  # Scan with sonar
-  - name: sonar scan
-    image: payments-api-base
-    volumes:
-      - name: package_directory
-        path: /drone/src/target
-      - name: m2_repo
-        path: /root/.m2
-    environment:
-      JAQU_NEXUS_URL:
-        from_secret: nexus_url
-      JAQU_NEXUS_USER:
-        from_secret: nexus_username
-      JAQU_NEXUS_PASSWORD:
-        from_secret: nexus_password
-      SONAR_HOst:
-        from_secret: sonar_host
-      SONAR_TOKEN:
-        from_secret: sonar_token
-    pull: never
-    commands:
-      #  TODO add src/test/java to sonar.tests once they are present
-      - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOst
-        -Dsonar.projectKey=${DRONE_REPO}
-        -Dsonar.projectName=${DRONE_REPO}
-        -Dsonar.login=$SONAR_TOKEN
-        -Dsonar.coverage.jacoco.xmlReportPaths=/drone/src/target/ste/jacoco-aggregate/jacoco.xml
-        -Dsonar.tests=src/it/java
-        --no-transfer-progress
-
   # Package
   - name: package
     image: payments-api-base
