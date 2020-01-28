@@ -328,16 +328,17 @@ services:
   - name: postgres
     image: postgres:11-alpine
     environment:
-      POstGRES_USER: postgres
-      POstGRES_PASSWORD: postgres
-      POstGRES_DB: caz_payments
+      POSTGRES_USER: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_USER: caz_payments
     ports:
       - 5432
+
   - name: localstack
     image: localstack/localstack:0.10.2
     environment:
       SERVICES: sqs, secretsmanager
-      HOstNAME_EXTERNAL: localstack
+      HOSTNAME_EXTERNAL: localstack
     ports:
       - 4576
       - 4584
