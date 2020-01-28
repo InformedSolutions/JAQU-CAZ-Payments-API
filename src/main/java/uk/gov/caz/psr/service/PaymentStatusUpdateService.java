@@ -6,12 +6,15 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.service.exception.PaymentNotProcessedException;
+import uk.gov.caz.psr.util.EntrantPaymentStatusUpdateConverter;
 
 /**
  * A service which updates {@code paymentStatus} for all found {@link EntrantPayment}.
@@ -23,6 +26,7 @@ public class PaymentStatusUpdateService {
 
   private final EntrantPaymentRepository entrantPaymentRepository;
   private final PaymentRepository paymentRepository;
+  private final EntrantPaymentStatusUpdateConverter entrantPaymentStatusUpdateConverter;
 
   /**
    * Process update of the {@link EntrantPayment} with provided details.
@@ -30,6 +34,7 @@ public class PaymentStatusUpdateService {
    * @param entrantPaymentStatusUpdates list of {@link EntrantPaymentStatusUpdate} which
    *     contains data to find and update {@link EntrantPayment}.
    */
+  @Transactional
   public void process(
       List<EntrantPaymentStatusUpdate> entrantPaymentStatusUpdates) {
     Preconditions.checkNotNull(entrantPaymentStatusUpdates,
@@ -41,27 +46,38 @@ public class PaymentStatusUpdateService {
       if (entrantPayment.isPresent()) {
         handleUpdateEntrantPayment(entrantPayment.get(), entrantPaymentStatusUpdate);
       } else {
-        handleNewEntrantPayment();
+        handleNewEntrantPayment(entrantPaymentStatusUpdate);
       }
     }
   }
 
-  private void handleNewEntrantPayment() {
-    // TODO: Implement in CAZ-1723
+  private void handleNewEntrantPayment(EntrantPaymentStatusUpdate entrantPaymentStatusUpdate) {
+    entrantPaymentRepository.insert(makeNewEntrantPayment(entrantPaymentStatusUpdate));
+    log.info("Created new EntrantPayment from the following statusUpdate: {}",
+        entrantPaymentStatusUpdate);
   }
 
   private void handleUpdateEntrantPayment(EntrantPayment entrantPayment,
       EntrantPaymentStatusUpdate entrantPaymentStatusUpdate) {
-    Optional<Payment> payment = paymentRepository
-        .findByEntrantPayment(entrantPayment.getCleanAirZoneEntrantPaymentId());
-
-    if (payment.isPresent() && payment.get().getExternalPaymentStatus().isNotFinished()) {
-      // TODO: Implement in CAZ-1725
-      log.info("To be implemented");
-    }
+    verifyOptionalPayment(entrantPayment);
 
     entrantPaymentRepository
         .update(prepareUpdateEntrantPayment(entrantPayment, entrantPaymentStatusUpdate));
+
+    log.info("Updated EntrantPayment from the following statusUpdate: {}",
+        entrantPaymentStatusUpdate);
+  }
+
+  private void verifyOptionalPayment(EntrantPayment entrantPayment) {
+    Payment payment = paymentRepository
+        .findByEntrantPayment(entrantPayment.getCleanAirZoneEntrantPaymentId())
+        .orElse(null);
+
+    if (payment != null && payment.getExternalPaymentStatus()
+        .isNotFinished()) {
+      log.error("Payment with ID: {} is still being processed.", payment.getId());
+      throw new PaymentNotProcessedException("Payment is still being processed");
+    }
   }
 
   /**
@@ -79,6 +95,19 @@ public class PaymentStatusUpdateService {
         .caseReference(entrantPaymentStatusUpdate.getCaseReference())
         .updateActor(EntrantPaymentUpdateActor.LA)
         .build();
+  }
+
+  /**
+   * Builds a new instance of {@link EntrantPayment} with attributes assigned by Local Authority,
+   * with zero charge.
+   *
+   * @param statusUpdate {@link EntrantPaymentStatusUpdate} object used to initialize new
+   *     record.
+   * @return entrantPayment {@link EntrantPayment} which is supposed to be persisted in the
+   *     database.
+   */
+  private EntrantPayment makeNewEntrantPayment(EntrantPaymentStatusUpdate statusUpdate) {
+    return entrantPaymentStatusUpdateConverter.convert(statusUpdate);
   }
 
   /**

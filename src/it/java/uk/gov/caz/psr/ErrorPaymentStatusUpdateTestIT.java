@@ -27,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -40,15 +39,15 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
+import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
 
-@Disabled("Because of ERD updates")
 @FullyRunningServerIntegrationTest
-@Sql(scripts = "classpath:data/sql/add-payments.sql",
+@Sql(scripts = "classpath:data/sql/add-payments-for-payment-status.sql",
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
@@ -78,21 +77,13 @@ public class ErrorPaymentStatusUpdateTestIT {
         .paymentStatusUpdateRequest(invalidPaymentStatusUpdateRequest())
         .whenInvalidRequestSubmitted()
         .then()
-        .noVehicleEntrantPaymentUpdatedInDatabase();
+        .noEntrantPaymentUpdatedInDatabase();
 
-    // when not able to find VehicleEntrantPayment
     given()
-        .paymentStatusUpdateRequest(paymentStatusUpdateRequestForMissing())
-        .whenMissingVehicleEntrantPaymentSubmitted()
+        .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithUnfinishedPayment())
+        .whenRequestSubmitted()
         .then()
-        .noVehicleEntrantPaymentUpdatedInDatabase();
-
-    // when not unique multiple VehicleEntrantPayment found
-    given()
-        .paymentStatusUpdateRequest(paymentStatusUpdateRequestFotNotUnique())
-        .whenNotUniqueVehicleEntrantPaymentSubmitted()
-        .then()
-        .noVehicleEntrantPaymentUpdatedInDatabase();
+        .noEntrantPaymentUpdatedInDatabase();
   }
 
   private PaymentStatusUpdateJourneyAssertion given() {
@@ -105,17 +96,10 @@ public class ErrorPaymentStatusUpdateTestIT {
         .build();
   }
 
-  private PaymentStatusUpdateRequest paymentStatusUpdateRequestForMissing() {
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithUnfinishedPayment() {
     return PaymentStatusUpdateRequest.builder()
-        .vrn("INVALID")
-        .statusUpdates(exampleStatusUpdates())
-        .build();
-  }
-
-  private PaymentStatusUpdateRequest paymentStatusUpdateRequestFotNotUnique() {
-    return PaymentStatusUpdateRequest.builder()
-        .vrn("ND84VSX")
-        .statusUpdates(exampleStatusUpdates())
+        .statusUpdates(unfinishedPaymentStatusUpdate())
+        .vrn("CAS123")
         .build();
   }
 
@@ -123,6 +107,16 @@ public class ErrorPaymentStatusUpdateTestIT {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 2))
     );
+  }
+
+  private List<PaymentStatusUpdateDetails> unfinishedPaymentStatusUpdate() {
+    PaymentStatusUpdateDetails details = PaymentStatusUpdateDetails.builder()
+        .caseReference("case-ref-14")
+        .dateOfCazEntry(LocalDate.parse("2019-11-05"))
+        .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+        .build();
+
+    return Arrays.asList(details);
   }
 
   @RequiredArgsConstructor
@@ -133,7 +127,6 @@ public class ErrorPaymentStatusUpdateTestIT {
     private final UUID cleanAirZoneId = UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4");
 
     private PaymentStatusUpdateRequest paymentStatusUpdateRequest;
-
 
     public PaymentStatusUpdateJourneyAssertion paymentStatusUpdateRequest(
         PaymentStatusUpdateRequest request) {
@@ -172,7 +165,8 @@ public class ErrorPaymentStatusUpdateTestIT {
       return this;
     }
 
-    public PaymentStatusUpdateJourneyAssertion whenMissingVehicleEntrantPaymentSubmitted() {
+
+    public PaymentStatusUpdateJourneyAssertion whenRequestSubmitted() {
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
 
       RestAssured
@@ -187,44 +181,11 @@ public class ErrorPaymentStatusUpdateTestIT {
           .put()
           .then()
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .header(STRICT_TRANSPORT_SECURITY_HEADER, STRICT_TRANSPORT_SECURITY_VALUE)
-          .header(PRAGMA_HEADER, PRAGMA_HEADER_VALUE)
-          .header(X_CONTENT_TYPE_OPTIONS_HEADER, X_CONTENT_TYPE_OPTIONS_VALUE)
-          .header(X_FRAME_OPTIONS_HEADER, X_FRAME_OPTIONS_VALUE)
-          .header(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_VALUE)
-          .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
-          .statusCode(HttpStatus.BAD_REQUEST.value())
-          .body("errors[0].vrn", equalTo(paymentStatusUpdateRequest.getVrn()))
-          .body("errors[0].detail", containsString("VehicleEntrantPayment not found"));
+          .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+          .body("status", equalTo(HttpStatus.INTERNAL_SERVER_ERROR.value()))
+          .body("message", containsString("Payment is still being processed"));
       return this;
-    }
 
-    public PaymentStatusUpdateJourneyAssertion whenNotUniqueVehicleEntrantPaymentSubmitted() {
-      String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
-
-      RestAssured
-          .given()
-          .accept(MediaType.APPLICATION_JSON.toString())
-          .contentType(MediaType.APPLICATION_JSON.toString())
-          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .header(Headers.TIMESTAMP, LocalDateTime.now().toString())
-          .header(Headers.X_API_KEY, cleanAirZoneId)
-          .body(toJsonString(paymentStatusUpdateRequest))
-          .when()
-          .put()
-          .then()
-          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .header(STRICT_TRANSPORT_SECURITY_HEADER, STRICT_TRANSPORT_SECURITY_VALUE)
-          .header(PRAGMA_HEADER, PRAGMA_HEADER_VALUE)
-          .header(X_CONTENT_TYPE_OPTIONS_HEADER, X_CONTENT_TYPE_OPTIONS_VALUE)
-          .header(X_FRAME_OPTIONS_HEADER, X_FRAME_OPTIONS_VALUE)
-          .header(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_VALUE)
-          .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
-          .statusCode(HttpStatus.BAD_REQUEST.value())
-          .body("errors[0].vrn", equalTo(paymentStatusUpdateRequest.getVrn()))
-          .body("errors[0].detail",
-              containsString("Not able to find unique VehicleEntrantPayment"));
-      return this;
     }
 
     @SneakyThrows
@@ -232,15 +193,15 @@ public class ErrorPaymentStatusUpdateTestIT {
       return objectMapper.writeValueAsString(request);
     }
 
-    public PaymentStatusUpdateJourneyAssertion noVehicleEntrantPaymentUpdatedInDatabase() {
+    public PaymentStatusUpdateJourneyAssertion noEntrantPaymentUpdatedInDatabase() {
       verifyNoVehicleEntrantPaymentUpdated();
       return this;
     }
 
     private void verifyNoVehicleEntrantPaymentUpdated() {
       int vehicleEntrantPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "vehicle_entrant_payment",
-          "caz_id = '" + cleanAirZoneId.toString() + "' AND "
+          "caz_payment.t_clean_air_zone_entrant_payment",
+          "clean_air_zone_id = '" + cleanAirZoneId.toString() + "' AND "
               + "vrn = '" + paymentStatusUpdateRequest.getVrn() + "' AND "
               + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
       assertThat(vehicleEntrantPaymentCount).isEqualTo(0);
