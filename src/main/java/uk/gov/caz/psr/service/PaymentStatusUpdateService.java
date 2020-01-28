@@ -13,6 +13,7 @@ import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.service.exception.PaymentNotProcessedException;
 import uk.gov.caz.psr.util.EntrantPaymentStatusUpdateConverter;
 
 /**
@@ -58,19 +59,25 @@ public class PaymentStatusUpdateService {
 
   private void handleUpdateEntrantPayment(EntrantPayment entrantPayment,
       EntrantPaymentStatusUpdate entrantPaymentStatusUpdate) {
-    Optional<Payment> payment = paymentRepository
-        .findByEntrantPayment(entrantPayment.getCleanAirZoneEntrantPaymentId());
-
-    if (payment.isPresent() && payment.get().getExternalPaymentStatus().isNotFinished()) {
-      // TODO: Implement in CAZ-1725
-      log.info("To be implemented");
-    }
+    verifyOptionalPayment(entrantPayment);
 
     entrantPaymentRepository
         .update(prepareUpdateEntrantPayment(entrantPayment, entrantPaymentStatusUpdate));
 
     log.info("Updated EntrantPayment from the following statusUpdate: {}",
         entrantPaymentStatusUpdate);
+  }
+
+  private void verifyOptionalPayment(EntrantPayment entrantPayment) {
+    Payment payment = paymentRepository
+        .findByEntrantPayment(entrantPayment.getCleanAirZoneEntrantPaymentId())
+        .orElse(null);
+
+    if (payment != null && payment.getExternalPaymentStatus()
+        .isNotFinished()) {
+      log.error("Payment with ID: {} is still being processed.", payment.getId());
+      throw new PaymentNotProcessedException("Payment is still being processed");
+    }
   }
 
   /**
