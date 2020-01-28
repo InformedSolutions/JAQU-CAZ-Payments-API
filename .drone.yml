@@ -329,8 +329,8 @@ services:
     image: postgres:11-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_USER: caz_payments
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: caz_payments
     ports:
       - 5432
 
