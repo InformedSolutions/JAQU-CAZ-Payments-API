@@ -37,7 +37,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
@@ -452,29 +451,40 @@ public class SuccessPaymentsJourneyTestIT {
     public PaymentJourneyAssertion andAuditRecordsCreated() {
       String vrn = initiatePaymentRequest.getVrn();
       UUID cleanAirZoneId = initiatePaymentRequest.getCleanAirZoneId();
+      UUID paymentId = initPaymentResponse.getPaymentId();
       
-      // check master table is only written to once
-      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
-          "caz_payment_audit.t_clean_air_zone_payment_master",
-          "vrn = '" + initiatePaymentRequest.getVrn()+ "' AND clean_air_zone_id = '" 
-          + initiatePaymentRequest.getCleanAirZoneId() + "'");
-      assertThat(masterCount).isEqualTo(1);
-      
-      // check that a paid & not paid record has been written into the detail table for each entrant payment
+      checkMasterTableWrittenToOnlyOnce(vrn, cleanAirZoneId);
+      checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(vrn, cleanAirZoneId);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.CREATED);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.INITIATED);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.SUCCESS);
+     
+      return this;
+    }
+
+    private void checkDetailTableWrittenToForPaymentStatus(UUID paymentId,
+        ExternalPaymentStatus status) {
+      int detailPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          AuditTableWrapper.DETAIL,
+          "payment_id = '" + paymentId + "' AND payment_provider_status = '" + status.name() + "'");
+      assertThat(detailPaymentCount).isEqualTo(1);
+    }
+
+    private void checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(String vrn,
+        UUID cleanAirZoneId) {
       Object[] params = new Object[] {vrn, cleanAirZoneId};
       UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
       int detailPaymentEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
-          "caz_payment_audit.t_clean_air_zone_payment_detail",
-          "clean_air_zone_payment_master_id = '" + masterId.toString() + "'");
-      assertThat(detailPaymentEntrantCount).isEqualTo(initiatePaymentRequest.getDays().size() * 2);
-      
-      // check that a record has been written into the detail table for each of the 3 payment statuses:
-      // created, pending, success
-      int detailPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
-          "caz_payment_audit.t_clean_air_zone_payment_detail", 
-          "payment_id = '" + initPaymentResponse.getPaymentId().toString() +"'");
-      assertThat(detailPaymentCount).isEqualTo(3);
-      return this;
+          AuditTableWrapper.DETAIL,
+          "clean_air_zone_payment_master_id = '?'".replace("?", masterId.toString()));
+      assertThat(detailPaymentEntrantCount).isEqualTo(initiatePaymentRequest.getDays().size() * 2);      
+    }
+
+    private void checkMasterTableWrittenToOnlyOnce(String vrn, UUID cleanAirZoneId) {
+      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
+          AuditTableWrapper.MASTER, "vrn = '" + vrn + "' AND clean_air_zone_id = '" 
+          + cleanAirZoneId + "'");
+      assertThat(masterCount).isEqualTo(1);      
     }
 
     public void andPaymentReceiptIsSent() {
@@ -494,7 +504,7 @@ public class SuccessPaymentsJourneyTestIT {
     return InitiatePaymentRequest.builder()
         .amount(4200)
         .days(TRAVEL_DATES)
-        .cleanAirZoneId(UUID.fromString(this.CAZ_ID))
+        .cleanAirZoneId(UUID.fromString(CAZ_ID))
         .returnUrl("http://localhost/return-url")
         .vrn("ND84VSX")
         .tariffCode("tariffCode")

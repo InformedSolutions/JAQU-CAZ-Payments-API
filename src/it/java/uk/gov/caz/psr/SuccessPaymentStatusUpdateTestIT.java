@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,6 +42,7 @@ import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
 
 @Disabled("Because of ERD updates")
@@ -51,7 +51,6 @@ import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-@Slf4j
 public class SuccessPaymentStatusUpdateTestIT {
 
   @LocalServerPort
@@ -82,7 +81,8 @@ public class SuccessPaymentStatusUpdateTestIT {
         .paymentStatusUpdateRequest(paymentStatusUpdateRequest(vrn))
         .whenSubmitted()
         .then()
-        .vehicleEntrantPaymentsAreUpdatedInTheDatabse();
+        .vehicleEntrantPaymentsAreUpdatedInTheDatabse()
+        .detailTableIsUpdated();
   }
 
   private PaymentStatusUpdateJourneyAssertion given() {
@@ -166,6 +166,19 @@ public class SuccessPaymentStatusUpdateTestIT {
               + "vrn = 'ND84VSX' AND "
               + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
       assertThat(vehicleEntrantCount).isEqualTo(2);
+    }
+
+    public void detailTableIsUpdated() {
+      verifyThatDetailRecordExistsForNewPaymentStatus();      
+    }
+    
+    private void verifyThatDetailRecordExistsForNewPaymentStatus() {
+      int detailCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          AuditTableWrapper.DETAIL,
+          "caz_id = '" + cleanAirZoneId + "' AND "
+              + "vrn = 'ND84VSX' AND "
+              + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
+      assertThat(detailCount).isEqualTo(1);
     }
   }
 }
