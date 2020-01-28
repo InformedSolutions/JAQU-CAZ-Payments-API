@@ -476,7 +476,7 @@ public class SuccessPaymentsJourneyTestIT {
       UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
       int detailPaymentEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
           AuditTableWrapper.DETAIL,
-          "clean_air_zone_payment_master_id = '?'".replace("?", masterId.toString()));
+          AuditTableWrapper.MASTER_ID + " = '?'".replace("?", masterId.toString()));
       assertThat(detailPaymentEntrantCount).isEqualTo(initiatePaymentRequest.getDays().size() * 2);      
     }
 

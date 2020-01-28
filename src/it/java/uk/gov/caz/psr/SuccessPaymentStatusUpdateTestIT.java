@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -59,6 +60,11 @@ public class SuccessPaymentStatusUpdateTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private JdbcTemplate jdbcTemplate;
+  
+  private static final String TEST_VRN = "MARYSIA";
+  private static final String FORMATTED_VRN = "ND84VSX";
+  private static final LocalDate TRAVEL_DATE_ONE = LocalDate.of(2019, 11, 1);
+  private static final LocalDate TRAVEL_DATE_TWO = LocalDate.of(2019, 11, 3);
 
   @BeforeEach
   public void startMockServer() {
@@ -81,7 +87,8 @@ public class SuccessPaymentStatusUpdateTestIT {
         .whenSubmitted()
         .then()
         .entrantPaymentsAreUpdatedInTheDatabase()
-        .detailTableIsUpdated();
+        .masterRecordExistsForVrn(FORMATTED_VRN)
+        .detailTableIsUpdated(FORMATTED_VRN);
   }
 
   @Test
@@ -90,7 +97,8 @@ public class SuccessPaymentStatusUpdateTestIT {
         .paymentStatusUpdateRequest(paymentStatusUpdateRequestForNonExistingParams())
         .whenSubmitted()
         .then()
-        .entrantPaymentIsCreatedInTheDatabase();
+        .entrantPaymentIsCreatedInTheDatabase()
+        .detailTableIsUpdated(TEST_VRN);
   }
 
   private PaymentStatusUpdateJourneyAssertion given() {
@@ -106,16 +114,16 @@ public class SuccessPaymentStatusUpdateTestIT {
 
   private PaymentStatusUpdateRequest paymentStatusUpdateRequestForNonExistingParams() {
     return PaymentStatusUpdateRequest.builder()
-        .vrn("MARYSIA")
+        .vrn(TEST_VRN)
         .statusUpdates(validStatusUpdates())
         .build();
   }
 
   private List<PaymentStatusUpdateDetails> validStatusUpdates() {
     return Arrays.asList(
-        PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 1)),
+        PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(TRAVEL_DATE_ONE),
         PaymentStatusUpdateDetailsFactory
-            .refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 3))
+            .refundedWithDateOfCazEntry(TRAVEL_DATE_TWO)
     );
   }
 
@@ -196,17 +204,34 @@ public class SuccessPaymentStatusUpdateTestIT {
       assertThat(entrantPaymentCount).isEqualTo(2);
     }
 
-    public void detailTableIsUpdated() {
-      verifyThatDetailRecordExistsForNewPaymentStatus();      
+    public PaymentStatusUpdateJourneyAssertion masterRecordExistsForVrn(String vrn) {
+      verifyThatMasterRecordExistsForVrnAndCleanAirZone(vrn);
+      return this;
     }
     
-    private void verifyThatDetailRecordExistsForNewPaymentStatus() {
-      int detailCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          AuditTableWrapper.DETAIL,
-          "caz_id = '" + cleanAirZoneId + "' AND "
-              + "vrn = 'ND84VSX' AND "
-              + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
-      assertThat(detailCount).isEqualTo(1);
+    private void verifyThatMasterRecordExistsForVrnAndCleanAirZone(String vrn) {
+      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, AuditTableWrapper.MASTER, 
+          "vrn = '" + vrn + "' AND clean_air_zone_id = '" + cleanAirZoneId + "'");
+      assertThat(masterCount).isEqualTo(1);
+    }
+
+    public void detailTableIsUpdated(String vrn) {
+      verifyThatDetailRecordExistsForNewPaymentStatusForBothDates(vrn);      
+    }
+    
+    private void verifyThatDetailRecordExistsForNewPaymentStatusForBothDates(String vrn) {
+      Object[] params = new Object[] {vrn, cleanAirZoneId};
+      UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
+      int detailDay1Count = getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(masterId, TRAVEL_DATE_ONE);
+      int detailDay2Count = getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(masterId, TRAVEL_DATE_TWO);
+      assertThat(detailDay1Count + detailDay2Count).isEqualTo(2);
+    }
+    
+    private int getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(UUID masterId, LocalDate travelDate) {
+      return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          AuditTableWrapper.DETAIL,"payment_status = '" + InternalPaymentStatus.REFUNDED.name() 
+          + "' AND " + AuditTableWrapper.MASTER_ID + " = '" + masterId
+          + "' AND travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
     }
   }
 }
