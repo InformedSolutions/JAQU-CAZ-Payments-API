@@ -233,7 +233,7 @@ public class TestObjectFactory {
 
   public static class PaymentStatusUpdateDetailsFactory {
 
-    public static PaymentStatusUpdateDetails anyWithStatus(ChargeSettlementPaymentStatus status) {
+    public static PaymentStatusUpdateDetails anyWithStatus(String status) {
       return PaymentStatusUpdateDetails.builder()
           .caseReference("CaseReference")
           .paymentStatus(status)
@@ -243,20 +243,20 @@ public class TestObjectFactory {
 
     public static PaymentStatusUpdateDetails refundedWithDateOfCazEntry(LocalDate date) {
       return PaymentStatusUpdateDetails.builder().caseReference("CaseReference")
-          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus("refunded")
           .dateOfCazEntry(date).build();
     }
 
     public static PaymentStatusUpdateDetails anyInvalid() {
       return PaymentStatusUpdateDetails.builder()
-          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus("refunded")
           .dateOfCazEntry(LocalDate.now())
           .build();
     }
 
     public static PaymentStatusUpdateDetails withCaseReference(String caseReference) {
       return PaymentStatusUpdateDetails.builder()
-          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus("refunded")
           .caseReference(caseReference)
           .dateOfCazEntry(LocalDate.now())
           .build();

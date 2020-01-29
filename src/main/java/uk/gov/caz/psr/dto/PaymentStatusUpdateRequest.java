@@ -54,7 +54,7 @@ public class PaymentStatusUpdateRequest {
         .vrn(normalizeVrn(vrn))
         .dateOfCazEntry(paymentStatusUpdateDetail.getDateOfCazEntry())
         .paymentStatus(InternalPaymentStatus
-            .valueOf(paymentStatusUpdateDetail.getPaymentStatus().name()))
+            .valueOf(paymentStatusUpdateDetail.getChargeSettlementPaymentStatus().name()))
         .caseReference(paymentStatusUpdateDetail.getCaseReference())
         .build();
   }

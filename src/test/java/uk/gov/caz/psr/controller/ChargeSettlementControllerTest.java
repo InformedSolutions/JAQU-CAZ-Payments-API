@@ -603,8 +603,8 @@ class ChargeSettlementControllerTest {
 
     private List<PaymentStatusUpdateDetails> buildPaymentStatusUpdateDetails() {
       return Arrays.asList(
-          PaymentStatusUpdateDetailsFactory.anyWithStatus(ChargeSettlementPaymentStatus.CHARGEBACK),
-          PaymentStatusUpdateDetailsFactory.anyWithStatus(ChargeSettlementPaymentStatus.REFUNDED));
+          PaymentStatusUpdateDetailsFactory.anyWithStatus("chargeback"),
+          PaymentStatusUpdateDetailsFactory.anyWithStatus("refunded"));
     }
 
     private String requestWithVrn(String vrn) {
