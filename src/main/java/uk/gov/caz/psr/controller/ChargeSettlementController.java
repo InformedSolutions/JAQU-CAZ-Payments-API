@@ -5,6 +5,7 @@ import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,13 +70,15 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
           "getPaymentStatus.validationErrorTitle", bindingResult);
     }
 
-    PaymentStatus paymentStatus = chargeSettlementService
+    Optional<PaymentStatus> paymentStatus = chargeSettlementService
         .findChargeSettlement(
             cleanAirZoneId,
             normalizeVrn(request.getVrn()),
             LocalDate.parse(request.getDateOfCazEntry()));
 
-    return ResponseEntity.ok(PaymentStatusResponse.from(paymentStatus));
+    return paymentStatus.map(PaymentStatusResponse::from)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @Override

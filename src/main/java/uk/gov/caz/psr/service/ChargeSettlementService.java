@@ -1,8 +1,8 @@
 package uk.gov.caz.psr.service;
 
-import com.google.common.collect.Iterables;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,12 +28,12 @@ public class ChargeSettlementService {
    * @return {@link PaymentStatus}
    * @throws IllegalStateException when single day was paid twice
    */
-  public PaymentStatus findChargeSettlement(UUID cazId, String vrn,
+  public Optional<PaymentStatus> findChargeSettlement(UUID cazId, String vrn,
       LocalDate dateOfCazEntry) {
 
     Collection<PaymentStatus> paymentStatuses = paymentStatusRepository
         .findByCazIdAndVrnAndEntryDate(cazId, vrn, dateOfCazEntry);
 
-    return Iterables.getFirst(paymentStatuses, PaymentStatus.getEmptyPaymentStatusResponse());
+    return paymentStatuses.stream().findFirst();
   }
 }

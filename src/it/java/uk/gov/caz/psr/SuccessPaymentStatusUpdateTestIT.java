@@ -81,7 +81,7 @@ public class SuccessPaymentStatusUpdateTestIT {
         .paymentStatusUpdateRequest(paymentStatusUpdateRequest(vrn))
         .whenSubmitted()
         .then()
-        .entrantPaymentsAreUpdatedInTheDatabse();
+        .entrantPaymentsAreUpdatedInTheDatabase();
   }
 
   @Test
@@ -125,6 +125,7 @@ public class SuccessPaymentStatusUpdateTestIT {
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
     private final UUID cleanAirZoneId = UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4");
+    private final int EXPECTED_NUMBER_OF_REFUNDED_RECORDS = 4;
 
     private PaymentStatusUpdateRequest paymentStatusUpdateRequest;
 
@@ -169,7 +170,7 @@ public class SuccessPaymentStatusUpdateTestIT {
       return objectMapper.writeValueAsString(request);
     }
 
-    public PaymentStatusUpdateJourneyAssertion entrantPaymentsAreUpdatedInTheDatabse() {
+    public PaymentStatusUpdateJourneyAssertion entrantPaymentsAreUpdatedInTheDatabase() {
       verifyThatRefundedEntrantPaymentsExists();
       return this;
     }
@@ -185,7 +186,7 @@ public class SuccessPaymentStatusUpdateTestIT {
           "clean_air_zone_id = '" + cleanAirZoneId.toString() + "' AND "
               + "vrn = 'ND84VSX' AND "
               + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
-      assertThat(vehicleEntrantCount).isEqualTo(3);
+      assertThat(vehicleEntrantCount).isEqualTo(EXPECTED_NUMBER_OF_REFUNDED_RECORDS);
     }
 
     private void verifyThatNewEntrantPaymentWasCreated() {
