@@ -53,6 +53,8 @@ import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 public class ErrorPaymentStatusUpdateTestIT {
 
+  private static final String VALID_VRN = "ND84VSX";
+
   @LocalServerPort
   int randomServerPort;
 
@@ -100,6 +102,10 @@ public class ErrorPaymentStatusUpdateTestIT {
         .whenNonExistentRequestSubmitted(NON_EXISTING_VRN)
         .then()
         .noEntrantPaymentUpdatedInDatabase();
+
+    given()
+        .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithInvalidPaymentStatus())
+        .failsWhenInvalidStatusRequestSubmitted();
   }
 
   private PaymentStatusUpdateJourneyAssertion given() {
@@ -126,6 +132,13 @@ public class ErrorPaymentStatusUpdateTestIT {
         .build();
   }
 
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithInvalidPaymentStatus() {
+    return PaymentStatusUpdateRequest.builder()
+        .statusUpdates(invalidPaymentStatusUpdate())
+        .vrn(VALID_VRN)
+        .build();
+  }
+
   private List<PaymentStatusUpdateDetails> exampleStatusUpdates() {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 2))
@@ -136,7 +149,17 @@ public class ErrorPaymentStatusUpdateTestIT {
     PaymentStatusUpdateDetails details = PaymentStatusUpdateDetails.builder()
         .caseReference("case-ref-14")
         .dateOfCazEntry(LocalDate.parse("2019-11-05"))
-        .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+        .paymentStatus("refunded")
+        .build();
+
+    return Arrays.asList(details);
+  }
+
+  private List<PaymentStatusUpdateDetails> invalidPaymentStatusUpdate() {
+    PaymentStatusUpdateDetails details = PaymentStatusUpdateDetails.builder()
+        .caseReference("case-ref-14")
+        .dateOfCazEntry(LocalDate.parse("2019-11-01"))
+        .paymentStatus("Refunded") // Invalid payment status
         .build();
 
     return Arrays.asList(details);
@@ -185,6 +208,27 @@ public class ErrorPaymentStatusUpdateTestIT {
           .statusCode(HttpStatus.BAD_REQUEST.value())
           .body("errors[0].vrn", equalTo(null))
           .body("errors[0].detail", containsString("\"vrn\" is mandatory and cannot be blank"));
+      return this;
+    }
+
+    public PaymentStatusUpdateJourneyAssertion failsWhenInvalidStatusRequestSubmitted() {
+      String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
+
+      RestAssured
+          .given()
+          .accept(MediaType.APPLICATION_JSON.toString())
+          .contentType(MediaType.APPLICATION_JSON.toString())
+          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+          .header(Headers.TIMESTAMP, LocalDateTime.now().toString())
+          .header(Headers.X_API_KEY, cleanAirZoneId)
+          .body(toJsonString(paymentStatusUpdateRequest))
+          .when()
+          .put()
+          .then()
+          .statusCode(HttpStatus.BAD_REQUEST.value())
+          .body("errors[0].vrn", equalTo(VALID_VRN))
+          .body("errors[0].detail", containsString(
+              "Incorrect payment status update, please use \"paid\", \"chargeback\", or \"refunded\" instead"));
       return this;
     }
 
