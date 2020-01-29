@@ -2,9 +2,9 @@
 
 
 -- NOT dangling one since it was submitted less than 90 minutes ago
-insert into PAYMENT (payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_method, payment_provider_id, payment_provider_status,
+                                   total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('CREDIT_DEBIT_CARD',
  'aac1ksqi26f9t2h7q3henmlamc',
@@ -15,9 +15,9 @@ values
  );
 
 -- NOT dangling one since it has NULL payment_provider_id (a payment done in LA)
-insert into PAYMENT (payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_method, payment_provider_id, payment_provider_status,
+                                   total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('CREDIT_DEBIT_CARD',
  null,
@@ -29,9 +29,9 @@ values
 
 -------------- PAYMENTS in 'final' states - begin
 -- NOT dangling one since it is in 'final' status (it's been processed)
-insert into PAYMENT (payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_method, payment_provider_id, payment_provider_status,
+                                   total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('CREDIT_DEBIT_CARD',
  'bac1ksqi26f9t2h7q3henmlamc',
@@ -41,9 +41,9 @@ values
  now() - interval '90 minutes'
 );
 
-insert into PAYMENT (payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_method, payment_provider_id, payment_provider_status,
+                                   total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('CREDIT_DEBIT_CARD',
  'cac1ksqi26f9t2h7q3henmlamc',
@@ -53,9 +53,9 @@ values
  null
 );
 
-insert into PAYMENT (payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_method, payment_provider_id, payment_provider_status,
+                                   total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('CREDIT_DEBIT_CARD',
  'dac1ksqi26f9t2h7q3henmlamc',
@@ -65,9 +65,9 @@ values
  null
 );
 
-insert into PAYMENT (payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_method, payment_provider_id, payment_provider_status,
+                                   total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('CREDIT_DEBIT_CARD',
  'eac1ksqi26f9t2h7q3henmlamc',
@@ -81,9 +81,9 @@ values
 
 -------------- dangling ones
 
-insert into PAYMENT (payment_id, payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_id, payment_method, payment_provider_id,
+                                   payment_provider_status, total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('88c1b316-06b3-11ea-a9f4-2b3d49d48bfd',
  'CREDIT_DEBIT_CARD',
@@ -94,22 +94,34 @@ values
  null
 );
 
-insert into vehicle_entrant_payment (payment_id, vrn, caz_id, travel_date, charge_paid, payment_status)
+insert into CAZ_PAYMENT.T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT (clean_air_zone_entrant_payment_id, vrn,
+  clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
 values
 (
-    '88c1b316-06b3-11ea-a9f4-2b3d49d48bfd',
+    'c86a6dcd-a325-4e9b-bd80-b12aa0a1697a',
     'DS98UDG',
     '53e03a28-0627-11ea-9511-ffaaee87e375',
     now(),
+    'TariffCode',
     1000,
-    'NOT_PAID'
+    'NOT_PAID',
+    'USER'
+);
+
+insert into CAZ_PAYMENT.T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_MATCH(clean_air_zone_entrant_payment_id,
+                                                               payment_id, latest)
+values
+(
+    'c86a6dcd-a325-4e9b-bd80-b12aa0a1697a',
+    '88c1b316-06b3-11ea-a9f4-2b3d49d48bfd',
+    true
 );
 
 ----
 
-insert into PAYMENT (payment_id, payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_id, payment_method, payment_provider_id,
+                                   payment_provider_status, total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('6ff12efa-0615-11ea-9511-2771b85b976f',
  'CREDIT_DEBIT_CARD',
@@ -120,22 +132,49 @@ values
  null
 );
 
-insert into vehicle_entrant_payment (payment_id, vrn, caz_id, travel_date, charge_paid, payment_status)
+insert into CAZ_PAYMENT.T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT (clean_air_zone_entrant_payment_id, vrn,
+  clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
 values
 (
-    '6ff12efa-0615-11ea-9511-2771b85b976f',
+    '2322e0e6-cbb2-4047-88a5-611ef935773b',
     'OI64EFO',
     '53e03a28-0627-11ea-9511-ffaaee87e375',
     now(),
-    1000,
-    'NOT_PAID'
+    'TariffCode',
+    500,
+    'NOT_PAID',
+    'USER'
+),
+(
+    'f449bcdb-8cad-436b-a7cc-2ef9803ef2db',
+    'OI64EFO',
+    '53e03a28-0627-11ea-9511-ffaaee87e375',
+    now() - interval '1 day',
+    'TariffCode',
+    500,
+    'REFUNDED',
+    'USER'
 );
+insert into CAZ_PAYMENT.T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_MATCH(clean_air_zone_entrant_payment_id,
+                                                               payment_id, latest)
+values
+(
+    '2322e0e6-cbb2-4047-88a5-611ef935773b',
+    '6ff12efa-0615-11ea-9511-2771b85b976f',
+    true
+),
+(
+    'f449bcdb-8cad-436b-a7cc-2ef9803ef2db',
+    '6ff12efa-0615-11ea-9511-2771b85b976f',
+    true
+)
+;
 ----
 
 ---- payment which was finished successfully on GOV UK side, but not on ours -- begin
-insert into PAYMENT (payment_id, payment_method, payment_provider_id,
-                     payment_provider_status, total_paid, payment_submitted_timestamp,
-                     payment_authorised_timestamp)
+insert into CAZ_PAYMENT.T_PAYMENT (payment_id, payment_method, payment_provider_id,
+                                   payment_provider_status, total_paid, payment_submitted_timestamp,
+                                   payment_authorised_timestamp)
 values
 ('3cefd184-0627-11ea-9511-87ff6d6f54ab',
  'CREDIT_DEBIT_CARD',
@@ -146,24 +185,25 @@ values
  null
 );
 
-insert into vehicle_entrant_payment (payment_id, vrn, caz_id, travel_date, charge_paid, payment_status)
+insert into CAZ_PAYMENT.T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT (clean_air_zone_entrant_payment_id, vrn,
+  clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
 values
 (
-    '3cefd184-0627-11ea-9511-87ff6d6f54ab',
+    'c8d47916-47f2-4572-b427-ae109c7cfbb8',
     'LE35LMK',
     '53e03a28-0627-11ea-9511-ffaaee87e375',
     now(),
+    'TariffCode',
     1000,
-    'NOT_PAID'
+    'NOT_PAID',
+    'USER'
 );
-
-insert into vehicle_entrant (vehicle_entrant_id, caz_entry_timestamp, caz_id, vrn, caz_entry_date)
+insert into CAZ_PAYMENT.T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_MATCH(clean_air_zone_entrant_payment_id,
+                                                               payment_id, latest)
 values
 (
-    '6e8c947a-0627-11ea-9511-27edb54b6c81',
-    now(),
-    '53e03a28-0627-11ea-9511-ffaaee87e375',
-    'LE35LMK',
-    now()
+    'c8d47916-47f2-4572-b427-ae109c7cfbb8',
+    '3cefd184-0627-11ea-9511-87ff6d6f54ab',
+    true
 );
 ---- payment which was finished successfully on GOV UK side, but not on ours -- end

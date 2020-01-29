@@ -37,7 +37,7 @@ public class CleanupDanglingPaymentService {
 
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      danglingPayment = loadVehicleEntrantPayments(danglingPayment);
+      danglingPayment = loadEntrantPayments(danglingPayment);
       UUID cleanAirZoneId = getCleanAirZoneId(danglingPayment);
       String externalId = danglingPayment.getExternalId();
       
@@ -80,7 +80,7 @@ public class CleanupDanglingPaymentService {
    * {@link Payment} instance is created with the newly fetched records and all previous attributes
    * from {@code payment}.
    */
-  private Payment loadVehicleEntrantPayments(Payment payment) {
+  private Payment loadEntrantPayments(Payment payment) {
     return payment.toBuilder()
         .entrantPayments(entrantPaymentRepository.findByPaymentId(payment.getId()))
         .build();

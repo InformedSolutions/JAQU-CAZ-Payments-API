@@ -39,6 +39,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
+import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
@@ -81,8 +82,11 @@ public class ErrorPaymentStatusUpdateTestIT {
         .then()
         .noEntrantPaymentUpdatedInDatabase();
 
-    // TODO: CAZ-1725
-    // Test for EntrantPayment with associated Payment which has INPROGRESS status
+    given()
+        .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithUnfinishedPayment())
+        .whenRequestSubmitted()
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();
   }
   
   @Test
@@ -139,6 +143,13 @@ public class ErrorPaymentStatusUpdateTestIT {
         .statusUpdates(statusUpdatesWithoutPaymentStatus())
         .build();
   }
+  
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithUnfinishedPayment() {
+    return PaymentStatusUpdateRequest.builder()
+        .statusUpdates(unfinishedPaymentStatusUpdate())
+        .vrn("CAS123")
+        .build();
+  }
 
   private List<PaymentStatusUpdateDetails> exampleStatusUpdates() {
     return Arrays.asList(
@@ -162,6 +173,16 @@ public class ErrorPaymentStatusUpdateTestIT {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.anyWithoutPaymentStatus()
     );
+  }
+
+  private List<PaymentStatusUpdateDetails> unfinishedPaymentStatusUpdate() {
+    PaymentStatusUpdateDetails details = PaymentStatusUpdateDetails.builder()
+        .caseReference("case-ref-14")
+        .dateOfCazEntry(LocalDate.parse("2019-11-05"))
+        .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+        .build();
+
+    return Arrays.asList(details);
   }
 
   @RequiredArgsConstructor
@@ -209,6 +230,29 @@ public class ErrorPaymentStatusUpdateTestIT {
           .body("errors[0].field", equalTo(errorField))
           .body("errors[0].detail", containsString(msg));
       return this;
+    }
+
+
+    public PaymentStatusUpdateJourneyAssertion whenRequestSubmitted() {
+      String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
+
+      RestAssured
+          .given()
+          .accept(MediaType.APPLICATION_JSON.toString())
+          .contentType(MediaType.APPLICATION_JSON.toString())
+          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+          .header(Headers.TIMESTAMP, LocalDateTime.now().toString())
+          .header(Headers.X_API_KEY, cleanAirZoneId)
+          .body(toJsonString(paymentStatusUpdateRequest))
+          .when()
+          .put()
+          .then()
+          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+          .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+          .body("status", equalTo(HttpStatus.INTERNAL_SERVER_ERROR.value()))
+          .body("message", containsString("Payment is still being processed"));
+      return this;
+
     }
 
     @SneakyThrows
