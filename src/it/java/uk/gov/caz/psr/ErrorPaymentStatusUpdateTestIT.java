@@ -50,7 +50,6 @@ import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-@Slf4j
 public class ErrorPaymentStatusUpdateTestIT {
 
   @LocalServerPort
