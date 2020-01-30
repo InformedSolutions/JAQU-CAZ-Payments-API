@@ -191,20 +191,6 @@ class EntrantPaymentRepositoryTest {
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("VRN cannot be empty");
     }
-//    @Test
-//    public void shouldThrowNIllegalArgumentExceptionWhenVrnIsEmpty() {
-//      // given
-//      String vrn = null;
-//
-//      // when
-//      Throwable throwable = catchThrowable(
-//          () -> cazEntrantPaymentRepository
-//              .findOneByVrnAndCazEntryDate(UUID.randomUUID(), "", LocalDate.now()));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-//          .hasMessage("VRN cannot be empty");
-//    }
 
 //    TODO: Fix with the payment updates CAZ-1716
 //    @Test
@@ -300,6 +286,65 @@ class EntrantPaymentRepositoryTest {
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
           .hasMessage("'paymentId' cannot be null");
+    }
+  }
+
+  @Nested
+  class FindAllPaidByVrnAndDateRangeAndCazId {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenVrnIsNull() {
+      // given
+      String vrn = null;
+      LocalDate startDate = LocalDate.now();
+      LocalDate endDate = LocalDate.now();
+      UUID cleanAirZoneId = UUID.randomUUID();
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository.findAllPaidByVrnAndDateRangeAndCazId(
+              vrn, startDate, endDate, cleanAirZoneId));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("VRN cannot be empty");
+    }
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenDateIsNull() {
+      // given
+      String vrn = "CAS123";
+      LocalDate startDate = null;
+      LocalDate endDate = LocalDate.now();
+      UUID cleanAirZoneId = UUID.randomUUID();
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository.findAllPaidByVrnAndDateRangeAndCazId(
+              vrn, startDate, endDate, cleanAirZoneId));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("startDate cannot be null");
+
+    }
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenCazIdIsNull() {
+      // given
+      String vrn = "CAS123";
+      LocalDate startDate = LocalDate.now();
+      LocalDate endDate = LocalDate.now();
+      UUID cleanAirZoneId = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository.findAllPaidByVrnAndDateRangeAndCazId(
+              vrn, startDate, endDate, cleanAirZoneId));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("cleanAirZoneId cannot be null");
     }
   }
 }
