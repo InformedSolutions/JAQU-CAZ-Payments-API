@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
 
@@ -28,15 +29,19 @@ public class PaymentStatusRepository {
       + "payment.payment_provider_id, "
       + "payment.central_reference_number "
       + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
-      + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
+      + "LEFT OUTER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
       + "ON entrant_payment.clean_air_zone_entrant_payment_id = "
       + "entrant_payment_match.clean_air_zone_entrant_payment_id "
       + "AND entrant_payment_match.latest = true "
-      + "INNER JOIN caz_payment.t_payment payment "
+      + "LEFT OUTER JOIN caz_payment.t_payment payment "
       + "ON entrant_payment_match.payment_id = payment.payment_id "
       + "WHERE entrant_payment.clean_air_zone_id = ? AND "
       + "entrant_payment.vrn = ? AND "
-      + "entrant_payment.travel_date = ?";
+      + "entrant_payment.travel_date = ? AND "
+      // exclude not captured with failed payment records.
+      + "(entrant_payment.vehicle_entrant_captured is true OR "
+      + "entrant_payment.update_actor != '" + EntrantPaymentUpdateActor.USER.name() + "' OR "
+      + "entrant_payment.payment_status != 'NOT_PAID')";
 
   /**
    * Finds collection of matching records in join table. To represent the found records

@@ -144,6 +144,15 @@ swagger:
         return-url: Front end URL used as return URL after payment.
       payments-get-status:
         clean-air-zone-name: Clean Air Zone name
+      paid-payments-request:
+        start-date: First day in date range in which the payments are going to be checked.
+        end-date: Last day in date range in which the payments are going to be checked.
+        vrns: List of VRNs for which the payments check is going to be done.
+      paid-payments-result:
+        vrn: A VRN for which the list of paid days is being returned.
+        paid-dates: A list of days which are already paid.
+      paid-payments-response:
+        results: Collection of VRNs and dates which are already paid in a given date range.
 
   operations:
     payments:
@@ -151,6 +160,11 @@ swagger:
         description: >-
           Creates (unless it exists) a collection of entries in the database that represents an entrances of a vehicles into a CAZ.
           Upon completion of this operation the collection of caz entrant payments is returned
+      get-paid-entrants:
+        description: >-
+          Fetches information about already paid days in specific CAZ in order to prevent
+          him from paying for the same day more than one time. Upon completion of this operation the
+          list of provided VRNs along with list of paid days is returned.
     charge-settlement:
       payment-status-update:
         description: >-
