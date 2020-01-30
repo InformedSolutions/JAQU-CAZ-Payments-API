@@ -27,6 +27,7 @@ import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
 import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.ValidationError.ValidationErrorBuilder;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
+import uk.gov.caz.psr.service.exception.PaymentDoesNotExistException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,8 +41,8 @@ public class ExceptionController extends GlobalExceptionHandler {
 
 
   /**
-   * Method to handle Exception while VehicleEntrantPayment was not found and failed with {@link
-   * NotUniqueVehicleEntrantPaymentFoundException}.
+   * Method to handle Exception when a unique VehicleEntrantPayment was not found and failed with 
+   * {@link NotUniqueVehicleEntrantPaymentFoundException}.
    *
    * @param e Exception object.
    */
@@ -53,6 +54,18 @@ public class ExceptionController extends GlobalExceptionHandler {
     return ResponseEntity.badRequest()
         .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(e.getVrn(),
             e.getMessage()));
+  }
+  
+  /**
+   * Method to handle {@link PaymentDoesNotExistException} when no VehicleEntrantPayment was found.
+   * @param e Exception object
+   */
+  @ExceptionHandler(PaymentDoesNotExistException.class)
+  ResponseEntity<PaymentStatusErrorsResponse> handleNoVehicleEntrantPaymentFoundException(
+      PaymentDoesNotExistException e) {
+    log.info("PaymentDoesNotExistException occurred", e);
+    return ResponseEntity.badRequest()
+        .body(PaymentStatusErrorsResponse.entrantNotFoundErrorResponse(e));
   }
 
   /**

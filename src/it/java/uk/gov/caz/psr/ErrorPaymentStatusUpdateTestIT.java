@@ -51,7 +51,6 @@ import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-@Slf4j
 public class ErrorPaymentStatusUpdateTestIT {
 
   @LocalServerPort
@@ -61,6 +60,10 @@ public class ErrorPaymentStatusUpdateTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private JdbcTemplate jdbcTemplate;
+  
+  private static final PaymentStatusUpdateDetails INVALID_TRAVEL_DATE = 
+      PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 1));
+  private static final String NON_EXISTING_VRN = "MARYSIA";
 
   @BeforeEach
   public void startMockServer() {
@@ -71,7 +74,7 @@ public class ErrorPaymentStatusUpdateTestIT {
   }
 
   @Test
-  public void errorsPaymentStatusUpdateJourney() {
+  public void errorsPaymentStatusUpdateWithInvalidRequestJourney() {
     // when invalid request submitted
     given()
         .paymentStatusUpdateRequest(invalidPaymentStatusUpdateRequest())
@@ -79,9 +82,22 @@ public class ErrorPaymentStatusUpdateTestIT {
         .then()
         .noEntrantPaymentUpdatedInDatabase();
 
+  }
+  
+  @Test
+  public void errorsPaymentStatusUpdateWithUnfinishedPayment() {
     given()
         .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithUnfinishedPayment())
         .whenRequestSubmitted()
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();    
+  }
+
+  @Test
+  public void errorsPaymentStatusUpdateForNonExistingEntrantPaymentJourney() {
+    given()
+        .paymentStatusUpdateRequest(paymentStatusUpdateRequestForNonExistingParams())
+        .whenNonExistentRequestSubmitted(NON_EXISTING_VRN)
         .then()
         .noEntrantPaymentUpdatedInDatabase();
   }
@@ -93,6 +109,13 @@ public class ErrorPaymentStatusUpdateTestIT {
   private PaymentStatusUpdateRequest invalidPaymentStatusUpdateRequest() {
     return PaymentStatusUpdateRequest.builder()
         .statusUpdates(exampleStatusUpdates())
+        .build();
+  }
+  
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestForNonExistingParams() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn(NON_EXISTING_VRN)
+        .statusUpdates(Arrays.asList(INVALID_TRAVEL_DATE))
         .build();
   }
 
@@ -165,7 +188,6 @@ public class ErrorPaymentStatusUpdateTestIT {
       return this;
     }
 
-
     public PaymentStatusUpdateJourneyAssertion whenRequestSubmitted() {
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
 
@@ -184,6 +206,30 @@ public class ErrorPaymentStatusUpdateTestIT {
           .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
           .body("status", equalTo(HttpStatus.INTERNAL_SERVER_ERROR.value()))
           .body("message", containsString("Payment is still being processed"));
+      return this;
+    }
+
+    public PaymentStatusUpdateJourneyAssertion whenNonExistentRequestSubmitted(String vrn) {
+      String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
+
+      RestAssured
+          .given()
+          .accept(MediaType.APPLICATION_JSON.toString())
+          .contentType(MediaType.APPLICATION_JSON.toString())
+          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+          .header(Headers.TIMESTAMP, LocalDateTime.now().toString())
+          .header(Headers.X_API_KEY, cleanAirZoneId)
+          .body(toJsonString(paymentStatusUpdateRequest))
+          .when()
+          .put()
+          .then()
+          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+          .statusCode(HttpStatus.BAD_REQUEST.value())
+          .body("errors[0].status", equalTo(400))
+          .body("errors[0].vrn", equalTo(vrn))
+          .body("errors[0].title", equalTo("Vehicle entry not found"))
+          .body("errors[0].detail", 
+              containsString("A vehicle entry for the supplied combination of vrn and date of CAZ entry"));
       return this;
 
     }

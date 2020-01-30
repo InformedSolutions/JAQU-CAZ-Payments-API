@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import uk.gov.caz.psr.service.exception.PaymentDoesNotExistException;
 
 /**
  * Value object that represents collection of errors response which are returned to the client upon
@@ -26,6 +27,19 @@ public class PaymentStatusErrorsResponse {
       String detail) {
     PaymentStatusErrorResponse errorResponse = PaymentStatusErrorResponse
         .validationErrorResponseWithDetailAndVrn(vrn, detail);
+    return new PaymentStatusErrorsResponse(Collections.singletonList(errorResponse));
+  }
+
+  /**
+   * Method to build a single errors response from exception thrown when vehicle entrant 
+   * cannot be found.
+   *
+   * @param e {@link PaymentDoesNotExistException}
+   */  
+  public static PaymentStatusErrorsResponse entrantNotFoundErrorResponse(
+      PaymentDoesNotExistException e) {
+    PaymentStatusErrorResponse errorResponse = PaymentStatusErrorResponse
+        .errorResponseFromNonExistentEntrantException(e);    
     return new PaymentStatusErrorsResponse(Collections.singletonList(errorResponse));
   }
 

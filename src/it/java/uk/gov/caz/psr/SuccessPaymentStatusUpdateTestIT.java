@@ -84,15 +84,6 @@ public class SuccessPaymentStatusUpdateTestIT {
         .entrantPaymentsAreUpdatedInTheDatabse();
   }
 
-  @Test
-  public void successPaymentStatusUpdateForNonExistingEntrantPaymentJourney() {
-    given()
-        .paymentStatusUpdateRequest(paymentStatusUpdateRequestForNonExistingParams())
-        .whenSubmitted()
-        .then()
-        .entrantPaymentIsCreatedInTheDatabase();
-  }
-
   private PaymentStatusUpdateJourneyAssertion given() {
     return new PaymentStatusUpdateJourneyAssertion(objectMapper, jdbcTemplate);
   }
@@ -100,13 +91,6 @@ public class SuccessPaymentStatusUpdateTestIT {
   private PaymentStatusUpdateRequest paymentStatusUpdateRequest(String vrn) {
     return PaymentStatusUpdateRequest.builder()
         .vrn(vrn)
-        .statusUpdates(validStatusUpdates())
-        .build();
-  }
-
-  private PaymentStatusUpdateRequest paymentStatusUpdateRequestForNonExistingParams() {
-    return PaymentStatusUpdateRequest.builder()
-        .vrn("MARYSIA")
         .statusUpdates(validStatusUpdates())
         .build();
   }
