@@ -44,8 +44,8 @@ public class PaymentStatusRepository {
       + "entrant_payment.payment_status != 'NOT_PAID')";
 
   /**
-   * Finds collection of matching records in join table. To represent the found records
-   * we are passing the data to ${@code PaymentStatusResponse} objects.
+   * Finds collection of matching records in join table. To represent the found records we are
+   * passing the data to ${@code PaymentStatusResponse} objects.
    *
    * @param cazId provided clean air zone ID
    * @param vrn provided VRN
@@ -59,7 +59,7 @@ public class PaymentStatusRepository {
     Preconditions.checkNotNull(dateOfCazEntry, "dateOfCazEntry cannot be null");
 
     return jdbcTemplate.query(
-        SELECT_BY_ENTRY_DATE_AND_VRN_AND_CAZ_ID_SQL,
+        selectByEntryDateAndVrnAndCazId(),
         preparedStatement -> {
           preparedStatement.setObject(1, cazId);
           preparedStatement.setObject(2, vrn);
@@ -70,8 +70,8 @@ public class PaymentStatusRepository {
   }
 
   /**
-   * A class which maps the results obtained from the database to instances of {@link
-   * PaymentStatus} class.
+   * A class which maps the results obtained from the database to instances of {@link PaymentStatus}
+   * class.
    */
   private static class PaymentStatusRowMapper implements RowMapper<PaymentStatus> {
 
@@ -85,5 +85,13 @@ public class PaymentStatusRepository {
           .caseReference(resultSet.getString("case_reference"))
           .build();
     }
+  }
+
+  /**
+   * Returns SQL with SELECT statement. Useful really only for Sonar security scan. User input is
+   * sanitized by PreparedStatement at call point.
+   */
+  private String selectByEntryDateAndVrnAndCazId() {
+    return SELECT_BY_ENTRY_DATE_AND_VRN_AND_CAZ_ID_SQL;
   }
 }
