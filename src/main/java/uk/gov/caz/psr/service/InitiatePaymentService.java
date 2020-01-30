@@ -2,10 +2,12 @@
 package uk.gov.caz.psr.service;
 
 import java.util.Collections;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
@@ -21,13 +23,12 @@ public class InitiatePaymentService {
 
   private final ExternalPaymentsRepository externalPaymentsRepository;
   private final PaymentRepository paymentRepository;
-
   private final InitiateEntrantPaymentsService initiateEntrantPaymentsService;
 
   /**
    * Creates Payment in GOV.UK PAY Inserts Payment details into database.
    *
-   * @param request A data which need to be used to create the payment.
+   * @param request A data which needs to be used to create the payment.
    */
   @Transactional
   public Payment createPayment(InitiatePaymentRequest request) {
@@ -37,10 +38,7 @@ public class InitiatePaymentService {
     Payment paymentWithExternalId = externalPaymentsRepository.create(paymentWithInternalId,
         request.getReturnUrl());
     initiateEntrantPaymentsService.processEntrantPaymentsForPayment(paymentWithInternalId.getId(),
-        request.getAmount(), request.getDays(), request.getTariffCode(), request.getVrn(),
-        request.getCleanAirZoneId()
-    );
-
+        request.getCleanAirZoneId(), request.getTransactions());
     paymentRepository.update(paymentWithExternalId);
     return paymentWithExternalId;
   }
@@ -54,9 +52,19 @@ public class InitiatePaymentService {
     return Payment.builder()
         .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
         .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
-        .totalPaid(request.getAmount())
+        .totalPaid(calculateTotal(request.getTransactions()))
         .entrantPayments(Collections.emptyList())
         .cleanAirZoneId(request.getCleanAirZoneId())
         .build();
+  }
+
+  /**
+   * Calculates the total, i.e. the amount which needs to be paid for all {@code transactions}.
+   */
+  private int calculateTotal(List<Transaction> transactions) {
+    return transactions
+        .stream()
+        .mapToInt(Transaction::getCharge)
+        .sum();
   }
 }

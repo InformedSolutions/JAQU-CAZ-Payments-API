@@ -3,6 +3,8 @@ package uk.gov.caz.psr.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -11,6 +13,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestClientException;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
@@ -56,8 +60,7 @@ public class InitiatePaymentServiceTest {
     verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository).update(paymentWithExternalId);
     verify(initiateEntrantPaymentsService).processEntrantPaymentsForPayment(
-        paymentWithInternalId.getId(), request.getAmount(), request.getDays(),
-        request.getTariffCode(), request.getVrn(), request.getCleanAirZoneId()
+        eq(paymentWithInternalId.getId()), eq(request.getCleanAirZoneId()), anyList()
     );
   }
 
@@ -78,8 +81,7 @@ public class InitiatePaymentServiceTest {
     verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository, never()).update(any());
     verify(initiateEntrantPaymentsService, never()).processEntrantPaymentsForPayment(
-        paymentWithInternalId.getId(), request.getAmount(), request.getDays(),
-        request.getTariffCode(), request.getVrn(), request.getCleanAirZoneId()
+        eq(paymentWithInternalId.getId()), eq(request.getCleanAirZoneId()), anyList()
     );
   }
 
@@ -87,12 +89,18 @@ public class InitiatePaymentServiceTest {
     List<LocalDate> days = Arrays.asList(LocalDate.of(2019, 1, 1), LocalDate.of(2019, 1, 3));
 
     return InitiatePaymentRequest.builder()
+        .transactions(
+            days.stream()
+                .map(travelDate -> Transaction.builder()
+                    .charge(700)
+                    .travelDate(travelDate)
+                    .vrn("VRN123")
+                    .tariffCode("TARIFF_CODE")
+                    .build())
+                .collect(Collectors.toList())
+        )
         .cleanAirZoneId(UUID.randomUUID())
-        .days(days)
-        .vrn("VRN123")
-        .amount(700)
         .returnUrl("https://example.return.url")
-        .tariffCode("TARIFF_CODE")
         .build();
   }
 

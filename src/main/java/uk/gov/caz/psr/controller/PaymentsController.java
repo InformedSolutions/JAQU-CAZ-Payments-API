@@ -39,6 +39,7 @@ public class PaymentsController implements PaymentsControllerApiSpec {
 
   @Override
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(InitiatePaymentRequest request) {
+    request.validate();
     log.info("Received payment request {}", request);
     Payment payment = initiatePaymentService.createPayment(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(InitiatePaymentResponse.from(payment));
