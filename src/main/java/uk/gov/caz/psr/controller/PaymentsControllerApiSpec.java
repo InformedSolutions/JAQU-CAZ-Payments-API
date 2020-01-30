@@ -16,10 +16,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
@@ -66,8 +64,8 @@ public interface PaymentsControllerApiSpec {
 
   /**
    * Allows User to fetch information about already paid days in specific CAZ in order to prevent
-   * him from paying for the same day more than one time. Upon completion of this operation the
-   * list of provided VRNs along with list of paid days is returned.
+   * him from paying for the same day more than one time. Upon completion of this operation the list
+   * of provided VRNs along with list of paid days is returned.
    */
   @ApiOperation(
       value = "${swagger.operations.payments.get-paid-entrants.description}",
@@ -89,7 +87,5 @@ public interface PaymentsControllerApiSpec {
   @PostMapping(PaymentsController.GET_PAID_VEHICLE_ENTRANTS)
   @ResponseStatus(HttpStatus.OK)
   ResponseEntity<PaidPaymentsResponse> getPaidEntrantPayment(
-      @RequestBody @Valid PaidPaymentsRequest paymentsRequest,
-      @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId);
-
+      @RequestBody PaidPaymentsRequest paymentsRequest);
 }

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class GetPaidEntrantPaymentsTestIT {
       PaymentsController.BASE_PATH + "/" + PaymentsController.GET_PAID_VEHICLE_ENTRANTS;
 
   private static final String VALID_CORRELATION_HEADER = "79b7a48f-27c7-4947-bd1c-670f981843ef";
-  private static final String VALID_CAZ_ID = "b8e53786-c5ca-426a-a701-b14ee74857d4";
+  private static final UUID VALID_CAZ_ID = UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4");
   private static final String VALID_VRN = "ND84VSX";
   private static final LocalDate VALID_START_DATE = LocalDate.of(2019, 11, 1);
   private static final LocalDate VALID_END_DATE = LocalDate.of(2019, 11, 5);
@@ -47,13 +48,12 @@ public class GetPaidEntrantPaymentsTestIT {
   private ObjectMapper objectMapper;
 
   @Test
-  public void shouldReturn400WhenParametersIsMissing() throws Exception {
+  public void shouldReturn400WhenParametersAreMissing() throws Exception {
     mockMvc.perform(post(PATH)
         .content(invalidJsonPayload())
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
-        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
-        .header("x-api-key", VALID_CAZ_ID))
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER))
         .andExpect(status().isBadRequest());
   }
 
@@ -63,8 +63,7 @@ public class GetPaidEntrantPaymentsTestIT {
         .content(validJsonPayload())
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
-        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
-        .header("x-api-key", VALID_CAZ_ID))
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER))
         .andExpect(status().isOk())
         .andExpect(content().json(validJsonResponse()));
   }
@@ -91,6 +90,7 @@ public class GetPaidEntrantPaymentsTestIT {
 
   private String validJsonPayload() {
     PaidPaymentsRequest request = PaidPaymentsRequest.builder()
+        .cleanAirZoneId(VALID_CAZ_ID)
         .vrns(Arrays.asList(VALID_VRN))
         .startDate(VALID_START_DATE)
         .endDate(VALID_END_DATE)

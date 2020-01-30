@@ -145,6 +145,7 @@ swagger:
       payments-get-status:
         clean-air-zone-name: Clean Air Zone name
       paid-payments-request:
+        clean-zone-id: Clean Air Zone identifier
         start-date: First day in date range in which the payments are going to be checked.
         end-date: Last day in date range in which the payments are going to be checked.
         vrns: List of VRNs for which the payments check is going to be done.

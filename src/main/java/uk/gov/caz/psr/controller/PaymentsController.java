@@ -55,14 +55,14 @@ public class PaymentsController implements PaymentsControllerApiSpec {
 
   @Override
   public ResponseEntity<PaidPaymentsResponse> getPaidEntrantPayment(
-      PaidPaymentsRequest paymentsRequest, UUID cleanAirZoneId) {
+      PaidPaymentsRequest paymentsRequest) {
     paymentsRequest.validate();
 
     Map<String, List<EntrantPayment>> results = getPaidEntrantPaymentsService.getResults(
         paymentsRequest.getVrns(),
         paymentsRequest.getStartDate(),
         paymentsRequest.getEndDate(),
-        cleanAirZoneId
+        paymentsRequest.getCleanAirZoneId()
     );
 
     return ResponseEntity.ok(PaidPaymentsResponse.from(results));

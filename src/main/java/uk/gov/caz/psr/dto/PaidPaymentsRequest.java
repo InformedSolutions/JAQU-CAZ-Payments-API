@@ -4,7 +4,9 @@ import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
@@ -16,6 +18,13 @@ import uk.gov.caz.psr.util.MapPreservingOrderBuilder;
 @Value
 @Builder
 public class PaidPaymentsRequest {
+
+  /**
+   * Id of Clean Air Zone in which the payments are going to be checked.
+   */
+  @ApiModelProperty(value = "${swagger.model.descriptions.paid-payments-request.clean-zone-id}")
+  @NotNull
+  UUID cleanAirZoneId;
 
   /**
    * First day in date range in which the payments are going to be checked.
@@ -37,6 +46,8 @@ public class PaidPaymentsRequest {
 
   private static final Map<Function<PaidPaymentsRequest, Boolean>, String> validators =
       MapPreservingOrderBuilder.<Function<PaidPaymentsRequest, Boolean>, String>builder()
+          .put(paidPaymentsRequest -> paidPaymentsRequest.cleanAirZoneId != null,
+              "cleanAirZoneId cannot be null.")
           .put(paidPaymentsRequest -> paidPaymentsRequest.startDate != null,
               "startDate cannot be null.")
           .put(paidPaymentsRequest -> paidPaymentsRequest.endDate != null,
