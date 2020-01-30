@@ -1,5 +1,6 @@
 package uk.gov.caz.psr;
 
+import static java.util.stream.Collectors.groupingBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 
@@ -17,11 +18,15 @@ import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
+import javax.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -43,6 +48,7 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -59,9 +65,14 @@ public class SuccessPaymentsJourneyTestIT {
       LocalDate.of(2019, 11, 10),
       LocalDate.of(2019, 11, 2)
   );
+  private static final List<String> VRNS = Arrays.asList(
+      "ND84VSX",
+      "DL76MWX",
+      "DS98UDG"
+  );
   private static final String EXTERNAL_PAYMENT_ID = "kac1ksqi26f9t2h7q3henmlamc";
   private static final String CAZ_ID = "53e03a28-0627-11ea-9511-ffaaee87e375";
-  
+
   private static final String PAYMENT_TABLE = "caz_payment.t_payment";
   private static final String ENTRANT_PAYMENT_TABLE = "caz_payment.t_clean_air_zone_entrant_payment";
 
@@ -169,7 +180,7 @@ public class SuccessPaymentsJourneyTestIT {
         .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
         .withNullPaymentAuthorisedTimestamp()
         .withMatchedEntrantPayments()
-        .andPreviouslyPaymentMatchRecordsHaveLatestSetToFalse()
+        .andMatchRecordsCountWithLatestSetToFalseIsEqualTo(2)
         .andResponseIsReturnedWithMatchingInternalId()
         .and()
         .whenRequestedToGetAndUpdateStatus()
@@ -349,10 +360,11 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion withMatchedEntrantPayments() {
-      int entrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_clean_air_zone_entrant_payment_match",
-          "payment_id = '" + initPaymentResponse.getPaymentId() + "' AND "
-              + "latest is true");
-      assertThat(entrantPaymentsCount).isEqualTo(initiatePaymentRequest.getDays().size());
+      int entrantPaymentsCount = JdbcTestUtils
+          .countRowsInTableWhere(jdbcTemplate, "caz_payment.t_clean_air_zone_entrant_payment_match",
+              "payment_id = '" + initPaymentResponse.getPaymentId() + "' AND "
+                  + "latest is true");
+      assertThat(entrantPaymentsCount).isEqualTo(initiatePaymentRequest.getTransactions().size());
       return this;
     }
 
@@ -403,14 +415,25 @@ public class SuccessPaymentsJourneyTestIT {
       int entrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           ENTRANT_PAYMENT_TABLE,
           "clean_air_zone_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
-              + "travel_date in (" + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
-              + "tariff_code = '" + initiatePaymentRequest.getTariffCode() + "' AND "
+              + "travel_date in (" + joinWithCommas(extractTravelDates(initiatePaymentRequest)) + ") AND "
+              + "tariff_code in (" + joinWithCommas(extractTariffCodes()) + ") AND "
               + "update_actor = '" + EntrantPaymentUpdateActor.USER.name() + "' AND "
               + "payment_status = '" + InternalPaymentStatus.from(status).name() + "'");
-      assertThat(entrantPaymentsCount).isEqualTo(initiatePaymentRequest.getDays().size());
+      assertThat(entrantPaymentsCount).isEqualTo(initiatePaymentRequest.getTransactions().size());
     }
 
-    public PaymentJourneyAssertion andMatchRecordsCountWithLatestSetToFalseIsEqualTo(int expectedCnt) {
+    private List<@NotBlank String> extractTariffCodes() {
+      return initiatePaymentRequest.getTransactions().stream().map(Transaction::getTariffCode).collect(
+          Collectors.toList());
+    }
+
+    private List<LocalDate> extractTravelDates(InitiatePaymentRequest initiatePaymentRequest) {
+      return initiatePaymentRequest.getTransactions().stream().map(Transaction::getTravelDate)
+          .collect(Collectors.toList());
+    }
+
+    public PaymentJourneyAssertion andMatchRecordsCountWithLatestSetToFalseIsEqualTo(
+        int expectedCnt) {
       int entrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment.t_clean_air_zone_entrant_payment_match",
           "latest is false");
@@ -418,13 +441,10 @@ public class SuccessPaymentsJourneyTestIT {
       return this;
     }
 
-    public PaymentJourneyAssertion andPreviouslyPaymentMatchRecordsHaveLatestSetToFalse() {
-      return andMatchRecordsCountWithLatestSetToFalseIsEqualTo(initiatePaymentRequest.getDays().size());
-    }
-
-    private String joinWithCommas(List<LocalDate> days) {
+    private <T> String joinWithCommas(Collection<T> collections) {
       return Joiner.on(',').join(
-          days.stream().map(date -> "'" + date.toString() + "'").collect(Collectors.toList()));
+          collections.stream().map(object -> "'" + object + "'").collect(Collectors.toList())
+      );
     }
 
     public PaymentJourneyAssertion andStatusResponseIsReturnedWithMatchinInternalId() {
@@ -449,16 +469,16 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion andAuditRecordsCreated() {
-      String vrn = initiatePaymentRequest.getVrn();
+      Set<String> vrns = initiatePaymentRequest.getTransactions().stream().map(Transaction::getVrn).collect(Collectors.toSet());
       UUID cleanAirZoneId = initiatePaymentRequest.getCleanAirZoneId();
       UUID paymentId = initPaymentResponse.getPaymentId();
-      
-      checkMasterTableWrittenToOnlyOnce(vrn, cleanAirZoneId);
-      checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(vrn, cleanAirZoneId);
+
+      checkMasterTableWrittenToOnlyOnce(vrns, cleanAirZoneId);
+      checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(vrns, cleanAirZoneId);
       checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.CREATED);
       checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.INITIATED);
       checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.SUCCESS);
-     
+
       return this;
     }
 
@@ -470,21 +490,24 @@ public class SuccessPaymentsJourneyTestIT {
       assertThat(detailPaymentCount).isEqualTo(1);
     }
 
-    private void checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(String vrn,
+    private void checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(Set<String> vrns,
         UUID cleanAirZoneId) {
-      Object[] params = new Object[] {vrn, cleanAirZoneId};
-      UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
-      int detailPaymentEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
-          AuditTableWrapper.DETAIL,
-          AuditTableWrapper.MASTER_ID + " = '?'".replace("?", masterId.toString()));
-      assertThat(detailPaymentEntrantCount).isEqualTo(initiatePaymentRequest.getDays().size() * 2);      
+      Map<String, List<Transaction>> transactionsByVrn = initiatePaymentRequest.getTransactions().stream().collect(groupingBy(Transaction::getVrn));
+      for (String vrn : vrns) {
+        Object[] params = new Object[] {vrn, cleanAirZoneId};
+        UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
+        int detailPaymentEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+            AuditTableWrapper.DETAIL,
+            AuditTableWrapper.MASTER_ID + " = '?'".replace("?", masterId.toString()));
+        assertThat(detailPaymentEntrantCount).isEqualTo(transactionsByVrn.get(vrn).size() * 2);
+      }
     }
 
-    private void checkMasterTableWrittenToOnlyOnce(String vrn, UUID cleanAirZoneId) {
-      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
-          AuditTableWrapper.MASTER, "vrn = '" + vrn + "' AND clean_air_zone_id = '" 
-          + cleanAirZoneId + "'");
-      assertThat(masterCount).isEqualTo(1);      
+    private void checkMasterTableWrittenToOnlyOnce(Set<String> vrns, UUID cleanAirZoneId) {
+      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          AuditTableWrapper.MASTER, "vrn in (" + joinWithCommas(vrns) + ") AND "
+              + "clean_air_zone_id = '" + cleanAirZoneId + "'");
+      assertThat(masterCount).isEqualTo(vrns.size());
     }
 
     public void andPaymentReceiptIsSent() {
@@ -502,12 +525,19 @@ public class SuccessPaymentsJourneyTestIT {
 
   private InitiatePaymentRequest initiatePaymentRequest() {
     return InitiatePaymentRequest.builder()
-        .amount(4200)
-        .days(TRAVEL_DATES)
+        .transactions(
+            VRNS.stream()
+                .flatMap(vrn -> TRAVEL_DATES.stream()
+                    .map(travelDate -> Transaction.builder()
+                        .charge(4200)
+                        .travelDate(travelDate)
+                        .vrn(vrn)
+                        .tariffCode("tariffCode")
+                        .build())
+                ).collect(Collectors.toList())
+        )
         .cleanAirZoneId(UUID.fromString(CAZ_ID))
         .returnUrl("http://localhost/return-url")
-        .vrn("ND84VSX")
-        .tariffCode("tariffCode")
         .build();
   }
 
@@ -525,12 +555,12 @@ public class SuccessPaymentsJourneyTestIT {
   }
 
   private void andReturnsSuccessStatus() {
-    mockServer
-        .when(HttpRequest.request().withMethod("GET")
-            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-
-            .withPath("/v1/payments/.*"))
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
+    mockServer.when(HttpRequest.request()
+        .withMethod("GET")
+        .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
+        .withPath("/v1/payments/.*"))
+        .respond(HttpResponse.response()
+            .withStatusCode(HttpStatus.OK.value())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
             .withBody(readFile("get-payment-response.json")));
   }

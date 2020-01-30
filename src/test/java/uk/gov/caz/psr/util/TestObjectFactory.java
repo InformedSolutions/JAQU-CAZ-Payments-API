@@ -12,6 +12,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.model.EntrantPayment;
@@ -158,7 +159,7 @@ public class TestObjectFactory {
 
       return createPaymentWith(entrantPayments, null, null, request.getCleanAirZoneId())
           .toBuilder()
-          .totalPaid(request.getAmount())
+          .totalPaid(request.getTransactions().stream().mapToInt(Transaction::getCharge).sum())
           .build();
     }
 
@@ -303,7 +304,7 @@ public class TestObjectFactory {
           .externalId(externalId).build();
     }
   }
-  
+
   public static class PaymentStatusErrorFactory {
     public static PaymentStatusErrorResponse with(String title, String detail, String field) {
       return PaymentStatusErrorResponse.builder().title(title).detail(detail)
