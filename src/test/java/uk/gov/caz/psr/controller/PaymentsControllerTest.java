@@ -41,6 +41,7 @@ import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
+import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
@@ -205,8 +206,20 @@ class PaymentsControllerTest {
     }
 
     @Test
+    public void shouldReturn400StatusCodeCleanAirZoneIdIsNull() throws Exception {
+      String payload = requestWithoutCleanAirZoneId();
+
+      performRequestWithContent(payload)
+          .andExpect(status().isBadRequest())
+          .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(jsonPath("message").value("cleanAirZoneId cannot be null."));
+
+      verify(getPaidEntrantPaymentsService, never()).getResults(any(), any(), any(), any());
+    }
+
+    @Test
     public void shouldReturn400StatusCodeWhenVrnsIsNull() throws Exception {
-      String payload = requestWithVrns(null);
+      String payload = requestWithoutVrns();
 
       performRequestWithContent(payload)
           .andExpect(status().isBadRequest())
@@ -218,7 +231,7 @@ class PaymentsControllerTest {
 
     @Test
     public void shouldReturn400StatusCodeWhenStartDateIsNull() throws Exception {
-      String payload = requestWithStartDate(null);
+      String payload = requestWithoutStartDate();
 
       performRequestWithContent(payload)
           .andExpect(status().isBadRequest())
@@ -230,7 +243,7 @@ class PaymentsControllerTest {
 
     @Test
     public void shouldReturn400StatusCodeWhenEndDateIsNull() throws Exception {
-      String payload = requestWithEndDate(null);
+      String payload = requestWithoutEndDate();
 
       performRequestWithContent(payload)
           .andExpect(status().isBadRequest())
@@ -241,12 +254,11 @@ class PaymentsControllerTest {
     }
 
     @Test
-    public void shouldReturn400StatusCodeWhenCleanAirZoneIsMissing() throws Exception {
+    public void shouldReturn400StatusCodeWhenCorrelationIdIsMissing() throws Exception {
       String payload = requestWithVrns(Arrays.asList("CAS123"));
 
       mockMvc.perform(post(GET_PAID_PATH).content(payload)
-          .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
-          .header("x-api-key", UUID.randomUUID()))
+          .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("message").value("Missing request header 'X-Correlation-ID'"));
 
@@ -256,8 +268,13 @@ class PaymentsControllerTest {
     private ResultActions performRequestWithContent(String payload) throws Exception {
       return mockMvc.perform(post(GET_PAID_PATH).content(payload)
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-          .header("x-api-key", UUID.randomUUID())
           .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON));
+    }
+
+    private String requestWithoutCleanAirZoneId() {
+      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().cleanAirZoneId(null).build();
+
+      return toJsonString(request);
     }
 
     private String requestWithVrns(List<String> vrns) {
@@ -266,20 +283,27 @@ class PaymentsControllerTest {
       return toJsonString(request);
     }
 
-    private String requestWithStartDate(LocalDate startDate) {
-      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().startDate(startDate).build();
+    private String requestWithoutVrns() {
+      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().vrns(null).build();
 
       return toJsonString(request);
     }
 
-    private String requestWithEndDate(LocalDate endDate) {
-      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().endDate(endDate).build();
+    private String requestWithoutStartDate() {
+      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().startDate(null).build();
+
+      return toJsonString(request);
+    }
+
+    private String requestWithoutEndDate() {
+      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().endDate(null).build();
 
       return toJsonString(request);
     }
 
     private PaidPaymentsRequest.PaidPaymentsRequestBuilder basePaidPaymentsResultBuilder() {
       return PaidPaymentsRequest.builder()
+          .cleanAirZoneId(TestObjectFactory.anyCleanAirZoneId())
           .vrns(Arrays.asList("CAS123", "CAS124"))
           .startDate(LocalDate.of(2020, 1, 1))
           .endDate(LocalDate.of(2020, 2, 1));
