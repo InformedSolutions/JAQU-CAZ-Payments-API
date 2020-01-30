@@ -40,14 +40,10 @@ public class PaymentStatusUpdateService {
         "entrantPaymentStatusUpdates cannot be null");
 
     for (EntrantPaymentStatusUpdate entrantPaymentStatusUpdate : entrantPaymentStatusUpdates) {
-      Optional<EntrantPayment> entrantPayment = loadEntrantPayment(entrantPaymentStatusUpdate);
-
-      if (entrantPayment.isPresent()) {
-        handleUpdateEntrantPayment(entrantPayment.get(), entrantPaymentStatusUpdate);
-      } else {
-        log.error("Vehicle entry not found");
-        throw new PaymentDoesNotExistException(entrantPaymentStatusUpdate.getVrn());
-      }
+      EntrantPayment entrantPayment = 
+          loadEntrantPayment(entrantPaymentStatusUpdate).orElseThrow(() -> 
+              new PaymentDoesNotExistException(entrantPaymentStatusUpdate.getVrn()));
+      handleUpdateEntrantPayment(entrantPayment, entrantPaymentStatusUpdate);
     }
   }
 
