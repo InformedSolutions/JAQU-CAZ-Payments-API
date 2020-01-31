@@ -1,9 +1,11 @@
 package uk.gov.caz.psr.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -15,13 +17,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,6 +36,7 @@ import uk.gov.caz.psr.dto.EntrantPaymentDto;
 import uk.gov.caz.psr.dto.VehicleEntrantDto;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 import uk.gov.caz.psr.service.EntrantPaymentService;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 
@@ -54,6 +60,11 @@ class VehicleEntrantControllerTest {
   private static final String ANY_VALID_VRN = "DL76MWX";
   private static final String PATH = VehicleEntrantController.BASE_PATH + "/"
       + VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS;
+
+  @BeforeEach
+  public void resetMocks() {
+    Mockito.reset(entrantPaymentService);
+  }
 
   @Nested
   class Validation {
@@ -118,6 +129,28 @@ class VehicleEntrantControllerTest {
 
       verify(entrantPaymentService, never()).bulkProcess(any());
     }
+
+    @Test
+    public void shouldReturn400StatusCodeWhenNotUniqueEntrantPaymentFoundExceptionIsThrown()
+        throws Exception {
+      String payload = requestWithValidBody();
+      mockThrowingNotUniqueVehicleEntrantPaymentFoundException();
+
+      mockMvc.perform(post(PATH).content(payload)
+          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isBadRequest())
+          .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(jsonPath("$.errors[0].title").value("Validation error"))
+          .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.errors[0].vrn").value("MY-VRN"))
+          .andExpect(jsonPath("$.errors[0].detail").value("Not able to find unique EntrantPayment"));
+    }
+
+    private void mockThrowingNotUniqueVehicleEntrantPaymentFoundException() {
+      when(entrantPaymentService.bulkProcess(anyList()))
+          .thenThrow(new NotUniqueVehicleEntrantPaymentFoundException("MY-VRN", "Not able to find unique EntrantPayment"));
+    }
   }
 
   @Test
@@ -125,8 +158,7 @@ class VehicleEntrantControllerTest {
     String payload = requestWithValidBody();
     mockValidScenarioWithUnpaidRecordFound();
 
-    mockMvc
-        .perform(post(PATH).content(payload)
+    mockMvc.perform(post(PATH).content(payload)
             .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
             .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())

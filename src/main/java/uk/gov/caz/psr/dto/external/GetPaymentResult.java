@@ -36,16 +36,15 @@ public class GetPaymentResult {
 
   /**
    * Converts the external status to its representation in model. If the status is not recognized,
-   * {@link ExternalPaymentStatus#UNKNOWN} is returned.
+   * {@link IllegalArgumentException} is rethrown.
    */
   public ExternalPaymentStatus getPaymentStatus() {
     String status = state.getStatus();
     try {
       return ExternalPaymentStatus.valueOf(status.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.error("Unrecognized payment status '{}', returning {}", status,
-          ExternalPaymentStatus.UNKNOWN);
-      return ExternalPaymentStatus.UNKNOWN;
+      log.error("Unrecognized payment status '{}'", status);
+      throw e;
     }
   }
 }

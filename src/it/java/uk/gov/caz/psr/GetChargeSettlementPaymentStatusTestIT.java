@@ -27,7 +27,6 @@ import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.repository.PaymentStatusRepository;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusErrorFactory;
@@ -281,13 +280,6 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isBadRequest())
         .andExpect(content().json(
             getErrorResponse()));
-  }
-
-  private String getNotPaidResponse() {
-    PaymentStatusResponse paymentStatusResponse = PaymentStatusResponse
-        .from(PaymentStatus.getEmptyPaymentStatusResponse());
-
-    return toJsonString(paymentStatusResponse);
   }
 
   private String getResponseWith(InternalPaymentStatus internalPaymentStatus, String caseReference,

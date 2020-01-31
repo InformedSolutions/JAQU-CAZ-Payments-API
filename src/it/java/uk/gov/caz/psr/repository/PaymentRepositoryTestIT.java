@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
@@ -23,13 +25,13 @@ class PaymentRepositoryTestIT {
   @Autowired
   private PaymentRepository paymentRepository;
 
-  @Test
-  public void shouldFetchByIdPayment() {
-    // given
-    UUID id = UUID.fromString("b71b72a5-902f-4a16-a91d-1a4463b801db");
+  @ParameterizedTest
+  @ValueSource(strings = {"1d378f50-3326-412a-b663-cd080744f1f1",
+      "b71b72a5-902f-4a16-a91d-1a4463b801db"})
+  public void shouldFetchByIdPayment(String id) {
 
     // when
-    Optional<Payment> payment = paymentRepository.findById(id);
+    Optional<Payment> payment = paymentRepository.findById(UUID.fromString(id));
 
     // then
     assertThat(payment).isNotEmpty();

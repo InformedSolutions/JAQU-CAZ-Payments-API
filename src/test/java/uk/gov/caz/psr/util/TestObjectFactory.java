@@ -1,7 +1,6 @@
 package uk.gov.caz.psr.util;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,7 +23,6 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
-import uk.gov.caz.psr.model.VehicleEntrant;
 
 public class TestObjectFactory {
 
@@ -204,32 +202,6 @@ public class TestObjectFactory {
 
       return EntrantPaymentsBuilder.forDays(localDates)
           .withStatus(InternalPaymentStatus.PAID).build();
-    }
-  }
-
-  public static class VehicleEntrants {
-
-    public static VehicleEntrant forDay(LocalDate entryDate) {
-      return basicBuilder().cazEntryDate(entryDate).cazEntryTimestamp(entryDate.atStartOfDay())
-          .build();
-    }
-
-    public static VehicleEntrant anyWithoutId() {
-      return basicBuilder().build();
-    }
-
-    public static VehicleEntrant anyWithId() {
-      return basicBuilder().id(UUID.randomUUID()).build();
-    }
-
-    public static VehicleEntrant sampleEntrantWithId(UUID uuid) {
-      return basicBuilder().id(uuid).build();
-    }
-
-    private static VehicleEntrant.VehicleEntrantBuilder basicBuilder() {
-      LocalDateTime now = LocalDateTime.now();
-      return VehicleEntrant.builder().id(null).vrn("BW91HUN").cazEntryTimestamp(now)
-          .cazEntryDate(now.toLocalDate()).cleanZoneId(ANY_CLEAN_AIR_ZONE);
     }
   }
 

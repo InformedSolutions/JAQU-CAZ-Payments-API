@@ -147,7 +147,7 @@ public class InitiatePaymentRequest {
    */
   private static Function<InitiatePaymentRequest, Boolean> vrnsMaxLength() {
     return request -> allTransactionsMatch(request,
-        transaction -> transaction.getVrn().length() >= 1 && transaction.getVrn().length() <= 15);
+        transaction -> transaction.getVrn().length() <= 15);
   }
 
   /**
