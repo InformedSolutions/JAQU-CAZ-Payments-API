@@ -49,6 +49,7 @@ import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
@@ -60,6 +61,9 @@ public class SuccessPaymentsJourneyTestIT {
   );
   private static final String EXTERNAL_PAYMENT_ID = "kac1ksqi26f9t2h7q3henmlamc";
   private static final String CAZ_ID = "53e03a28-0627-11ea-9511-ffaaee87e375";
+  
+  private static final String PAYMENT_TABLE = "caz_payment.t_payment";
+  private static final String ENTRANT_PAYMENT_TABLE = "caz_payment.t_clean_air_zone_entrant_payment";
 
   @Value("${services.sqs.new-queue-name}")
   private String emailSqsQueueName;
@@ -219,6 +223,7 @@ public class SuccessPaymentsJourneyTestIT {
         .then()
         .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
         .withNonNullPaymentAuthorisedTimestamp()
+        .andAuditRecordsCreated()
         .andStatusResponseIsReturnedWithMatchinInternalId()
         .andPaymentReceiptIsSent();
   }
@@ -300,7 +305,7 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion whenSubmitted() {
-      this.initialPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, "caz_payment.t_payment");
+      this.initialPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, PAYMENT_TABLE);
 
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
       this.validatableResponse = RestAssured.given()
@@ -331,14 +336,14 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion paymentEntityIsCreatedInDatabase() {
-      int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, "caz_payment.t_payment");
+      int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, PAYMENT_TABLE);
       assertThat(currentPaymentsCount).isGreaterThan(initialPaymentsCount);
       verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus.CREATED);
       return this;
     }
 
     public PaymentJourneyAssertion andNoNewPaymentEntityIsCreatedInDatabase() {
-      int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, "caz_payment.t_payment");
+      int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, PAYMENT_TABLE);
       assertThat(currentPaymentsCount).isEqualTo(initialPaymentsCount);
       return this;
     }
@@ -352,14 +357,14 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion withExternalIdEqualTo(String externalPaymentId) {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
           "payment_provider_id = '" + externalPaymentId + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
     }
 
     public PaymentJourneyAssertion andResponseIsReturnedWithMatchingInternalId() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
           "payment_id = '" + initPaymentResponse.getPaymentId().toString() + "'");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
@@ -396,7 +401,7 @@ public class SuccessPaymentsJourneyTestIT {
     private void verifyThatVehicleEntrantPaymentsExistForMatchingDaysWithStatus(
         ExternalPaymentStatus status) {
       int entrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "caz_payment.t_clean_air_zone_entrant_payment",
+          ENTRANT_PAYMENT_TABLE,
           "clean_air_zone_id = '" + initiatePaymentRequest.getCleanAirZoneId().toString() + "' AND "
               + "travel_date in (" + joinWithCommas(initiatePaymentRequest.getDays()) + ") AND "
               + "tariff_code = '" + initiatePaymentRequest.getTariffCode() + "' AND "
@@ -429,7 +434,7 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion withNullPaymentAuthorisedTimestamp() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
           "payment_id = '" + initPaymentResponse.getPaymentId().toString() + "' AND "
               + "payment_authorised_timestamp is null");
       assertThat(paymentsCount).isEqualTo(1);
@@ -437,10 +442,49 @@ public class SuccessPaymentsJourneyTestIT {
     }
 
     public PaymentJourneyAssertion withNonNullPaymentAuthorisedTimestamp() {
-      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
           "payment_authorised_timestamp is not null");
       assertThat(paymentsCount).isEqualTo(1);
       return this;
+    }
+
+    public PaymentJourneyAssertion andAuditRecordsCreated() {
+      String vrn = initiatePaymentRequest.getVrn();
+      UUID cleanAirZoneId = initiatePaymentRequest.getCleanAirZoneId();
+      UUID paymentId = initPaymentResponse.getPaymentId();
+      
+      checkMasterTableWrittenToOnlyOnce(vrn, cleanAirZoneId);
+      checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(vrn, cleanAirZoneId);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.CREATED);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.INITIATED);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.SUCCESS);
+     
+      return this;
+    }
+
+    private void checkDetailTableWrittenToForPaymentStatus(UUID paymentId,
+        ExternalPaymentStatus status) {
+      int detailPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          AuditTableWrapper.DETAIL,
+          "payment_id = '" + paymentId + "' AND payment_provider_status = '" + status.name() + "'");
+      assertThat(detailPaymentCount).isEqualTo(1);
+    }
+
+    private void checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(String vrn,
+        UUID cleanAirZoneId) {
+      Object[] params = new Object[] {vrn, cleanAirZoneId};
+      UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
+      int detailPaymentEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
+          AuditTableWrapper.DETAIL,
+          AuditTableWrapper.MASTER_ID + " = '?'".replace("?", masterId.toString()));
+      assertThat(detailPaymentEntrantCount).isEqualTo(initiatePaymentRequest.getDays().size() * 2);      
+    }
+
+    private void checkMasterTableWrittenToOnlyOnce(String vrn, UUID cleanAirZoneId) {
+      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
+          AuditTableWrapper.MASTER, "vrn = '" + vrn + "' AND clean_air_zone_id = '" 
+          + cleanAirZoneId + "'");
+      assertThat(masterCount).isEqualTo(1);      
     }
 
     public void andPaymentReceiptIsSent() {
@@ -460,7 +504,7 @@ public class SuccessPaymentsJourneyTestIT {
     return InitiatePaymentRequest.builder()
         .amount(4200)
         .days(TRAVEL_DATES)
-        .cleanAirZoneId(UUID.fromString(this.CAZ_ID))
+        .cleanAirZoneId(UUID.fromString(CAZ_ID))
         .returnUrl("http://localhost/return-url")
         .vrn("ND84VSX")
         .tariffCode("tariffCode")

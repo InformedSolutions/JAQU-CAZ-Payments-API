@@ -122,6 +122,25 @@ public class EntrantPaymentRepository {
       + "update_timestamp = CURRENT_TIMESTAMP "
       + "WHERE clean_air_zone_entrant_payment_id = ?";
 
+  private static final String FIND_ALL_PAID_BY_VRN_DATE_RANGE_AND_CAZ_ID = "SELECT "
+      + "clean_air_zone_entrant_payment_id, "
+      + "vrn, "
+      + "clean_air_zone_id, "
+      + "travel_date, "
+      + "tariff_code, "
+      + "charge, "
+      + "payment_status, "
+      + "vehicle_entrant_captured, "
+      + "update_actor, "
+      + "case_reference "
+      + "FROM "
+      + "caz_payment.t_clean_air_zone_entrant_payment "
+      + "WHERE "
+      + "clean_air_zone_id = ? AND "
+      + "vrn = ? AND "
+      + "travel_date BETWEEN ? AND ? AND "
+      + "payment_status = 'PAID'";
+
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
 
@@ -387,6 +406,35 @@ public class EntrantPaymentRepository {
     //    }
     //    return Optional.of(results.iterator().next());
     return Optional.empty();
+  }
+
+  /**
+   * Finds collection of paid {@link EntrantPayment} for a specific vrn, cazId and date range. If no
+   * element is found empty collection is returned.
+   *
+   * @param vrn provided VRN number
+   * @param startDate provided date from which search is done
+   * @param endDate privded date to which search is done
+   * @param cleanAirZoneId provided CAZ ID
+   * @return a list of found {@EntrantPayment}.
+   */
+  public List<EntrantPayment> findAllPaidByVrnAndDateRangeAndCazId(String vrn, LocalDate startDate,
+      LocalDate endDate, UUID cleanAirZoneId) {
+    Preconditions.checkNotNull(cleanAirZoneId, "cleanAirZoneId cannot be null");
+    Preconditions.checkNotNull(startDate, "startDate cannot be null");
+    Preconditions.checkNotNull(endDate, "endDate cannot be null");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
+
+    List<EntrantPayment> entrantPayments = jdbcTemplate.query(
+        FIND_ALL_PAID_BY_VRN_DATE_RANGE_AND_CAZ_ID,
+        preparedStatementSetter -> {
+          preparedStatementSetter.setObject(1, cleanAirZoneId);
+          preparedStatementSetter.setObject(2, vrn);
+          preparedStatementSetter.setObject(3, startDate);
+          preparedStatementSetter.setObject(4, endDate);
+        }, ROW_MAPPER);
+
+    return entrantPayments;
   }
 
   /**

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,16 +33,16 @@ class ChargeSettlementServiceTest {
   private ChargeSettlementService chargeSettlementService;
 
   @Test
-  void shouldReturnNotPaidWhenRepositoryReturnsEmptyCollection() {
+  void shouldReturnEmptyElementWhenRepositoryReturnsEmptyCollection() {
     //given
     mockEmptyCollection();
 
     //when
-    PaymentStatus paymentStatus = chargeSettlementService
+    Optional<PaymentStatus> paymentStatus = chargeSettlementService
         .findChargeSettlement(ANY_CAZ_ID, ANY_VRN, ANY_DATE);
 
     //then
-    assertThat(paymentStatus.getStatus()).isEqualTo(InternalPaymentStatus.NOT_PAID);
+    assertThat(paymentStatus).isEqualTo(Optional.empty());
   }
 
   @Test
@@ -50,11 +51,11 @@ class ChargeSettlementServiceTest {
     mockSingleEntrantPaymentForStatus(InternalPaymentStatus.PAID);
 
     // when
-    PaymentStatus paymentStatus = chargeSettlementService
+    Optional<PaymentStatus> paymentStatus = chargeSettlementService
         .findChargeSettlement(ANY_CAZ_ID, ANY_VRN, ANY_DATE);
 
     // then
-    assertThat(paymentStatus.getStatus()).isEqualTo(InternalPaymentStatus.PAID);
+    assertThat(paymentStatus).map(PaymentStatus::getStatus).contains(InternalPaymentStatus.PAID);
   }
 
   @Test
@@ -63,10 +64,11 @@ class ChargeSettlementServiceTest {
     mockSingleEntrantPaymentForStatus(InternalPaymentStatus.NOT_PAID);
 
     //when
-    PaymentStatus paymentStatus = chargeSettlementService
+    Optional<PaymentStatus> paymentStatus = chargeSettlementService
         .findChargeSettlement(ANY_CAZ_ID, ANY_VRN, ANY_DATE);
 
-    assertThat(paymentStatus.getStatus()).isEqualTo(InternalPaymentStatus.NOT_PAID);
+    assertThat(paymentStatus).map(PaymentStatus::getStatus)
+        .contains(InternalPaymentStatus.NOT_PAID);
   }
 
   @Test
@@ -75,10 +77,11 @@ class ChargeSettlementServiceTest {
     mockSingleEntrantPaymentForStatus(InternalPaymentStatus.REFUNDED);
 
     //when
-    PaymentStatus paymentStatus = chargeSettlementService
+    Optional<PaymentStatus> paymentStatus = chargeSettlementService
         .findChargeSettlement(ANY_CAZ_ID, ANY_VRN, ANY_DATE);
 
-    assertThat(paymentStatus.getStatus()).isEqualTo(InternalPaymentStatus.REFUNDED);
+    assertThat(paymentStatus).map(PaymentStatus::getStatus)
+        .contains(InternalPaymentStatus.REFUNDED);
   }
 
   @Test
@@ -87,10 +90,11 @@ class ChargeSettlementServiceTest {
     mockSingleEntrantPaymentForStatus(InternalPaymentStatus.CHARGEBACK);
 
     //when
-    PaymentStatus paymentStatus = chargeSettlementService
+    Optional<PaymentStatus> paymentStatus = chargeSettlementService
         .findChargeSettlement(ANY_CAZ_ID, ANY_VRN, ANY_DATE);
-
-    assertThat(paymentStatus.getStatus()).isEqualTo(InternalPaymentStatus.CHARGEBACK);
+    
+    assertThat(paymentStatus).map(PaymentStatus::getStatus)
+        .contains(InternalPaymentStatus.CHARGEBACK);
   }
 
   private void mockEmptyCollection() {

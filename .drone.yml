@@ -524,7 +524,7 @@ steps:
       - apk add --update bash python python-dev py-pip jq
       - pip install awscli
       - >
-        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-st --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POst\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-st --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
       - status_code=$(cat output.json | jq '.statusCode')
       - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
     environment:
