@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,7 +31,8 @@ class GetPaidEntrantPaymentsServiceTest {
 
   private final static String ANY_VRN_1 = "CAS123";
   private final static String ANY_VRN_2 = "CAS125";
-  private final static List<String> ANY_VRNS_LIST = Arrays.asList(ANY_VRN_1, ANY_VRN_2);
+  private final static HashSet<String> ANY_VRNS_LIST = new HashSet<String>(
+      Arrays.asList(ANY_VRN_1, ANY_VRN_2));
   private final static LocalDate ANY_START_DATE = LocalDate.of(2020, 1, 1);
   private final static LocalDate ANY_END_DATE = LocalDate.of(2020, 2, 1);
   private final static UUID ANY_UUID = UUID.fromString("6cb5a6b1-18ae-4b06-ac29-f8433099381c");
@@ -45,7 +47,9 @@ class GetPaidEntrantPaymentsServiceTest {
         .getResults(ANY_VRNS_LIST, ANY_START_DATE, ANY_END_DATE, ANY_UUID);
 
     // then
-    assertThat(result).isEmpty();
+    assertThat(result).isNotEmpty();
+    assertThat(result.get(ANY_VRN_1)).isEmpty();
+    assertThat(result.get(ANY_VRN_2)).isEmpty();
   }
 
   @Test
@@ -60,6 +64,8 @@ class GetPaidEntrantPaymentsServiceTest {
     // then
     assertThat(result).isNotEmpty();
     assertThat(result.size()).isEqualTo(2);
+    assertThat(result.get(ANY_VRN_1)).isNotEmpty();
+    assertThat(result.get(ANY_VRN_2)).isNotEmpty();
   }
 
   private void mockEmptyResultFromEntrantPaymentRepository() {

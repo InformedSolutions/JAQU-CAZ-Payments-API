@@ -1,10 +1,12 @@
 package uk.gov.caz.psr.service;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.EntrantPayment;
@@ -31,19 +33,17 @@ public class GetPaidEntrantPaymentsService {
    * @param cleanAirZoneId CAZ in which the payments are checked.
    * @return Map with VRN as a key and list of {@link EntrantPayment} as value.
    */
-  public Map<String,List<EntrantPayment>> getResults(List<String> vrns, LocalDate startDate,
+  public Map<String, List<EntrantPayment>> getResults(Set<String> vrns, LocalDate startDate,
       LocalDate endDate, UUID cleanAirZoneId) {
-    Map<String, List<EntrantPayment>> results = new HashMap<>();
 
-    for (String vrn : vrns) {
-      List<EntrantPayment> paidEntrantPaymentsForVrn = entrantPaymentRepository
-          .findAllPaidByVrnAndDateRangeAndCazId(vrn, startDate, endDate, cleanAirZoneId);
-
-      if (!paidEntrantPaymentsForVrn.isEmpty()) {
-        results.put(vrn, paidEntrantPaymentsForVrn);
-      }
-    }
-
+    Map<String, List<EntrantPayment>> results = vrns.stream()
+        .collect(
+            Collectors.toMap(
+                Function.identity(),
+                vrn -> entrantPaymentRepository.findAllPaidByVrnAndDateRangeAndCazId(vrn, startDate,
+                    endDate, cleanAirZoneId)
+            )
+        );
     return results;
   }
 }

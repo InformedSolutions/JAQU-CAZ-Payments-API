@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.controller;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,7 +60,7 @@ public class PaymentsController implements PaymentsControllerApiSpec {
     paymentsRequest.validate();
 
     Map<String, List<EntrantPayment>> results = getPaidEntrantPaymentsService.getResults(
-        paymentsRequest.getVrns(),
+        new HashSet<String>(paymentsRequest.getVrns()),
         paymentsRequest.getStartDate(),
         paymentsRequest.getEndDate(),
         paymentsRequest.getCleanAirZoneId()
