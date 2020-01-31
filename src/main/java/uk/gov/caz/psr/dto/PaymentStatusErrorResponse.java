@@ -36,6 +36,7 @@ public class PaymentStatusErrorResponse {
     return PaymentStatusErrorResponse.builder()
         .vrn(validationError.getVrn())
         .title(validationError.getTitle())
+        .field(validationError.getField())
         .detail(validationError.getDetail())
         .build();
   }

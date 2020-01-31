@@ -1,8 +1,10 @@
 package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static uk.gov.caz.security.SecurityHeadersInjector.CACHE_CONTROL_HEADER;
 import static uk.gov.caz.security.SecurityHeadersInjector.CACHE_CONTROL_VALUE;
 import static uk.gov.caz.security.SecurityHeadersInjector.CONTENT_SECURITY_POLICY_HEADER;
@@ -25,7 +27,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,6 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
-import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
@@ -63,9 +63,17 @@ public class ErrorPaymentStatusUpdateTestIT {
   @Autowired
   private JdbcTemplate jdbcTemplate;
   
+  private static final String TEST_VRN = "CAS300";
+  private static final String NOT_NULL = "must not be null";
+  private static final String NOT_EMPTY = " is mandatory and cannot be blank";
+  private static final String INCORRECT_STATUS = "Incorrect payment status update, please use "
+      + "\"paid\", \"chargeback\", or \"refunded\" instead";
   private static final PaymentStatusUpdateDetails INVALID_TRAVEL_DATE = 
       PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 1));
   private static final String NON_EXISTING_VRN = "MARYSIA";
+  private static final String REQUEST_WITHOUT_PAYMENT_STATUS = "{\"vrn\":\"" + TEST_VRN + "\",\"statusUpdates\""
+      + ":[{\"dateOfCazEntry\":\"2020-02-05\",\"paymentProviderId\":\"akor5rnblpfdasco6pp04dc5if\","
+      + "\"caseReference\":\"test123\"}]}";
 
   @BeforeEach
   public void startMockServer() {
@@ -76,11 +84,11 @@ public class ErrorPaymentStatusUpdateTestIT {
   }
 
   @Test
-  public void errorsPaymentStatusUpdateWithInvalidRequestJourney() {
+  public void paymentStatusUpdateWithoutVrn() {
     // when invalid request submitted
     given()
-        .paymentStatusUpdateRequest(invalidPaymentStatusUpdateRequest())
-        .whenInvalidRequestSubmitted()
+        .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutVrn())
+        .whenRequestSubmitted("vrn", NOT_EMPTY)
         .then()
         .noEntrantPaymentUpdatedInDatabase();
 
@@ -107,12 +115,36 @@ public class ErrorPaymentStatusUpdateTestIT {
         .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithInvalidPaymentStatus())
         .failsWhenInvalidStatusRequestSubmitted();
   }
+  
+  @Test
+  public void paymentStatusUpdateWithoutDateOfCazEntry() {
+    given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutDateOfCazEntry())
+        .whenRequestSubmitted("dateOfCazEntry", NOT_NULL)
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();
+  }
+  
+  @Test
+  public void paymentStatusUpdateWithoutPaymentStatus() {
+    given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutPaymentStatus())
+        .whenPaymentStatusRequestSubmitted("paymentStatus", NOT_NULL, INCORRECT_STATUS, REQUEST_WITHOUT_PAYMENT_STATUS)
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();
+  }
+  
+  @Test
+  public void paymentStatusUpdateWithoutCaseReference() {
+    given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutCaseReference())
+        .whenRequestSubmitted("caseReference", NOT_EMPTY)
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();
+  }
 
   private PaymentStatusUpdateJourneyAssertion given() {
     return new PaymentStatusUpdateJourneyAssertion(objectMapper, jdbcTemplate);
   }
 
-  private PaymentStatusUpdateRequest invalidPaymentStatusUpdateRequest() {
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithoutVrn() {
     return PaymentStatusUpdateRequest.builder()
         .statusUpdates(exampleStatusUpdates())
         .build();
@@ -125,6 +157,27 @@ public class ErrorPaymentStatusUpdateTestIT {
         .build();
   }
 
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithoutDateOfCazEntry() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn(TEST_VRN)
+        .statusUpdates(statusUpdatesWithoutDateOfCazEntry())
+        .build();
+  }
+
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithoutCaseReference() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn(TEST_VRN)
+        .statusUpdates(statusUpdatesWithoutCaseReference())
+        .build();
+  }
+
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithoutPaymentStatus() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn(TEST_VRN)
+        .statusUpdates(statusUpdatesWithoutPaymentStatus())
+        .build();
+  }
+  
   private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithUnfinishedPayment() {
     return PaymentStatusUpdateRequest.builder()
         .statusUpdates(unfinishedPaymentStatusUpdate())
@@ -142,6 +195,24 @@ public class ErrorPaymentStatusUpdateTestIT {
   private List<PaymentStatusUpdateDetails> exampleStatusUpdates() {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 2))
+    );
+  }
+  
+  private List<PaymentStatusUpdateDetails> statusUpdatesWithoutCaseReference() {
+    return Arrays.asList(
+        PaymentStatusUpdateDetailsFactory.anyWithoutCaseReference()
+    );
+  }
+  
+  private List<PaymentStatusUpdateDetails> statusUpdatesWithoutDateOfCazEntry() {
+    return Arrays.asList(
+        PaymentStatusUpdateDetailsFactory.anyWithoutDateOfCazEntry()
+    );
+  }
+  
+  private List<PaymentStatusUpdateDetails> statusUpdatesWithoutPaymentStatus() {
+    return Arrays.asList(
+        PaymentStatusUpdateDetailsFactory.anyWithoutPaymentStatus()
     );
   }
 
@@ -184,7 +255,7 @@ public class ErrorPaymentStatusUpdateTestIT {
       return this;
     }
 
-    public PaymentStatusUpdateJourneyAssertion whenInvalidRequestSubmitted() {
+    public PaymentStatusUpdateJourneyAssertion whenRequestSubmitted(String errorField, String msg) {
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
 
       RestAssured
@@ -206,8 +277,39 @@ public class ErrorPaymentStatusUpdateTestIT {
           .header(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_VALUE)
           .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
           .statusCode(HttpStatus.BAD_REQUEST.value())
-          .body("errors[0].vrn", equalTo(null))
-          .body("errors[0].detail", containsString("\"vrn\" is mandatory and cannot be blank"));
+          .body("errors[0].vrn", equalTo(errorField.equals("vrn") ? null : TEST_VRN))
+          .body("errors[0].field", equalTo(errorField))
+          .body("errors[0].detail", containsString(msg));
+      return this;
+    }
+
+    public PaymentStatusUpdateJourneyAssertion whenPaymentStatusRequestSubmitted(String errorField, String msg,
+        String msg2, String body) {
+      String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
+
+      RestAssured
+          .given()
+          .accept(MediaType.APPLICATION_JSON.toString())
+          .contentType(MediaType.APPLICATION_JSON.toString())
+          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+          .header(Headers.TIMESTAMP, LocalDateTime.now().toString())
+          .header(Headers.X_API_KEY, cleanAirZoneId)
+          .body(body)
+          .when()
+          .put()
+          .then()
+          .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+          .header(STRICT_TRANSPORT_SECURITY_HEADER, STRICT_TRANSPORT_SECURITY_VALUE)
+          .header(PRAGMA_HEADER, PRAGMA_HEADER_VALUE)
+          .header(X_CONTENT_TYPE_OPTIONS_HEADER, X_CONTENT_TYPE_OPTIONS_VALUE)
+          .header(X_FRAME_OPTIONS_HEADER, X_FRAME_OPTIONS_VALUE)
+          .header(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_VALUE)
+          .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
+          .statusCode(HttpStatus.BAD_REQUEST.value())
+          .body("errors[0].vrn", equalTo(errorField.equals("vrn") ? null : TEST_VRN))
+          .body("errors[0].field", equalTo(errorField))
+          .body("errors[0].detail", anyOf(containsString(msg), containsString(msg2)))
+          .body("errors[1].detail", anyOf(containsString(msg), containsString(msg2)));
       return this;
     }
 
@@ -280,7 +382,7 @@ public class ErrorPaymentStatusUpdateTestIT {
 
     @SneakyThrows
     private String toJsonString(Object request) {
-      return objectMapper.writeValueAsString(request);
+      return objectMapper.writeValueAsString(request).replace("REFUNDED", "refunded");
     }
 
     public PaymentStatusUpdateJourneyAssertion noEntrantPaymentUpdatedInDatabase() {

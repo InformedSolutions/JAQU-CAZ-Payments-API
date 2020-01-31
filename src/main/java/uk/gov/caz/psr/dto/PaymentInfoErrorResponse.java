@@ -15,6 +15,7 @@ public class PaymentInfoErrorResponse {
 
   String title;
   String detail;
+  String field;
   int status = HttpStatus.BAD_REQUEST.value();
 
   /**
@@ -27,6 +28,7 @@ public class PaymentInfoErrorResponse {
   public static PaymentInfoErrorResponse from(ValidationError validationError) {
     return PaymentInfoErrorResponse.builder()
         .title(validationError.getTitle())
+        .field(validationError.getField())
         .detail(validationError.getDetail())
         .build();
   }

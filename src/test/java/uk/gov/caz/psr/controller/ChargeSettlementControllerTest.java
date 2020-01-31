@@ -195,6 +195,7 @@ class ChargeSettlementControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
             .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(jsonPath("$.errors[0].field").value(argumentName))
             .andExpect(jsonPath("$.errors[0].vrn").doesNotExist())
             .andExpect(jsonPath("$.errors[0].detail")
                 .value("Invalid date format of \"" + argumentName + "\""));
@@ -217,6 +218,7 @@ class ChargeSettlementControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
             .andExpect(jsonPath("$.errors[0].vrn").doesNotExist())
+            .andExpect(jsonPath("$.errors[0].field").value("vrn"))
             .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
             .andExpect(
                 jsonPath("$.errors[0].detail").value("\"vrn\" size must be between 1 and 15"));
@@ -245,6 +247,7 @@ class ChargeSettlementControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
             .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(jsonPath("$.errors[0].field").value("paymentProviderId"))
             .andExpect(jsonPath("$.errors[0].vrn").doesNotExist())
             .andExpect(jsonPath("$.errors[0].detail").value("\"paymentProviderId\" size must be between 1 and 255"));
       }
@@ -318,6 +321,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].vrn").value(IsNull.nullValue()))
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+          .andExpect(jsonPath("$.errors[0].field").value("vrn"))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"vrn\" is mandatory and cannot be blank"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()));
@@ -336,6 +340,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].vrn").value(ANY_VALID_VRN))
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+          .andExpect(jsonPath("$.errors[0].field").value("dateOfCazEntry"))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"dateOfCazEntry\" is mandatory and cannot be blank"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()));
@@ -356,6 +361,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].vrn").value(vrn))
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+          .andExpect(jsonPath("$.errors[0].field").value("vrn"))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"vrn\" size must be between 1 and 15"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()));
@@ -377,6 +383,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].vrn").value(ANY_VALID_VRN))
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
+          .andExpect(jsonPath("$.errors[0].field").value("dateOfCazEntry"))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("Invalid date format of \"dateOfCazEntry\""))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()));
@@ -479,6 +486,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].vrn").value(""))
+          .andExpect(jsonPath("$.errors[0].field").value("vrn"))
           .andExpect(jsonPath("$.errors[*].title").value(hasItem("Parameter validation error")))
           .andExpect(jsonPath("$.errors[*].detail")
               .value(hasItem("\"vrn\" is mandatory and cannot be blank")));
@@ -498,6 +506,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].vrn").value(IsNull.nullValue()))
+          .andExpect(jsonPath("$.errors[0].field").value("vrn"))
           .andExpect(jsonPath("$.errors[*].title").value(hasItem("Parameter validation error")))
           .andExpect(jsonPath("$.errors[*].detail")
               .value(hasItem("\"vrn\" is mandatory and cannot be blank")));
@@ -517,6 +526,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.errors[0].field").value("vrn"))
           .andExpect(jsonPath("$.errors[0].vrn").value("TOO_LONG_VRN_1234567890"))
           .andExpect(jsonPath("$.errors[0].detail").value("\"vrn\" size must be between 1 and 15"));
     }
@@ -535,6 +545,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
           .andExpect(jsonPath("$.errors[0].vrn").isNotEmpty())
+          .andExpect(jsonPath("$.errors[0].field").value("statusUpdates"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"statusUpdates\" is mandatory and cannot be empty"));
@@ -543,7 +554,7 @@ class ChargeSettlementControllerTest {
     @Test
     public void blankCaseReferenceShouldResultIn400() throws Exception {
       String payload = requestWithStatusUpdates(
-          Collections.singletonList(PaymentStatusUpdateDetailsFactory.anyInvalid()));
+          Collections.singletonList(PaymentStatusUpdateDetailsFactory.anyWithoutCaseReference()));
 
       mockMvc.perform(put(PAYMENT_STATUS_PUT_PATH)
           .content(payload)
@@ -555,6 +566,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
           .andExpect(jsonPath("$.errors[0].vrn").isNotEmpty())
+          .andExpect(jsonPath("$.errors[0].field").value("caseReference"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"statusUpdates[0].caseReference\" is mandatory and cannot be blank"));
@@ -576,6 +588,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
           .andExpect(jsonPath("$.errors[0].vrn").isNotEmpty())
+          .andExpect(jsonPath("$.errors[0].field").value("caseReference"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"statusUpdates[0].caseReference\" size must be between 1 and 15"));

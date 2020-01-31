@@ -1,3 +1,4 @@
+
 package uk.gov.caz.psr.controller;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -36,6 +38,7 @@ import uk.gov.caz.psr.service.exception.PaymentDoesNotExistException;
 public class ExceptionController extends GlobalExceptionHandler {
 
   private static final Locale LOCALE = Locale.ENGLISH;
+  private static final String EMPTY = "must not be null";
 
   private final MessageSource messageSource;
 
@@ -87,7 +90,7 @@ public class ExceptionController extends GlobalExceptionHandler {
 
   /**
    * Method to handle Exception while validation of request DTO failed with {@link
-   * PaymentStatusDtoValidationException}.
+   * PaymentInfoDtoValidationException}.
    *
    * @param ex Exception object.
    */
@@ -178,8 +181,16 @@ public class ExceptionController extends GlobalExceptionHandler {
    */
   private ValidationErrorBuilder createBaseValidationErrorBuilder(ObjectError error,
       String validationCode) {
+    String field = null;
+    String detail = messageSource.getMessage(error, LOCALE);
+    if (error instanceof FieldError) {
+      String[] fieldArray = ((FieldError) error).getField().split("\\.");
+      field = fieldArray.length > 1 ? fieldArray[1] : fieldArray[0];
+      detail = detail.contains(EMPTY) ? field + " " + detail : detail;
+    }
     return ValidationError.builder()
-        .detail(messageSource.getMessage(error, LOCALE))
+        .detail(detail)
+        .field(field)
         .title(messageSource.getMessage(validationCode, null, LOCALE));
   }
 }

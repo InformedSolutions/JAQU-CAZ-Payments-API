@@ -801,6 +801,50 @@ class ChargeSettlementPaymentInfoTestIT {
       }
     }
   }
+  
+  @Nested
+  class WhenInvalidRequest {
+    
+    @Test
+    public void shouldReturn400ResponseWhenNoParametersGiven() {
+      PaymentInfoAssertion.whenRequested()
+          .then()
+          .headerContainsCorrelationId()
+          .responseHasBadRequestStatus();
+    }
+    
+    @Test
+    public void shouldReturn400ResponseWhenVrnIsLongerThan15Characters() {
+      PaymentInfoAssertion.whenRequested()
+      .withParam("vrn", "AB12CD34EF56GH78")
+      .then()
+      .headerContainsCorrelationId()
+      .responseHasBadRequestStatus()
+      .responseHasErrorField("vrn");
+    }
+    
+    @ParameterizedTest
+    @ValueSource(strings = {"2020-01-20-", "20/01/2020"})
+    public void shouldReturn400ResponseWhenFromDatePaidForIsInvalid(String fromDatePaidFor) {
+      PaymentInfoAssertion.whenRequested()
+      .withParam("fromDatePaidFor", fromDatePaidFor)
+      .then()
+      .headerContainsCorrelationId()
+      .responseHasBadRequestStatus()
+      .responseHasErrorField("fromDatePaidFor");
+    }
+    
+    @ParameterizedTest
+    @ValueSource(strings = {"2020-01-20-", "20/01/2020"})
+    public void shouldReturn400ResponseWhenToDatePaidForIsInvalid(String toDatePaidFor) {
+      PaymentInfoAssertion.whenRequested()
+      .withParam("toDatePaidFor", toDatePaidFor)
+      .then()
+      .headerContainsCorrelationId()
+      .responseHasBadRequestStatus()
+      .responseHasErrorField("toDatePaidFor");
+    }
+  }
 
   private static class PaymentInfoAssertion {
 
@@ -834,6 +878,11 @@ class ChargeSettlementPaymentInfoTestIT {
 
     public PaymentInfoAssertion responseHasOkStatus() {
       validatableResponse = validatableResponse.statusCode(HttpStatus.OK.value());
+      return this;
+    }
+    
+    public PaymentInfoAssertion responseHasBadRequestStatus() {
+      validatableResponse = validatableResponse.statusCode(HttpStatus.BAD_REQUEST.value());
       return this;
     }
 
@@ -883,6 +932,11 @@ class ChargeSettlementPaymentInfoTestIT {
 
     public PaymentInfoAssertion containsReferenceNumbers() {
       validatableResponse.body(REFERENCE_NUMBERS_CNT, greaterThan(0));
+      return this;
+    }
+
+    public PaymentInfoAssertion responseHasErrorField(String field) {
+      validatableResponse.body("errors[0].field", equalTo(field));
       return this;
     }
   }
