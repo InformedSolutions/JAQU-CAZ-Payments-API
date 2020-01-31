@@ -13,8 +13,8 @@ import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.service.exception.PaymentDoesNotExistException;
 import uk.gov.caz.psr.service.exception.PaymentNotProcessedException;
-import uk.gov.caz.psr.util.EntrantPaymentStatusUpdateConverter;
 
 /**
  * A service which updates {@code paymentStatus} for all found {@link EntrantPayment}.
@@ -26,7 +26,6 @@ public class PaymentStatusUpdateService {
 
   private final EntrantPaymentRepository entrantPaymentRepository;
   private final PaymentRepository paymentRepository;
-  private final EntrantPaymentStatusUpdateConverter entrantPaymentStatusUpdateConverter;
 
   /**
    * Process update of the {@link EntrantPayment} with provided details.
@@ -41,20 +40,11 @@ public class PaymentStatusUpdateService {
         "entrantPaymentStatusUpdates cannot be null");
 
     for (EntrantPaymentStatusUpdate entrantPaymentStatusUpdate : entrantPaymentStatusUpdates) {
-      Optional<EntrantPayment> entrantPayment = loadEntrantPayment(entrantPaymentStatusUpdate);
-
-      if (entrantPayment.isPresent()) {
-        handleUpdateEntrantPayment(entrantPayment.get(), entrantPaymentStatusUpdate);
-      } else {
-        handleNewEntrantPayment(entrantPaymentStatusUpdate);
-      }
+      EntrantPayment entrantPayment = 
+          loadEntrantPayment(entrantPaymentStatusUpdate).orElseThrow(() -> 
+              new PaymentDoesNotExistException(entrantPaymentStatusUpdate.getVrn()));
+      handleUpdateEntrantPayment(entrantPayment, entrantPaymentStatusUpdate);
     }
-  }
-
-  private void handleNewEntrantPayment(EntrantPaymentStatusUpdate entrantPaymentStatusUpdate) {
-    entrantPaymentRepository.insert(makeNewEntrantPayment(entrantPaymentStatusUpdate));
-    log.info("Created new EntrantPayment from the following statusUpdate: {}",
-        entrantPaymentStatusUpdate);
   }
 
   private void handleUpdateEntrantPayment(EntrantPayment entrantPayment,
@@ -95,19 +85,6 @@ public class PaymentStatusUpdateService {
         .caseReference(entrantPaymentStatusUpdate.getCaseReference())
         .updateActor(EntrantPaymentUpdateActor.LA)
         .build();
-  }
-
-  /**
-   * Builds a new instance of {@link EntrantPayment} with attributes assigned by Local Authority,
-   * with zero charge.
-   *
-   * @param statusUpdate {@link EntrantPaymentStatusUpdate} object used to initialize new
-   *     record.
-   * @return entrantPayment {@link EntrantPayment} which is supposed to be persisted in the
-   *     database.
-   */
-  private EntrantPayment makeNewEntrantPayment(EntrantPaymentStatusUpdate statusUpdate) {
-    return entrantPaymentStatusUpdateConverter.convert(statusUpdate);
   }
 
   /**

@@ -91,16 +91,6 @@ public class SuccessPaymentStatusUpdateTestIT {
         .detailTableIsUpdated(FORMATTED_VRN);
   }
 
-  @Test
-  public void successPaymentStatusUpdateForNonExistingEntrantPaymentJourney() {
-    given()
-        .paymentStatusUpdateRequest(paymentStatusUpdateRequestForNonExistingParams())
-        .whenSubmitted()
-        .then()
-        .entrantPaymentIsCreatedInTheDatabase()
-        .detailTableIsUpdated(TEST_VRN);
-  }
-
   private PaymentStatusUpdateJourneyAssertion given() {
     return new PaymentStatusUpdateJourneyAssertion(objectMapper, jdbcTemplate);
   }
