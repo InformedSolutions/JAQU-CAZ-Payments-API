@@ -566,7 +566,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
           .andExpect(jsonPath("$.errors[0].vrn").isNotEmpty())
-          .andExpect(jsonPath("$.errors[0].field").value("statusUpdates[0].caseReference"))
+          .andExpect(jsonPath("$.errors[0].field").value("caseReference"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"statusUpdates[0].caseReference\" is mandatory and cannot be blank"));
@@ -588,7 +588,7 @@ class ChargeSettlementControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.errors[0].title").value("Parameter validation error"))
           .andExpect(jsonPath("$.errors[0].vrn").isNotEmpty())
-          .andExpect(jsonPath("$.errors[0].field").value("statusUpdates[0].caseReference"))
+          .andExpect(jsonPath("$.errors[0].field").value("caseReference"))
           .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
           .andExpect(jsonPath("$.errors[0].detail")
               .value("\"statusUpdates[0].caseReference\" size must be between 1 and 15"));

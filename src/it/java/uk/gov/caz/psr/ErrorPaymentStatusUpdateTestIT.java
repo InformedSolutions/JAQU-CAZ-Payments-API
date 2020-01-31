@@ -1,6 +1,7 @@
 package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -306,7 +307,9 @@ public class ErrorPaymentStatusUpdateTestIT {
           .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
           .statusCode(HttpStatus.BAD_REQUEST.value())
           .body("errors[0].vrn", equalTo(errorField.equals("vrn") ? null : TEST_VRN))
-          .body("errors[0].field", equalTo(errorField));
+          .body("errors[0].field", equalTo(errorField))
+          .body("errors[0].detail", anyOf(containsString(msg), containsString(msg2)))
+          .body("errors[1].detail", anyOf(containsString(msg), containsString(msg2)));
       return this;
     }
 
@@ -379,7 +382,7 @@ public class ErrorPaymentStatusUpdateTestIT {
 
     @SneakyThrows
     private String toJsonString(Object request) {
-      return objectMapper.writeValueAsString(request);
+      return objectMapper.writeValueAsString(request).replace("REFUNDED", "refunded");
     }
 
     public PaymentStatusUpdateJourneyAssertion noEntrantPaymentUpdatedInDatabase() {

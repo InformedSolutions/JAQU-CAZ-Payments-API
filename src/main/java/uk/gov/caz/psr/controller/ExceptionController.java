@@ -38,6 +38,7 @@ import uk.gov.caz.psr.service.exception.PaymentDoesNotExistException;
 public class ExceptionController extends GlobalExceptionHandler {
 
   private static final Locale LOCALE = Locale.ENGLISH;
+  private static final String EMPTY = "must not be null";
 
   private final MessageSource messageSource;
 
@@ -180,10 +181,16 @@ public class ExceptionController extends GlobalExceptionHandler {
    */
   private ValidationErrorBuilder createBaseValidationErrorBuilder(ObjectError error,
       String validationCode) {
-    String field = error instanceof FieldError ? ((FieldError) error).getField() : null;
+    String field = null;
+    String detail = messageSource.getMessage(error, LOCALE);
+    if (error instanceof FieldError) {
+      String[] fieldArray = ((FieldError) error).getField().split("\\.");
+      field = fieldArray.length > 1 ? fieldArray[1] : fieldArray[0];
+      detail = detail.contains(EMPTY) ? field + " " + detail : detail;
+    }
     return ValidationError.builder()
-        .detail(field.split("\\.")[1] + " " + messageSource.getMessage(error, LOCALE))
-        .field(field.split("\\.")[1])
+        .detail(detail)
+        .field(field)
         .title(messageSource.getMessage(validationCode, null, LOCALE));
   }
 }
