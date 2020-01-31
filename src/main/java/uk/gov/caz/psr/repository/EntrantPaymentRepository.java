@@ -34,64 +34,67 @@ public class EntrantPaymentRepository {
   private static final EntrantPaymentRowMapper ROW_MAPPER =
       new EntrantPaymentRowMapper();
 
-  private static final String SELECT_BY_PAYMENT_ID_SQL = "SELECT "
-      + "entrant_payment.clean_air_zone_entrant_payment_id, "
-      + "entrant_payment.vrn, "
-      + "entrant_payment.clean_air_zone_id, "
-      + "entrant_payment.travel_date, "
-      + "entrant_payment.tariff_code, "
-      + "entrant_payment.charge, "
-      + "entrant_payment.payment_status, "
-      + "entrant_payment.update_actor, "
-      + "entrant_payment.vehicle_entrant_captured, "
-      + "entrant_payment.case_reference "
-      + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
-      + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
-      + "ON entrant_payment_match.clean_air_zone_entrant_payment_id = "
-      + "entrant_payment.clean_air_zone_entrant_payment_id "
-      + "WHERE entrant_payment_match.payment_id = ?";
+  private static class EntrantPaymentColumns {
 
-  private static final String SELECT_PAID_SQL = "SELECT "
-      + "clean_air_zone_entrant_payment_id, "
-      + "vrn, "
-      + "clean_air_zone_id, "
-      + "travel_date, "
-      + "tariff_code, "
-      + "charge, "
-      + "payment_status, "
-      + "vehicle_entrant_captured, "
-      + "case_reference "
-      + "FROM caz_payment.t_clean_air_zone_entrant_payment "
-      + "WHERE travel_date = ? AND clean_air_zone_id = ? AND vrn = ? AND payment_status = ?";
+    static final String COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID = "clean_air_zone_entrant_payment_id";
+    static final String COL_VRN = "vrn";
+    static final String COL_CLEAN_AIR_ZONE_ID = "clean_air_zone_id";
+    static final String COL_TRAVEL_DATE = "travel_date";
+    static final String COL_TARIFF_CODE = "tariff_code";
+    static final String COL_CHARGE = "charge";
+    static final String COL_PAYMENT_STATUS = "payment_status";
+    static final String COL_UPDATE_ACTOR = "update_actor";
+    static final String COL_VEHICLE_ENTRANT_CAPTURED = "vehicle_entrant_captured";
+    static final String COL_CASE_REFERENCE = "case_reference";
+  }
+
+  private static class EntrantPaymentMatchColumns {
+
+    static final String COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID = "clean_air_zone_entrant_payment_id";
+    static final String COL_PAYMENT_ID = "payment_id";
+  }
+
+  private static String selectAllColumns() {
+    return "SELECT ep." + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID + ", "
+        + "ep." + EntrantPaymentColumns.COL_VRN + ", "
+        + "ep." + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + ", "
+        + "ep." + EntrantPaymentColumns.COL_TRAVEL_DATE + ", "
+        + "ep." + EntrantPaymentColumns.COL_TARIFF_CODE + ", "
+        + "ep." + EntrantPaymentColumns.COL_CHARGE + ", "
+        + "ep." + EntrantPaymentColumns.COL_PAYMENT_STATUS + ", "
+        + "ep." + EntrantPaymentColumns.COL_UPDATE_ACTOR + ", "
+        + "ep." + EntrantPaymentColumns.COL_VEHICLE_ENTRANT_CAPTURED + ", "
+        + "ep." + EntrantPaymentColumns.COL_CASE_REFERENCE + " "
+        + "FROM caz_payment.t_clean_air_zone_entrant_payment ep ";
+  }
+
+  private static final String SELECT_BY_PAYMENT_ID_SQL =
+      selectAllColumns()
+          + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
+          + "ON entrant_payment_match."
+          + EntrantPaymentMatchColumns.COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID + " = "
+          + "ep." + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID
+          + " WHERE entrant_payment_match." + EntrantPaymentMatchColumns.COL_PAYMENT_ID + " = ?";
+
+  private static final String SELECT_PAID_SQL =
+      selectAllColumns() + " WHERE "
+          + EntrantPaymentColumns.COL_TRAVEL_DATE + " = ? AND "
+          + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
+          + EntrantPaymentColumns.COL_VRN + " = ? AND "
+          + EntrantPaymentColumns.COL_PAYMENT_STATUS + " = ?";
 
   @VisibleForTesting
-  static final String SELECT_BY_VRN_CAZ_ENTRY_DATE_SQL = "SELECT "
-      + "clean_air_zone_entrant_payment_id, "
-      + "vrn, "
-      + "clean_air_zone_id, "
-      + "travel_date, "
-      + "tariff_code, "
-      + "charge, "
-      + "payment_status, "
-      + "vehicle_entrant_captured, "
-      + "update_actor, "
-      + "case_reference "
-      + "FROM caz_payment.t_clean_air_zone_entrant_payment "
-      + "WHERE clean_air_zone_id = ? AND vrn = ? AND travel_date = ?";
+  static final String SELECT_BY_VRN_CAZ_ENTRY_DATE_SQL =
+      selectAllColumns() + " WHERE "
+          + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
+          + EntrantPaymentColumns.COL_VRN + " = ? AND "
+          + EntrantPaymentColumns.COL_TRAVEL_DATE + " = ?";
 
-  private static final String SELECT_BY_VRN_CAZ_ENTRY_DATES_SQL = "SELECT "
-      + "clean_air_zone_entrant_payment_id, "
-      + "vrn, "
-      + "clean_air_zone_id, "
-      + "travel_date, "
-      + "tariff_code, "
-      + "charge, "
-      + "payment_status, "
-      + "vehicle_entrant_captured, "
-      + "update_actor, "
-      + "case_reference "
-      + "FROM caz_payment.t_clean_air_zone_entrant_payment "
-      + "WHERE clean_air_zone_id = ? AND vrn = ? AND travel_date = ANY (?)";
+  private static final String SELECT_BY_VRN_CAZ_ENTRY_DATES_SQL =
+      selectAllColumns() + " WHERE "
+          + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
+          + EntrantPaymentColumns.COL_VRN + " = ? AND "
+          + EntrantPaymentColumns.COL_TRAVEL_DATE + " = ANY (?)";
 
   //    @VisibleForTesting
   //    static final String SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL = "SELECT "
@@ -113,33 +116,22 @@ public class EntrantPaymentRepository {
   //        + "payment.payment_provider_id = ?";
 
   private static final String UPDATE_SQL = "UPDATE caz_payment.t_clean_air_zone_entrant_payment "
-      + "SET payment_status = ?, "
-      + "case_reference = ?, "
-      + "update_actor = ?, "
-      + "tariff_code = ?, "
-      + "vehicle_entrant_captured = ?, "
-      + "charge = ?, "
+      + "SET " + EntrantPaymentColumns.COL_PAYMENT_STATUS + " = ?, "
+      + EntrantPaymentColumns.COL_CASE_REFERENCE + " = ?, "
+      + EntrantPaymentColumns.COL_UPDATE_ACTOR + " = ?, "
+      + EntrantPaymentColumns.COL_TARIFF_CODE + " = ?, "
+      + EntrantPaymentColumns.COL_VEHICLE_ENTRANT_CAPTURED + " = ?, "
+      + EntrantPaymentColumns.COL_CHARGE + " = ?, "
       + "update_timestamp = CURRENT_TIMESTAMP "
-      + "WHERE clean_air_zone_entrant_payment_id = ?";
+      + "WHERE " + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID + " = ?";
 
-  private static final String FIND_ALL_PAID_BY_VRN_DATE_RANGE_AND_CAZ_ID = "SELECT "
-      + "clean_air_zone_entrant_payment_id, "
-      + "vrn, "
-      + "clean_air_zone_id, "
-      + "travel_date, "
-      + "tariff_code, "
-      + "charge, "
-      + "payment_status, "
-      + "vehicle_entrant_captured, "
-      + "update_actor, "
-      + "case_reference "
-      + "FROM "
-      + "caz_payment.t_clean_air_zone_entrant_payment "
-      + "WHERE "
-      + "clean_air_zone_id = ? AND "
-      + "vrn = ? AND "
-      + "travel_date BETWEEN ? AND ? AND "
-      + "payment_status = 'PAID'";
+  private static final String FIND_ALL_PAID_BY_VRN_DATE_RANGE_AND_CAZ_ID =
+      selectAllColumns() + " WHERE "
+          + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
+          + EntrantPaymentColumns.COL_VRN + " = ? AND "
+          + EntrantPaymentColumns.COL_TRAVEL_DATE + " BETWEEN ? AND ? AND "
+          + EntrantPaymentColumns.COL_PAYMENT_STATUS + " = "
+          + "\'" + InternalPaymentStatus.PAID.toString() + "\'";
 
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
@@ -153,8 +145,16 @@ public class EntrantPaymentRepository {
         .withSchemaName("caz_payment")
         .withTableName("t_clean_air_zone_entrant_payment")
         .usingGeneratedKeyColumns("clean_air_zone_entrant_payment_id")
-        .usingColumns("vrn", "clean_air_zone_id", "travel_date", "tariff_code", "charge",
-            "payment_status", "update_actor", "vehicle_entrant_captured");
+        .usingColumns(
+            EntrantPaymentColumns.COL_VRN,
+            EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID,
+            EntrantPaymentColumns.COL_TRAVEL_DATE,
+            EntrantPaymentColumns.COL_TARIFF_CODE,
+            EntrantPaymentColumns.COL_CHARGE,
+            EntrantPaymentColumns.COL_PAYMENT_STATUS,
+            EntrantPaymentColumns.COL_UPDATE_ACTOR,
+            EntrantPaymentColumns.COL_VEHICLE_ENTRANT_CAPTURED
+        );
   }
 
   /**
@@ -210,14 +210,16 @@ public class EntrantPaymentRepository {
    */
   private MapSqlParameterSource toSqlParameters(EntrantPayment entrantPayment) {
     return new MapSqlParameterSource()
-        .addValue("vrn", entrantPayment.getVrn())
-        .addValue("clean_air_zone_id", entrantPayment.getCleanAirZoneId())
-        .addValue("travel_date", entrantPayment.getTravelDate())
-        .addValue("tariff_code", entrantPayment.getTariffCode())
-        .addValue("charge", entrantPayment.getCharge())
-        .addValue("payment_status", entrantPayment.getInternalPaymentStatus().name())
-        .addValue("vehicle_entrant_captured", entrantPayment.isVehicleEntrantCaptured())
-        .addValue("update_actor", entrantPayment.getUpdateActor());
+        .addValue(EntrantPaymentColumns.COL_VRN, entrantPayment.getVrn())
+        .addValue(EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID, entrantPayment.getCleanAirZoneId())
+        .addValue(EntrantPaymentColumns.COL_TRAVEL_DATE, entrantPayment.getTravelDate())
+        .addValue(EntrantPaymentColumns.COL_TARIFF_CODE, entrantPayment.getTariffCode())
+        .addValue(EntrantPaymentColumns.COL_CHARGE, entrantPayment.getCharge())
+        .addValue(EntrantPaymentColumns.COL_PAYMENT_STATUS,
+            entrantPayment.getInternalPaymentStatus().name())
+        .addValue(EntrantPaymentColumns.COL_VEHICLE_ENTRANT_CAPTURED,
+            entrantPayment.isVehicleEntrantCaptured())
+        .addValue(EntrantPaymentColumns.COL_UPDATE_ACTOR, entrantPayment.getUpdateActor());
   }
 
   /**
@@ -449,17 +451,21 @@ public class EntrantPaymentRepository {
     public EntrantPayment mapRow(ResultSet resultSet, int i) throws SQLException {
       return EntrantPayment.builder()
           .cleanAirZoneEntrantPaymentId(
-              UUID.fromString(resultSet.getString("clean_air_zone_entrant_payment_id")))
-          .vrn(resultSet.getString("vrn"))
-          .cleanAirZoneId(UUID.fromString(resultSet.getString("clean_air_zone_id")))
-          .travelDate(LocalDate.parse(resultSet.getString("travel_date")))
-          .tariffCode(resultSet.getString("tariff_code"))
-          .charge(resultSet.getInt("charge"))
+              UUID.fromString(
+                  resultSet.getString(EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID)))
+          .vrn(resultSet.getString(EntrantPaymentColumns.COL_VRN))
+          .cleanAirZoneId(
+              UUID.fromString(resultSet.getString(EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID)))
+          .travelDate(LocalDate.parse(resultSet.getString(EntrantPaymentColumns.COL_TRAVEL_DATE)))
+          .tariffCode(resultSet.getString(EntrantPaymentColumns.COL_TARIFF_CODE))
+          .charge(resultSet.getInt(EntrantPaymentColumns.COL_CHARGE))
           .internalPaymentStatus(InternalPaymentStatus.valueOf(
-              resultSet.getString("payment_status")))
-          .vehicleEntrantCaptured(resultSet.getBoolean("vehicle_entrant_captured"))
-          .updateActor(EntrantPaymentUpdateActor.valueOf(resultSet.getString("update_actor")))
-          .caseReference(resultSet.getString("case_reference"))
+              resultSet.getString(EntrantPaymentColumns.COL_PAYMENT_STATUS)))
+          .vehicleEntrantCaptured(
+              resultSet.getBoolean(EntrantPaymentColumns.COL_VEHICLE_ENTRANT_CAPTURED))
+          .updateActor(EntrantPaymentUpdateActor
+              .valueOf(resultSet.getString(EntrantPaymentColumns.COL_UPDATE_ACTOR)))
+          .caseReference(resultSet.getString(EntrantPaymentColumns.COL_CASE_REFERENCE))
           .build();
     }
   }
