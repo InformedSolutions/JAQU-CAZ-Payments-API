@@ -23,6 +23,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -113,9 +115,10 @@ class PaymentsControllerTest {
     verify(initiatePaymentService, never()).createPayment(any());
   }
 
-  @Test
-  public void invalidVrnShouldResultIn400() throws Exception {
-    String payload = paymentRequestWithVrn("1234567890123456");
+  @ParameterizedTest
+  @ValueSource(strings = {"1234567890123456", ""})
+  public void invalidVrnShouldResultIn400(String vrn) throws Exception {
+    String payload = paymentRequestWithVrn(vrn);
 
     mockMvc.perform(post(BASE_PATH)
         .content(payload)
@@ -137,6 +140,18 @@ class PaymentsControllerTest {
         .andExpect(status().isBadRequest());
     verify(initiatePaymentService, never()).createPayment(any());
   }
+
+    @Test
+    public void duplicatedTransactionsShouldResultIn400() throws Exception {
+      String payload = paymentRequestWithDuplicatedTransactions();
+
+      mockMvc.perform(post(BASE_PATH).content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(status().isBadRequest());
+      verify(initiatePaymentService, never()).createPayment(any());
+    }
 
   @Test
   public void invalidReturnUrlShouldResultIn400() throws Exception {
@@ -194,6 +209,13 @@ class PaymentsControllerTest {
         .build();
     return toJsonString(requestParams);
   }
+
+    private String paymentRequestWithDuplicatedTransactions() {
+      InitiatePaymentRequest requestParams = baseRequestBuilder()
+          .transactions(Arrays.asList(ANY_TRANSACTION, ANY_TRANSACTION))
+          .build();
+      return toJsonString(requestParams);
+    }
 
   private String paymentRequestWithVrn(String vrn) {
     InitiatePaymentRequest requestParams = baseRequestBuilder()
@@ -297,6 +319,30 @@ class PaymentsControllerTest {
     }
 
     @Test
+    public void shouldReturn400StatusCodeWhenStartDateIsAfterEndDate() throws Exception {
+      String payload = requestWithStartDateAfterEndDate();
+
+      performRequestWithContent(payload)
+          .andExpect(status().isBadRequest())
+          .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(jsonPath("message").value("endDate cannot be before startDate."));
+
+      verify(getPaidEntrantPaymentsService, never()).getResults(any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldReturn400StatusCodeWhenVrnsAreEmpty() throws Exception {
+      String payload = requestWithEmptyVrns();
+
+      performRequestWithContent(payload)
+          .andExpect(status().isBadRequest())
+          .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(jsonPath("message").value("VRNs cannot be empty."));
+
+      verify(getPaidEntrantPaymentsService, never()).getResults(any(), any(), any(), any());
+    }
+
+    @Test
     public void shouldReturn400StatusCodeWhenCorrelationIdIsMissing() throws Exception {
       String payload = requestWithVrns(Arrays.asList("CAS123"));
 
@@ -332,6 +378,12 @@ class PaymentsControllerTest {
       return toJsonString(request);
     }
 
+    private String requestWithEmptyVrns() {
+      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().vrns(Collections.emptyList()).build();
+
+      return toJsonString(request);
+    }
+
     private String requestWithoutStartDate() {
       PaidPaymentsRequest request = basePaidPaymentsResultBuilder().startDate(null).build();
 
@@ -340,6 +392,14 @@ class PaymentsControllerTest {
 
     private String requestWithoutEndDate() {
       PaidPaymentsRequest request = basePaidPaymentsResultBuilder().endDate(null).build();
+
+      return toJsonString(request);
+    }
+
+    private String requestWithStartDateAfterEndDate() {
+      LocalDate startDate = LocalDate.now();
+      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().startDate(startDate)
+          .endDate(startDate.minusDays(1)).build();
 
       return toJsonString(request);
     }

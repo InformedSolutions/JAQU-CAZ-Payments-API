@@ -7,7 +7,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
-import uk.gov.caz.psr.model.VehicleEntrant;
 
 /**
  * A class that represents a request from VCCS that a vehicle entered the CAZ.
@@ -28,19 +27,4 @@ public class VehicleEntrantDto {
   @NotNull
   @Size(min = 1, max = 15)
   String vrn;
-
-  /**
-   * Maps this value object to an instance of the model.
-   *
-   * @return An instance of {@link VehicleEntrant} whose parameters comes from this object.
-   */
-
-  public VehicleEntrant toVehicleEntrant() {
-    return VehicleEntrant.builder()
-        .cleanZoneId(cleanZoneId)
-        .cazEntryTimestamp(cazEntryTimestamp)
-        .cazEntryDate(cazEntryTimestamp.toLocalDate())
-        .vrn(vrn)
-        .build();
-  }
 }

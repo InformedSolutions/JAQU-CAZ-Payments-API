@@ -6,7 +6,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -114,8 +113,7 @@ public class InitiateEntrantPaymentsService {
     ExternalPaymentStatus relatedPaymentStatus = paymentRepository
         .findByEntrantPayment(entrantPayment.getCleanAirZoneEntrantPaymentId())
         .filter(payment -> {
-          boolean isDanglingPayment = Objects.nonNull(payment.getExternalPaymentStatus())
-              && payment.getExternalPaymentStatus().isNotFinished();
+          boolean isDanglingPayment = payment.getExternalPaymentStatus().isNotFinished();
           log.info("The related payment for entrant '{}' is {}",
               entrantPayment.getCleanAirZoneEntrantPaymentId(),
               isDanglingPayment ? "a dangling one" : "not a dangling one");

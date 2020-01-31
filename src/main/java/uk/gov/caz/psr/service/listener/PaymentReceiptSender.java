@@ -40,23 +40,31 @@ public class PaymentReceiptSender {
     double totalAmount = currencyFormatter.parsePennies(payment.getTotalPaid());
 
     log.info("Processing email event for payment with ID: {}", payment.getId());
-    
+
     String cazName = payment.getCleanAirZoneName();
     String vrn = payment.getEntrantPayments().iterator().next().getVrn();
-    List<String> datesPaidFor = payment.getEntrantPayments()
-        .stream().map(entrantPayment -> entrantPayment.getTravelDate()
-            .format(DateTimeFormatter.ofPattern("dd MMMM YYYY")))
-        .collect(Collectors.toList());
-    
+    List<String> datesPaidFor = formatTravelDates(payment);
+
     try {
       SendEmailRequest sendEmailRequest =
           paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount, 
-              cazName, payment.getReferenceNumber().toString(), vrn, 
+              cazName, payment.getReferenceNumber().toString(), vrn,
               payment.getExternalId(), datesPaidFor);
       messagingClient.publishMessage(sendEmailRequest);
     } catch (Exception e) {
       log.error("Payment receipt not sent to recipient with payment ID: {}", payment.getId(), e);
     }
+  }
+
+  /**
+   * Returns a list of formatted travel dates for {@code payment}.
+   */
+  private List<String> formatTravelDates(Payment payment) {
+    return payment.getEntrantPayments()
+        .stream()
+        .map(entrantPayment -> entrantPayment.getTravelDate()
+            .format(DateTimeFormatter.ofPattern("dd MMMM YYYY")))
+        .collect(Collectors.toList());
   }
 
   private void checkPreconditions(PaymentStatusUpdatedEvent event) {
