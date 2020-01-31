@@ -31,6 +31,10 @@ public class TestObjectFactory {
   private static final UUID ANY_CLEAN_AIR_ZONE =
       UUID.fromString("17e8e064-fcb9-11e9-995d-fb4ae3c787c6");
 
+  public static UUID anyCleanAirZoneId() {
+    return ANY_CLEAN_AIR_ZONE;
+  }
+
   private static String randomVrn() {
     char[] value = {randomUppercase(), randomUppercase(), (char) (random.nextInt(10) + '0'),
         (char) (random.nextInt(10) + '0'), randomUppercase(), randomUppercase(), randomUppercase()};
@@ -142,9 +146,10 @@ public class TestObjectFactory {
 
     public static Payment forDays(Collection<LocalDate> travelDates, UUID paymentId,
         String externalId, UUID cazIdentifier) {
-        List<EntrantPayment> entrantPayments = EntrantPaymentsBuilder.forDays(travelDates).withTotal(travelDates.size() * 800)
-            .withVrn(randomVrn())
-            .withStatus(InternalPaymentStatus.NOT_PAID).withCazId(cazIdentifier).build();
+      List<EntrantPayment> entrantPayments = EntrantPaymentsBuilder.forDays(travelDates)
+          .withTotal(travelDates.size() * 800)
+          .withVrn(randomVrn())
+          .withStatus(InternalPaymentStatus.NOT_PAID).withCazId(cazIdentifier).build();
       return createPaymentWith(entrantPayments, paymentId, externalId, cazIdentifier);
     }
 
@@ -229,7 +234,7 @@ public class TestObjectFactory {
 
   public static class PaymentStatusUpdateDetailsFactory {
 
-    public static PaymentStatusUpdateDetails anyWithStatus(ChargeSettlementPaymentStatus status) {
+    public static PaymentStatusUpdateDetails anyWithStatus(String status) {
       return PaymentStatusUpdateDetails.builder()
           .caseReference("CaseReference")
           .paymentStatus(status)
@@ -239,20 +244,20 @@ public class TestObjectFactory {
 
     public static PaymentStatusUpdateDetails refundedWithDateOfCazEntry(LocalDate date) {
       return PaymentStatusUpdateDetails.builder().caseReference("CaseReference")
-          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus("refunded")
           .dateOfCazEntry(date).build();
     }
 
     public static PaymentStatusUpdateDetails anyWithoutCaseReference() {
       return PaymentStatusUpdateDetails.builder()
-          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus("refunded")
           .dateOfCazEntry(LocalDate.now())
           .build();
     }
 
     public static PaymentStatusUpdateDetails anyWithoutDateOfCazEntry() {
       return PaymentStatusUpdateDetails.builder()
-          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED.name())
           .caseReference("CaseReference")
           .build();
     }
@@ -266,7 +271,7 @@ public class TestObjectFactory {
 
     public static PaymentStatusUpdateDetails withCaseReference(String caseReference) {
       return PaymentStatusUpdateDetails.builder()
-          .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED)
+          .paymentStatus("refunded")
           .caseReference(caseReference)
           .dateOfCazEntry(LocalDate.now())
           .build();
@@ -293,7 +298,8 @@ public class TestObjectFactory {
 
     public static PaymentStatus with(InternalPaymentStatus internalPaymentStatus,
         String caseReference, String externalId, Long paymentReference) {
-      return PaymentStatus.builder().caseReference(caseReference).paymentReference(paymentReference).status(internalPaymentStatus)
+      return PaymentStatus.builder().caseReference(caseReference).paymentReference(paymentReference)
+          .status(internalPaymentStatus)
           .externalId(externalId).build();
     }
   }
@@ -306,6 +312,7 @@ public class TestObjectFactory {
   }
 
   public static class ExternalPaymentDetailsFactory {
+
     public static ExternalPaymentDetails any() {
       return ExternalPaymentDetails.builder().email("example@email.com")
           .externalPaymentStatus(ExternalPaymentStatus.SUCCESS).build();

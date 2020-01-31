@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0004-1.0
+      author: informed
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0004-1.0-add_master_detail_triggers.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true

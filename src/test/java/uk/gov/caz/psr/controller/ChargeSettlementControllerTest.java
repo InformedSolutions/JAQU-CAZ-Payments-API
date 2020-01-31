@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import org.hamcrest.core.IsNull;
@@ -395,7 +396,7 @@ class ChargeSettlementControllerTest {
           .anyWithStatus(InternalPaymentStatus.PAID);
 
       given(chargeSettlementService.findChargeSettlement(any(), any(), any()))
-          .willReturn(paymentStatusStub);
+          .willReturn(Optional.of(paymentStatusStub));
 
       mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
           .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
@@ -615,8 +616,8 @@ class ChargeSettlementControllerTest {
 
     private List<PaymentStatusUpdateDetails> buildPaymentStatusUpdateDetails() {
       return Arrays.asList(
-          PaymentStatusUpdateDetailsFactory.anyWithStatus(ChargeSettlementPaymentStatus.CHARGEBACK),
-          PaymentStatusUpdateDetailsFactory.anyWithStatus(ChargeSettlementPaymentStatus.REFUNDED));
+          PaymentStatusUpdateDetailsFactory.anyWithStatus("chargeback"),
+          PaymentStatusUpdateDetailsFactory.anyWithStatus("refunded"));
     }
 
     private String requestWithVrn(String vrn) {

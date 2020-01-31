@@ -42,10 +42,14 @@ import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusFactory;
 public class GetChargeSettlementPaymentStatusTestIT {
 
   private static final String NOT_PAID_NOT_EXISTING_DATE_STRING = "2019-10-30";
-  private static final String NOT_PAID_EXISTING_DATE_STRING = "2019-11-03";
-  private static final String REFUNDED_DATE_STRING = "2019-11-02";
   private static final String PAID_DATE_STRING = "2019-11-01";
+  private static final String REFUNDED_DATE_STRING = "2019-11-02";
+  private static final String NOT_PAID_EXISTING_DATE_STRING = "2019-11-03";
   private static final String PAID_MULTIPLE_PAYMENTS_DATE_STRING = "2019-11-04";
+  private static final String FAILED_PAYMENT_NOT_EXISTING_DATE_STRING = "2019-11-06";
+  private static final String PAID_IN_LA_BUT_ENTRANT_NOT_REGISTERED_DATE_STRING = "2019-11-07";
+  private static final String REFUNDED_BUT_NOT_CAPTURED_DATE_STRING = "2019-11-08";
+  private static final String PAID_BUT_ENTRANT_NOT_REGISTERED_DATE_STRING = "2019-11-09";
 
   private static final String VALID_CAZ_ID = "b8e53786-c5ca-426a-a701-b14ee74857d4";
   private static final String VALID_CORRELATION_HEADER = "79b7a48f-27c7-4947-bd1c-670f981843ef";
@@ -53,8 +57,8 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private static final String VALID_EXTERNAL_ID_FOR_NOT_PAID = "12345test";
   private static final String VALID_EXTERNAL_ID_FOR_PAID = "54321test";
   private static final String VALID_CASE_REFERENCE = "case-reference123";
-  private static final Long VALID_PAYMENT_REFERENCE = (long) 3001;
-  private static final Long PAYMENT_REFERENCE_UNPAID = (long) 3000;
+  private static final Long VALID_PAYMENT_REFERENCE = 3001L;
+  private static final Long PAYMENT_REFERENCE_UNPAID = 3000L;
   private static final String PAYMENT_STATUS_GET_PATH = ChargeSettlementController.BASE_PATH +
       ChargeSettlementController.PAYMENT_STATUS_PATH;
   
@@ -71,7 +75,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private PaymentRepository paymentsRepository;
 
   @Test
-  public void shouldReturn200WithNotPaidStatusWhenDoesNotExistInDatabase() throws Exception {
+  public void shouldReturn404WhenDoesNotExistInDatabase() throws Exception {
     String nonExistingVrn = "CAS222";
 
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
@@ -82,8 +86,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", nonExistingVrn)
         .param("dateOfCazEntry", NOT_PAID_NOT_EXISTING_DATE_STRING))
-        .andExpect(status().isOk())
-        .andExpect(content().json(getNotPaidResponse()));
+        .andExpect(status().isNotFound());
   }
 
   @ParameterizedTest
@@ -93,8 +96,99 @@ public class GetChargeSettlementPaymentStatusTestIT {
       "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
       "N D8  4v SX " // with whitespaces and changed capitalisation
   })
-  public void shouldReturn200AndPaidPaymentStatusWhenThereIsPaidEntrantExists(
+  public void shouldReturn404WhenEntrantNotRecordedAndFailedWasCreated(String vrn)
+      throws Exception {
+
+    mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
+        .header(Headers.X_API_KEY, VALID_CAZ_ID)
+        .param("vrn", vrn)
+        .param("dateOfCazEntry", FAILED_PAYMENT_NOT_EXISTING_DATE_STRING))
+        .andExpect(status().isNotFound());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "ND84VSX", // existing
+      "Nd84vSX", "nD84vsX", // with changed capitalisation
+      "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
+      "N D8  4v SX " // with whitespaces and changed capitalisation
+  })
+  public void shouldReturn200AndPaidPaymentStatusWhenMarkedAsPaidByLaButEntrantNotRecorded(
       String vrn)
+      throws Exception {
+    mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
+        .header(Headers.X_API_KEY, VALID_CAZ_ID)
+        .param("vrn", vrn)
+        .param("dateOfCazEntry", PAID_IN_LA_BUT_ENTRANT_NOT_REGISTERED_DATE_STRING))
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
+                null, 0L)));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "ND84VSX", // existing
+      "Nd84vSX", "nD84vsX", // with changed capitalisation
+      "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
+      "N D8  4v SX " // with whitespaces and changed capitalisation
+  })
+  public void shouldReturn200AndPaidPaymentStatusWhenPaidButEntrantNotRecorded(String vrn)
+      throws Exception {
+    mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
+        .header(Headers.X_API_KEY, VALID_CAZ_ID)
+        .param("vrn", vrn)
+        .param("dateOfCazEntry", PAID_BUT_ENTRANT_NOT_REGISTERED_DATE_STRING))
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
+                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "ND84VSX", // existing
+      "Nd84vSX", "nD84vsX", // with changed capitalisation
+      "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
+      "N D8  4v SX " // with whitespaces and changed capitalisation
+  })
+  public void shouldReturn200AndRefundedPaymentStatusWhenMarkedAsRefundedByLaButEntrantNotRecorded(
+      String vrn)
+      throws Exception {
+    mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
+        .header(Headers.X_API_KEY, VALID_CAZ_ID)
+        .param("vrn", vrn)
+        .param("dateOfCazEntry", REFUNDED_BUT_NOT_CAPTURED_DATE_STRING))
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            getResponseWith(InternalPaymentStatus.REFUNDED, VALID_CASE_REFERENCE,
+                null, 0L)));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "ND84VSX", // existing
+      "Nd84vSX", "nD84vsX", // with changed capitalisation
+      "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
+      "N D8  4v SX " // with whitespaces and changed capitalisation
+  })
+  public void shouldReturn200AndPaidPaymentStatusWhenPaidEntrantExists(String vrn)
       throws Exception {
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
         .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +200,8 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .param("dateOfCazEntry", PAID_DATE_STRING))
         .andExpect(status().isOk())
         .andExpect(content().json(
-            getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE, VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
+            getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
+                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
   }
 
   @ParameterizedTest

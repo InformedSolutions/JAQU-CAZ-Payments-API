@@ -18,12 +18,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,6 +43,7 @@ import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
 
 @FullyRunningServerIntegrationTest
@@ -50,7 +51,6 @@ import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusUpdateDetailsFactory;
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-@Slf4j
 public class SuccessPaymentStatusUpdateTestIT {
 
   @LocalServerPort
@@ -60,6 +60,11 @@ public class SuccessPaymentStatusUpdateTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private JdbcTemplate jdbcTemplate;
+  
+  private static final String TEST_VRN = "MARYSIA";
+  private static final String FORMATTED_VRN = "ND84VSX";
+  private static final LocalDate TRAVEL_DATE_ONE = LocalDate.of(2019, 11, 1);
+  private static final LocalDate TRAVEL_DATE_TWO = LocalDate.of(2019, 11, 3);
 
   @BeforeEach
   public void startMockServer() {
@@ -81,16 +86,9 @@ public class SuccessPaymentStatusUpdateTestIT {
         .paymentStatusUpdateRequest(paymentStatusUpdateRequest(vrn))
         .whenSubmitted()
         .then()
-        .entrantPaymentsAreUpdatedInTheDatabse();
-  }
-
-  @Test
-  public void successPaymentStatusUpdateForNonExistingEntrantPaymentJourney() {
-    given()
-        .paymentStatusUpdateRequest(paymentStatusUpdateRequestForNonExistingParams())
-        .whenSubmitted()
-        .then()
-        .entrantPaymentIsCreatedInTheDatabase();
+        .entrantPaymentsAreUpdatedInTheDatabase()
+        .masterRecordExistsForVrn(FORMATTED_VRN)
+        .detailTableIsUpdated(FORMATTED_VRN);
   }
 
   private PaymentStatusUpdateJourneyAssertion given() {
@@ -106,16 +104,16 @@ public class SuccessPaymentStatusUpdateTestIT {
 
   private PaymentStatusUpdateRequest paymentStatusUpdateRequestForNonExistingParams() {
     return PaymentStatusUpdateRequest.builder()
-        .vrn("MARYSIA")
+        .vrn(TEST_VRN)
         .statusUpdates(validStatusUpdates())
         .build();
   }
 
   private List<PaymentStatusUpdateDetails> validStatusUpdates() {
     return Arrays.asList(
-        PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 1)),
+        PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(TRAVEL_DATE_ONE),
         PaymentStatusUpdateDetailsFactory
-            .refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 3))
+            .refundedWithDateOfCazEntry(TRAVEL_DATE_TWO)
     );
   }
 
@@ -125,6 +123,7 @@ public class SuccessPaymentStatusUpdateTestIT {
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
     private final UUID cleanAirZoneId = UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4");
+    private final int EXPECTED_NUMBER_OF_REFUNDED_RECORDS = 4;
 
     private PaymentStatusUpdateRequest paymentStatusUpdateRequest;
 
@@ -169,7 +168,7 @@ public class SuccessPaymentStatusUpdateTestIT {
       return objectMapper.writeValueAsString(request);
     }
 
-    public PaymentStatusUpdateJourneyAssertion entrantPaymentsAreUpdatedInTheDatabse() {
+    public PaymentStatusUpdateJourneyAssertion entrantPaymentsAreUpdatedInTheDatabase() {
       verifyThatRefundedEntrantPaymentsExists();
       return this;
     }
@@ -185,7 +184,7 @@ public class SuccessPaymentStatusUpdateTestIT {
           "clean_air_zone_id = '" + cleanAirZoneId.toString() + "' AND "
               + "vrn = 'ND84VSX' AND "
               + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
-      assertThat(vehicleEntrantCount).isEqualTo(3);
+      assertThat(vehicleEntrantCount).isEqualTo(EXPECTED_NUMBER_OF_REFUNDED_RECORDS);
     }
 
     private void verifyThatNewEntrantPaymentWasCreated() {
@@ -194,6 +193,36 @@ public class SuccessPaymentStatusUpdateTestIT {
           "vrn = 'MARYSIA'"
       );
       assertThat(entrantPaymentCount).isEqualTo(2);
+    }
+
+    public PaymentStatusUpdateJourneyAssertion masterRecordExistsForVrn(String vrn) {
+      verifyThatMasterRecordExistsForVrnAndCleanAirZone(vrn);
+      return this;
+    }
+    
+    private void verifyThatMasterRecordExistsForVrnAndCleanAirZone(String vrn) {
+      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, AuditTableWrapper.MASTER, 
+          "vrn = '" + vrn + "' AND clean_air_zone_id = '" + cleanAirZoneId + "'");
+      assertThat(masterCount).isEqualTo(1);
+    }
+
+    public void detailTableIsUpdated(String vrn) {
+      verifyThatDetailRecordExistsForNewPaymentStatusForBothDates(vrn);      
+    }
+    
+    private void verifyThatDetailRecordExistsForNewPaymentStatusForBothDates(String vrn) {
+      Object[] params = new Object[] {vrn, cleanAirZoneId};
+      UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
+      int detailDay1Count = getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(masterId, TRAVEL_DATE_ONE);
+      int detailDay2Count = getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(masterId, TRAVEL_DATE_TWO);
+      assertThat(detailDay1Count + detailDay2Count).isEqualTo(2);
+    }
+    
+    private int getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(UUID masterId, LocalDate travelDate) {
+      return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          AuditTableWrapper.DETAIL,"payment_status = '" + InternalPaymentStatus.REFUNDED.name() 
+          + "' AND " + AuditTableWrapper.MASTER_ID + " = '" + masterId
+          + "' AND travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
     }
   }
 }

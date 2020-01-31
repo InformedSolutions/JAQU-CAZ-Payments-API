@@ -25,7 +25,6 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
-import uk.gov.caz.psr.util.EntrantPaymentStatusUpdateConverter;
 import uk.gov.caz.psr.service.exception.PaymentNotProcessedException;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPaymentStatusUpdates;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
@@ -40,8 +39,6 @@ public class PaymentStatusUpdateServiceTest {
   @Mock
   private PaymentRepository paymentRepository;
 
-  private EntrantPaymentStatusUpdateConverter entrantPaymentStatusUpdateConverter =
-      new EntrantPaymentStatusUpdateConverter();
 
   private PaymentStatusUpdateService paymentStatusUpdateService;
 
@@ -49,8 +46,7 @@ public class PaymentStatusUpdateServiceTest {
   public void beforeEach() {
     paymentStatusUpdateService = new PaymentStatusUpdateService(
         entrantPaymentRepository,
-        paymentRepository,
-        entrantPaymentStatusUpdateConverter);
+        paymentRepository);
   }
 
   @Test
@@ -125,22 +121,6 @@ public class PaymentStatusUpdateServiceTest {
   }
 
   @Test
-  public void shouldCreateNewEntrantPaymentWhenNoEntrantPaymentFound() {
-    // given
-    EntrantPaymentStatusUpdate statusUpdate = EntrantPaymentStatusUpdates.any();
-    EntrantPayment expectedEntrantPayment = buildExpectedEntrantPaymentFrom(statusUpdate);
-    List<EntrantPaymentStatusUpdate> entrantPaymentStatusUpdates = Arrays
-        .asList(statusUpdate);
-    mockEntrantPaymentNotFound();
-
-    // when
-    paymentStatusUpdateService.process(entrantPaymentStatusUpdates);
-
-    // then
-    verify(entrantPaymentRepository).insert(expectedEntrantPayment);
-  }
-
-  @Test
   public void shouldThrowPaymentNotProcessedExceptionWhenPaymentIsNotFinished() {
     // given
     EntrantPaymentStatusUpdate statusUpdate = EntrantPaymentStatusUpdates.any();
@@ -154,10 +134,6 @@ public class PaymentStatusUpdateServiceTest {
     // then
     assertThat(throwable).isInstanceOf(PaymentNotProcessedException.class)
         .hasMessage("Payment is still being processed");
-  }
-
-  private EntrantPayment buildExpectedEntrantPaymentFrom(EntrantPaymentStatusUpdate statusUpdate) {
-    return entrantPaymentStatusUpdateConverter.convert(statusUpdate);
   }
 
   private void mockEntrantPaymentFoundWith(EntrantPayment entrantPayment) {
