@@ -320,15 +320,16 @@ public class EntrantPaymentRepository {
     Preconditions.checkNotNull(cazEntryDate, "cazEntryDate cannot be null");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
 
-    List<EntrantPayment> results = jdbcTemplate
-        .query(SELECT_BY_VRN_CAZ_ENTRY_DATE_SQL,
-            preparedStatement -> {
-              preparedStatement.setObject(1, cleanZoneId);
-              preparedStatement.setString(2, vrn);
-              preparedStatement.setObject(3, cazEntryDate);
-            },
-            ROW_MAPPER
-        );
+    List<EntrantPayment> results = jdbcTemplate.query(
+        SELECT_BY_VRN_CAZ_ENTRY_DATE_SQL,
+        preparedStatement -> {
+          preparedStatement.setObject(1, cleanZoneId);
+          preparedStatement.setString(2, vrn);
+          preparedStatement.setObject(3, cazEntryDate);
+        },
+        ROW_MAPPER
+    );
+
     if (results.size() > 1) {
       throw new NotUniqueVehicleEntrantPaymentFoundException(vrn,
           "Not able to find unique EntrantPayment");

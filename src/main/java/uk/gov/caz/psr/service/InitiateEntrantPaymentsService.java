@@ -4,9 +4,11 @@ import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentMatch;
@@ -21,6 +23,7 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 /**
  * Processes {@link EntrantPayment}s when a new payment is initiated.
  */
+@Slf4j
 @AllArgsConstructor
 @Service
 public class InitiateEntrantPaymentsService {
@@ -29,6 +32,7 @@ public class InitiateEntrantPaymentsService {
   private final EntrantPaymentMatchRepository entrantPaymentMatchRepository;
   private final VehicleEntrantPaymentChargeCalculator chargeCalculator;
   private final PaymentRepository paymentRepository;
+  private final CleanupDanglingPaymentService cleanupDanglingPaymentService;
 
   /**
    * Processes {@link EntrantPayment}s when a new payment is initiated by inserting or updating
@@ -46,7 +50,7 @@ public class InitiateEntrantPaymentsService {
           currentEntrantPayments);
       UUID cleanAirZoneEntrantPaymentId;
       if (entrantPayment.isPresent()) {
-        verifyRelatedPaymentIsFinished(entrantPayment.get());
+        processRelatedPayment(entrantPayment.get());
         cleanAirZoneEntrantPaymentId = updateEntrantPayment(tariffCode, chargePerDay,
             entrantPayment.get());
         entrantPaymentMatchRepository.updateLatestToFalseFor(cleanAirZoneEntrantPaymentId);
@@ -59,23 +63,34 @@ public class InitiateEntrantPaymentsService {
   }
 
   /**
-   * Checks whether the associated payment for {@code entrantPayment} is finished or the payment
-   * has already been successfully completed.
+   * Checks whether the associated payment for {@code entrantPayment} is finished or the payment has
+   * already been successfully completed. If the payment is not finished yet, the payment is
+   * considered a dangling one and the same logic as for dangling payments is applied.
    */
-  private void verifyRelatedPaymentIsFinished(EntrantPayment entrantPayment) {
+  private void processRelatedPayment(EntrantPayment entrantPayment) {
     if (InternalPaymentStatus.PAID == entrantPayment.getInternalPaymentStatus()) {
       throw new IllegalStateException("Cannot process the payment as the entrant on "
           + entrantPayment.getTravelDate() + " has already been paid");
     }
 
-    ExternalPaymentStatus paymentStatus = paymentRepository.findByEntrantPayment(
-        entrantPayment.getCleanAirZoneEntrantPaymentId())
+    ExternalPaymentStatus relatedPaymentStatus = paymentRepository
+        .findByEntrantPayment(entrantPayment.getCleanAirZoneEntrantPaymentId())
+        .filter(payment -> {
+          boolean isDanglingPayment = Objects.nonNull(payment.getExternalPaymentStatus())
+              && payment.getExternalPaymentStatus().isNotFinished();
+          log.info("The related payment for entrant '{}' is {}",
+              entrantPayment.getCleanAirZoneEntrantPaymentId(),
+              isDanglingPayment ? "a dangling one" : "not a dangling one");
+          return isDanglingPayment;
+        })
+        .map(cleanupDanglingPaymentService::processDanglingPayment)
         .map(Payment::getExternalPaymentStatus)
         .orElse(null);
 
-    if (paymentStatus != null && paymentStatus.isNotFinished()) {
-      throw new IllegalStateException("The corresponding payment has not finished yet, its state"
-          + " is equal to " + paymentStatus);
+    if (relatedPaymentStatus != null && (relatedPaymentStatus.isNotFinished()
+        || relatedPaymentStatus == ExternalPaymentStatus.SUCCESS)) {
+      throw new IllegalStateException("The corresponding payment has been completed or not "
+          + "finished yet, its state is equal to " + relatedPaymentStatus);
     }
   }
 
