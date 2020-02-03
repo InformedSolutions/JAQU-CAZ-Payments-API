@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -74,9 +74,9 @@ class CleanupDanglingPaymentsServiceTest {
   }
 
   private void mockProcessingFailureOnSecondCall() {
-    willDoNothing()
+    willAnswer(answer -> answer.getArgument(0))
         .willThrow(new RuntimeException(""))
-        .willDoNothing()
+        .willAnswer(answer -> answer.getArgument(0))
         .given(cleanupDanglingPaymentService).processDanglingPayment(any());
   }
 

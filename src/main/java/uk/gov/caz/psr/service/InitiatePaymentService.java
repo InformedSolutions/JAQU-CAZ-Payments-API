@@ -50,7 +50,6 @@ public class InitiatePaymentService {
    *
    * @param request A data which need to be used to create the payment.
    */
-
   private Payment buildPayment(InitiatePaymentRequest request) {
     return Payment.builder()
         .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
