@@ -36,7 +36,7 @@ class PaymentRepositoryTestIT {
   }
 
   @Test
-  public void shouldUpdatePaymentWithEntratntPaymentWhenExternalPayment() {
+  public void shouldUpdatePaymentWithEntrantPaymentWhenExternalPayment() {
     // given
     UUID id = UUID.fromString("b71b72a5-902f-4a16-a91d-1a4463b801db");
     Payment payment = paymentRepository.findById(id).get();
