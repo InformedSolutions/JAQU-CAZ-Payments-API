@@ -23,7 +23,6 @@ import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
-import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 
 @RequestMapping(
@@ -60,7 +59,7 @@ public interface PaymentsControllerApiSpec {
   @PutMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
   ResponseEntity<ReconcilePaymentResponse> reconcilePaymentStatus(
-      @PathVariable UUID id, @RequestBody ReconcilePaymentRequest request);
+      @PathVariable UUID id);
 
   /**
    * Allows User to fetch information about already paid days in specific CAZ in order to prevent
