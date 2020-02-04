@@ -34,17 +34,14 @@ public class ReconcilePaymentStatusService {
    *
    * @throws NullPointerException if {@code id} is null
    */
-  public Optional<Payment> reconcilePaymentStatus(UUID id, String cleanAirZoneName) {
+  public Optional<Payment> reconcilePaymentStatus(UUID id) {
     Preconditions.checkNotNull(id, "ID cannot be null");
-    Payment internalPayment = internalPaymentsRepository.findById(id).orElse(null);
-    Payment payment;
+    Payment payment = internalPaymentsRepository.findById(id).orElse(null);
 
-    if (internalPayment == null) {
+    if (payment == null) {
       log.warn("Payment '{}' not found in the database", id);
 
       return Optional.empty();
-    } else {
-      payment = internalPayment.toBuilder().cleanAirZoneName(cleanAirZoneName).build();
     }
 
     String externalPaymentId = payment.getExternalId();
