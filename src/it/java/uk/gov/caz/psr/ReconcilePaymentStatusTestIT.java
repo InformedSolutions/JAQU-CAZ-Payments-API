@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.IntegrationTest;
 import uk.gov.caz.psr.controller.PaymentsController;
+import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -41,9 +42,13 @@ public class ReconcilePaymentStatusTestIT {
   @Autowired
   private PaymentRepository paymentRepository;
   
+  String body;
+  
   @BeforeEach
   public void init() throws JsonProcessingException {
     ObjectMapper om = new ObjectMapper();
+    ReconcilePaymentRequest request = ReconcilePaymentRequest.builder().cleanAirZoneName("Leeds").build();
+    body = om.writeValueAsString(request);
   }
 
   @ParameterizedTest
@@ -52,6 +57,7 @@ public class ReconcilePaymentStatusTestIT {
     String correlationId = "31f69f26-fb99-11e9-8483-9fcf0b2b434f";
     mockMvc
         .perform(put(URL_TEMPLATE, id)
+            .content(body)
             .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
             .header("content-type", MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
@@ -66,6 +72,7 @@ public class ReconcilePaymentStatusTestIT {
     String correlationId = "542de1b5-4aab-45eb-bccc-6ec91f1d6d51";
     mockMvc
         .perform(put(URL_TEMPLATE, notExistingId)
+            .content(body)
             .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
             .header("content-type", MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
@@ -80,6 +87,7 @@ public class ReconcilePaymentStatusTestIT {
     String correlationId = "939898b0-fb9e-11e9-8483-cb50ccd05275";
     mockMvc
         .perform(put(URL_TEMPLATE, paymentId)
+            .content(body)
             .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
             .header("content-type", MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON))
