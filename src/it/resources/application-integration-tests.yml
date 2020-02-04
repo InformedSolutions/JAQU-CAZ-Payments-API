@@ -28,6 +28,8 @@ services:
   gov-uk-pay:
     root-url: http://localhost:1080
     api-key: dummy
+  vehicle-compliance-checker:
+    root-url: http://localhost:1090
   sqs:
     message-group-id-payments: TEST_RECEIPT
     new-queue-name: testqueue.fifo

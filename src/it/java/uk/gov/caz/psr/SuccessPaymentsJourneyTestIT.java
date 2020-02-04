@@ -33,6 +33,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
+import org.mockserver.model.Header;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +51,6 @@ import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
-import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -59,7 +59,7 @@ import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
-public class SuccessPaymentsJourneyTestIT {
+public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
 
   private static final List<LocalDate> TRAVEL_DATES = Arrays.asList(
       LocalDate.of(2019, 11, 10),
@@ -99,6 +99,7 @@ public class SuccessPaymentsJourneyTestIT {
 
   @Test
   public void testPaymentJourneys() {
+    mockVccsCleanAirZonesCall();
     testPaymentJourneyWithEmptyDatabase();
 
     testPaymentJourneyWhenEntrantPaymentsExist();
@@ -388,11 +389,8 @@ public class SuccessPaymentsJourneyTestIT {
 
     public PaymentJourneyAssertion whenRequestedToGetAndUpdateStatus() {
       String correlationId = "e879d028-2882-4f0b-b3b3-06d7fbcd8537";
-      ReconcilePaymentRequest request = ReconcilePaymentRequest.builder()
-          .cleanAirZoneName("Leeds").build();
       this.reconcilePaymentResponse = RestAssured.given()
           .accept(MediaType.APPLICATION_JSON.toString())
-          .body(request)
           .contentType(MediaType.APPLICATION_JSON.toString())
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId).when()
           .put(initPaymentResponse.getPaymentId().toString()).then()

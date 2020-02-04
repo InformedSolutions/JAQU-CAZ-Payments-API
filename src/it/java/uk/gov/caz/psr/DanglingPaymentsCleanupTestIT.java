@@ -44,7 +44,7 @@ import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 @Sql(
     scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-public class DanglingPaymentsCleanupTestIT {
+public class DanglingPaymentsCleanupTestIT extends VccsCallsIT {
 
   private static final int EXPECTED_NON_DANGLING_PAYMENTS_COUNT = 6;
   private static final int INITIAL_DANGLING_PAYMENTS_COUNT = 3;
@@ -100,6 +100,7 @@ public class DanglingPaymentsCleanupTestIT {
 
   @Test
   public void danglingPaymentsCleanupTest() {
+    mockVccsCleanAirZonesCall();
     givenDanglingPaymentsWithExternalIds("cancelled-payment-id", "expired-payment-id",
         "success-payment-id");
     andNonDanglingPaymentsCountIs(EXPECTED_NON_DANGLING_PAYMENTS_COUNT);
@@ -189,12 +190,12 @@ public class DanglingPaymentsCleanupTestIT {
             .withPath("/v1/payments/" + externalId))
         .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readFile(prefix + "-payment.json")));
+            .withBody(readFile("dangling/" + prefix + "-payment.json")));
   }
 
   @SneakyThrows
   private String readFile(String filename) {
-    return Resources.toString(Resources.getResource("data/external/dangling/" + filename),
+    return Resources.toString(Resources.getResource("data/external/" + filename),
         Charsets.UTF_8);
   }
 
