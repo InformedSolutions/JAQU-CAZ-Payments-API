@@ -34,7 +34,7 @@ public class ReconcilePaymentStatusService {
    *
    * @throws NullPointerException if {@code id} is null
    */
-  public Optional<Payment> reconcilePaymentStatus(UUID id, String cleanAirZoneName) {
+  public Optional<Payment> reconcilePaymentStatus(UUID id) {
     Preconditions.checkNotNull(id, "ID cannot be null");
     Payment internalPayment = internalPaymentsRepository.findById(id).orElse(null);
     Payment payment;
@@ -44,7 +44,8 @@ public class ReconcilePaymentStatusService {
 
       return Optional.empty();
     } else {
-      payment = internalPayment.toBuilder().cleanAirZoneName(cleanAirZoneName).build();
+      // TODO: CAZ-1879 - fetching CAZ name from VCCS
+      payment = internalPayment.toBuilder().cleanAirZoneName("cleanAirZoneName").build();
     }
 
     String externalPaymentId = payment.getExternalId();

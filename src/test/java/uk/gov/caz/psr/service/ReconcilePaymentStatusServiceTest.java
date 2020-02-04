@@ -50,7 +50,8 @@ class ReconcilePaymentStatusServiceTest {
   private ReconcilePaymentStatusService reconcilePaymentStatusService;
 
   private final UUID cazIdentifier = UUID.fromString("ab3e9f4b-4076-4154-b6dd-97c5d4800b47");
-  private final static String CLEAN_AIR_ZONE_NAME = "Leeds";
+  // TODO: CAZ-1879 - adjust CAZ name
+  private final static String CLEAN_AIR_ZONE_NAME = "cleanAirZoneName";
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPassedNullValue() {
@@ -59,7 +60,7 @@ class ReconcilePaymentStatusServiceTest {
 
     // when
     Throwable throwable =
-        catchThrowable(() -> reconcilePaymentStatusService.reconcilePaymentStatus(id, CLEAN_AIR_ZONE_NAME));
+        catchThrowable(() -> reconcilePaymentStatusService.reconcilePaymentStatus(id));
 
     assertThat(throwable).isInstanceOf(NullPointerException.class).hasMessage("ID cannot be null");
   }
@@ -74,7 +75,7 @@ class ReconcilePaymentStatusServiceTest {
 
     // when
     Throwable throwable = catchThrowable(
-        () -> reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME));
+        () -> reconcilePaymentStatusService.reconcilePaymentStatus(paymentId));
 
     // then
     assertThat(throwable).isInstanceOf(IllegalStateException.class)
@@ -89,7 +90,7 @@ class ReconcilePaymentStatusServiceTest {
 
     // when
     Optional<Payment> result =
-        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME);
+        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId);
 
     // then
     assertThat(result).isEmpty();
@@ -106,7 +107,7 @@ class ReconcilePaymentStatusServiceTest {
 
     // when
     Optional<Payment> result =
-        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME);
+        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId);
 
     // then
     assertThat(result).isEmpty();
@@ -125,7 +126,7 @@ class ReconcilePaymentStatusServiceTest {
 
     // when
     Optional<Payment> result =
-        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME);
+        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId);
 
     // then
     assertThat(result).contains(payment);
@@ -151,7 +152,7 @@ class ReconcilePaymentStatusServiceTest {
 
     // when
     Optional<Payment> result =
-        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId, CLEAN_AIR_ZONE_NAME);
+        reconcilePaymentStatusService.reconcilePaymentStatus(paymentId);
 
     // then
     assertThat(result).contains(paymentWithEmail);
@@ -170,7 +171,7 @@ class ReconcilePaymentStatusServiceTest {
     
     // when
     Throwable throwable =
-        catchThrowable(() -> reconcilePaymentStatusService.reconcilePaymentStatus(paymentId,CLEAN_AIR_ZONE_NAME));
+        catchThrowable(() -> reconcilePaymentStatusService.reconcilePaymentStatus(paymentId));
 
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessage("CAZ entrant payments should not be empty");
   }

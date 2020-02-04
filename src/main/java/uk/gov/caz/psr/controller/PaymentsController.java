@@ -15,7 +15,6 @@ import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.dto.PaidPaymentsResponse;
-import uk.gov.caz.psr.dto.ReconcilePaymentRequest;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
@@ -45,10 +44,9 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   }
 
   @Override
-  public ResponseEntity<ReconcilePaymentResponse> reconcilePaymentStatus(
-      UUID id, ReconcilePaymentRequest request) {
+  public ResponseEntity<ReconcilePaymentResponse> reconcilePaymentStatus(UUID id) {
     Optional<Payment> payment = reconcilePaymentStatusService
-        .reconcilePaymentStatus(id, request.getCleanAirZoneName());
+        .reconcilePaymentStatus(id);
     return payment.map(ReconcilePaymentResponse::from)
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
