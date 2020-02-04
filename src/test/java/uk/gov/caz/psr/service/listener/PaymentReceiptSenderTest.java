@@ -2,7 +2,6 @@ package uk.gov.caz.psr.service.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -15,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +29,9 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
+import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
+import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
+import uk.gov.caz.psr.service.CleanAirZoneNameGetterService;
 import uk.gov.caz.psr.service.PaymentReceiptService;
 import uk.gov.caz.psr.util.CurrencyFormatter;
 
@@ -37,13 +40,14 @@ public class PaymentReceiptSenderTest {
 
   private static final String ANY_VALID_EMAIL = "test@test.com";
   private static final int ANY_AMOUNT = 800;
-  private static final String ANY_CAZ = "";
+  private static final UUID ANY_CAZ_ID = UUID.randomUUID();
+  private static final String ANY_CAZ = "TEST_CAZ";
   private static final Long ANY_REFERENCE = 1001L;
   private static final String ANY_VRN = "VRN123";
   private static final String ANY_EXT_ID = "ext-id";
   private static final LocalDate ANY_TRAVEL_DATE = LocalDate.of(2019, 2, 6);
   private static final String STRINGIFIED_TRAVEL_DATE = "06 February 2019";
-  private static final Payment ANY_PAYMENT = Payment.builder()
+  private static final Payment ANY_PAYMENT_WITHOUT_ENTRANT_PAYMENTS = Payment.builder()
       .id(UUID.randomUUID())
       .externalId(ANY_EXT_ID)
       .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
@@ -51,6 +55,10 @@ public class PaymentReceiptSenderTest {
       .authorisedTimestamp(LocalDateTime.now())
       .referenceNumber(ANY_REFERENCE)
       .totalPaid(ANY_AMOUNT)
+      .entrantPayments(Collections.emptyList())
+      .emailAddress(ANY_VALID_EMAIL)
+      .build();
+  private static final Payment ANY_PAYMENT = ANY_PAYMENT_WITHOUT_ENTRANT_PAYMENTS.toBuilder()
       .entrantPayments(Collections.singletonList(EntrantPayment.builder()
           .updateActor(EntrantPaymentUpdateActor.USER)
           .charge(10)
@@ -60,8 +68,7 @@ public class PaymentReceiptSenderTest {
           .travelDate(ANY_TRAVEL_DATE)
           .tariffCode("some-tariff")
           .build()))
-      .emailAddress(ANY_VALID_EMAIL)
-      .cleanAirZoneName(ANY_CAZ).build();
+      .build();
 
   @Mock
   CurrencyFormatter currencyFormatter;
@@ -71,6 +78,9 @@ public class PaymentReceiptSenderTest {
 
   @Mock
   PaymentReceiptService paymentReceiptService;
+
+  @Mock
+  CleanAirZoneNameGetterService cleanAirZoneNameGetterService;
 
   @InjectMocks
   PaymentReceiptSender paymentReceiptSender;
@@ -102,14 +112,31 @@ public class PaymentReceiptSenderTest {
   }
 
   @Test
+  public void shouldThrowExceptionWhenPaymentDoesNotHaveAnyEntrantPayments() {
+    // given
+    SendEmailRequest sendEmailRequest = anyValidRequest();
+    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this,
+        ANY_PAYMENT_WITHOUT_ENTRANT_PAYMENTS);
+
+    // when
+    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
+
+    // then
+    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Vehicle entrant payments should not be empty");
+  }
+
+  @Test
   void shouldHandleCorrectPaymentObject() throws JsonProcessingException {
     // given
     SendEmailRequest sendEmailRequest = anyValidRequest();
     PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
     when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
     when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT, ANY_CAZ,
-        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID, Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
+        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID,
+        Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
         .thenReturn(sendEmailRequest);
+    when(cleanAirZoneNameGetterService.fetch(any())).thenReturn(ANY_CAZ);
 
     // when
     paymentReceiptSender.onPaymentStatusUpdated(event);
@@ -129,9 +156,26 @@ public class PaymentReceiptSenderTest {
         .thenThrow(new JsonMappingException(null, "test exception"));
 
     // when
-    paymentReceiptSender.onPaymentStatusUpdated(event);
+    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
 
     // then
+    assertThat(throwable).isNull();
+    verify(messagingClient, never()).publishMessage(any());
+  }
+
+  @Test
+  void shouldNotPropagateVccsCallExceptionError() throws JsonProcessingException {
+    // given
+    SendEmailRequest sendEmailRequest = anyValidRequest();
+    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
+    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
+    when(cleanAirZoneNameGetterService.fetch(any())).thenThrow(new CleanAirZoneNotFoundException(ANY_CAZ_ID));
+
+    // when
+    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
+
+    // then
+    assertThat(throwable).isNull();
     verify(messagingClient, never()).publishMessage(any());
   }
 
@@ -142,7 +186,8 @@ public class PaymentReceiptSenderTest {
     SendEmailRequest sendEmailRequest = anyValidRequest();
     when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(8.0);
     when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, 8.0, ANY_CAZ,
-        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID, Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
+        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID,
+        Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
         .thenReturn(sendEmailRequest);
 
     // when

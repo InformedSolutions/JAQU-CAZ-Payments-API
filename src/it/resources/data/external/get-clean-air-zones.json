@@ -1,0 +1,9 @@
+{
+  "cleanAirZones": [
+    {
+      "name": "Birmingham",
+      "cleanAirZoneId": "53e03a28-0627-11ea-9511-ffaaee87e375",
+      "boundaryUrl": "https://www.birmingham.gov.uk/info/20076/pollution/1763/a_clean_air_zone_for_birmingham/3"
+    }
+  ]
+}
