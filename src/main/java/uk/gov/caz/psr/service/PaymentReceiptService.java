@@ -2,9 +2,8 @@ package uk.gov.caz.psr.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,20 +34,21 @@ public class PaymentReceiptService {
    * @throws JsonProcessingException if the amount cannot be serialized into a json string
    */
   public SendEmailRequest buildSendEmailRequest(String email, double amount, 
-      String cazName, String reference, String vrn, String externalId)
+      String cazName, String reference, String vrn, String externalId, List<String> datesPaidFor)
       throws JsonProcessingException {
     return SendEmailRequest.builder().emailAddress(email)
-        .personalisation(createPersonalisationPayload(amount, cazName, reference, vrn, externalId))
+        .personalisation(createPersonalisationPayload(amount, cazName, reference, vrn, 
+            externalId, datesPaidFor))
         .templateId(templateId).build();
   }
 
   private String createPersonalisationPayload(double amount, String cazName, 
-      String reference, String vrn, String externalId) throws JsonProcessingException {
-    Map<String, String> personalisationMap = new HashMap<String, String>();    
+      String reference, String vrn, String externalId, List<String> datesPaidFor) 
+          throws JsonProcessingException {
+    Map<String, Object> personalisationMap = new HashMap<String, Object>();    
     personalisationMap.put("amount", String.format(Locale.UK, "%.2f", amount));
     personalisationMap.put("caz", cazName);
-    personalisationMap.put("date", 
-        LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMMM YYYY")));
+    personalisationMap.put("date", datesPaidFor);
     personalisationMap.put("reference", reference);
     personalisationMap.put("vrn", vrn);
     personalisationMap.put("external_id", externalId);

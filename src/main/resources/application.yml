@@ -17,7 +17,7 @@ spring:
     enabled: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/caz-payments
+    url: jdbc:postgresql://localhost:5433/caz_vcc
     username: postgres
     password: postgres
     hikari:
@@ -33,7 +33,7 @@ services:
     api-key: to-be-replaced-by-external-value
   sqs:
     new-queue-name: notify-gateway_new_dev.fifo
-    template-id: a4282196-a623-4b78-acfa-70b0a0b4a19b
+    template-id: 36c3e259-e03c-415e-bf62-c7fbdb9d49a5
 
 management:
   endpoints:
@@ -142,6 +142,8 @@ swagger:
         clean-zone-id: Clean Air Zone identifier
         amount: Amount to pay
         return-url: Front end URL used as return URL after payment.
+      payments-get-status:
+        clean-air-zone-name: Clean Air Zone name
       paid-payments-request:
         clean-zone-id: Clean Air Zone identifier
         start-date: First day in date range in which the payments are going to be checked.

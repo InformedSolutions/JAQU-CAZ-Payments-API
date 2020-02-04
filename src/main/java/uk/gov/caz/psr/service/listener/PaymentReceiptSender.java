@@ -2,6 +2,9 @@ package uk.gov.caz.psr.service.listener;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -40,11 +43,16 @@ public class PaymentReceiptSender {
     
     String cazName = payment.getCleanAirZoneName();
     String vrn = payment.getEntrantPayments().iterator().next().getVrn();
+    List<String> datesPaidFor = payment.getEntrantPayments()
+        .stream().map(entrantPayment -> entrantPayment.getTravelDate()
+            .format(DateTimeFormatter.ofPattern("dd MMMM YYYY")))
+        .collect(Collectors.toList());
     
     try {
       SendEmailRequest sendEmailRequest =
           paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount, 
-              cazName, payment.getReferenceNumber().toString(), vrn, payment.getExternalId());
+              cazName, payment.getReferenceNumber().toString(), vrn, 
+              payment.getExternalId(), datesPaidFor);
       messagingClient.publishMessage(sendEmailRequest);
     } catch (Exception e) {
       log.error("Payment receipt not sent to recipient with payment ID: {}", payment.getId(), e);
