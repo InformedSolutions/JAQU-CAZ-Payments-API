@@ -223,6 +223,39 @@ class EntrantPaymentRepositoryTest {
   }
 
   @Nested
+  class FindOneByVrnAndCaz {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenCleanZoneIdIsNull() {
+      // given
+      UUID cleanZoneId = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository
+              .findOneByVrnAndCaz(cleanZoneId, "VRN123"));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("cleanZoneId cannot be null");
+    }
+    
+    @Test
+    public void shouldThrowNIllegalArgumentExceptionWhenVrnIsEmpty() {
+      // given
+      String vrn = null;
+
+      // when
+      Throwable throwable = catchThrowable(
+          () -> entrantPaymentRepository
+              .findOneByVrnAndCaz(UUID.randomUUID(), vrn));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("VRN cannot be empty");
+    }
+  }
+  @Nested
   class FindOnePaidByCazEntryDateAndExternalPaymentId {
 
     @Test
