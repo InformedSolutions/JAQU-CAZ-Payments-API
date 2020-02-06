@@ -7,9 +7,6 @@ springfox:
       v2:
         path: /v1/swagger-docs
 
-server:
-  port: 8081
-
 spring:
   jpa:
     open-in-view: false
@@ -138,10 +135,12 @@ swagger:
         status: Payment Status of created Vehicle Entrant
       payments-initiate:
         vrn: Vehicle registration number
-        days: Array of ISO 8601 formatted dates string that specifies the dates for which user wants to pay.
+        travel-date: ISO 8601 formatted date string that specifies the date for which user wants to pay
+        tariff-code: Tariff code
         clean-zone-id: Clean Air Zone identifier
-        amount: Amount to pay
-        return-url: Front end URL used as return URL after payment.
+        charge: Amount to pay
+        return-url: Front end URL used as return URL after payment
+        transactions: Collection of objects representing a single vehicle entrant against which the payment is made
       payments-get-status:
         clean-air-zone-name: Clean Air Zone name
       paid-payments-request:

@@ -2,7 +2,10 @@ package uk.gov.caz.psr.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -11,7 +14,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.RowMapper;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentRepositoryTest {
@@ -22,88 +28,41 @@ class PaymentRepositoryTest {
   @InjectMocks
   private PaymentRepository paymentRepository;
 
-//  @Nested
-//  class Insert {
-//
-//    @Test
-//    public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
-//      // given
-//      Payment payment = null;
-//
-//      // when
-//      Throwable throwable =
-//          catchThrowable(() -> paymentRepository.insert(payment));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(NullPointerException.class)
-//          .hasMessage("Payment cannot be null");
-//    }
-//
-//    @Test
-//    public void shouldThrowIllegalArgumentExceptionWhenPaymentHasId() {
-//      // given
-//      Payment payment =
-//          Payments.forRandomDaysWithId(UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150"), null);
-//
-//      // when
-//      Throwable throwable =
-//          catchThrowable(() -> paymentRepository.insert(payment));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-//          .hasMessage("Payment cannot have ID");
-//    }
-//
-//    @Test
-//    public void shouldThrowIllegalArgumentExceptionWhenPaymentHasEmptyVehicleEntrantPayments() {
-//      // given
-//      Payment payment = paymentWithEmptyVehicleEntrantPayments();
-//
-//      // when
-//      Throwable throwable =
-//          catchThrowable(() -> paymentRepository.insert(payment));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-//          .hasMessage("Vehicle entrant payments cannot be empty");
-//    }
-//
-//    @Test
-//    public void shouldThrowIllegalStateExceptionWhenVehicleEntrantPaymentsContainDifferentStatuses() {
-//      // given
-//      Payment payment = paymentWithTwoDifferentVehicleEntrantStatuses();
-//
-//      // when
-//      Throwable throwable =
-//          catchThrowable(() -> paymentRepository.insert(payment));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-//          .hasMessage("Vehicle entrant payments do not have one common status");
-//    }
-//
-//    private Payment paymentWithEmptyVehicleEntrantPayments() {
-//      return Payments.forRandomDays().toBuilder().vehicleEntrantPayments(Collections.emptyList())
-//          .build();
-//    }
-//
-//    private Payment paymentWithTwoDifferentVehicleEntrantStatuses() {
-//      Payment payment =
-//          Payments.forDays(Arrays.asList(LocalDate.now(), LocalDate.now().plusDays(1)),
-//              UUID.randomUUID(), "ext-id", null);
-//      Iterator<VehicleEntrantPayment> it = payment.getVehicleEntrantPayments().iterator();
-//      List<VehicleEntrantPayment> updatedVehicleEntrantPayments =
-//          Arrays.asList(InternalPaymentStatus.PAID, InternalPaymentStatus.CHARGEBACK).stream()
-//              .map(status -> it.next().toBuilder().internalPaymentStatus(status).build())
-//              .collect(Collectors.toList());
-//
-//      return payment.toBuilder().id(null).vehicleEntrantPayments(updatedVehicleEntrantPayments)
-//          .build();
-//    }
-//  }
+  @Nested
+  class Insert {
+
+    @Test
+    public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
+      // given
+      Payment payment = null;
+
+      // when
+      Throwable throwable =
+          catchThrowable(() -> paymentRepository.insert(payment));
+
+      // then
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("Payment cannot be null");
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenPaymentHasId() {
+      // given
+      Payment payment = Payments.forRandomDaysWithId(
+          UUID.fromString("c70d7c3c-fbb3-11e9-a4bd-4308a048c150"), null);
+
+      // when
+      Throwable throwable = catchThrowable(() -> paymentRepository.insert(payment));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Payment cannot have ID");
+    }
+  }
 
   @Nested
   class Update {
+
     @Test
     public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
       // given
@@ -120,6 +79,7 @@ class PaymentRepositoryTest {
 
   @Nested
   class FindById {
+
     @Test
     public void shouldThrowNullPointerExceptionWhenIdIsNull() {
       // given
@@ -131,6 +91,28 @@ class PaymentRepositoryTest {
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
           .hasMessage("ID cannot be null");
+    }
+  }
+
+  @Nested
+  class FindByEntrantPayment {
+
+    @Test
+    public void shouldThrowIllegalStateExceptionWhenMoreThanOneRowIsReturned() {
+      UUID entrantPaymentId = UUID.fromString("b49ee61e-b9c3-497a-b729-e924c3f57930");
+      mockMoreThanOneRowReturned();
+
+      Throwable throwable = catchThrowable(() ->
+          paymentRepository.findByEntrantPayment(entrantPaymentId));
+
+      assertThat(throwable).isInstanceOf(IllegalStateException.class)
+          .hasMessageStartingWith("Found more than one payments for entrant payment id");
+    }
+
+    private void mockMoreThanOneRowReturned() {
+      when(jdbcTemplate.query(any(String.class), any(PreparedStatementSetter.class),
+          any(RowMapper.class))
+      ).thenReturn(Arrays.asList(Payments.forRandomDays(), Payments.forRandomDays()));
     }
   }
 }

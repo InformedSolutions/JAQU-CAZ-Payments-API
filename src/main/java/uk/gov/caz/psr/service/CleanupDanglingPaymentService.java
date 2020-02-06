@@ -47,7 +47,7 @@ public class CleanupDanglingPaymentService {
       GetPaymentResult paymentInfo = externalPaymentsRepository
           .findByIdAndCazId(externalId, cleanAirZoneId)
           .orElseThrow(() -> new IllegalStateException("External payment not found with "
-              + "id " + "'" + externalId + "'"));
+              + "id '" + externalId + "'"));
       ExternalPaymentDetails externalPaymentDetails =
           getPaymentResultConverter.toExternalPaymentDetails(paymentInfo);
       ExternalPaymentStatus status = externalPaymentDetails.getExternalPaymentStatus();

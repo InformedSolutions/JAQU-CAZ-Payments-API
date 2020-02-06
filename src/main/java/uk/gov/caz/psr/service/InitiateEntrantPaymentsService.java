@@ -4,12 +4,15 @@ import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -30,7 +33,6 @@ public class InitiateEntrantPaymentsService {
 
   private final EntrantPaymentRepository entrantPaymentRepository;
   private final EntrantPaymentMatchRepository entrantPaymentMatchRepository;
-  private final VehicleEntrantPaymentChargeCalculator chargeCalculator;
   private final PaymentRepository paymentRepository;
   private final CleanupDanglingPaymentService cleanupDanglingPaymentService;
 
@@ -39,30 +41,65 @@ public class InitiateEntrantPaymentsService {
    * {@link EntrantPayment} entities alongside with inserting or updating {@link
    * EntrantPaymentMatch}es.
    */
-  void processEntrantPaymentsForPayment(UUID paymentId, int total, List<LocalDate> travelDates,
-      String tariffCode, String vrn, UUID cleanAirZoneId) {
-    int chargePerDay = chargeCalculator.calculateCharge(total, travelDates.size());
-    List<EntrantPayment> currentEntrantPayments = entrantPaymentRepository
-        .findByVrnAndCazEntryDates(cleanAirZoneId, vrn, travelDates);
+  void processEntrantPaymentsForPayment(UUID paymentId, UUID cleanAirZoneId,
+      List<Transaction> transactions) {
 
-    for (LocalDate travelDate : travelDates) {
-      Optional<EntrantPayment> entrantPayment = findEntrantPaymentForTravelDate(travelDate,
-          currentEntrantPayments);
-      UUID cleanAirZoneEntrantPaymentId;
-      if (entrantPayment.isPresent()) {
-        processRelatedPayment(entrantPayment.get());
-        cleanAirZoneEntrantPaymentId = updateEntrantPayment(tariffCode, chargePerDay,
-            entrantPayment.get());
-        entrantPaymentMatchRepository.updateLatestToFalseFor(cleanAirZoneEntrantPaymentId);
-      } else {
-        cleanAirZoneEntrantPaymentId = insertEntrantPayment(tariffCode, vrn, cleanAirZoneId,
-            chargePerDay, travelDate);
-      }
-      matchPaymentWithEntrantPayment(paymentId, cleanAirZoneEntrantPaymentId);
+    Map<String, List<Transaction>> transactionsGroupedByVrn = transactions.stream()
+        .collect(Collectors.groupingBy(Transaction::getVrn));
+
+    for (Entry<String, List<Transaction>> vrnAndTransaction : transactionsGroupedByVrn.entrySet()) {
+      processTransactionsForVrn(paymentId, cleanAirZoneId, vrnAndTransaction.getKey(),
+          vrnAndTransaction.getValue());
     }
   }
 
   /**
+   * Process all 'transactions' (in a data sense, see {@code InitiatePaymentRequest}) related to a
+   * particular {@code vrn}.
+   */
+  private void processTransactionsForVrn(UUID paymentId, UUID cleanAirZoneId, String vrn,
+      List<Transaction> transactions) {
+    List<EntrantPayment> currentEntrantPayments = fetchMatchingEntrantPayments(
+        cleanAirZoneId, vrn, transactions);
+    for (Transaction transaction : transactions) {
+      processTransaction(paymentId, cleanAirZoneId, vrn, currentEntrantPayments, transaction);
+    }
+  }
+
+  /**
+   * Finds matching entrant payments for {@code cleanAirZoneId} and {@code vrn} in {@code
+   * transactions}.
+   */
+  private List<EntrantPayment> fetchMatchingEntrantPayments(UUID cleanAirZoneId, String vrn,
+      List<Transaction> transactions) {
+    List<LocalDate> travelDates = transactions.stream().map(Transaction::getTravelDate)
+        .collect(Collectors.toList());
+    return entrantPaymentRepository.findByVrnAndCazEntryDates(cleanAirZoneId, vrn, travelDates);
+  }
+
+  /**
+   * Process a single 'transaction' (in a data sense, see {@code InitiatePaymentRequest}).
+   */
+  private void processTransaction(UUID paymentId, UUID cleanAirZoneId, String vrn,
+      List<EntrantPayment> currentEntrantPayments, Transaction transaction) {
+    Optional<EntrantPayment> entrantPayment = findMatchingEntrantPayment(
+        transaction.getTravelDate(), currentEntrantPayments);
+    UUID cleanAirZoneEntrantPaymentId;
+    if (entrantPayment.isPresent()) {
+      processRelatedPayment(entrantPayment.get());
+      cleanAirZoneEntrantPaymentId = updateEntrantPayment(transaction.getTariffCode(),
+          transaction.getCharge(), entrantPayment.get());
+      entrantPaymentMatchRepository.updateLatestToFalseFor(cleanAirZoneEntrantPaymentId);
+    } else {
+      cleanAirZoneEntrantPaymentId = insertEntrantPayment(cleanAirZoneId, vrn,
+          transaction.getTariffCode(), transaction.getCharge(), transaction.getTravelDate());
+    }
+    matchPaymentWithEntrantPayment(paymentId, cleanAirZoneEntrantPaymentId);
+  }
+
+  /**
+   * Checks whether the associated payment for {@code entrantPayment} is finished or the payment has
+   * already been successfully completed.
    * Checks whether the associated payment for {@code entrantPayment} is finished or the payment has
    * already been successfully completed. If the payment is not finished yet, the payment is
    * considered a dangling one and the same logic as for dangling payments is applied.
@@ -76,8 +113,7 @@ public class InitiateEntrantPaymentsService {
     ExternalPaymentStatus relatedPaymentStatus = paymentRepository
         .findByEntrantPayment(entrantPayment.getCleanAirZoneEntrantPaymentId())
         .filter(payment -> {
-          boolean isDanglingPayment = Objects.nonNull(payment.getExternalPaymentStatus())
-              && payment.getExternalPaymentStatus().isNotFinished();
+          boolean isDanglingPayment = payment.getExternalPaymentStatus().isNotFinished();
           log.info("The related payment for entrant '{}' is {}",
               entrantPayment.getCleanAirZoneEntrantPaymentId(),
               isDanglingPayment ? "a dangling one" : "not a dangling one");
@@ -110,7 +146,7 @@ public class InitiateEntrantPaymentsService {
    * Inserts a new instance of {@link EntrantPayment} based on the passed arguments and returns its
    * identifier.
    */
-  private UUID insertEntrantPayment(String tariffCode, String vrn, UUID cleanAirZoneId,
+  private UUID insertEntrantPayment(UUID cleanAirZoneId, String vrn, String tariffCode,
       int chargePerDay, LocalDate travelDate) {
     EntrantPayment toBeInserted = buildEntrantPayment(travelDate, chargePerDay,
         vrn, tariffCode, cleanAirZoneId);
@@ -153,7 +189,7 @@ public class InitiateEntrantPaymentsService {
    * Finds an entrant payment in the passed {@code currentEntrantPayments} whose travel date is
    * equal to {@code travelDate}.
    */
-  private Optional<EntrantPayment> findEntrantPaymentForTravelDate(LocalDate travelDate,
+  private Optional<EntrantPayment> findMatchingEntrantPayment(LocalDate travelDate,
       List<EntrantPayment> currentEntrantPayments) {
     return currentEntrantPayments.stream()
         .filter(entrantPayment -> travelDate.equals(entrantPayment.getTravelDate()))

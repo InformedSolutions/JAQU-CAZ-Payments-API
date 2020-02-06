@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -18,13 +17,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -47,15 +46,12 @@ class InitiateEntrantPaymentsServiceTest {
   @Mock
   private EntrantPaymentMatchRepository entrantPaymentMatchRepository;
   @Mock
-  private VehicleEntrantPaymentChargeCalculator chargeCalculator;
-  @Mock
   private PaymentRepository paymentRepository;
   @Mock
   private CleanupDanglingPaymentService cleanupDanglingPaymentService;
 
   @InjectMocks
   private InitiateEntrantPaymentsService service;
-  public static final int ANY_TOTAL = 150;
   public static final String ANY_VRN = "ABCDEF";
   public static final UUID ANY_CLEAN_AIR_ZONE_ID = UUID
       .fromString("cf54fd70-3902-11ea-a0e6-fbf575fb00ee");
@@ -70,12 +66,18 @@ class InitiateEntrantPaymentsServiceTest {
     public void shouldInsertEntrantPaymentsAndEntrantPaymentMatches() {
       // given
       List<LocalDate> travelDates = Collections.singletonList(ANY_TRAVEL_DATE);
+      List<Transaction> transactions = Collections.singletonList(Transaction.builder()
+              .charge(ANY_CHARGE)
+              .travelDate(ANY_TRAVEL_DATE)
+              .vrn(ANY_VRN)
+              .tariffCode(ANY_TARIFF_CODE)
+              .build());
+
       mockNoCurrentEntrantPaymentsInDatabase(travelDates, ANY_VRN, ANY_CLEAN_AIR_ZONE_ID);
       UUID entrantPaymentId = mockEntrantPaymentRepository();
 
       // when
-      service.processEntrantPaymentsForPayment(ANY_PAYMENT_ID, ANY_TOTAL, travelDates,
-          ANY_TARIFF_CODE, ANY_VRN, ANY_CLEAN_AIR_ZONE_ID);
+      service.processEntrantPaymentsForPayment(ANY_PAYMENT_ID, ANY_CLEAN_AIR_ZONE_ID, transactions);
 
       // then
       verify(entrantPaymentRepository).insert(argThat((EntrantPayment entrantPayment) ->
@@ -107,6 +109,19 @@ class InitiateEntrantPaymentsServiceTest {
         // given
         LocalDate notMatchingDate = LocalDate.now();
         LocalDate matchingDate = LocalDate.now().minusDays(1);
+        List<Transaction> transactions = Arrays.asList(Transaction.builder()
+                .charge(ANY_CHARGE)
+                .travelDate(matchingDate)
+                .vrn(ANY_VRN)
+                .tariffCode(ANY_TARIFF_CODE)
+                .build(),
+            Transaction.builder()
+                .charge(ANY_CHARGE)
+                .travelDate(notMatchingDate)
+                .vrn(ANY_VRN)
+                .tariffCode(ANY_TARIFF_CODE)
+                .build()
+        );
         List<LocalDate> travelDates = Arrays.asList(matchingDate, notMatchingDate);
         UUID existingEntrantPaymentId = UUID.fromString("d34f9d3a-54c7-40e3-9611-60caa783a8b7");
         EntrantPayment existingEntrantPayment = mockExistingEntrantPayments(matchingDate,
@@ -115,8 +130,7 @@ class InitiateEntrantPaymentsServiceTest {
         mockPaymentRepositoryWithFinishedPayment(existingEntrantPaymentId);
 
         // when
-        service.processEntrantPaymentsForPayment(ANY_PAYMENT_ID, ANY_TOTAL, travelDates,
-            ANY_TARIFF_CODE, ANY_VRN, ANY_CLEAN_AIR_ZONE_ID);
+        service.processEntrantPaymentsForPayment(ANY_PAYMENT_ID, ANY_CLEAN_AIR_ZONE_ID, transactions);
 
         // then
         verify(entrantPaymentRepository).update(argThat((EntrantPayment entrantPayment) ->
@@ -152,6 +166,19 @@ class InitiateEntrantPaymentsServiceTest {
         // given
         LocalDate notMatchingDate = LocalDate.now();
         LocalDate matchingDate = LocalDate.now().minusDays(1);
+        List<Transaction> transactions = Arrays.asList(Transaction.builder()
+                .charge(ANY_CHARGE)
+                .travelDate(matchingDate)
+                .vrn(ANY_VRN)
+                .tariffCode(ANY_TARIFF_CODE)
+                .build(),
+            Transaction.builder()
+                .charge(ANY_CHARGE)
+                .travelDate(notMatchingDate)
+                .vrn(ANY_VRN)
+                .tariffCode(ANY_TARIFF_CODE)
+                .build()
+        );
         List<LocalDate> travelDates = Arrays.asList(matchingDate, notMatchingDate);
         UUID existingEntrantPaymentId = UUID.fromString("d34f9d3a-54c7-40e3-9611-60caa783a8b7");
         mockExistingEntrantPaymentsWithPaidStatus(matchingDate, travelDates,
@@ -159,8 +186,7 @@ class InitiateEntrantPaymentsServiceTest {
 
         // when
         Throwable throwable = catchThrowable(() -> service.processEntrantPaymentsForPayment(
-            ANY_PAYMENT_ID, ANY_TOTAL, travelDates, ANY_TARIFF_CODE, ANY_VRN,
-            ANY_CLEAN_AIR_ZONE_ID));
+            ANY_PAYMENT_ID, ANY_CLEAN_AIR_ZONE_ID, transactions));
 
         // then
         assertThat(throwable).isInstanceOf(IllegalStateException.class)
@@ -184,6 +210,13 @@ class InitiateEntrantPaymentsServiceTest {
           // given
           LocalDate matchingDate = LocalDate.now().minusDays(1);
           List<LocalDate> travelDates = Arrays.asList(matchingDate);
+          List<Transaction> transactions = Arrays.asList(Transaction.builder()
+                  .charge(ANY_CHARGE)
+                  .travelDate(matchingDate)
+                  .vrn(ANY_VRN)
+                  .tariffCode(ANY_TARIFF_CODE)
+                  .build()
+          );
           UUID existingEntrantPaymentId = UUID.fromString("d34f9d3a-54c7-40e3-9611-60caa783a8b7");
           mockExistingEntrantPayments(matchingDate, travelDates, existingEntrantPaymentId);
           mockPaymentRepositoryWithNotFinishedPayment(existingEntrantPaymentId);
@@ -191,8 +224,7 @@ class InitiateEntrantPaymentsServiceTest {
 
           // when && then
           assertThatCode(() -> service.processEntrantPaymentsForPayment(
-              ANY_PAYMENT_ID, ANY_TOTAL, travelDates, ANY_TARIFF_CODE, ANY_VRN,
-              ANY_CLEAN_AIR_ZONE_ID)
+              ANY_PAYMENT_ID, ANY_CLEAN_AIR_ZONE_ID, transactions)
           ).doesNotThrowAnyException();
         }
       }
@@ -205,6 +237,19 @@ class InitiateEntrantPaymentsServiceTest {
           // given
           LocalDate notMatchingDate = LocalDate.now();
           LocalDate matchingDate = LocalDate.now().minusDays(1);
+          List<Transaction> transactions = Arrays.asList(Transaction.builder()
+                  .charge(ANY_CHARGE)
+                  .travelDate(matchingDate)
+                  .vrn(ANY_VRN)
+                  .tariffCode(ANY_TARIFF_CODE)
+                  .build(),
+              Transaction.builder()
+                  .charge(ANY_CHARGE)
+                  .travelDate(notMatchingDate)
+                  .vrn(ANY_VRN)
+                  .tariffCode(ANY_TARIFF_CODE)
+                  .build()
+          );
           List<LocalDate> travelDates = Arrays.asList(matchingDate, notMatchingDate);
           UUID existingEntrantPaymentId = UUID.fromString("d34f9d3a-54c7-40e3-9611-60caa783a8b7");
           mockExistingEntrantPayments(matchingDate, travelDates, existingEntrantPaymentId);
@@ -213,8 +258,7 @@ class InitiateEntrantPaymentsServiceTest {
 
           // when
           Throwable throwable = catchThrowable(() -> service.processEntrantPaymentsForPayment(
-              ANY_PAYMENT_ID, ANY_TOTAL, travelDates, ANY_TARIFF_CODE, ANY_VRN,
-              ANY_CLEAN_AIR_ZONE_ID));
+              ANY_PAYMENT_ID, ANY_CLEAN_AIR_ZONE_ID, transactions));
 
           // then
           assertThat(throwable).isInstanceOf(IllegalStateException.class)
@@ -254,15 +298,27 @@ class InitiateEntrantPaymentsServiceTest {
           // given
           LocalDate notMatchingDate = LocalDate.now();
           LocalDate matchingDate = LocalDate.now().minusDays(1);
+          List<Transaction> transactions = Arrays.asList(Transaction.builder()
+                  .charge(ANY_CHARGE)
+                  .travelDate(matchingDate)
+                  .vrn(ANY_VRN)
+                  .tariffCode(ANY_TARIFF_CODE)
+                  .build(),
+              Transaction.builder()
+                  .charge(ANY_CHARGE)
+                  .travelDate(notMatchingDate)
+                  .vrn(ANY_VRN)
+                  .tariffCode(ANY_TARIFF_CODE)
+                  .build()
+          );
           List<LocalDate> travelDates = Arrays.asList(matchingDate, notMatchingDate);
           UUID existingEntrantPaymentId = UUID.fromString("d34f9d3a-54c7-40e3-9611-60caa783a8b7");
           mockExistingEntrantPayments(matchingDate, travelDates, existingEntrantPaymentId);
           mockPaymentRepositoriesWithNotFinishedPayment(existingEntrantPaymentId);
 
-          // when
-          Throwable throwable = catchThrowable(() -> service.processEntrantPaymentsForPayment(
-              ANY_PAYMENT_ID, ANY_TOTAL, travelDates, ANY_TARIFF_CODE, ANY_VRN,
-              ANY_CLEAN_AIR_ZONE_ID));
+        // when
+        Throwable throwable = catchThrowable(() -> service.processEntrantPaymentsForPayment(
+            ANY_PAYMENT_ID, ANY_CLEAN_AIR_ZONE_ID, transactions));
 
           // then
           assertThat(throwable).isInstanceOf(IllegalStateException.class)
@@ -366,10 +422,5 @@ class InitiateEntrantPaymentsServiceTest {
       UUID cleanAirZoneId) {
     when(entrantPaymentRepository.findByVrnAndCazEntryDates(cleanAirZoneId, vrn, travelDates))
         .thenReturn(Collections.emptyList());
-  }
-
-  @BeforeEach
-  public void mockChargeCalculator() {
-    when(chargeCalculator.calculateCharge(anyInt(), anyInt())).thenReturn(ANY_CHARGE);
   }
 }

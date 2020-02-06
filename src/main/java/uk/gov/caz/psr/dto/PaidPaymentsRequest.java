@@ -46,19 +46,17 @@ public class PaidPaymentsRequest {
 
   private static final Map<Function<PaidPaymentsRequest, Boolean>, String> validators =
       MapPreservingOrderBuilder.<Function<PaidPaymentsRequest, Boolean>, String>builder()
-          .put(paidPaymentsRequest -> paidPaymentsRequest.cleanAirZoneId != null,
+          .put(request -> request.cleanAirZoneId != null,
               "cleanAirZoneId cannot be null.")
-          .put(paidPaymentsRequest -> paidPaymentsRequest.startDate != null,
+          .put(request -> request.startDate != null,
               "startDate cannot be null.")
-          .put(paidPaymentsRequest -> paidPaymentsRequest.endDate != null,
+          .put(request -> request.endDate != null,
               "endDate cannot be null.")
-          .put(paidPaymentsRequest -> paidPaymentsRequest.startDate
-                  .isBefore(paidPaymentsRequest.endDate) || paidPaymentsRequest.startDate
-                  .isEqual(paidPaymentsRequest.endDate),
+          .put(request -> !request.startDate.isAfter(request.endDate),
               "endDate cannot be before startDate.")
-          .put(paidPaymentsRequest -> paidPaymentsRequest.vrns != null,
+          .put(request -> request.vrns != null,
               "VRNs cannot be blank.")
-          .put(paidPaymentsRequest -> !paidPaymentsRequest.vrns.isEmpty(),
+          .put(request -> !request.vrns.isEmpty(),
               "VRNs cannot be empty.")
           .build();
 
