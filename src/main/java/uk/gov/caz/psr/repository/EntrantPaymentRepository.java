@@ -358,7 +358,7 @@ public class EntrantPaymentRepository {
    * @param vrn provided VRN number
    * @return integer
    */
-  public Integer findOneByVrnAndCaz(UUID cleanAirZoneId, String vrn) {
+  public Integer countByVrnAndCaz(UUID cleanAirZoneId, String vrn) {
     Preconditions.checkNotNull(cleanAirZoneId, "cleanZoneId cannot be null");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
 

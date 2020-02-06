@@ -41,6 +41,7 @@ public class ChargeSettlementPaymentInfoService {
    */
   public List<EntrantPaymentMatchInfo> findPaymentInfo(PaymentInfoRequestAttributes attributes,
       UUID cazId) {
+    throwIfNonExistentVrn(cazId, attributes.getVrn());
     Specification<EntrantPaymentMatchInfo> specification = specifications.stream()
         .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(attributes))
         .map(paymentInfoSpecification -> paymentInfoSpecification.create(attributes))
@@ -55,8 +56,8 @@ public class ChargeSettlementPaymentInfoService {
    * @param cleanAirZoneId the identifier of the Clean Air Zone
    * @param vrn the vrn of the vehicle to check
    */
-  public void throwIfNonExistentVrn(UUID cleanAirZoneId, String vrn) {
-    if (vrn != null && entrantPaymentRepository.findOneByVrnAndCaz(cleanAirZoneId, 
+  private void throwIfNonExistentVrn(UUID cleanAirZoneId, String vrn) {
+    if (vrn != null && entrantPaymentRepository.countByVrnAndCaz(cleanAirZoneId, 
           AttributesNormaliser.normalizeVrn(vrn)) == 0) {
       throw new PaymentInfoVrnValidationException("vrn cannot be found");
     }

@@ -233,7 +233,7 @@ class EntrantPaymentRepositoryTest {
       // when
       Throwable throwable = catchThrowable(
           () -> entrantPaymentRepository
-              .findOneByVrnAndCaz(cleanZoneId, "VRN123"));
+              .countByVrnAndCaz(cleanZoneId, "VRN123"));
 
       // then
       assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -248,7 +248,7 @@ class EntrantPaymentRepositoryTest {
       // when
       Throwable throwable = catchThrowable(
           () -> entrantPaymentRepository
-              .findOneByVrnAndCaz(UUID.randomUUID(), vrn));
+              .countByVrnAndCaz(UUID.randomUUID(), vrn));
 
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)

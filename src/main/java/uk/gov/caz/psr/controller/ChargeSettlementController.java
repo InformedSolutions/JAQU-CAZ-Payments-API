@@ -53,7 +53,6 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
     }
-    chargeSettlementPaymentInfoService.throwIfNonExistentVrn(cleanAirZoneId, request.getVrn());
     List<EntrantPaymentMatchInfo> result = chargeSettlementPaymentInfoService.findPaymentInfo(
         paymentInfoRequestConverter.toPaymentInfoRequestAttributes(request),
         cleanAirZoneId
