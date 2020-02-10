@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import uk.gov.caz.GlobalExceptionHandler;
 import uk.gov.caz.psr.controller.exception.PaymentInfoDtoValidationException;
+import uk.gov.caz.psr.controller.exception.PaymentInfoVrnValidationException;
 import uk.gov.caz.psr.controller.exception.PaymentStatusDtoValidationException;
 import uk.gov.caz.psr.dto.GenericErrorResponse;
 import uk.gov.caz.psr.dto.PaymentInfoErrorResponse;
@@ -103,6 +104,19 @@ public class ExceptionController extends GlobalExceptionHandler {
         .collect(Collectors.toList());
     log.info("PaymentInfoDtoValidationException occurred: {}", errorsList);
     return ResponseEntity.badRequest().body(PaymentInfoErrorsResponse.from(errorsList));
+  }
+  
+  /**
+   * Method to handle Exception when no VRN exists.
+   * 
+   * @param ex Exception object.
+   */
+  @ExceptionHandler(PaymentInfoVrnValidationException.class)
+  public ResponseEntity<PaymentInfoErrorsResponse> handlePaymentInfoNonExistentVrnExceptions(
+      PaymentInfoVrnValidationException ex) {
+    log.info("PaymentInfoVrnValidationException occurred: {}", ex);
+    return ResponseEntity.badRequest().body(
+        PaymentInfoErrorsResponse.singleValidationErrorResponse("vrn", ex.getMessage()));
   }
 
   /**

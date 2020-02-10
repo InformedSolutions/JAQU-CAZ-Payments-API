@@ -128,7 +128,7 @@ class PaymentTest {
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
-        .hasMessage("paymentMethod is marked non-null but is null");
+        .hasMessageContaining("paymentMethod");
   }
 
   @Test
@@ -146,7 +146,7 @@ class PaymentTest {
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
-        .hasMessage("totalPaid is marked non-null but is null");
+        .hasMessageContaining("totalPaid");
   }
 
   @Test
@@ -165,7 +165,7 @@ class PaymentTest {
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
-        .hasMessage("entrantPayments is marked non-null but is null");
+        .hasMessageContaining("entrantPayments");
   }
 
   @Test

@@ -200,15 +200,13 @@ class ChargeSettlementPaymentInfoTestIT {
 
       @ParameterizedTest
       @ValueSource(strings = {"XB11CDE", "YB11CDE", "ZB11CDE"})
-      public void shouldReturnEmptyArray(String nonExistingVrn) {
+      public void shouldReturnBadRequestResponse(String nonExistingVrn) {
         PaymentInfoAssertion.whenRequested()
             .withParam("vrn", nonExistingVrn)
             .then()
             .headerContainsCorrelationId()
-            .responseHasOkStatus()
-            .containsEmptyResults();
-
-        verifyResultsWereFetchedByOneDatabaseQuery();
+            .responseHasBadRequestStatus()
+            .responseHasErrorField("vrn");
       }
 
       @Nested
@@ -225,10 +223,8 @@ class ChargeSettlementPaymentInfoTestIT {
               .withParam("vrn", nonExistingVrn)
               .then()
               .headerContainsCorrelationId()
-              .responseHasOkStatus()
-              .containsEmptyResults();
-
-          verifyResultsWereFetchedByOneDatabaseQuery();
+              .responseHasBadRequestStatus()
+              .responseHasErrorField("vrn");
         }
       }
 
@@ -244,10 +240,8 @@ class ChargeSettlementPaymentInfoTestIT {
               .withParam("vrn", nonExistingVrn)
               .then()
               .headerContainsCorrelationId()
-              .responseHasOkStatus()
-              .containsEmptyResults();
-
-          verifyResultsWereFetchedByOneDatabaseQuery();
+              .responseHasBadRequestStatus()
+              .responseHasErrorField("vrn");
         }
       }
 
@@ -263,10 +257,8 @@ class ChargeSettlementPaymentInfoTestIT {
               .withParam("vrn", nonExistingVrn)
               .then()
               .headerContainsCorrelationId()
-              .responseHasOkStatus()
-              .containsEmptyResults();
-
-          verifyResultsWereFetchedByOneDatabaseQuery();
+              .responseHasBadRequestStatus()
+              .responseHasErrorField("vrn");
         }
       }
     }

@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.dto;
 
+import java.util.Collections;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,5 +23,19 @@ public class PaymentInfoErrorsResponse {
    */
   public static PaymentInfoErrorsResponse from(List<PaymentInfoErrorResponse> validationErrors) {
     return new PaymentInfoErrorsResponse(validationErrors);
+  }
+  
+
+  /**
+   * Method to return single errors response for a specific field.
+   *
+   * @param field the invalid field
+   * @param detail Error details.
+   */
+  public static PaymentInfoErrorsResponse singleValidationErrorResponse(String field,
+      String detail) {
+    PaymentInfoErrorResponse errorResponse = PaymentInfoErrorResponse
+        .validationErrorResponseWithDetailAndField(field, detail);
+    return new PaymentInfoErrorsResponse(Collections.singletonList(errorResponse));
   }
 }
