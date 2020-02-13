@@ -66,6 +66,10 @@ public class EntrantPaymentRepository {
         + "ep." + EntrantPaymentColumns.COL_CASE_REFERENCE + " "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment ep ";
   }
+  
+  private static String selectCount() {
+    return "SELECT COUNT(*) FROM caz_payment.t_clean_air_zone_entrant_payment";
+  }
 
   private static final String SELECT_BY_PAYMENT_ID_SQL =
       selectAllColumns()
@@ -87,6 +91,11 @@ public class EntrantPaymentRepository {
           + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
           + EntrantPaymentColumns.COL_VRN + " = ? AND "
           + EntrantPaymentColumns.COL_TRAVEL_DATE + " = ANY (?)";
+
+  private static final String SELECT_BY_VRN_CAZ_SQL =
+      selectCount() + " WHERE "
+          + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
+          + EntrantPaymentColumns.COL_VRN + " = ?";
 
   //    @VisibleForTesting
   //    static final String SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL = "SELECT "
@@ -309,6 +318,24 @@ public class EntrantPaymentRepository {
   }
 
   /**
+   * Finds number of instances of a VRN in the EntrantPayment table.
+   *
+   * @param cleanAirZoneId provided Clean Air Zone ID.
+   * @param vrn provided VRN number
+   * @return integer
+   */
+  public Integer countByVrnAndCaz(UUID cleanAirZoneId, String vrn) {
+    Preconditions.checkNotNull(cleanAirZoneId, "cleanZoneId cannot be null");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
+
+    return jdbcTemplate.queryForObject(
+        SELECT_BY_VRN_CAZ_SQL,
+        new Object[] {cleanAirZoneId, vrn},
+        Integer.class
+    );
+  }
+
+  /**
    * Finds a list of {@link EntrantPayment}s based on {@code cleanZoneId}, {@code vrn} and {@code
    * cazEntryDates}.
    *
@@ -384,7 +411,7 @@ public class EntrantPaymentRepository {
           .tariffCode(resultSet.getString(EntrantPaymentColumns.COL_TARIFF_CODE))
           .charge(resultSet.getInt(EntrantPaymentColumns.COL_CHARGE))
           .internalPaymentStatus(InternalPaymentStatus.valueOf(
-              resultSet.getString(EntrantPaymentColumns.COL_PAYMENT_STATUS)))
+              resultSet.getString(EntrantPaymentColumns.COL_PAYMENT_STATUS).toUpperCase()))
           .vehicleEntrantCaptured(
               resultSet.getBoolean(EntrantPaymentColumns.COL_VEHICLE_ENTRANT_CAPTURED))
           .updateActor(EntrantPaymentUpdateActor
