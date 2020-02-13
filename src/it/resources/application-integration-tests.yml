@@ -30,6 +30,8 @@ services:
     api-key: dummy
   vehicle-compliance-checker:
     root-url: http://localhost:1090
+  accounts:
+    root-url: http://localhost:1091
   sqs:
     message-group-id-payments: TEST_RECEIPT
     new-queue-name: testqueue.fifo
