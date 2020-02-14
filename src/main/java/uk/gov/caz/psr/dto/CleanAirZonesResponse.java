@@ -26,7 +26,7 @@ public class CleanAirZonesResponse {
     return cleanAirZones.stream()
         .filter(fetch -> fetch.getCleanAirZoneId().equals(cleanAirZoneId))
         .findFirst()
-        .orElseThrow(() -> new CleanAirZoneNotFoundException());
+        .orElseThrow(() -> new CleanAirZoneNotFoundException(cleanAirZoneId));
   }
 
   @Value
@@ -36,5 +36,4 @@ public class CleanAirZonesResponse {
     String name;
     URI boundaryUrl;
   }
-
 }

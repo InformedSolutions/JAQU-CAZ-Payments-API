@@ -14,6 +14,7 @@ import uk.gov.caz.psr.dto.SendEmailRequest;
 import uk.gov.caz.psr.messaging.MessagingClient;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
+import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
 import uk.gov.caz.psr.service.CleanAirZoneNameGetterService;
 import uk.gov.caz.psr.service.PaymentReceiptService;
 import uk.gov.caz.psr.util.CurrencyFormatter;
@@ -40,20 +41,23 @@ public class PaymentReceiptSender {
   public void onPaymentStatusUpdated(PaymentStatusUpdatedEvent event) {
     checkPreconditions(event);
     Payment payment = event.getPayment();
+    UUID cleanAirZoneId = getCleanAirZoneId(payment);
     double totalAmount = currencyFormatter.parsePennies(payment.getTotalPaid());
 
     log.info("Processing email event for payment with ID: {}", payment.getId());
-
-    String cazName = cleanAirZoneNameGetterService.fetch(getCleanAirZoneId(payment));
-    String vrn = payment.getEntrantPayments().iterator().next().getVrn();
-    List<String> datesPaidFor = formatTravelDates(payment);
-
+    
     try {
+      String cazName = cleanAirZoneNameGetterService.fetch(cleanAirZoneId);
+      String vrn = payment.getEntrantPayments().iterator().next().getVrn();
+      List<String> datesPaidFor = formatTravelDates(payment);
+
       SendEmailRequest sendEmailRequest =
           paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount,
               cazName, payment.getReferenceNumber().toString(), vrn,
               payment.getExternalId(), datesPaidFor);
       messagingClient.publishMessage(sendEmailRequest);
+    } catch (CleanAirZoneNotFoundException e) {
+      log.error("Clean Air Zone not found in VCCS: {}", cleanAirZoneId);
     } catch (Exception e) {
       log.error("Payment receipt not sent to recipient with payment ID: {}", payment.getId(), e);
     }

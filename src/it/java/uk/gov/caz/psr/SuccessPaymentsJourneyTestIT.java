@@ -59,7 +59,7 @@ import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
-public class SuccessPaymentsJourneyTestIT {
+public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
 
   private static final List<LocalDate> TRAVEL_DATES = Arrays.asList(
       LocalDate.of(2019, 11, 10),
@@ -100,7 +100,7 @@ public class SuccessPaymentsJourneyTestIT {
 
   @Test
   public void testPaymentJourneys() {
-    mockVccsResponse();
+    mockVccsCleanAirZonesCall();
     testPaymentJourneyWithEmptyDatabase();
 
     testPaymentJourneyWhenEntrantPaymentsExist();

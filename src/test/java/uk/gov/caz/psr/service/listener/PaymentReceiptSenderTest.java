@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +29,8 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
+import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
+import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 import uk.gov.caz.psr.service.CleanAirZoneNameGetterService;
 import uk.gov.caz.psr.service.PaymentReceiptService;
 import uk.gov.caz.psr.util.CurrencyFormatter;
@@ -37,6 +40,7 @@ public class PaymentReceiptSenderTest {
 
   private static final String ANY_VALID_EMAIL = "test@test.com";
   private static final int ANY_AMOUNT = 800;
+  private static final UUID ANY_CAZ_ID = UUID.randomUUID();
   private static final String ANY_CAZ = "TEST_CAZ";
   private static final Long ANY_REFERENCE = 1001L;
   private static final String ANY_VRN = "VRN123";
@@ -108,8 +112,7 @@ public class PaymentReceiptSenderTest {
   }
 
   @Test
-  public void shouldThrowExceptionWhenPaymentDoesNotHaveAnyEntrantPayments()
-      throws JsonProcessingException {
+  public void shouldThrowExceptionWhenPaymentDoesNotHaveAnyEntrantPayments() {
     // given
     SendEmailRequest sendEmailRequest = anyValidRequest();
     PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this,
@@ -154,9 +157,26 @@ public class PaymentReceiptSenderTest {
         .thenThrow(new JsonMappingException(null, "test exception"));
 
     // when
-    paymentReceiptSender.onPaymentStatusUpdated(event);
+    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
 
     // then
+    assertThat(throwable).isNull();
+    verify(messagingClient, never()).publishMessage(any());
+  }
+
+  @Test
+  void shouldNotPropagateVccsCallExceptionError() throws JsonProcessingException {
+    // given
+    SendEmailRequest sendEmailRequest = anyValidRequest();
+    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
+    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
+    when(cleanAirZoneNameGetterService.fetch(any())).thenThrow(new CleanAirZoneNotFoundException(ANY_CAZ_ID));
+
+    // when
+    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
+
+    // then
+    assertThat(throwable).isNull();
     verify(messagingClient, never()).publishMessage(any());
   }
 

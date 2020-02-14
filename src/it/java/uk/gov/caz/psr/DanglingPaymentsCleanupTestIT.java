@@ -45,7 +45,7 @@ import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 @Sql(
     scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-public class DanglingPaymentsCleanupTestIT {
+public class DanglingPaymentsCleanupTestIT extends VccsCallsIT {
 
   private static final int EXPECTED_NON_DANGLING_PAYMENTS_COUNT = 6;
   private static final int INITIAL_DANGLING_PAYMENTS_COUNT = 3;
@@ -104,7 +104,7 @@ public class DanglingPaymentsCleanupTestIT {
 
   @Test
   public void danglingPaymentsCleanupTest() {
-    mockVccsResponse();
+    mockVccsCleanAirZonesCall();
     givenDanglingPaymentsWithExternalIds("cancelled-payment-id", "expired-payment-id",
         "success-payment-id");
     andNonDanglingPaymentsCountIs(EXPECTED_NON_DANGLING_PAYMENTS_COUNT);

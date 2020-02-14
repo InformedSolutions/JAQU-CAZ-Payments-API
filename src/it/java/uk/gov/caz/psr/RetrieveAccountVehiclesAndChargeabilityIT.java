@@ -1,6 +1,7 @@
 package uk.gov.caz.psr;
 
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -10,7 +11,7 @@ import uk.gov.caz.psr.util.MockServerTestIT;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 
 @FullyRunningServerIntegrationTest
-public class RetrieveAccountVehiclesAndChargeabilityIT extends MockServerTestIT{
+public class RetrieveAccountVehiclesAndChargeabilityIT extends MockServerTestIT {
   
   private static final String ZONES = 
       "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3,5cd7441d-766f-48ff-b8ad-1809586fea37";
@@ -24,6 +25,12 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends MockServerTestIT{
       RestAssured.baseURI = "http://localhost";
       vccMockServer.reset();
       accountMockServer.reset();
+  }
+  
+  @AfterEach
+  public void clearUp() {
+    vccMockServer.stop();
+    accountMockServer.stop();
   }
   
   @Test
