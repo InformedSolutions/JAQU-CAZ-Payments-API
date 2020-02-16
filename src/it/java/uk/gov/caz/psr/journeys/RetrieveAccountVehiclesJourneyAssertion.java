@@ -1,12 +1,8 @@
 package uk.gov.caz.psr.journeys;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockserver.matchers.Times.exactly;
-import static uk.gov.caz.psr.util.MockServerTestIT.requestGet;
-import static uk.gov.caz.psr.util.MockServerTestIT.response;
 
 import java.util.UUID;
-import org.mockserver.integration.ClientAndServer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import io.restassured.RestAssured;
@@ -27,8 +23,6 @@ public class RetrieveAccountVehiclesJourneyAssertion {
   
   private ValidatableResponse vehicleResponse;
   private VehicleRetrievalResponseDto vehicleResponseDto;
-  public final ClientAndServer vccMockServer;
-  public final ClientAndServer accountMockServer;
 
   public RetrieveAccountVehiclesJourneyAssertion forAccountId(String accountId) {
     this.accountId = accountId;
@@ -85,22 +79,6 @@ public class RetrieveAccountVehiclesJourneyAssertion {
     assertEquals(1,this.vehicleResponseDto.getPageCount());
     assertEquals(1, this.vehicleResponseDto.getTotalVrnsCount());
     assertEquals("CAS300", this.vehicleResponseDto.getVehicles().get(0).getRegistrationNumber());
-  }
-  
-  public RetrieveAccountVehiclesJourneyAssertion mockAccountService() {
-    accountMockServer
-        .when(requestGet("/v1/accounts/" + this.accountId + "/vehicles"),
-            exactly(1))
-        .respond(response("account-vehicles-response.json"));
-    return this;
-  }
-  
-  public RetrieveAccountVehiclesJourneyAssertion mockVehicleCheckerService() {
-    vccMockServer
-        .when(requestGet("/v1/compliance-checker/vehicles/CAS300/compliance"),
-            exactly(1))
-        .respond(response("vehicle-compliance-response.json"));
-    return this;
   }
 
 }

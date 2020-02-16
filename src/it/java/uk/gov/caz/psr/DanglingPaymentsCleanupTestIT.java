@@ -20,7 +20,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.Header;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +66,6 @@ public class DanglingPaymentsCleanupTestIT extends VccsCallsIT {
   private CleanupDanglingPaymentsService danglingPaymentsService;
 
   private ClientAndServer mockServer;
-  private ClientAndServer vccsMockServer;
 
   @Value("${aws.secret-name}")
   private String secretName;
@@ -82,7 +80,6 @@ public class DanglingPaymentsCleanupTestIT extends VccsCallsIT {
   @BeforeEach
   public void startMockServer() {
     mockServer = startClientAndServer(1080);
-    vccsMockServer = startClientAndServer(1090);
   }
 
   @BeforeEach
@@ -93,7 +90,6 @@ public class DanglingPaymentsCleanupTestIT extends VccsCallsIT {
   @AfterEach
   public void stopMockServer() {
     mockServer.stop();
-    vccsMockServer.stop();
   }
 
   @AfterEach
@@ -291,16 +287,5 @@ public class DanglingPaymentsCleanupTestIT extends VccsCallsIT {
               + "AND entrant_payment.payment_status != '"
               + internalPaymentStatus.name() + "'");
     }
-  }
-
-  public void mockVccsResponse() {
-    vccsMockServer
-        .when(HttpRequest.request()
-            .withPath("/v1/compliance-checker/clean-air-zones")
-            .withMethod("GET"))
-        .respond(HttpResponse.response()
-            .withStatusCode(200)
-            .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
-            .withBody(readFile("get-clean-air-zones.json")));
   }
 }
