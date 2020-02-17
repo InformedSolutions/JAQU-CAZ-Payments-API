@@ -33,7 +33,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.Header;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +58,7 @@ import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
-public class SuccessPaymentsJourneyTestIT {
+public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
 
   private static final List<LocalDate> TRAVEL_DATES = Arrays.asList(
       LocalDate.of(2019, 11, 10),
@@ -96,11 +95,10 @@ public class SuccessPaymentsJourneyTestIT {
   private SecretsManagerInitialisation secretsManagerInitialisation;
 
   private ClientAndServer mockServer;
-  private ClientAndServer vccsMockServer;
 
   @Test
   public void testPaymentJourneys() {
-    mockVccsResponse();
+    mockVccsCleanAirZonesCall();
     testPaymentJourneyWithEmptyDatabase();
 
     testPaymentJourneyWhenEntrantPaymentsExist();
@@ -244,7 +242,6 @@ public class SuccessPaymentsJourneyTestIT {
   @BeforeEach
   public void startMockServer() {
     mockServer = startClientAndServer(1080);
-    vccsMockServer = startClientAndServer(1090);
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = "/v1/payments";
@@ -265,7 +262,6 @@ public class SuccessPaymentsJourneyTestIT {
   @AfterEach
   public void stopMockServer() {
     mockServer.stop();
-    vccsMockServer.stop();
   }
 
   @AfterEach
@@ -564,17 +560,6 @@ public class SuccessPaymentsJourneyTestIT {
             .withStatusCode(HttpStatus.OK.value())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
             .withBody(readFile("get-payment-response.json")));
-  }
-
-  public void mockVccsResponse() {
-    vccsMockServer
-        .when(HttpRequest.request()
-            .withPath("/v1/compliance-checker/clean-air-zones")
-            .withMethod("GET"))
-        .respond(HttpResponse.response()
-            .withStatusCode(200)
-            .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
-            .withBody(readFile("get-clean-air-zones.json")));
   }
 
   /// ----- utility methods

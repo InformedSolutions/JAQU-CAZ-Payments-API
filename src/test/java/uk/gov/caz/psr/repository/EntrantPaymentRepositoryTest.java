@@ -196,6 +196,7 @@ class EntrantPaymentRepositoryTest {
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("VRN cannot be empty");
     }
+
   }
 
   @Nested
@@ -325,5 +326,54 @@ class EntrantPaymentRepositoryTest {
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("VRN cannot be empty");
     }
+  }
+
+  @Nested
+  class FindByVrnAndCaz {
+	  
+	  @Test
+	  public void shouldThrowIllegalArgumentExceptionWhenVrnIsNull() {
+	      // given
+	      UUID cazId = UUID.randomUUID();
+	      String vrn = null;
+
+	      // when
+	      Throwable throwable = catchThrowable(() ->
+	          entrantPaymentRepository.countByVrnAndCaz(cazId, vrn));
+
+	      // then
+	      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+	          .hasMessage("VRN cannot be empty");
+	  }
+	  
+	  @Test
+	  public void shouldThrowIllegalArgumentExceptionWhenVrnIsEmpty() {
+	      // given
+	      UUID cazId = UUID.randomUUID();
+	      String vrn = "";
+
+	      // when
+	      Throwable throwable = catchThrowable(() ->
+	          entrantPaymentRepository.countByVrnAndCaz(cazId, vrn));
+
+	      // then
+	      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+	          .hasMessage("VRN cannot be empty");
+	  }
+	  
+	  @Test
+	  public void shouldThrowIllegalArgumentExceptionWhenCazIdIsEmpty() {
+	      // given
+	      UUID cazId = null;
+	      String vrn = "VRN321";
+
+	      // when
+	      Throwable throwable = catchThrowable(() ->
+	          entrantPaymentRepository.countByVrnAndCaz(cazId, vrn));
+
+	      // then
+	      assertThat(throwable).isInstanceOf(NullPointerException.class)
+	          .hasMessage("cleanZoneId cannot be null");
+	  }
   }
 }

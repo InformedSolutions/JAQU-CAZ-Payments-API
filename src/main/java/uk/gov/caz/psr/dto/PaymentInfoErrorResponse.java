@@ -17,6 +17,8 @@ public class PaymentInfoErrorResponse {
   String detail;
   String field;
   int status = HttpStatus.BAD_REQUEST.value();
+  
+  private static final String VALIDATION_ERROR_TITLE = "Invalid search parameter";
 
   /**
    * Static factory method. Error Response
@@ -30,6 +32,19 @@ public class PaymentInfoErrorResponse {
         .title(validationError.getTitle())
         .field(validationError.getField())
         .detail(validationError.getDetail())
+        .build();
+  }
+
+  /**
+   * Creates a validation error response, i.e. its title is fixed and equal to 'Validation error',
+   * status is equal to 400 and detail is set to the parameter.
+   */
+  public static PaymentInfoErrorResponse validationErrorResponseWithDetailAndField(String field,
+      String detail) {
+    return PaymentInfoErrorResponse.builder()
+        .field(field)
+        .title(VALIDATION_ERROR_TITLE)
+        .detail(detail)
         .build();
   }
 }

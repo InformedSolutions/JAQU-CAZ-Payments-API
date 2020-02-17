@@ -16,6 +16,7 @@ import uk.gov.caz.psr.dto.CleanAirZonesResponse;
  * Retrofit2 repository to create a vccs call.
  */
 public interface VccsRepository {
+  
   /**
    * Method to create retrofit2 vccs for cleanAirZones call.
    *
@@ -30,7 +31,6 @@ public interface VccsRepository {
   Call<ComplianceResultsDto> findCompliance(@Path("vrn") String vrn, 
       @Query("zones") String zones,
       @Header("X-Correlation-ID") String correlationId);
-
 
   /**
    * Wraps REST API call in {@link Response} making synchronous request.
