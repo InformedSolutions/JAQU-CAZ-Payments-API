@@ -49,6 +49,7 @@ public class PaymentRepository {
     private static final String TOTAL_PAID = "total_paid";
     private static final String PAYMENT_PROVIDER_STATUS = "payment_provider_status";
     private static final String REFERENCE_NUMBER = "central_reference_number";
+    private static final String USER_ID = "user_id";
   }
 
   /**
@@ -64,7 +65,8 @@ public class PaymentRepository {
         .withSchemaName(SCHEMA_NAME)
         .withTableName(TABLE_NAME)
         .usingGeneratedKeyColumns(Columns.PAYMENT_ID, Columns.REFERENCE_NUMBER)
-        .usingColumns(Columns.PAYMENT_METHOD, Columns.TOTAL_PAID, Columns.PAYMENT_PROVIDER_STATUS);
+        .usingColumns(Columns.PAYMENT_METHOD, Columns.TOTAL_PAID, Columns.PAYMENT_PROVIDER_STATUS,
+            Columns.USER_ID);
     this.entrantPaymentRepository = entrantPaymentRepository;
   }
 
@@ -87,7 +89,7 @@ public class PaymentRepository {
         "Vehicle entrant payments must be empty");
 
     KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
-        toSqlParametersForExternalInsert(payment));
+        toSqlParametersForInsert(payment));
     UUID paymentId = (UUID) keyHolder.getKeys().get("payment_id");
     Long referenceNumber = (Long) keyHolder.getKeys().get("central_reference_number");
     return payment.toBuilder()
@@ -176,11 +178,12 @@ public class PaymentRepository {
    * Converts {@code payment} into a map of attributes which will be saved in the database for an
    * external payment.
    */
-  private MapSqlParameterSource toSqlParametersForExternalInsert(Payment payment) {
+  private MapSqlParameterSource toSqlParametersForInsert(Payment payment) {
     return new MapSqlParameterSource()
         .addValue("total_paid", payment.getTotalPaid())
         .addValue("payment_provider_status", payment.getExternalPaymentStatus().name())
-        .addValue("payment_method", payment.getPaymentMethod().name());
+        .addValue("payment_method", payment.getPaymentMethod().name())
+        .addValue("user_id", payment.getUserId());
   }
 
   /**
@@ -196,6 +199,7 @@ public class PaymentRepository {
         + "payment.payment_authorised_timestamp, "
         + "payment.payment_provider_status, "
         + "payment.central_reference_number, "
+        + "payment.user_id, "
         + "payment.payment_provider_id "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
         + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
@@ -216,7 +220,7 @@ public class PaymentRepository {
 
     private static final String ALL_PAYMENT_ATTRIBUTES =
         "payment_id, payment_method, payment_provider_id, central_reference_number, "
-        + "total_paid, payment_provider_status, payment_submitted_timestamp, " 
+        + "total_paid, payment_provider_status, user_id, payment_submitted_timestamp, "
         + "payment_authorised_timestamp ";
 
     static final String SELECT_DANGLING_PAYMENTS =
@@ -247,6 +251,7 @@ public class PaymentRepository {
     @Override
     public Payment mapRow(ResultSet resultSet, int i) throws SQLException {
       String externalStatus = resultSet.getString("payment_provider_status");
+      String userId = resultSet.getString("user_id");
       return Payment.builder()
           .id(UUID.fromString(resultSet.getString("payment_id")))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
@@ -259,6 +264,7 @@ public class PaymentRepository {
               fromTimestampToLocalDateTime(resultSet, "payment_submitted_timestamp"))
           .authorisedTimestamp(
               fromTimestampToLocalDateTime(resultSet, "payment_authorised_timestamp"))
+          .userId(userId == null ? null : UUID.fromString(userId))
           .entrantPayments(entrantPayments)
           .build();
     }
