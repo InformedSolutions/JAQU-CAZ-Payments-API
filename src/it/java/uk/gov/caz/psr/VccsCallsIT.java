@@ -40,11 +40,18 @@ public class VccsCallsIT {
   }
   
   
-  public void mockVccsComplianceCall(String vrn) {
+  public void mockVccsComplianceCall(String vrn, String responseFile, int statusCode) {
     vccsMockServer
         .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),
             exactly(1))
-        .respond(response("vehicle-compliance-response.json"));
+        .respond(response(responseFile, vrn, statusCode));
+  }
+  
+  public void mockVccsComplianceCallError(String vrn, int statusCode) {
+    vccsMockServer
+    .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),
+        exactly(1))
+    .respond(emptyResponse(statusCode));
   }
 
   @SneakyThrows
@@ -59,11 +66,16 @@ public class VccsCallsIT {
         Files.readAllBytes(ResourceUtils.getFile("classpath:data/json/response/" + file).toPath()));
   }
 
-  public static HttpResponse response(String responseFile) {
+  public static HttpResponse response(String responseFile, String vrn, int statusCode) {
     return HttpResponse.response()
-        .withStatusCode(200)
+        .withStatusCode(statusCode)
         .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
-        .withBody(readJson(responseFile));
+        .withBody(readJson(responseFile).replace("TEST_VRN", vrn));
+  }
+  
+  public static HttpResponse emptyResponse(int statusCode) {
+    return HttpResponse.response()
+        .withStatusCode(statusCode);
   }
 
   public static HttpRequest requestGet(String url) {

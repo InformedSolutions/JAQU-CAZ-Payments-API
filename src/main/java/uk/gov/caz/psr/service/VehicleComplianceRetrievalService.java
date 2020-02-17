@@ -1,6 +1,8 @@
 package uk.gov.caz.psr.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +54,10 @@ public class VehicleComplianceRetrievalService {
         if (complianceResultResponse.getHttpStatus().equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
           log.error("could not get vehicle compliance due to null vehicle type");
           results.add(ComplianceResultsDto.builder()
-              .registrationNumber(aom.getVrnByIdentifier(complianceResultResponse.getIdentifier()))
+              .registrationNumber(
+                  aom.getVrnByIdentifier(
+                      complianceResultResponse.getIdentifier().substring(6)))
+              .complianceOutcomes(Collections.emptyList())
               .build());
         } else {
           log.error("VCCS call return error {}, code: {}", complianceResultResponse.getError(),

@@ -18,6 +18,8 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends VccsCallsIT {
   private static final String ZONES =
       "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3,5cd7441d-766f-48ff-b8ad-1809586fea37";
 
+  private static final String ACCOUNT_ID = UUID.randomUUID().toString();
+
   @LocalServerPort
   int randomServerPort;
   
@@ -37,19 +39,73 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends VccsCallsIT {
 
   @Test
   public void shouldReturn200OkAndResponseWhenValidRequest() {
-    String accountId = UUID.randomUUID().toString();
-    mockVccsComplianceCall("CAS300");
-    mockAccountService(accountId);
-    givenVehicleRetrieval().forAccountId(accountId).forPageNumber("0").forPageSize("10")
-        .forZones(ZONES).whenRequestIsMadeToRetrieveAccountVehicles().then()
-        .responseIsReturnedWithHttpOkStatusCode().andResponseContainsExpectedData();
+    mockAccountService(ACCOUNT_ID, "CAS300");
+    mockVccsComplianceCall("CAS300", "vehicle-compliance-response.json", 200);
+    givenVehicleRetrieval()
+      .forAccountId(ACCOUNT_ID)
+      .forPageNumber("0")
+      .forPageSize("10")
+      .forZones(ZONES)
+      .whenRequestIsMadeToRetrieveAccountVehicles()
+      .then()
+      .responseIsReturnedWithHttpOkStatusCode()
+      .andResponseContainsExpectedData();
   }
   
-  public void mockAccountService(String accountId) {
+  @Test
+  public void shouldReturn200OkAndResponseWhenUnknownVehicleType() {
+    mockAccountService(ACCOUNT_ID, "CAS302");
+    mockVccsComplianceCall("CAS302", "vehicle-compliance-null-response.json", 422);
+    givenVehicleRetrieval()
+      .forAccountId(ACCOUNT_ID)
+      .forPageNumber("0")
+      .forPageSize("10")
+      .forZones(ZONES)
+      .whenRequestIsMadeToRetrieveAccountVehicles()
+      .then()
+      .responseIsReturnedWithHttpOkStatusCode()
+      .andResponseContainsTypeUnknownData();
+  }
+  
+  @Test
+  public void shouldReturn503WhenVccsUnavailable() {
+    mockAccountService(ACCOUNT_ID, "CAS300");
+    mockVccsComplianceCallError("CAS300", 503);
+    givenVehicleRetrieval()
+      .forAccountId(ACCOUNT_ID)
+      .forPageNumber("0")
+      .forPageSize("10")
+      .forZones(ZONES)
+      .whenRequestIsMadeToRetrieveAccountVehicles()
+      .then()
+      .responseIsReturnedWithHttpErrorStatusCode(503);
+  }
+  
+  @Test
+  public void shouldReturn503WhenAccountServiceUnavailable() {
+    mockAccountServiceError(ACCOUNT_ID, 503);
+    givenVehicleRetrieval()
+      .forAccountId(ACCOUNT_ID)
+      .forPageNumber("0")
+      .forPageSize("10")
+      .forZones(ZONES)
+      .whenRequestIsMadeToRetrieveAccountVehicles()
+      .then()
+      .responseIsReturnedWithHttpErrorStatusCode(503);
+  }
+  
+  private void mockAccountService(String accountId, String vrn) {
     accountsMockServer
         .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
             exactly(1))
-        .respond(response("account-vehicles-response.json"));
+        .respond(response("account-vehicles-response.json", vrn, 200));
+  }
+  
+  private void mockAccountServiceError(String accountId, int statusCode) {
+    accountsMockServer
+      .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
+          exactly(1))
+      .respond(emptyResponse(503));
   }
 
   private RetrieveAccountVehiclesJourneyAssertion givenVehicleRetrieval() {
