@@ -4,8 +4,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.async.rest.AsyncRestService;
@@ -17,10 +18,13 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
  * Class responsible to call vccs for compliance.
  */
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class VehicleComplianceRetrievalService {
 
+  @Value("${services.connection-timeout-seconds:10}")
+  private int serviceCallTimeout;
+  
   private final VccsRepository vccsRepository;
   private final AsyncRestService asyncRestService;
 
@@ -62,10 +66,9 @@ public class VehicleComplianceRetrievalService {
    */
   private void callVehicleComplianceChecker(
       List<AsyncOp<ComplianceResultsDto>> complianceResults) {
-    long timeout = calculateTimeoutInSeconds();
     try {
       asyncRestService
-          .startAndAwaitAll(complianceResults, timeout, TimeUnit.SECONDS);
+          .startAndAwaitAll(complianceResults, serviceCallTimeout, TimeUnit.SECONDS);
     } catch (Exception exception) {
       log.error("Unexpected exception occurs ", exception);
       throw new ExternalServiceCallException(exception.getMessage());
@@ -77,7 +80,7 @@ public class VehicleComplianceRetrievalService {
    *
    * @return timeout
    */
-  static long calculateTimeoutInSeconds() {
-    return 8L;
+  long calculateTimeoutInSeconds() {
+    return new Long(serviceCallTimeout);
   }
 }
