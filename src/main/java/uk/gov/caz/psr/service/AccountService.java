@@ -14,6 +14,7 @@ import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
+import uk.gov.caz.psr.service.exception.AccountNotFoundException;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
@@ -40,7 +41,12 @@ public class AccountService {
     if (accountsResponse.isSuccessful()) {
       return accountsResponse.body();
     } else {
-      throw new ExternalServiceCallException();
+      switch (accountsResponse.code()) {
+        case 404:
+          throw new AccountNotFoundException();
+        default:
+          throw new ExternalServiceCallException();          
+      }        
     }
   }
   

@@ -52,12 +52,12 @@ public class VehicleComplianceRetrievalService {
       if (complianceResultResponse.hasError()) {
         if (complianceResultResponse.getHttpStatus().equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
           log.error("could not get vehicle compliance due to null vehicle type");
-          results.add(ComplianceResultsDto.builder()
-              .registrationNumber(
-                  aom.getValueByKey(
-                      complianceResultResponse.getIdentifier().substring(6)))
-              .complianceOutcomes(Collections.emptyList())
-              .build());
+          results.add(buildExceptionResult(aom, 
+              complianceResultResponse.getIdentifier().substring(6)));
+        } else if (complianceResultResponse.getHttpStatus().equals(HttpStatus.NOT_FOUND)) {
+          log.error("could not find vrn");
+          results.add(buildExceptionResult(aom, 
+              complianceResultResponse.getIdentifier().substring(6)));
         } else {
           log.error("VCCS call return error {}, code: {}", complianceResultResponse.getError(),
               complianceResultResponse.getHttpStatus());
@@ -71,6 +71,15 @@ public class VehicleComplianceRetrievalService {
     results.sort(Comparator.comparing(ComplianceResultsDto:: getRegistrationNumber));
     
     return results;
+  }
+
+  private ComplianceResultsDto buildExceptionResult(AsyncOperationsMatcher aom, 
+      String identifier) {
+    return ComplianceResultsDto.builder()
+        .registrationNumber(
+            aom.getValueByKey(identifier))
+        .complianceOutcomes(Collections.emptyList())
+        .build();
   }
 
   /**

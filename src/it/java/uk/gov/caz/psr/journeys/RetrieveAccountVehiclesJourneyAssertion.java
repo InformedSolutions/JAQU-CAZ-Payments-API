@@ -79,15 +79,23 @@ public class RetrieveAccountVehiclesJourneyAssertion {
     return this;
   }
 
+  public void andResponseContainsEmptyData() {
+    assertEquals(0, this.vehicleResponseDto.getVehicles().size());
+    assertEquals(Integer.parseInt(this.pageNumber), this.vehicleResponseDto.getPage());
+    assertEquals(Integer.parseInt(this.pageSize), this.vehicleResponseDto.getPerPage());
+    assertEquals(0, this.vehicleResponseDto.getPageCount());
+    assertEquals(0, this.vehicleResponseDto.getTotalVrnsCount()); 
+  }
+
   public void andResponseContainsExpectedData() {
     checkResponseSize();
     assertEquals("CAS300", this.vehicleResponseDto.getVehicles().get(0).getRegistrationNumber());
   }
-
-  public void andResponseContainsTypeUnknownData() {
+  
+  public void andResponseContainsTypeUnknownOrUnrecognisedData(String vrn) {
     checkResponseSize();
     ComplianceResultsDto firstVehicle = this.vehicleResponseDto.getVehicles().get(0);
-    assertEquals("CAS302", firstVehicle.getRegistrationNumber());
+    assertEquals(vrn, firstVehicle.getRegistrationNumber());
     assertEquals(null, firstVehicle.getIsExempt());
     assertEquals(null, firstVehicle.getIsRetrofitted());
     assertEquals(null, firstVehicle.getVehicleType());
