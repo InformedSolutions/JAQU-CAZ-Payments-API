@@ -35,7 +35,7 @@ public class AsyncOperationsMatcher {
   }
   
   /**
-   * Extract value from map with key
+   * Extract value from map with key.
    * @param identifier the key to use
    * @return the value associated with the identifier
    */
