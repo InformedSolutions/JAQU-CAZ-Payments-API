@@ -17,7 +17,6 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends VccsCallsIT {
 
   private static final String ZONES =
       "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3,5cd7441d-766f-48ff-b8ad-1809586fea37";
-
   private static final String ACCOUNT_ID = UUID.randomUUID().toString();
 
   @LocalServerPort

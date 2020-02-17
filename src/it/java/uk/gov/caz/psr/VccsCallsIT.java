@@ -39,7 +39,6 @@ public class VccsCallsIT {
             .withBody(readFile("get-clean-air-zones.json")));
   }
   
-  
   public void mockVccsComplianceCall(String vrn, String responseFile, int statusCode) {
     vccsMockServer
         .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),
