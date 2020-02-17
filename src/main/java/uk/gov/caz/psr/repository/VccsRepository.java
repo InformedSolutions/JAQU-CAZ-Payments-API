@@ -1,10 +1,10 @@
 package uk.gov.caz.psr.repository;
 
 import java.io.IOException;
+import java.util.UUID;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.GET;
-import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -29,8 +29,7 @@ public interface VccsRepository {
   @Headers("Accept: application/json")
   @GET("v1/compliance-checker/vehicles/{vrn}/compliance")
   Call<ComplianceResultsDto> findCompliance(@Path("vrn") String vrn, 
-      @Query("zones") String zones,
-      @Header("X-Correlation-ID") String correlationId);
+      @Query("zones") String zones);
 
   /**
    * Wraps REST API call in {@link Response} making synchronous request.
@@ -48,12 +47,10 @@ public interface VccsRepository {
   /**
    * Wraps REST API call in {@link AsyncOp} making it asynchronous.
    *
-   * @param correlationId for correlation
    * @param vrn the vrn to find compliance of
    * @return {@link AsyncOp} with prepared REST call.
    */
-  default AsyncOp<ComplianceResultsDto> findComplianceAsync(String vrn, String zones,
-      String correlationId) {
-    return AsyncOp.from("VCCS: " + correlationId, findCompliance(vrn, zones, correlationId));
+  default AsyncOp<ComplianceResultsDto> findComplianceAsync(String vrn, String zones) {
+    return AsyncOp.from("VCCS: " + UUID.randomUUID(), findCompliance(vrn, zones));
   }
 }

@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.controller;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -26,7 +25,7 @@ public class AccountsController implements AccountControllerApiSpec {
 
   @Override
   public ResponseEntity<VehicleRetrievalResponseDto> retrieveVehiclesAndCharges(
-      UUID accountId, Map<String, String> queryStrings) throws IOException {
+      UUID accountId, Map<String, String> queryStrings) {
     
     validateRequest(queryStrings);
     

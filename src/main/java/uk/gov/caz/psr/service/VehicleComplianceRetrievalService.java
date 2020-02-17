@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.async.rest.AsyncRestService;
-import uk.gov.caz.correlationid.MdcCorrelationIdInjector;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
@@ -35,7 +34,7 @@ public class VehicleComplianceRetrievalService {
   public List<ComplianceResultsDto> retrieveVehicleCompliance(List<String> vrns, String zones) {
     List<AsyncOp<ComplianceResultsDto>> complianceResultResponses = vrns.stream()
         .map(vrn -> vccsRepository
-            .findComplianceAsync(vrn, zones, MdcCorrelationIdInjector.getCurrentValue()))
+            .findComplianceAsync(vrn, zones))
         .collect(Collectors.toList());
 
     callVehicleComplianceChecker(complianceResultResponses);
@@ -69,7 +68,7 @@ public class VehicleComplianceRetrievalService {
           .startAndAwaitAll(complianceResults, timeout, TimeUnit.SECONDS);
     } catch (Exception exception) {
       log.error("Unexpected exception occurs ", exception);
-      throw new ExternalServiceCallException(exception);
+      throw new ExternalServiceCallException(exception.getMessage());
     }
   }
 

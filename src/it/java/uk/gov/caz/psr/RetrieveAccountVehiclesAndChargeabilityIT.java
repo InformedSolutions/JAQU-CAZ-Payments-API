@@ -40,9 +40,15 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends VccsCallsIT {
     String accountId = UUID.randomUUID().toString();
     mockVccsComplianceCall("CAS300");
     mockAccountService(accountId);
-    givenVehicleRetrieval().forAccountId(accountId).forPageNumber("0").forPageSize("10")
-        .forZones(ZONES).whenRequestIsMadeToRetrieveAccountVehicles().then()
-        .responseIsReturnedWithHttpOkStatusCode().andResponseContainsExpectedData();
+    givenVehicleRetrieval()
+      .forAccountId(accountId)
+      .forPageNumber("0")
+      .forPageSize("10")
+      .forZones(ZONES)
+      .whenRequestIsMadeToRetrieveAccountVehicles()
+      .then()
+      .responseIsReturnedWithHttpOkStatusCode()
+      .andResponseContainsExpectedData();
   }
   
   public void mockAccountService(String accountId) {
