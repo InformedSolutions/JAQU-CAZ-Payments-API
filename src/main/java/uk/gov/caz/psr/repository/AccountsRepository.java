@@ -38,7 +38,7 @@ public interface AccountsRepository {
   default Response<AccountVehicleRetrievalResponse> getAccountVehicleVrnsSync(
       UUID accountId, String pageNumber, String pageSize) {
     try {
-      return getAccountVehicleVrns(accountId, pageSize, pageSize).execute();
+      return getAccountVehicleVrns(accountId, pageNumber, pageSize).execute();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
