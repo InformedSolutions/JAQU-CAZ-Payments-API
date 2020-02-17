@@ -26,6 +26,7 @@ import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
+import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,7 +53,11 @@ public class InitiatePaymentServiceTest {
     Payment paymentWithExternalId = mockSuccessPaymentCreation(paymentWithInternalId, request);
 
     // when
-    Payment result = initiatePaymentService.createPayment(request);
+    Payment result = initiatePaymentService.createPayment(
+        InitiatePaymentRequestToModelConverter.toPayment(request),
+        InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(request),
+        request.getReturnUrl()
+    );
 
     // then
     assertThat(result).isEqualTo(paymentWithExternalId);
@@ -73,7 +78,11 @@ public class InitiatePaymentServiceTest {
     mockFailedPaymentCreation(paymentWithInternalId, request);
 
     // when
-    Throwable throwable = catchThrowable(() -> initiatePaymentService.createPayment(request));
+    Throwable throwable = catchThrowable(() -> initiatePaymentService.createPayment(
+        InitiatePaymentRequestToModelConverter.toPayment(request),
+        InitiatePaymentRequestToModelConverter
+            .toSingleEntrantPayments(request), request.getReturnUrl()
+    ));
 
     // then
     assertThat(throwable).isInstanceOf(RestClientException.class);

@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -43,6 +44,7 @@ import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
+import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -73,9 +75,6 @@ class PaymentsControllerTest {
     Mockito.reset(getPaidEntrantPaymentsService);
   }
 
-  private static final List<LocalDate> days =
-      Arrays.asList(LocalDate.of(2019, 1, 1), LocalDate.of(2019, 1, 3));
-
   private static final Transaction ANY_TRANSACTION = Transaction.builder()
       .charge(100)
       .tariffCode("tariff-code-1")
@@ -95,51 +94,53 @@ class PaymentsControllerTest {
     public void missingCorrelationIdShouldResultIn400AndValidMessage() throws Exception {
       String payload = "";
 
-    mockMvc.perform(post(BASE_PATH).content(payload)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").value("Missing request header 'X-Correlation-ID'"));
-    verify(initiatePaymentService, never()).createPayment(any());
-  }
+      mockMvc.perform(post(BASE_PATH).content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value("Missing request header 'X-Correlation-ID'"));
+      verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
+    }
 
-  @Test
-  public void emptyTransactionsShouldResultIn400() throws Exception {
-    String payload = paymentRequestWithEmptyTransactions();
+    @Test
+    public void emptyTransactionsShouldResultIn400() throws Exception {
+      String payload = paymentRequestWithEmptyTransactions();
 
-    mockMvc.perform(post(BASE_PATH).content(payload)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any());
-  }
+      mockMvc.perform(post(BASE_PATH).content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value("'transactions' cannot be null or empty"));
+      verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
+    }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"1234567890123456", ""})
-  public void invalidVrnShouldResultIn400(String vrn) throws Exception {
-    String payload = paymentRequestWithVrn(vrn);
+    @ParameterizedTest
+    @ValueSource(strings = {"1234567890123456", ""})
+    public void invalidVrnShouldResultIn400(String vrn) throws Exception {
+      String payload = paymentRequestWithVrn(vrn);
 
-    mockMvc.perform(post(BASE_PATH)
-        .content(payload)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any());
-  }
+      mockMvc.perform(post(BASE_PATH)
+          .content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(status().isBadRequest());
+      verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
+    }
 
-  @Test
-  public void invalidAmountShouldResultIn400() throws Exception {
-    String payload = paymentRequestWithAmount(-1250);
+    @Test
+    public void invalidChargeShouldResultIn400() throws Exception {
+      String payload = paymentRequestWithAmount(-1250);
 
-    mockMvc.perform(post(BASE_PATH).content(payload)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any());
-  }
+      mockMvc.perform(post(BASE_PATH).content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value("'charge' in all transactions must be positive"));
+      verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
+    }
 
     @Test
     public void duplicatedTransactionsShouldResultIn400() throws Exception {
@@ -149,66 +150,111 @@ class PaymentsControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
           .accept(MediaType.APPLICATION_JSON)
           .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-          .andExpect(status().isBadRequest());
-      verify(initiatePaymentService, never()).createPayment(any());
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value("Request cannot have duplicated travel date(s)"));
+      verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
     }
 
-  @Test
-  public void invalidReturnUrlShouldResultIn400() throws Exception {
-    String payload = paymentRequestWithEmptyReturnUrl();
+    @Test
+    public void invalidReturnUrlShouldResultIn400() throws Exception {
+      String payload = paymentRequestWithEmptyReturnUrl();
 
-    mockMvc.perform(post(BASE_PATH).content(payload)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any());
-  }
+      mockMvc.perform(post(BASE_PATH).content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value("'returnUrl' cannot be null or empty"));
 
-  @Test
-  public void invalidTariffCodeShouldResultIn400() throws Exception {
-    String payload = paymentRequestWithEmptyTariffCode();
+      verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
+    }
 
-    mockMvc.perform(post(BASE_PATH).content(payload)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(status().isBadRequest());
-    verify(initiatePaymentService, never()).createPayment(any());
-  }
+    @Test
+    public void invalidTariffCodeShouldResultIn400() throws Exception {
+      String payload = paymentRequestWithEmptyTariffCode();
 
-  @Test
-  public void shouldReturnValidResponse() throws Exception {
-    InitiatePaymentRequest requestParams = baseRequestBuilder()
-        .transactions(Collections.singletonList(Transaction.builder()
-            .tariffCode("tariff")
-            .vrn("vrn")
-            .travelDate(LocalDate.now())
-            .charge(120)
-            .build()))
-        .build();
-    String payload = toJsonString(requestParams);
-    Payment successfullyCreatedPayment = Payments.existing();
-    given(initiatePaymentService.createPayment(requestParams))
-        .willReturn(successfullyCreatedPayment);
+      mockMvc.perform(post(BASE_PATH).content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value("'tariffCode' in all transactions cannot be null or empty"));
+      verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
+    }
 
-    mockMvc.perform(post(BASE_PATH)
-        .content(payload)
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.paymentId").value(successfullyCreatedPayment.getId().toString()))
-        .andExpect(jsonPath("$.nextUrl").value(successfullyCreatedPayment.getNextUrl()));
-    verify(initiatePaymentService).createPayment(requestParams);
-  }
+    @Nested
+    class WhenContainsMalformedUserId {
 
-  private String paymentRequestWithEmptyTransactions() {
-    InitiatePaymentRequest requestParams = baseRequestBuilder()
-        .transactions(Collections.emptyList())
-        .build();
-    return toJsonString(requestParams);
-  }
+      @ParameterizedTest
+      @ValueSource(strings = {"24d4d8f3b-3b81-44f3-968d-d1c1a48b4ac8", "malformed-uuid"})
+      public void shouldResultIn400(String userId) throws Exception {
+        String payload = paymentRequestWithMalformedUserId(userId);
+
+        mockMvc.perform(post(BASE_PATH).content(payload)
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+            .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("'userId' must be a valid UUID"));
+        verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
+      }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"7caf9cb5-839a-44af-b970-4546bdc80c61", ""})
+    public void shouldReturnValidResponse(String userId) throws Exception {
+      InitiatePaymentRequest requestParams = baseRequestBuilder()
+          .userId(userId)
+          .transactions(Collections.singletonList(Transaction.builder()
+              .tariffCode("tariff")
+              .vrn("vrn")
+              .travelDate(LocalDate.now())
+              .charge(120)
+              .build()))
+          .build();
+      String payload = toJsonString(requestParams);
+      Payment successfullyCreatedPayment = Payments.existing();
+      mockSuccessfulInvocationOfInitPaymentService(requestParams, successfullyCreatedPayment);
+
+      mockMvc.perform(post(BASE_PATH)
+          .content(payload)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(status().isCreated())
+          .andExpect(jsonPath("$.paymentId").value(successfullyCreatedPayment.getId().toString()))
+          .andExpect(jsonPath("$.nextUrl").value(successfullyCreatedPayment.getNextUrl()));
+
+      verify(initiatePaymentService).createPayment(
+          InitiatePaymentRequestToModelConverter.toPayment(requestParams),
+          InitiatePaymentRequestToModelConverter
+              .toSingleEntrantPayments(requestParams), requestParams.getReturnUrl()
+      );
+    }
+
+    private void mockSuccessfulInvocationOfInitPaymentService(InitiatePaymentRequest requestParams,
+        Payment successfullyCreatedPayment) {
+      given(initiatePaymentService.createPayment(
+          InitiatePaymentRequestToModelConverter.toPayment(requestParams),
+          InitiatePaymentRequestToModelConverter
+              .toSingleEntrantPayments(requestParams), requestParams.getReturnUrl()
+      )).willReturn(successfullyCreatedPayment);
+    }
+
+
+    private String paymentRequestWithMalformedUserId(String userId) {
+      InitiatePaymentRequest requestParams = baseRequestBuilder()
+          .userId(userId)
+          .build();
+      return toJsonString(requestParams);
+    }
+
+    private String paymentRequestWithEmptyTransactions() {
+      InitiatePaymentRequest requestParams = baseRequestBuilder()
+          .transactions(Collections.emptyList())
+          .build();
+      return toJsonString(requestParams);
+    }
 
     private String paymentRequestWithDuplicatedTransactions() {
       InitiatePaymentRequest requestParams = baseRequestBuilder()
@@ -217,43 +263,46 @@ class PaymentsControllerTest {
       return toJsonString(requestParams);
     }
 
-  private String paymentRequestWithVrn(String vrn) {
-    InitiatePaymentRequest requestParams = baseRequestBuilder()
-        .transactions(Collections.singletonList(ANY_TRANSACTION.toBuilder().vrn(vrn).build()))
-        .build();
-    return toJsonString(requestParams);
-  }
+    private String paymentRequestWithVrn(String vrn) {
+      InitiatePaymentRequest requestParams = baseRequestBuilder()
+          .transactions(Collections.singletonList(ANY_TRANSACTION.toBuilder().vrn(vrn).build()))
+          .build();
+      return toJsonString(requestParams);
+    }
 
-  private String paymentRequestWithAmount(Integer amount) {
-    InitiatePaymentRequest requestParams = baseRequestBuilder()
-        .transactions(Collections.singletonList(ANY_TRANSACTION.toBuilder().charge(amount).build()))
-        .build();
-    return toJsonString(requestParams);
-  }
+    private String paymentRequestWithAmount(Integer amount) {
+      InitiatePaymentRequest requestParams = baseRequestBuilder()
+          .transactions(
+              Collections.singletonList(ANY_TRANSACTION.toBuilder().charge(amount).build()))
+          .build();
+      return toJsonString(requestParams);
+    }
 
-  private String paymentRequestWithEmptyReturnUrl() {
-    InitiatePaymentRequest requestParams = baseRequestBuilder().returnUrl("").build();
-    return toJsonString(requestParams);
-  }
+    private String paymentRequestWithEmptyReturnUrl() {
+      InitiatePaymentRequest requestParams = baseRequestBuilder().returnUrl("").build();
+      return toJsonString(requestParams);
+    }
 
-  private String paymentRequestWithEmptyTariffCode() {
-    InitiatePaymentRequest requestParams = baseRequestBuilder()
-        .transactions(Collections.singletonList(ANY_TRANSACTION.toBuilder().tariffCode("").build()))
-        .build();
-    return toJsonString(requestParams);
-  }
+    private String paymentRequestWithEmptyTariffCode() {
+      InitiatePaymentRequest requestParams = baseRequestBuilder()
+          .transactions(
+              Collections.singletonList(ANY_TRANSACTION.toBuilder().tariffCode("").build()))
+          .build();
+      return toJsonString(requestParams);
+    }
 
-  private InitiatePaymentRequest.InitiatePaymentRequestBuilder baseRequestBuilder() {
-    return InitiatePaymentRequest.builder()
-        .cleanAirZoneId(UUID.randomUUID())
-        .returnUrl("https://example.return.url");
-  }
+    private InitiatePaymentRequest.InitiatePaymentRequestBuilder baseRequestBuilder() {
+      return InitiatePaymentRequest.builder()
+          .transactions(Collections.singletonList(ANY_TRANSACTION))
+          .cleanAirZoneId(UUID.randomUUID())
+          .returnUrl("https://example.return.url");
+    }
 
-  @SneakyThrows
-  private String toJsonString(InitiatePaymentRequest requestParams) {
-    return objectMapper.writeValueAsString(requestParams);
+    @SneakyThrows
+    private String toJsonString(InitiatePaymentRequest requestParams) {
+      return objectMapper.writeValueAsString(requestParams);
+    }
   }
-}
 
   @Nested
   class GetEntrantPayments {
@@ -379,7 +428,8 @@ class PaymentsControllerTest {
     }
 
     private String requestWithEmptyVrns() {
-      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().vrns(Collections.emptyList()).build();
+      PaidPaymentsRequest request = basePaidPaymentsResultBuilder().vrns(Collections.emptyList())
+          .build();
 
       return toJsonString(request);
     }
