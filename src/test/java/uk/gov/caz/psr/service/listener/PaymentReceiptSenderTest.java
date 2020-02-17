@@ -152,7 +152,8 @@ public class PaymentReceiptSenderTest {
     double amount = 8.0;
     when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(amount);
     when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, amount, ANY_CAZ,
-        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID, Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
+        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID,
+        Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
         .thenThrow(new JsonMappingException(null, "test exception"));
 
     // when

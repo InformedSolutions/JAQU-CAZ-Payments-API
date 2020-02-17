@@ -45,7 +45,7 @@ public class PaymentReceiptSender {
     double totalAmount = currencyFormatter.parsePennies(payment.getTotalPaid());
 
     log.info("Processing email event for payment with ID: {}", payment.getId());
-
+    
     try {
       String cazName = cleanAirZoneNameGetterService.fetch(cleanAirZoneId);
       String vrn = payment.getEntrantPayments().iterator().next().getVrn();

@@ -314,6 +314,11 @@
       <artifactId>rest-assured</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>uk.gov.caz</groupId>
+      <artifactId>definitions</artifactId>
+      <version>${internal.libraries.version}</version>
+    </dependency>
     <!-- development-related: end -->
   </dependencies>
 
@@ -657,6 +662,11 @@
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
                 <exclude>**/psr/repository/VccsRepository.class</exclude>
+                <!-- TODO: remove once error handling implemented for account vehicle retrieval -->
+                <exclude>**/psr/controller/AccountsController.class</exclude>
+                <exclude>**/psr/service/VehicleComplianceRetrievalService.class</exclude>
+                <exclude>**/psr/service/exception/ExternalServiceCallException.class</exclude>
+                <exclude>**/psr/repository/AccountsRepository.class</exclude>
               </excludes>
               <rules>
                 <rule>

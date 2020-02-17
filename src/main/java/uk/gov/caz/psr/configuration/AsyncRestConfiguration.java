@@ -17,6 +17,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.correlationid.MdcCorrelationIdInjector;
+import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 
 
@@ -45,6 +46,24 @@ public class AsyncRestConfiguration {
         .client(buildHttpClient(readTimeoutSeconds, connectTimeoutSeconds))
         .build()
         .create(VccsRepository.class);
+  }
+
+  /**
+   * VccsRepository spring bean.
+   *
+   * @return {@link VccsRepository}
+   */
+  @Bean
+  public AccountsRepository accountsRepository(ObjectMapper objectMapper,
+      @Value("${services.accounts.root-url}") String accountsApiEndpoint,
+      @Value("${services.read-timeout-seconds}") Integer readTimeoutSeconds,
+      @Value("${services.connection-timeout-seconds}") Integer connectTimeoutSeconds) {
+    return new Retrofit.Builder()
+        .baseUrl(requireNonNull(HttpUrl.parse(formatUrl(accountsApiEndpoint))))
+        .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+        .client(buildHttpClient(readTimeoutSeconds, connectTimeoutSeconds))
+        .build()
+        .create(AccountsRepository.class);
   }
 
   /**

@@ -10,7 +10,6 @@ import uk.gov.caz.ApplicationRuntimeException;
  */
 @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 public class CleanAirZoneNotFoundException extends ApplicationRuntimeException {
-
   public CleanAirZoneNotFoundException(UUID cleanAirZoneId) {
     super("Clean Air Zone not found in VCCS: " + cleanAirZoneId);
   }
