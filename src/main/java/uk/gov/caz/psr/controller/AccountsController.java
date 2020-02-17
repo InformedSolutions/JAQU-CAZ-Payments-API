@@ -26,33 +26,53 @@ public class AccountsController implements AccountControllerApiSpec {
   @Override
   public ResponseEntity<VehicleRetrievalResponseDto> retrieveVehiclesAndCharges(
       UUID accountId, Map<String, String> queryStrings) {
-    
+
     validateRequest(queryStrings);
-    
+
+    String zones = "";
+
+    // If no collection of zones has been passed via querystring, 
+    // retrieve all zones from service layer.
+    if (queryStringAbsent("zones", queryStrings)) {
+      zones = accountService.getZonesQueryStringEquivalent();
+    } else {
+      zones = queryStrings.get("zones");
+    }
+
     AccountVehicleRetrievalResponse accountVehicleRetrievalResponse = 
         accountService.retrieveAccountVehicles(accountId, queryStrings.get("pageNumber"),
             queryStrings.get("pageSize"));
-    
+
     List<ComplianceResultsDto> results = vehicleComplianceRetrievalService
         .retrieveVehicleCompliance(
         accountVehicleRetrievalResponse.getVrns(), 
-        queryStrings.get("zones"));
-    
+        zones);
+
     return ResponseEntity.ok().body(createResponseFromVehicleComplianceRetrievalResults(
         results, queryStrings.get("pageNumber"), queryStrings.get("pageSize"),
         accountVehicleRetrievalResponse.getPageCount(), 
         accountVehicleRetrievalResponse.getTotalVrnsCount()));
   }
 
+  /**
+   * Helper method to test presence of required querystring parameters.
+   * @param map querystring parameter map.
+   */
   private void validateRequest(Map<String, String> map) {
-    if (map.size() < 3 || checkKey("pageNumber", map) || checkKey("pageSize", map)
-        || checkKey("zones", map)) {
+    if (map.size() < 2 || queryStringAbsent("pageNumber", map)
+        || queryStringAbsent("pageSize", map)) {
       throw new InvalidRequestPayloadException(
-          "Please supply 'pageNumber', 'pageSize' and 'zones' query strings.");
+          "Please supply 'pageNumber' and 'pageSize' query strings.");
     }
   }
   
-  private Boolean checkKey(String key, Map<String, String> map) {
+  /**
+   * Helper method to test for present of a key in a querystring parameter.
+   * @param key the key to search for.
+   * @param map the collection of keys to query against. 
+   * @return Boolean indicator as to whether the key exists in the map.
+   */
+  private Boolean queryStringAbsent(String key, Map<String, String> map) {
     return !map.containsKey(key) || !StringUtils.hasText(map.get(key));
   }
 

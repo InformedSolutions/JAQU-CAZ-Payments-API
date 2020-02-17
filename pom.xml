@@ -667,6 +667,7 @@
                 <exclude>**/psr/service/VehicleComplianceRetrievalService.class</exclude>
                 <exclude>**/psr/service/exception/ExternalServiceCallException.class</exclude>
                 <exclude>**/psr/repository/AccountsRepository.class</exclude>
+                <exclude>**/psr/service/AccountService.class</exclude>
               </excludes>
               <rules>
                 <rule>
