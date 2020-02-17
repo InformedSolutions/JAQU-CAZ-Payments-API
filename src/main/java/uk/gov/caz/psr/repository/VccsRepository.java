@@ -1,7 +1,6 @@
 package uk.gov.caz.psr.repository;
 
 import java.io.IOException;
-import java.util.UUID;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.GET;
@@ -50,7 +49,8 @@ public interface VccsRepository {
    * @param vrn the vrn to find compliance of
    * @return {@link AsyncOp} with prepared REST call.
    */
-  default AsyncOp<ComplianceResultsDto> findComplianceAsync(String vrn, String zones) {
-    return AsyncOp.from("VCCS: " + UUID.randomUUID(), findCompliance(vrn, zones));
+  default AsyncOp<ComplianceResultsDto> findComplianceAsync(
+      String vrn, String zones, String identifier) {
+    return AsyncOp.from("VCCS: " + identifier, findCompliance(vrn, zones));
   }
 }

@@ -14,6 +14,8 @@ import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
+import uk.gov.caz.psr.service.exception.AccountNotFoundException;
+import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
  * Service to interact with the Accounts Service.
@@ -23,7 +25,6 @@ import uk.gov.caz.psr.repository.VccsRepository;
 public class AccountService {
   
   private final AccountsRepository accountsRepository;
-
   private final VccsRepository vccRepository;
   
   /**
@@ -35,10 +36,20 @@ public class AccountService {
    */
   public AccountVehicleRetrievalResponse retrieveAccountVehicles(UUID accountId,
       String pageNumber, String pageSize) {
-    return accountsRepository.getAccountVehicleVrnsSync(accountId, pageNumber, pageSize)
-        .body();
+    Response<AccountVehicleRetrievalResponse> accountsResponse = accountsRepository
+        .getAccountVehicleVrnsSync(accountId, pageNumber, pageSize);
+    if (accountsResponse.isSuccessful()) {
+      return accountsResponse.body();
+    } else {
+      switch (accountsResponse.code()) {
+        case 404:
+          throw new AccountNotFoundException();
+        default:
+          throw new ExternalServiceCallException();          
+      }        
+    }
   }
-
+  
   /**
    * Helper method for retrieving a list of comma delimited clean air zones IDs.
    * @return a list of comma delimited clean air zones IDs.
