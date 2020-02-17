@@ -38,7 +38,6 @@ public interface AccountControllerApiSpec {
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
       @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
           + "element)"),
-      @ApiResponse(code = 401, message = "Unauthorized"),
       @ApiResponse(code = 404, message = "Account not found"),
       @ApiResponse(code = 429, message = "Too many requests"),
   })

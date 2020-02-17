@@ -1,7 +1,6 @@
 package uk.gov.caz.psr.service;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -55,7 +54,7 @@ public class VehicleComplianceRetrievalService {
           log.error("could not get vehicle compliance due to null vehicle type");
           results.add(ComplianceResultsDto.builder()
               .registrationNumber(
-                  aom.getVrnByIdentifier(
+                  aom.getValueByKey(
                       complianceResultResponse.getIdentifier().substring(6)))
               .complianceOutcomes(Collections.emptyList())
               .build());
@@ -85,7 +84,7 @@ public class VehicleComplianceRetrievalService {
           .startAndAwaitAll(complianceResults, timeout, TimeUnit.SECONDS);
     } catch (Exception exception) {
       log.error("Unexpected exception occurs ", exception);
-      throw new ExternalServiceCallException(exception);
+      throw new ExternalServiceCallException(exception.getMessage());
     }
   }
 
