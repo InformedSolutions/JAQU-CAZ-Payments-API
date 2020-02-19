@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -67,7 +66,7 @@ public class VehicleComplianceRetrievalService {
         } else {
           log.error("VCCS call return error {}, code: {}", complianceResultResponse.getError(),
               complianceResultResponse.getHttpStatus());
-          throw new ExternalServiceCallException();          
+          throw new ExternalServiceCallException();    
         }
       } else {
         results.add(complianceResultResponse.getResult());

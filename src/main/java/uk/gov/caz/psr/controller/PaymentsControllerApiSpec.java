@@ -132,7 +132,7 @@ public interface PaymentsControllerApiSpec {
       value = "CorrelationID to track the request from the API gateway through"
           + " the Enquiries stack",
       paramType = "header")})
-  @GetMapping("vehicles/{vrn}/compliance")
+  @GetMapping(PaymentsController.GET_COMPLIANCE)
   ResponseEntity<ComplianceResultsDto> getCompliance(@PathVariable String vrn, 
       @RequestParam("zones") String zones);
 }

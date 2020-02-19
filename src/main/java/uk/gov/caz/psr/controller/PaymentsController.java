@@ -41,6 +41,9 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   @VisibleForTesting
   public static final String GET_CLEAN_AIR_ZONES = "clean-air-zones";
   
+  @VisibleForTesting
+  public static final String GET_COMPLIANCE = "vehicles/{vrn}/compliance";
+  
   private final InitiatePaymentService initiatePaymentService;
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;

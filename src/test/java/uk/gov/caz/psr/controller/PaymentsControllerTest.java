@@ -45,6 +45,7 @@ import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
+import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
@@ -67,6 +68,9 @@ class PaymentsControllerTest {
   @MockBean
   private CleanAirZoneService cleanAirZoneService;
 
+  @MockBean
+  private VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
+  
   @Autowired
   private MockMvc mockMvc;
 
@@ -78,6 +82,7 @@ class PaymentsControllerTest {
     Mockito.reset(initiatePaymentService);
     Mockito.reset(getPaidEntrantPaymentsService);
     Mockito.reset(cleanAirZoneService);
+    Mockito.reset(vehicleComplianceRetrievalService);
   }
 
   private static final Transaction ANY_TRANSACTION =
@@ -85,7 +90,8 @@ class PaymentsControllerTest {
           .travelDate(LocalDate.of(2019, 1, 1)).vrn("some-vrn").build();
 
   private static final String ANY_CORRELATION_ID = UUID.randomUUID().toString();
-
+  private static final String ANY_CLEAN_AIR_ZONE_ID = UUID.randomUUID().toString();
+  
   private static final String GET_PAID_PATH = PaymentsController.BASE_PATH + "/"
       + PaymentsController.GET_PAID_VEHICLE_ENTRANTS;
 
@@ -93,6 +99,10 @@ class PaymentsControllerTest {
       PaymentsController.BASE_PATH + "/"
           + PaymentsController.GET_CLEAN_AIR_ZONES;
 
+  private static final String GET_COMPLIANCE_PATH =
+      PaymentsController.BASE_PATH + "/"
+          + PaymentsController.GET_COMPLIANCE;
+  
   @Nested
   class InitiatePayment {
 
@@ -545,6 +555,41 @@ class PaymentsControllerTest {
           .andExpect(status().is2xxSuccessful());
 
       verify(cleanAirZoneService).fetchAll();
+    }
+
+  }
+  
+  @Nested
+  class GetCompliance {
+
+    @Test
+    public void shouldReturn400StatusCodeWhenComplianceFetchedWithoutCorrelationId()
+        throws Exception {
+      mockMvc
+          .perform(get(GET_COMPLIANCE_PATH.replace("{vrn}", "TESTVRN"))
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
+          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
+              .value("Missing request header 'X-Correlation-ID'"));
+    }
+
+    @Test
+    public void shouldReturn200StatusCodeWhenComplianceFetched()
+        throws Exception {      
+      
+      String testVrn = "TESTVRN";
+      mockMvc
+        .perform(get(GET_COMPLIANCE_PATH.replace("{vrn}", testVrn))
+              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .param("vrn", "TESTVRN")
+              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
+          .andExpect(status()
+              .is2xxSuccessful());
+
+      verify(vehicleComplianceRetrievalService).retrieveVehicleCompliance(testVrn, ANY_CLEAN_AIR_ZONE_ID.toString());
     }
 
   }
