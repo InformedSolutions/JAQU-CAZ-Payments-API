@@ -14,7 +14,7 @@ spring:
     enabled: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5433/caz_vcc
+    url: jdbc:postgresql://localhost:5433/vehicle_compliance
     username: postgres
     password: postgres
     hikari:
@@ -145,6 +145,7 @@ swagger:
         charge: Amount to pay
         return-url: Front end URL used as return URL after payment
         transactions: Collection of objects representing a single vehicle entrant against which the payment is made
+        user-id: Identifies the fleet's account which is making the payment
       payments-get-status:
         clean-air-zone-name: Clean Air Zone name
       paid-payments-request:

@@ -23,7 +23,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -32,6 +31,7 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.Payment.PaymentBuilder;
 import uk.gov.caz.psr.model.PaymentMethod;
+import uk.gov.caz.psr.model.SingleEntrantPayment;
 import uk.gov.caz.psr.repository.EntrantPaymentMatchRepository;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -66,7 +66,7 @@ class InitiateEntrantPaymentsServiceTest {
     public void shouldInsertEntrantPaymentsAndEntrantPaymentMatches() {
       // given
       List<LocalDate> travelDates = Collections.singletonList(ANY_TRAVEL_DATE);
-      List<Transaction> transactions = Collections.singletonList(Transaction.builder()
+      List<SingleEntrantPayment> transactions = Collections.singletonList(SingleEntrantPayment.builder()
               .charge(ANY_CHARGE)
               .travelDate(ANY_TRAVEL_DATE)
               .vrn(ANY_VRN)
@@ -109,13 +109,13 @@ class InitiateEntrantPaymentsServiceTest {
         // given
         LocalDate notMatchingDate = LocalDate.now();
         LocalDate matchingDate = LocalDate.now().minusDays(1);
-        List<Transaction> transactions = Arrays.asList(Transaction.builder()
+        List<SingleEntrantPayment> transactions = Arrays.asList(SingleEntrantPayment.builder()
                 .charge(ANY_CHARGE)
                 .travelDate(matchingDate)
                 .vrn(ANY_VRN)
                 .tariffCode(ANY_TARIFF_CODE)
                 .build(),
-            Transaction.builder()
+            SingleEntrantPayment.builder()
                 .charge(ANY_CHARGE)
                 .travelDate(notMatchingDate)
                 .vrn(ANY_VRN)
@@ -166,13 +166,13 @@ class InitiateEntrantPaymentsServiceTest {
         // given
         LocalDate notMatchingDate = LocalDate.now();
         LocalDate matchingDate = LocalDate.now().minusDays(1);
-        List<Transaction> transactions = Arrays.asList(Transaction.builder()
+        List<SingleEntrantPayment> transactions = Arrays.asList(SingleEntrantPayment.builder()
                 .charge(ANY_CHARGE)
                 .travelDate(matchingDate)
                 .vrn(ANY_VRN)
                 .tariffCode(ANY_TARIFF_CODE)
                 .build(),
-            Transaction.builder()
+            SingleEntrantPayment.builder()
                 .charge(ANY_CHARGE)
                 .travelDate(notMatchingDate)
                 .vrn(ANY_VRN)
@@ -210,7 +210,7 @@ class InitiateEntrantPaymentsServiceTest {
           // given
           LocalDate matchingDate = LocalDate.now().minusDays(1);
           List<LocalDate> travelDates = Arrays.asList(matchingDate);
-          List<Transaction> transactions = Arrays.asList(Transaction.builder()
+          List<SingleEntrantPayment> transactions = Arrays.asList(SingleEntrantPayment.builder()
                   .charge(ANY_CHARGE)
                   .travelDate(matchingDate)
                   .vrn(ANY_VRN)
@@ -237,13 +237,13 @@ class InitiateEntrantPaymentsServiceTest {
           // given
           LocalDate notMatchingDate = LocalDate.now();
           LocalDate matchingDate = LocalDate.now().minusDays(1);
-          List<Transaction> transactions = Arrays.asList(Transaction.builder()
+          List<SingleEntrantPayment> transactions = Arrays.asList(SingleEntrantPayment.builder()
                   .charge(ANY_CHARGE)
                   .travelDate(matchingDate)
                   .vrn(ANY_VRN)
                   .tariffCode(ANY_TARIFF_CODE)
                   .build(),
-              Transaction.builder()
+              SingleEntrantPayment.builder()
                   .charge(ANY_CHARGE)
                   .travelDate(notMatchingDate)
                   .vrn(ANY_VRN)
@@ -298,13 +298,13 @@ class InitiateEntrantPaymentsServiceTest {
           // given
           LocalDate notMatchingDate = LocalDate.now();
           LocalDate matchingDate = LocalDate.now().minusDays(1);
-          List<Transaction> transactions = Arrays.asList(Transaction.builder()
+          List<SingleEntrantPayment> transactions = Arrays.asList(SingleEntrantPayment.builder()
                   .charge(ANY_CHARGE)
                   .travelDate(matchingDate)
                   .vrn(ANY_VRN)
                   .tariffCode(ANY_TARIFF_CODE)
                   .build(),
-              Transaction.builder()
+              SingleEntrantPayment.builder()
                   .charge(ANY_CHARGE)
                   .travelDate(notMatchingDate)
                   .vrn(ANY_VRN)

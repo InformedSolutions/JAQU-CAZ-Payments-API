@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
-import javax.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -44,12 +43,13 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.jdbc.JdbcTestUtils;
+import org.springframework.util.StringUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
-import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
+import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
@@ -74,6 +74,7 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
 
   private static final String PAYMENT_TABLE = "caz_payment.t_payment";
   private static final String ENTRANT_PAYMENT_TABLE = "caz_payment.t_clean_air_zone_entrant_payment";
+  public static final UUID ANY_USER_ID = UUID.fromString("2663df5a-5c71-42e7-8bca-c4b3a9313766");
 
   @Value("${services.sqs.new-queue-name}")
   private String emailSqsQueueName;
@@ -99,7 +100,10 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
   @Test
   public void testPaymentJourneys() {
     mockVccsCleanAirZonesCall();
+
     testPaymentJourneyWithEmptyDatabase();
+
+    testPaymentJourneyWithUserId();
 
     testPaymentJourneyWhenEntrantPaymentsExist();
 
@@ -113,7 +117,7 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
   }
 
   private void testPaymentJourneyWhenPaidPaymentExistsExactlyForSameDays() {
-    executeSqlFrom("data/sql/clear-all-payments.sql");
+    clearAllPayments();
     executeSqlFrom("data/sql/add-finished-payment-for-two-days.sql");
 
     given()
@@ -126,7 +130,7 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
   }
 
   private void testPaymentJourneyWhenPendingPaymentExistsExactlyForSameDays() {
-    executeSqlFrom("data/sql/clear-all-payments.sql");
+    clearAllPayments();
     executeSqlFrom("data/sql/add-not-finished-payment-for-two-days.sql");
 
     given()
@@ -139,7 +143,7 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
   }
 
   private void testPaymentJourneyWhenFailedPaymentExistsCoversSomeDaysOfNewPayment() {
-    executeSqlFrom("data/sql/clear-all-payments.sql");
+    clearAllPayments();
     executeSqlFrom("data/sql/add-failed-payment-for-three-days.sql");
 
     // failed payment exists for 2019-11-{10,11,12} so  the 'latest' flag is updated
@@ -167,7 +171,7 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
   }
 
   private void testPaymentJourneyWhenFailedPaymentExistsExactlyForSameDays() {
-    executeSqlFrom("data/sql/clear-all-payments.sql");
+    clearAllPayments();
     executeSqlFrom("data/sql/add-failed-payment-for-two-days.sql");
 
     given()
@@ -192,7 +196,7 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
   }
 
   private void testPaymentJourneyWhenEntrantPaymentsExist() {
-    executeSqlFrom("data/sql/clear-all-payments.sql");
+    clearAllPayments();
     executeSqlFrom("data/sql/add-only-caz-entrant-payments.sql");
 
     given()
@@ -239,6 +243,36 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
         .andPaymentReceiptIsSent();
   }
 
+
+  private void testPaymentJourneyWithUserId() {
+    clearAllPayments();
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequestWithUserId())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpCreatedStatusCode()
+        .paymentEntityIsCreatedInDatabaseWithUserId()
+        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
+        .withNullPaymentAuthorisedTimestamp()
+        .withMatchedEntrantPayments()
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
+
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .withNonNullPaymentAuthorisedTimestamp()
+        .andAuditRecordsCreated()
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptIsSent();
+  }
+
+  private void clearAllPayments() {
+    executeSqlFrom("data/sql/clear-all-payments.sql");
+  }
+
   @BeforeEach
   public void startMockServer() {
     mockServer = startClientAndServer(1080);
@@ -273,7 +307,7 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
   @AfterEach
   @BeforeEach
   public void clearDatabase() {
-    executeSqlFrom("data/sql/clear-all-payments.sql");
+    clearAllPayments();
   }
 
   private void executeSqlFrom(String classPathFile) {
@@ -316,7 +350,9 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
     }
 
     public PaymentJourneyAssertion whenSubmitted() {
-      this.initialPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, PAYMENT_TABLE);
+      boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
+      this.initialPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
+          includeUserId ? "user_id = '" + initiatePaymentRequest.getUserId() + "'" : "");
 
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
       this.validatableResponse = RestAssured.given()
@@ -347,7 +383,9 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
     }
 
     public PaymentJourneyAssertion paymentEntityIsCreatedInDatabase() {
-      int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, PAYMENT_TABLE);
+      boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
+      int currentPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
+          includeUserId ? "user_id = '" + initiatePaymentRequest.getUserId() + "'" : "");
       assertThat(currentPaymentsCount).isGreaterThan(initialPaymentsCount);
       verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus.CREATED);
       return this;
@@ -419,7 +457,7 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
       assertThat(entrantPaymentsCount).isEqualTo(initiatePaymentRequest.getTransactions().size());
     }
 
-    private List<@NotBlank String> extractTariffCodes() {
+    private List<String> extractTariffCodes() {
       return initiatePaymentRequest.getTransactions().stream().map(Transaction::getTariffCode).collect(
           Collectors.toList());
     }
@@ -518,6 +556,18 @@ public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
           sqsClient.receiveMessage(queueUrlResult.getQueueUrl());
       return receiveMessageResult.getMessages();
     }
+
+    public PaymentJourneyAssertion paymentEntityIsCreatedInDatabaseWithUserId() {
+      paymentEntityIsCreatedInDatabase();
+      return this;
+    }
+  }
+
+  private InitiatePaymentRequest initiatePaymentRequestWithUserId() {
+    return initiatePaymentRequest()
+        .toBuilder()
+        .userId(ANY_USER_ID.toString())
+        .build();
   }
 
   private InitiatePaymentRequest initiatePaymentRequest() {

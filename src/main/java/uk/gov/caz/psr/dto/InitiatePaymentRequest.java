@@ -24,7 +24,7 @@ import org.springframework.util.StringUtils;
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 @Slf4j
 public class InitiatePaymentRequest {
 
@@ -37,9 +37,10 @@ public class InitiatePaymentRequest {
           .put(vrnsMaxLength(), "'vrn' length in all transactions must be from 1 to 15")
           .put(chargesNotNull(), "'charge' in all transactions cannot be null")
           .put(positiveCharge(), "'charge' in all transactions must be positive")
+          .put(userIdShouldBeUuidIfPresent(), "'userId' must be a valid UUID")
           .put(travelDateNotNull(), "'travelDate' in all transactions cannot be null")
           .put(tariffCodeNotEmpty(), "'tariffCode' in all transactions cannot be null or empty")
-          .put(containsNoDuplicatedEntrants(), "Request cannot have duplicated travel date(s) ")
+          .put(containsNoDuplicatedEntrants(), "Request cannot have duplicated travel date(s)")
           .build();
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.clean-zone-id}")
@@ -47,6 +48,9 @@ public class InitiatePaymentRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.return-url}")
   String returnUrl;
+
+  @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.user-id}")
+  String userId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.transactions}")
   List<Transaction> transactions;
@@ -177,6 +181,29 @@ public class InitiatePaymentRequest {
    */
   private static Function<InitiatePaymentRequest, Boolean> cleanAirZoneIdNotNull() {
     return request -> Objects.nonNull(request.getCleanAirZoneId());
+  }
+
+  /**
+   * Returns a lambda that verifies if 'user id' is a valid value, unless it is not set.
+   */
+  private static Function<InitiatePaymentRequest, Boolean> userIdShouldBeUuidIfPresent() {
+    return request -> {
+      String userId = request.getUserId();
+      // the field is optional - return true when it is missing
+      if (!StringUtils.hasText(userId)) {
+        return true;
+      }
+      return isValidUuid(userId);
+    };
+  }
+
+  private static boolean isValidUuid(String userId) {
+    try {
+      // see https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8159339
+      return UUID.fromString(userId).toString().equals(userId);
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
   }
 
   /**

@@ -24,7 +24,7 @@ public class Payment {
    * The unique payment identifier from GOV UK Pay service.
    */
   String externalId;
-  
+
   /**
    * The central reference number of the payment.
    */
@@ -85,6 +85,12 @@ public class Payment {
   UUID cleanAirZoneId;
 
   /**
+   * An identifier of the account/user which is making the payment. {@code null} for citizen
+   * journeys.
+   */
+  UUID userId;
+
+  /**
    * An overridden lombok's builder.
    */
   public static class PaymentBuilder {
@@ -104,8 +110,8 @@ public class Payment {
               + "authorisedTimestamp is not null and external payment status is 'SUCCESS'");
 
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
-          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl, 
-          emailAddress, cleanAirZoneId);
+          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl,
+          emailAddress, cleanAirZoneId, userId);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

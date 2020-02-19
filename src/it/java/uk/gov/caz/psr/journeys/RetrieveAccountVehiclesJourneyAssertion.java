@@ -1,7 +1,7 @@
 package uk.gov.caz.psr.journeys;
 
 import static org.junit.Assert.assertEquals;
-
+import static org.junit.Assert.assertTrue;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -10,6 +10,7 @@ import io.restassured.response.ValidatableResponse;
 import lombok.RequiredArgsConstructor;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 import uk.gov.caz.correlationid.Constants;
+import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.controller.AccountsController;
 
 @RequiredArgsConstructor
@@ -72,13 +73,40 @@ public class RetrieveAccountVehiclesJourneyAssertion {
     return this;
   }
 
+  public RetrieveAccountVehiclesJourneyAssertion responseIsReturnedWithHttpErrorStatusCode(
+      int statusCode) {
+    vehicleResponse.statusCode(statusCode);
+    return this;
+  }
+
+  public void andResponseContainsEmptyData() {
+    assertEquals(0, this.vehicleResponseDto.getVehicles().size());
+    assertEquals(Integer.parseInt(this.pageNumber), this.vehicleResponseDto.getPage());
+    assertEquals(Integer.parseInt(this.pageSize), this.vehicleResponseDto.getPerPage());
+    assertEquals(0, this.vehicleResponseDto.getPageCount());
+    assertEquals(0, this.vehicleResponseDto.getTotalVrnsCount()); 
+  }
+
   public void andResponseContainsExpectedData() {
+    checkResponseSize();
+    assertEquals("CAS300", this.vehicleResponseDto.getVehicles().get(0).getRegistrationNumber());
+  }
+  
+  public void andResponseContainsTypeUnknownOrUnrecognisedData(String vrn) {
+    checkResponseSize();
+    ComplianceResultsDto firstVehicle = this.vehicleResponseDto.getVehicles().get(0);
+    assertEquals(vrn, firstVehicle.getRegistrationNumber());
+    assertEquals(null, firstVehicle.getIsExempt());
+    assertEquals(null, firstVehicle.getIsRetrofitted());
+    assertEquals(null, firstVehicle.getVehicleType());
+    assertTrue(firstVehicle.getComplianceOutcomes().isEmpty());
+  }
+
+  private void checkResponseSize() {
     assertEquals(1, this.vehicleResponseDto.getVehicles().size());
     assertEquals(Integer.parseInt(this.pageNumber), this.vehicleResponseDto.getPage());
     assertEquals(Integer.parseInt(this.pageSize), this.vehicleResponseDto.getPerPage());
     assertEquals(1,this.vehicleResponseDto.getPageCount());
-    assertEquals(1, this.vehicleResponseDto.getTotalVrnsCount());
-    assertEquals("CAS300", this.vehicleResponseDto.getVehicles().get(0).getRegistrationNumber());
+    assertEquals(1, this.vehicleResponseDto.getTotalVrnsCount());    
   }
-
 }

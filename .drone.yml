@@ -72,7 +72,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: caz_payments
+      POSTGRES_DB: vehicle_compliance
     ports:
       - 5432
   - name: localstack
@@ -134,7 +134,7 @@ steps:
         path: /root/.m2
     environment:
       BUILD_ID: ${DRONE_BUILD_NUMBER}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/caz_payments
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
       JAQU_NEXUS_URL:
         from_secret: nexus_url
       JAQU_NEXUS_USER:
@@ -330,7 +330,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: caz_payments
+      POSTGRES_DB: vehicle_compliance
     ports:
       - 5432
 
@@ -392,7 +392,7 @@ steps:
         path: /root/.m2
     environment:
       BUILD_ID: ${DRONE_BUILD_NUMBER}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/caz_payments
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
       JAQU_NEXUS_URL:
         from_secret: nexus_url
       JAQU_NEXUS_USER:
@@ -609,7 +609,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: caz_payments
+      POSTGRES_DB: vehicle_compliance
     ports:
       - 5432
   - name: localstack
@@ -670,7 +670,7 @@ steps:
         path: /root/.m2
     environment:
       BUILD_ID: ${DRONE_BUILD_NUMBER}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/caz_payments
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
       JAQU_NEXUS_URL:
         from_secret: nexus_url
       JAQU_NEXUS_USER:

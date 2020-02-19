@@ -12,13 +12,13 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.SingleEntrantPayment;
 import uk.gov.caz.psr.repository.EntrantPaymentMatchRepository;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
@@ -42,14 +42,14 @@ public class InitiateEntrantPaymentsService {
    * EntrantPaymentMatch}es.
    */
   void processEntrantPaymentsForPayment(UUID paymentId, UUID cleanAirZoneId,
-      List<Transaction> transactions) {
+      List<SingleEntrantPayment> entrantPayments) {
 
-    Map<String, List<Transaction>> transactionsGroupedByVrn = transactions.stream()
-        .collect(Collectors.groupingBy(Transaction::getVrn));
+    Map<String, List<SingleEntrantPayment>> groupedByVrn = entrantPayments.stream()
+        .collect(Collectors.groupingBy(SingleEntrantPayment::getVrn));
 
-    for (Entry<String, List<Transaction>> vrnAndTransaction : transactionsGroupedByVrn.entrySet()) {
-      processTransactionsForVrn(paymentId, cleanAirZoneId, vrnAndTransaction.getKey(),
-          vrnAndTransaction.getValue());
+    for (Entry<String, List<SingleEntrantPayment>> vrnWithPayment : groupedByVrn.entrySet()) {
+      processEntrantPaymentsForVrn(paymentId, cleanAirZoneId, vrnWithPayment.getKey(),
+          vrnWithPayment.getValue());
     }
   }
 
@@ -57,22 +57,22 @@ public class InitiateEntrantPaymentsService {
    * Process all 'transactions' (in a data sense, see {@code InitiatePaymentRequest}) related to a
    * particular {@code vrn}.
    */
-  private void processTransactionsForVrn(UUID paymentId, UUID cleanAirZoneId, String vrn,
-      List<Transaction> transactions) {
+  private void processEntrantPaymentsForVrn(UUID paymentId, UUID cleanAirZoneId, String vrn,
+      List<SingleEntrantPayment> entrantPayments) {
     List<EntrantPayment> currentEntrantPayments = fetchMatchingEntrantPayments(
-        cleanAirZoneId, vrn, transactions);
-    for (Transaction transaction : transactions) {
-      processTransaction(paymentId, cleanAirZoneId, vrn, currentEntrantPayments, transaction);
+        cleanAirZoneId, vrn, entrantPayments);
+    for (SingleEntrantPayment entrantPayment : entrantPayments) {
+      processEntrantPayment(paymentId, cleanAirZoneId, vrn, currentEntrantPayments, entrantPayment);
     }
   }
 
   /**
    * Finds matching entrant payments for {@code cleanAirZoneId} and {@code vrn} in {@code
-   * transactions}.
+   * entrantPayments}.
    */
   private List<EntrantPayment> fetchMatchingEntrantPayments(UUID cleanAirZoneId, String vrn,
-      List<Transaction> transactions) {
-    List<LocalDate> travelDates = transactions.stream().map(Transaction::getTravelDate)
+      List<SingleEntrantPayment> entrantPayments) {
+    List<LocalDate> travelDates = entrantPayments.stream().map(SingleEntrantPayment::getTravelDate)
         .collect(Collectors.toList());
     return entrantPaymentRepository.findByVrnAndCazEntryDates(cleanAirZoneId, vrn, travelDates);
   }
@@ -80,19 +80,20 @@ public class InitiateEntrantPaymentsService {
   /**
    * Process a single 'transaction' (in a data sense, see {@code InitiatePaymentRequest}).
    */
-  private void processTransaction(UUID paymentId, UUID cleanAirZoneId, String vrn,
-      List<EntrantPayment> currentEntrantPayments, Transaction transaction) {
+  private void processEntrantPayment(UUID paymentId, UUID cleanAirZoneId, String vrn,
+      List<EntrantPayment> currentEntrantPayments, SingleEntrantPayment singleEntrantPayment) {
     Optional<EntrantPayment> entrantPayment = findMatchingEntrantPayment(
-        transaction.getTravelDate(), currentEntrantPayments);
+        singleEntrantPayment.getTravelDate(), currentEntrantPayments);
     UUID cleanAirZoneEntrantPaymentId;
     if (entrantPayment.isPresent()) {
       processRelatedPayment(entrantPayment.get());
-      cleanAirZoneEntrantPaymentId = updateEntrantPayment(transaction.getTariffCode(),
-          transaction.getCharge(), entrantPayment.get());
+      cleanAirZoneEntrantPaymentId = updateEntrantPayment(singleEntrantPayment.getTariffCode(),
+          singleEntrantPayment.getCharge(), entrantPayment.get());
       entrantPaymentMatchRepository.updateLatestToFalseFor(cleanAirZoneEntrantPaymentId);
     } else {
       cleanAirZoneEntrantPaymentId = insertEntrantPayment(cleanAirZoneId, vrn,
-          transaction.getTariffCode(), transaction.getCharge(), transaction.getTravelDate());
+          singleEntrantPayment.getTariffCode(), singleEntrantPayment.getCharge(),
+          singleEntrantPayment.getTravelDate());
     }
     matchPaymentWithEntrantPayment(paymentId, cleanAirZoneEntrantPaymentId);
   }
