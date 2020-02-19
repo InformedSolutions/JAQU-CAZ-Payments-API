@@ -19,8 +19,8 @@ import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 public class AccountsController implements AccountControllerApiSpec {
 
   public static final String ACCOUNTS_PATH = "/v1/accounts";
-  private static final String pageNumberQueryParamName = "pageNumber";
-  private static final String pageSizeQueryParamName = "pageSize";
+  private static final String PAGE_NUMBER_QUERYSTRING_KEY = "pageNumber";
+  private static final String PAGE_SIZE_QUERYSTRING_KEY = "pageSize";
   
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final AccountService accountService;
@@ -43,8 +43,8 @@ public class AccountsController implements AccountControllerApiSpec {
     
     AccountVehicleRetrievalResponse accountVehicleRetrievalResponse =
         accountService.retrieveAccountVehicles(accountId,
-            queryStrings.get(pageNumberQueryParamName),
-            queryStrings.get(pageSizeQueryParamName));
+            queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
+            queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
 
     List<ComplianceResultsDto> results = vehicleComplianceRetrievalService
         .retrieveVehicleCompliance(
@@ -53,8 +53,8 @@ public class AccountsController implements AccountControllerApiSpec {
 
     return ResponseEntity.ok()
         .body(createResponseFromVehicleComplianceRetrievalResults(results,
-            queryStrings.get(pageNumberQueryParamName),
-            queryStrings.get(pageSizeQueryParamName),
+            queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
+            queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY),
             accountVehicleRetrievalResponse.getPageCount(),
             accountVehicleRetrievalResponse.getTotalVrnsCount()));
   }
@@ -64,8 +64,8 @@ public class AccountsController implements AccountControllerApiSpec {
    * @param map querystring parameter map.
    */
   private void validateRequest(Map<String, String> map) {
-    if (map.size() < 2 || queryStringAbsent(pageNumberQueryParamName, map)
-        || queryStringAbsent(pageSizeQueryParamName, map)) {
+    if (map.size() < 2 || queryStringAbsent(PAGE_NUMBER_QUERYSTRING_KEY, map)
+        || queryStringAbsent(PAGE_SIZE_QUERYSTRING_KEY, map)) {
       throw new InvalidRequestPayloadException(
           "Please supply 'pageNumber' and 'pageSize' query strings.");
     }
