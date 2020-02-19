@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,6 +41,7 @@ import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
@@ -61,6 +63,9 @@ class PaymentsControllerTest {
   @MockBean
   private GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
 
+  @MockBean
+  private CleanAirZoneService cleanAirZoneService;
+  
   @Autowired
   private MockMvc mockMvc;
 
@@ -71,10 +76,8 @@ class PaymentsControllerTest {
   public void resetMocks() {
     Mockito.reset(initiatePaymentService);
     Mockito.reset(getPaidEntrantPaymentsService);
+    Mockito.reset(cleanAirZoneService);
   }
-
-  private static final List<LocalDate> days =
-      Arrays.asList(LocalDate.of(2019, 1, 1), LocalDate.of(2019, 1, 3));
 
   private static final Transaction ANY_TRANSACTION = Transaction.builder()
       .charge(100)
@@ -84,10 +87,13 @@ class PaymentsControllerTest {
       .build();
 
   private static final String ANY_CORRELATION_ID = UUID.randomUUID().toString();
-
+  
   private static final String GET_PAID_PATH = PaymentsController.BASE_PATH + "/"
       + PaymentsController.GET_PAID_VEHICLE_ENTRANTS;
 
+  private static final String GET_CLEAN_AIR_ZONES_PATH = PaymentsController.BASE_PATH + "/"
+      + PaymentsController.GET_CLEAN_AIR_ZONES;
+  
   @Nested
   class InitiatePayment {
 
@@ -141,17 +147,17 @@ class PaymentsControllerTest {
     verify(initiatePaymentService, never()).createPayment(any());
   }
 
-    @Test
-    public void duplicatedTransactionsShouldResultIn400() throws Exception {
-      String payload = paymentRequestWithDuplicatedTransactions();
+  @Test
+  public void duplicatedTransactionsShouldResultIn400() throws Exception {
+    String payload = paymentRequestWithDuplicatedTransactions();
 
-      mockMvc.perform(post(BASE_PATH).content(payload)
-          .contentType(MediaType.APPLICATION_JSON)
-          .accept(MediaType.APPLICATION_JSON)
-          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
-          .andExpect(status().isBadRequest());
-      verify(initiatePaymentService, never()).createPayment(any());
-    }
+    mockMvc.perform(post(BASE_PATH).content(payload)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        .andExpect(status().isBadRequest());
+    verify(initiatePaymentService, never()).createPayment(any());
+  }
 
   @Test
   public void invalidReturnUrlShouldResultIn400() throws Exception {
@@ -427,6 +433,32 @@ class PaymentsControllerTest {
     }
   }
 
+  @Nested
+  class GetCleanAirZones {
+
+    @Test
+    public void shouldReturn400StatusCodeWhenCleanAirZonesAreFetchedWithoutCorrelationId() throws Exception {
+      mockMvc.perform(get(GET_CLEAN_AIR_ZONES_PATH)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().is4xxClientError())
+          .andExpect(jsonPath("message")
+              .value("Missing request header 'X-Correlation-ID'"));
+    }
+    
+    @Test
+    public void shouldReturn200StatusCodeWhenCleanAirZonesAreFetched() throws Exception {      
+      mockMvc.perform(get(GET_CLEAN_AIR_ZONES_PATH)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().is2xxSuccessful());
+      
+      verify(cleanAirZoneService).fetchAll();
+    }
+    
+  }
+  
   @SneakyThrows
   private String toJsonString(Object request) {
     return objectMapper.writeValueAsString(request);

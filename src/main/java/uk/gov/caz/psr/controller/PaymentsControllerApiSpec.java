@@ -98,6 +98,7 @@ public interface PaymentsControllerApiSpec {
    * @return a summary listing of a clean air zone including their identifiers
    *         and boundary urls.
    */
+  @GetMapping(PaymentsController.GET_CLEAN_AIR_ZONES)
   @ApiOperation(value = "${swagger.operations.cleanAirZones.description}",
       response = CleanAirZonesDto.class)
   @ApiResponses({
@@ -110,6 +111,5 @@ public interface PaymentsControllerApiSpec {
       value = "CorrelationID to track the request from the API gateway through"
           + " the Enquiries stack",
       paramType = "header")})
-  @GetMapping("/clean-air-zones")
   ResponseEntity<CleanAirZonesResponse> getCleanAirZones();
 }
