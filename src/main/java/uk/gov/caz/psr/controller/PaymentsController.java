@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
@@ -18,6 +19,7 @@ import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
@@ -27,6 +29,7 @@ import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 @Slf4j
 public class PaymentsController implements PaymentsControllerApiSpec {
 
+  @VisibleForTesting
   public static final String BASE_PATH = "/v1/payments";
 
   @VisibleForTesting
@@ -35,6 +38,7 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   private final InitiatePaymentService initiatePaymentService;
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
+  private final CleanAirZoneService cleanAirZoneService;
 
   @Override
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(InitiatePaymentRequest request) {
@@ -67,4 +71,12 @@ public class PaymentsController implements PaymentsControllerApiSpec {
 
     return ResponseEntity.ok(PaidPaymentsResponse.from(results));
   }
+  
+  @Override
+  public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() {
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(cleanAirZoneService.fetchAll());
+  }
+  
 }

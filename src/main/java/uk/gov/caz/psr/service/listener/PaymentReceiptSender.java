@@ -15,7 +15,7 @@ import uk.gov.caz.psr.messaging.MessagingClient;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
-import uk.gov.caz.psr.service.CleanAirZoneNameGetterService;
+import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.PaymentReceiptService;
 import uk.gov.caz.psr.util.CurrencyFormatter;
 
@@ -30,7 +30,7 @@ public class PaymentReceiptSender {
   private final CurrencyFormatter currencyFormatter;
   private final MessagingClient messagingClient;
   private final PaymentReceiptService paymentReceiptService;
-  private final CleanAirZoneNameGetterService cleanAirZoneNameGetterService;
+  private final CleanAirZoneService cleanAirZoneNameGetterService;
 
   /**
    * Processes a payment event (given that its external status is SUCCESS).

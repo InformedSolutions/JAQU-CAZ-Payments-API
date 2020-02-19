@@ -5,6 +5,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import retrofit2.HttpException;
 import retrofit2.Response;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
@@ -18,10 +19,32 @@ import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class CleanAirZoneNameGetterService {
+public class CleanAirZoneService {
 
   private final VccsRepository vccsRepository;
 
+  /**
+   * Gets clean air zones from VCCS.
+   *
+   * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
+   * @throws NullPointerException if {@code cleanAirZoneId} is null
+   * @throws CleanAirZoneNotFoundException if cleanAirZone was not found in VCCS
+   */
+  public CleanAirZonesResponse fetchAll() {
+    try {
+      log.debug("Fetching all clean air zones from VCCS");
+      Response<CleanAirZonesResponse> cleanAirZonesResponse =
+          vccsRepository.findCleanAirZonesSync();
+      return cleanAirZonesResponse.body();
+    } catch (HttpException e) {
+      log.error("Failed to retrieve clean air zones from VCCS");
+      log.error(e.getMessage());
+      throw e;
+    } finally {
+      log.debug("Fetching all clean air zones from VCCS: finish");
+    }
+  }
+  
   /**
    * Gets name of clean air zone name from vccs.
    *

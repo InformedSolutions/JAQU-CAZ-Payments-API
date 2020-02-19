@@ -26,7 +26,7 @@ public class CleanAirZoneNameGetterServiceTest {
   private static final String ANY_VALID_CAZ_NAME = "CAZ_NAME";
 
   @InjectMocks
-  private CleanAirZoneNameGetterService cleanAirZoneNameGetterService;
+  private CleanAirZoneService cleanAirZoneNameGetterService;
 
   @Mock
   private VccsRepository vccsRepository;
