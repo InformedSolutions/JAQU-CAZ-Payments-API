@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import uk.gov.caz.definitions.dto.CleanAirZonesDto;
+import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
@@ -112,4 +114,25 @@ public interface PaymentsControllerApiSpec {
           + " the Enquiries stack",
       paramType = "header")})
   ResponseEntity<CleanAirZonesResponse> getCleanAirZones();
+  
+  /**
+   * Get vehicle compliance details.
+   *
+   * @param vrn validated string
+   * @return Vehicle details about car
+   */
+  @ApiOperation(value = "${swagger.operations.vehicle.compliance.description}",
+      response = ComplianceResultsDto.class)
+  @ApiResponses({@ApiResponse(code = 500, message = "Internal Server Error / No message available"),
+      @ApiResponse(code = 422, message = "Invalid vrn"),
+      @ApiResponse(code = 404, message = "Vehicle not found"),
+      @ApiResponse(code = 400, message = "Correlation Id missing"),
+      @ApiResponse(code = 200, message = "Vehicle compliance details"),})
+  @ApiImplicitParams({@ApiImplicitParam(name = "X-Correlation-ID", required = true,
+      value = "CorrelationID to track the request from the API gateway through"
+          + " the Enquiries stack",
+      paramType = "header")})
+  @GetMapping("vehicles/{vrn}/compliance")
+  ResponseEntity<ComplianceResultsDto> getCompliance(@PathVariable String vrn, 
+      @RequestParam("zones") String zones);
 }

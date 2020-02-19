@@ -44,6 +44,19 @@ public interface VccsRepository {
   }
 
   /**
+   * Wraps REST API call for finding compliance in {@link Response} by making a synchronous request.
+   *
+   * @return {@link Response} with REST response.
+   */
+  default Response<ComplianceResultsDto> findComplianceSync(String vrn, String zones) {
+    try {
+      return findCompliance(vrn, zones).execute();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  
+  /**
    * Wraps REST API call in {@link AsyncOp} making it asynchronous.
    *
    * @param vrn the vrn to find compliance of

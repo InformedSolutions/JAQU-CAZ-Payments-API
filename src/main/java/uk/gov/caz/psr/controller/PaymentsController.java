@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
@@ -23,6 +24,7 @@ import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
+import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 
 @RestController
@@ -43,6 +45,7 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
   private final CleanAirZoneService cleanAirZoneService;
+  private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
 
   @Override
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(InitiatePaymentRequest request) {
@@ -85,6 +88,14 @@ public class PaymentsController implements PaymentsControllerApiSpec {
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(cleanAirZoneService.fetchAll());
+  }
+
+  @Override
+  public ResponseEntity<ComplianceResultsDto> getCompliance(String vrn,
+      String zones) {
+    ComplianceResultsDto result = 
+        vehicleComplianceRetrievalService.retrieveVehicleCompliance(vrn, zones);
+    return ResponseEntity.ok(result);
   }
   
 }
