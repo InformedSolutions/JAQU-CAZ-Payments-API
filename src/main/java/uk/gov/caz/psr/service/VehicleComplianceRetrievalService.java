@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import retrofit2.HttpException;
+import retrofit2.Response;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.async.rest.AsyncRestService;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
@@ -90,7 +91,8 @@ public class VehicleComplianceRetrievalService {
   public ComplianceResultsDto retrieveVehicleCompliance(String vrn,
       String zones) {
     try {
-      return vccsRepository.findComplianceSync(vrn, zones).body();
+      Response<ComplianceResultsDto> response = vccsRepository.findComplianceSync(vrn, zones);
+      return response.body();
     } catch (HttpException e) {
       log.error("Failed to retrieve vehicle compliance resul from VCCS");
       throw e;

@@ -14,7 +14,7 @@ spring:
     enabled: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5433/vehicle_compliance
+    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password: postgres
     hikari:
@@ -29,7 +29,7 @@ services:
     rootUrl: https://publicapi.payments.service.gov.uk
     api-key: to-be-replaced-by-external-value
   vehicle-compliance-checker:
-    root-url: http://localhost:1090
+    root-url: https://ndzi384gxe.execute-api.eu-west-2.amazonaws.com/dev
   accounts:
     root-url: http://localhost:1091
   sqs:
@@ -158,6 +158,18 @@ swagger:
         paid-dates: A list of days which are already paid.
       paid-payments-response:
         results: Collection of VRNs and dates which are already paid in a given date range.
+      cleanAirZones:
+        cleanAirZoneDetails: List of Clean Air Zones
+      cleanAirZone:
+        cleanAirZoneId: System ID of the clean air zone
+        name: Name of Tariff
+        boundaryUrl: URL provided by zone operators, boundary
+      vehicle:
+        complianceResult:
+          cleanAirZoneId: System ID of the clean air zone
+          name: Official name of the zone
+          charge: Charge to pay in £, 0 means 'no charge'
+          charges: List of Charges
 
   operations:
     accounts:
@@ -188,4 +200,11 @@ swagger:
           to a vehicle that has entered their CAZ (a 'vehicle entrant')
     db:
       migration:
-        description: Evolve DB schema          
+        description: Evolve DB schema 
+    cleanAirZones:
+      description: Returns list of available CAZs         
+    vehicle:
+      details:
+        description: Returns vehicle registation details
+      compliance:
+        description: Returns vehicle compliance details
