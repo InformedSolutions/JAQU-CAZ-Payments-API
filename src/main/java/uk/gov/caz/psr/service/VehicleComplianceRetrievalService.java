@@ -130,6 +130,6 @@ public class VehicleComplianceRetrievalService {
    * @return timeout
    */
   long calculateTimeoutInSeconds() {
-    return new Long(serviceCallTimeout);
+    return Long.valueOf(serviceCallTimeout);
   }
 }

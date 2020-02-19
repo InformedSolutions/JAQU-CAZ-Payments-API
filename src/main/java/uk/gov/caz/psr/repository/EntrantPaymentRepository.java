@@ -97,25 +97,6 @@ public class EntrantPaymentRepository {
           + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
           + EntrantPaymentColumns.COL_VRN + " = ?";
 
-  //    @VisibleForTesting
-  //    static final String SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL = "SELECT "
-  //        + "t_clean_air_zone_entrant_payment.payment_id, "
-  //        + "t_clean_air_zone_entrant_payment.vehicle_entrant_payment_id, "
-  //        + "t_clean_air_zone_entrant_payment.vrn, "
-  //        + "t_clean_air_zone_entrant_payment.clean_air_zone_id, "
-  //        + "t_clean_air_zone_entrant_payment.travel_date, "
-  //        + "t_clean_air_zone_entrant_payment.tariff_code, "
-  //        + "t_clean_air_zone_entrant_payment.charge, "
-  //        + "t_clean_air_zone_entrant_payment.payment_status, "
-  //        + "t_clean_air_zone_entrant_payment.case_reference "
-  //        + "FROM t_clean_air_zone_entrant_payment "
-  //        + "INNER JOIN payment "
-  //        + "ON t_clean_air_zone_entrant_payment.payment_id = payment.payment_id "
-  //        + "WHERE t_clean_air_zone_entrant_payment.clean_air_zone_id = ? AND "
-  //        + "vehicle_entrant_payment.travel_date = ? AND "
-  //        + "vehicle_entrant_payment.payment_status = ? AND "
-  //        + "payment.payment_provider_id = ?";
-
   private static final String UPDATE_SQL = "UPDATE caz_payment.t_clean_air_zone_entrant_payment "
       + "SET " + EntrantPaymentColumns.COL_PAYMENT_STATUS + " = ?, "
       + EntrantPaymentColumns.COL_CASE_REFERENCE + " = ?, "

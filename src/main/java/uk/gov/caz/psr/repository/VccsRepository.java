@@ -10,6 +10,7 @@ import retrofit2.http.Query;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
+import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
  * Retrofit2 repository to create a vccs call.
@@ -39,7 +40,7 @@ public interface VccsRepository {
     try {
       return findCleanAirZones().execute();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ExternalServiceCallException(e.getMessage());
     }
   }
 
@@ -52,7 +53,7 @@ public interface VccsRepository {
     try {
       return findCompliance(vrn, zones).execute();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ExternalServiceCallException(e.getMessage());
     }
   }
   
