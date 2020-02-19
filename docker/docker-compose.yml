@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: caz-payments
+      POSTGRES_DB: vehicle_compliance
 
   sonarqube:
     image: sonarqube
