@@ -48,7 +48,6 @@ public class CleanAirZoneService {
    *
    * @param cleanAirZoneId id of clean air zone
    * @return {@link String} if the CleanAirZone exist
-   * @throws CleanAirZoneNotFoundException if cleanAirZone was not found in VCCS
    */
   public String fetch(UUID cleanAirZoneId) {
     Preconditions.checkNotNull(cleanAirZoneId, "cleanAirZoneId cannot be null");
