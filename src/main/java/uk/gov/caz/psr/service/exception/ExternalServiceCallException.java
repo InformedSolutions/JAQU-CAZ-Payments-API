@@ -6,6 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import uk.gov.caz.ApplicationRuntimeException;
 
+/**
+ * An exception wrapper for signifying an exception was encountered
+ * when invoking a remote API.
+ */
 @ResponseStatus(value = HttpStatus.SERVICE_UNAVAILABLE, reason = "Service unavailable")
 public class ExternalServiceCallException extends ApplicationRuntimeException {
 

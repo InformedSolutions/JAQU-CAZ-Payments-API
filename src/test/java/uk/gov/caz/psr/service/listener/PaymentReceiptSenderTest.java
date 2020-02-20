@@ -31,7 +31,7 @@ import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
-import uk.gov.caz.psr.service.CleanAirZoneNameGetterService;
+import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.PaymentReceiptService;
 import uk.gov.caz.psr.util.CurrencyFormatter;
 
@@ -80,7 +80,7 @@ public class PaymentReceiptSenderTest {
   PaymentReceiptService paymentReceiptService;
 
   @Mock
-  CleanAirZoneNameGetterService cleanAirZoneNameGetterService;
+  CleanAirZoneService cleanAirZoneNameGetterService;
 
   @InjectMocks
   PaymentReceiptSender paymentReceiptSender;

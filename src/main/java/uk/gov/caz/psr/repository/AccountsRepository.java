@@ -9,6 +9,7 @@ import retrofit2.http.Headers;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
+import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
  * Wrapper for the Accounts Service.
@@ -40,7 +41,7 @@ public interface AccountsRepository {
     try {
       return getAccountVehicleVrns(accountId, pageNumber, pageSize).execute();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new ExternalServiceCallException(e.getMessage());
     }
   }
 }

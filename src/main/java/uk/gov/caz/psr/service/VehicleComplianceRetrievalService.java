@@ -11,9 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import retrofit2.Response;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.async.rest.AsyncRestService;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.dto.VehicleDto;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 import uk.gov.caz.psr.util.AsyncOperationsMatcher;
@@ -31,7 +33,7 @@ public class VehicleComplianceRetrievalService {
   
   private final VccsRepository vccsRepository;
   private final AsyncRestService asyncRestService;
-
+  
   /**
    * Coordinate asynchronous requests to the vehicle checker to retrieve compliance
    * information on a list of VRNs.
@@ -65,7 +67,7 @@ public class VehicleComplianceRetrievalService {
         } else {
           log.error("VCCS call return error {}, code: {}", complianceResultResponse.getError(),
               complianceResultResponse.getHttpStatus());
-          throw new ExternalServiceCallException();          
+          throw new ExternalServiceCallException();    
         }
       } else {
         results.add(complianceResultResponse.getResult());
@@ -77,6 +79,40 @@ public class VehicleComplianceRetrievalService {
     return results;
   }
 
+  /**
+   * Coordinate asynchronous requests to the vehicle checker to retrieve
+   * compliance information on a single VRN.
+   * 
+   * @param vrn the vrn to query.
+   * @param zones a list of zones to check compliance for
+   * @return a compliance result response body
+   */
+  public Response<ComplianceResultsDto> retrieveVehicleCompliance(String vrn,
+      String zones) {
+    try {
+      log.debug("Fetching compliance result from VCCS: start");
+      return vccsRepository.findComplianceSync(vrn, zones);
+    } finally {
+      log.debug("Fetching compliance result from VCCS: finish");
+    }
+  }
+  
+  /**
+   * Coordinate asynchronous requests to the vehicle checker to retrieve
+   * vehicle details for a single VRN.
+   * 
+   * @param vrn the vrn to query.
+   * @return details of a vehicle wrapped in a response object.
+   */
+  public Response<VehicleDto> retrieveVehicleDetails(String vrn) {
+    try {
+      log.debug("Fetching vehicle details from VCCS: start");
+      return vccsRepository.findVehicleDetailsSync(vrn);
+    } finally {
+      log.debug("Fetching vehicle details from VCCS: finish");
+    }
+  }
+  
   private ComplianceResultsDto buildExceptionResult(AsyncOperationsMatcher aom, 
       String identifier) {
     return ComplianceResultsDto.builder()
@@ -106,6 +142,6 @@ public class VehicleComplianceRetrievalService {
    * @return timeout
    */
   long calculateTimeoutInSeconds() {
-    return new Long(serviceCallTimeout);
+    return Long.valueOf(serviceCallTimeout);
   }
 }

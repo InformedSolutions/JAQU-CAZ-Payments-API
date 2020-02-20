@@ -1,0 +1,14 @@
+{
+    "registrationNumber": "TESTVRN",
+    "typeApproval": "N2",
+    "type": "Heavy Goods Vehicle",
+    "make": "Iveco",
+    "model": "Daily",
+    "colour": "Grey",
+    "fuelType": "Diesel",
+    "licensingAuthoritiesNames": [
+        "Birmingham"
+    ],
+    "taxiOrPhv": true,
+    "exempt": false
+}

@@ -19,6 +19,8 @@ import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 public class AccountsController implements AccountControllerApiSpec {
 
   public static final String ACCOUNTS_PATH = "/v1/accounts";
+  private static final String PAGE_NUMBER_QUERYSTRING_KEY = "pageNumber";
+  private static final String PAGE_SIZE_QUERYSTRING_KEY = "pageSize";
   
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final AccountService accountService;
@@ -30,7 +32,7 @@ public class AccountsController implements AccountControllerApiSpec {
     validateRequest(queryStrings);
 
     String zones = "";
-
+    
     // If no collection of zones has been passed via querystring, 
     // retrieve all zones from service layer.
     if (queryStringAbsent("zones", queryStrings)) {
@@ -38,20 +40,23 @@ public class AccountsController implements AccountControllerApiSpec {
     } else {
       zones = queryStrings.get("zones");
     }
-
-    AccountVehicleRetrievalResponse accountVehicleRetrievalResponse = 
-        accountService.retrieveAccountVehicles(accountId, queryStrings.get("pageNumber"),
-            queryStrings.get("pageSize"));
+    
+    AccountVehicleRetrievalResponse accountVehicleRetrievalResponse =
+        accountService.retrieveAccountVehicles(accountId,
+            queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
+            queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
 
     List<ComplianceResultsDto> results = vehicleComplianceRetrievalService
         .retrieveVehicleCompliance(
         accountVehicleRetrievalResponse.getVrns(), 
         zones);
 
-    return ResponseEntity.ok().body(createResponseFromVehicleComplianceRetrievalResults(
-        results, queryStrings.get("pageNumber"), queryStrings.get("pageSize"),
-        accountVehicleRetrievalResponse.getPageCount(), 
-        accountVehicleRetrievalResponse.getTotalVrnsCount()));
+    return ResponseEntity.ok()
+        .body(createResponseFromVehicleComplianceRetrievalResults(results,
+            queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
+            queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY),
+            accountVehicleRetrievalResponse.getPageCount(),
+            accountVehicleRetrievalResponse.getTotalVrnsCount()));
   }
 
   /**
@@ -59,8 +64,8 @@ public class AccountsController implements AccountControllerApiSpec {
    * @param map querystring parameter map.
    */
   private void validateRequest(Map<String, String> map) {
-    if (map.size() < 2 || queryStringAbsent("pageNumber", map)
-        || queryStringAbsent("pageSize", map)) {
+    if (map.size() < 2 || queryStringAbsent(PAGE_NUMBER_QUERYSTRING_KEY, map)
+        || queryStringAbsent(PAGE_SIZE_QUERYSTRING_KEY, map)) {
       throw new InvalidRequestPayloadException(
           "Please supply 'pageNumber' and 'pageSize' query strings.");
     }

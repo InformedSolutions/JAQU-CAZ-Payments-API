@@ -18,17 +18,29 @@ import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class CleanAirZoneNameGetterService {
+public class CleanAirZoneService {
 
   private final VccsRepository vccsRepository;
 
+  /**
+   * Gets clean air zones from VCCS.
+   *
+   * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
+   */
+  public Response<CleanAirZonesResponse> fetchAll() {
+    try {
+      log.debug("Fetching all clean air zones from VCCS");
+      return vccsRepository.findCleanAirZonesSync();
+    } finally {
+      log.debug("Fetching all clean air zones from VCCS: finish");
+    }
+  }
+  
   /**
    * Gets name of clean air zone name from vccs.
    *
    * @param cleanAirZoneId id of clean air zone
    * @return {@link String} if the CleanAirZone exist
-   * @throws NullPointerException if {@code cleanAirZoneId} is null
-   * @throws CleanAirZoneNotFoundException if cleanAirZone was not found in VCCS
    */
   public String fetch(UUID cleanAirZoneId) {
     Preconditions.checkNotNull(cleanAirZoneId, "cleanAirZoneId cannot be null");
