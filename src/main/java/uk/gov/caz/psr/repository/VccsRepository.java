@@ -9,6 +9,7 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.dto.VehicleDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
@@ -30,6 +31,10 @@ public interface VccsRepository {
   @GET("v1/compliance-checker/vehicles/{vrn}/compliance")
   Call<ComplianceResultsDto> findCompliance(@Path("vrn") String vrn, 
       @Query("zones") String zones);
+  
+  @Headers("Accept: application/json")
+  @GET("v1/compliance-checker/vehicles/{vrn}/details")
+  Call<VehicleDto> findVehicleDetails(@Path("vrn") String vrn);
 
   /**
    * Wraps REST API call in {@link Response} making synchronous request.
@@ -52,6 +57,19 @@ public interface VccsRepository {
   default Response<ComplianceResultsDto> findComplianceSync(String vrn, String zones) {
     try {
       return findCompliance(vrn, zones).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+  
+  /**
+   * Wraps REST API call in {@link Response} making synchronous request.
+   *
+   * @return {@link Response} with REST response.
+   */
+  default Response<VehicleDto> findVehicleDetailsSync(String vrn) {
+    try {
+      return findVehicleDetails(vrn).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }

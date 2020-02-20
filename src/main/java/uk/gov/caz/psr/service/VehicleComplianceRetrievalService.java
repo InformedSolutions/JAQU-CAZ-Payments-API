@@ -16,6 +16,7 @@ import retrofit2.Response;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.async.rest.AsyncRestService;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.dto.VehicleDto;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 import uk.gov.caz.psr.util.AsyncOperationsMatcher;
@@ -98,6 +99,25 @@ public class VehicleComplianceRetrievalService {
       throw e;
     } finally {
       log.debug("Fetching compliance result from VCCS: finish");
+    }
+  }
+  
+  /**
+   * Coordinate asynchronous requests to the vehicle checker to retrieve
+   * vehicle details for a single VRN.
+   * 
+   * @param vrn the vrn to query.
+   * @return details of a vehicle.
+   */
+  public VehicleDto retrieveVehicleDetails(String vrn) {
+    try {
+      Response<VehicleDto> response = vccsRepository.findVehicleDetailsSync(vrn);
+      return response.body();
+    } catch (HttpException e) {
+      log.error("Failed to retrieve vehicle details from VCCS");
+      throw e;
+    } finally {
+      log.debug("Fetching vehicle details from VCCS: finish");
     }
   }
   

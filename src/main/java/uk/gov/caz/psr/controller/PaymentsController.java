@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.dto.VehicleDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
@@ -43,6 +44,9 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   
   @VisibleForTesting
   public static final String GET_COMPLIANCE = "vehicles/{vrn}/compliance";
+
+  @VisibleForTesting
+  public static final String GET_VEHICLE_DETAILS = "vehicles/{vrn}/details";
   
   private final InitiatePaymentService initiatePaymentService;
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
@@ -98,6 +102,13 @@ public class PaymentsController implements PaymentsControllerApiSpec {
       String zones) {
     ComplianceResultsDto result = 
         vehicleComplianceRetrievalService.retrieveVehicleCompliance(vrn, zones);
+    return ResponseEntity.ok(result);
+  }
+  
+  @Override
+  public ResponseEntity<VehicleDto> getVehicleDetails(String vrn) {
+    VehicleDto result = 
+        vehicleComplianceRetrievalService.retrieveVehicleDetails(vrn);
     return ResponseEntity.ok(result);
   }
   

@@ -103,6 +103,10 @@ class PaymentsControllerTest {
       PaymentsController.BASE_PATH + "/"
           + PaymentsController.GET_COMPLIANCE;
   
+  private static final String GET_VEHICLE_DETAILS_PATH =
+      PaymentsController.BASE_PATH + "/"
+          + PaymentsController.GET_VEHICLE_DETAILS;
+  
   @Nested
   class InitiatePayment {
 
@@ -590,6 +594,40 @@ class PaymentsControllerTest {
               .is2xxSuccessful());
 
       verify(vehicleComplianceRetrievalService).retrieveVehicleCompliance(testVrn, ANY_CLEAN_AIR_ZONE_ID.toString());
+    }
+
+  }
+  
+  @Nested
+  class VehicleDetails {
+
+    @Test
+    public void shouldReturn400StatusCodeWhenVehicleDetailsFetchedWithoutCorrelationId()
+        throws Exception {
+      mockMvc
+          .perform(get(GET_VEHICLE_DETAILS_PATH.replace("{vrn}", "TESTVRN"))
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
+          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
+              .value("Missing request header 'X-Correlation-ID'"));
+    }
+
+    @Test
+    public void shouldReturn200StatusCodeWhenVehicleDetailseFetched()
+        throws Exception {      
+      
+      String testVrn = "TESTVRN";
+      mockMvc
+        .perform(get(GET_VEHICLE_DETAILS_PATH.replace("{vrn}", testVrn))
+              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .param("vrn", "TESTVRN"))
+          .andExpect(status()
+              .is2xxSuccessful());
+
+      verify(vehicleComplianceRetrievalService).retrieveVehicleDetails(testVrn);
     }
 
   }
