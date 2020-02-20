@@ -27,8 +27,6 @@ public class CleanAirZoneService {
    * Gets clean air zones from VCCS.
    *
    * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
-   * @throws NullPointerException if {@code cleanAirZoneId} is null
-   * @throws CleanAirZoneNotFoundException if cleanAirZone was not found in VCCS
    */
   public CleanAirZonesResponse fetchAll() {
     try {
@@ -50,7 +48,6 @@ public class CleanAirZoneService {
    *
    * @param cleanAirZoneId id of clean air zone
    * @return {@link String} if the CleanAirZone exist
-   * @throws NullPointerException if {@code cleanAirZoneId} is null
    * @throws CleanAirZoneNotFoundException if cleanAirZone was not found in VCCS
    */
   public String fetch(UUID cleanAirZoneId) {

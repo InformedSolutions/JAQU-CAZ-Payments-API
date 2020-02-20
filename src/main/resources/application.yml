@@ -14,7 +14,7 @@ spring:
     enabled: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5433/vehicle_compliance
     username: postgres
     password: postgres
     hikari:
@@ -29,7 +29,7 @@ services:
     rootUrl: https://publicapi.payments.service.gov.uk
     api-key: to-be-replaced-by-external-value
   vehicle-compliance-checker:
-    root-url: https://ndzi384gxe.execute-api.eu-west-2.amazonaws.com/dev
+    root-url: http://localhost:1090
   accounts:
     root-url: http://localhost:1091
   sqs:
@@ -162,7 +162,7 @@ swagger:
         cleanAirZoneDetails: List of Clean Air Zones
       cleanAirZone:
         cleanAirZoneId: System ID of the clean air zone
-        name: Name of Tariff
+        name: Name of the Clean Air Zone
         boundaryUrl: URL provided by zone operators, boundary
       vehicle:
         complianceResult:
