@@ -548,19 +548,6 @@ class PaymentsControllerTest {
               .value("Missing request header 'X-Correlation-ID'"));
     }
 
-    @Test
-    public void shouldReturn200StatusCodeWhenCleanAirZonesAreFetched()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_CLEAN_AIR_ZONES_PATH)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON))
-          .andExpect(status().is2xxSuccessful());
-
-      verify(cleanAirZoneService).fetchAll();
-    }
-
   }
   
   @Nested
@@ -577,25 +564,6 @@ class PaymentsControllerTest {
           .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
               .value("Missing request header 'X-Correlation-ID'"));
     }
-
-    @Test
-    public void shouldReturn200StatusCodeWhenComplianceFetched()
-        throws Exception {      
-      
-      String testVrn = "TESTVRN";
-      mockMvc
-        .perform(get(GET_COMPLIANCE_PATH.replace("{vrn}", testVrn))
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("vrn", "TESTVRN")
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status()
-              .is2xxSuccessful());
-
-      verify(vehicleComplianceRetrievalService).retrieveVehicleCompliance(testVrn, ANY_CLEAN_AIR_ZONE_ID.toString());
-    }
-
   }
   
   @Nested
@@ -612,24 +580,6 @@ class PaymentsControllerTest {
           .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
               .value("Missing request header 'X-Correlation-ID'"));
     }
-
-    @Test
-    public void shouldReturn200StatusCodeWhenVehicleDetailseFetched()
-        throws Exception {      
-      
-      String testVrn = "TESTVRN";
-      mockMvc
-        .perform(get(GET_VEHICLE_DETAILS_PATH.replace("{vrn}", testVrn))
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("vrn", "TESTVRN"))
-          .andExpect(status()
-              .is2xxSuccessful());
-
-      verify(vehicleComplianceRetrievalService).retrieveVehicleDetails(testVrn);
-    }
-
   }
 
   @SneakyThrows

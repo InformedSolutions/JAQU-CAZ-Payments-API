@@ -5,7 +5,6 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import retrofit2.HttpException;
 import retrofit2.Response;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
@@ -28,16 +27,10 @@ public class CleanAirZoneService {
    *
    * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
    */
-  public CleanAirZonesResponse fetchAll() {
+  public Response<CleanAirZonesResponse> fetchAll() {
     try {
       log.debug("Fetching all clean air zones from VCCS");
-      Response<CleanAirZonesResponse> cleanAirZonesResponse =
-          vccsRepository.findCleanAirZonesSync();
-      return cleanAirZonesResponse.body();
-    } catch (HttpException e) {
-      log.error("Failed to retrieve clean air zones from VCCS");
-      log.error(e.getMessage());
-      throw e;
+      return vccsRepository.findCleanAirZonesSync();
     } finally {
       log.debug("Fetching all clean air zones from VCCS: finish");
     }

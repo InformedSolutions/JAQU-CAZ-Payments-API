@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import retrofit2.HttpException;
 import retrofit2.Response;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.async.rest.AsyncRestService;
@@ -86,17 +85,13 @@ public class VehicleComplianceRetrievalService {
    * 
    * @param vrn the vrn to query.
    * @param zones a list of zones to check compliance for
-   * @return a compliance result
-   * @throws HttpException http tier exception encountered when invoking VCCS
+   * @return a compliance result response body
    */
-  public ComplianceResultsDto retrieveVehicleCompliance(String vrn,
+  public Response<ComplianceResultsDto> retrieveVehicleCompliance(String vrn,
       String zones) {
     try {
-      Response<ComplianceResultsDto> response = vccsRepository.findComplianceSync(vrn, zones);
-      return response.body();
-    } catch (HttpException e) {
-      log.error("Failed to retrieve vehicle compliance resul from VCCS");
-      throw e;
+      log.debug("Fetching compliance result from VCCS: start");
+      return vccsRepository.findComplianceSync(vrn, zones);
     } finally {
       log.debug("Fetching compliance result from VCCS: finish");
     }
@@ -107,15 +102,12 @@ public class VehicleComplianceRetrievalService {
    * vehicle details for a single VRN.
    * 
    * @param vrn the vrn to query.
-   * @return details of a vehicle.
+   * @return details of a vehicle wrapped in a response object.
    */
-  public VehicleDto retrieveVehicleDetails(String vrn) {
+  public Response<VehicleDto> retrieveVehicleDetails(String vrn) {
     try {
-      Response<VehicleDto> response = vccsRepository.findVehicleDetailsSync(vrn);
-      return response.body();
-    } catch (HttpException e) {
-      log.error("Failed to retrieve vehicle details from VCCS");
-      throw e;
+      log.debug("Fetching vehicle details from VCCS: start");
+      return vccsRepository.findVehicleDetailsSync(vrn);
     } finally {
       log.debug("Fetching vehicle details from VCCS: finish");
     }

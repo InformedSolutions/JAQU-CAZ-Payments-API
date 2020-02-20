@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import retrofit2.Response;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.dto.VehicleDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
@@ -92,24 +93,31 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   
   @Override
   public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() {
+    Response<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
     return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(cleanAirZoneService.fetchAll());
+        .status(result.code())
+        .body(result.body());
   }
 
   @Override
   public ResponseEntity<ComplianceResultsDto> getCompliance(String vrn,
       String zones) {
-    ComplianceResultsDto result = 
+    Response<ComplianceResultsDto> result = 
         vehicleComplianceRetrievalService.retrieveVehicleCompliance(vrn, zones);
-    return ResponseEntity.ok(result);
+    
+    return ResponseEntity
+        .status(result.code())
+        .body(result.body());
   }
   
   @Override
   public ResponseEntity<VehicleDto> getVehicleDetails(String vrn) {
-    VehicleDto result = 
+    Response<VehicleDto> result = 
         vehicleComplianceRetrievalService.retrieveVehicleDetails(vrn);
-    return ResponseEntity.ok(result);
+    
+    return ResponseEntity
+        .status(result.code())
+        .body(result.body());
   }
   
 }

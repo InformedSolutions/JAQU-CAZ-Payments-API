@@ -46,6 +46,17 @@ public class VccsCallsIT {
         .respond(response(responseFile, vrn, statusCode));
   }
   
+  public void mockVccsVehicleDetailsCall() {
+    vccsMockServer
+        .when(HttpRequest.request()
+            .withPath("/v1/compliance-checker/vehicles/TESTVRN/details")
+            .withMethod("GET"))
+        .respond(HttpResponse.response()
+            .withStatusCode(200)
+            .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
+            .withBody(readFile("vehicle-details.json")));
+  }
+  
   public void mockVccsComplianceCallError(String vrn, int statusCode) {
     vccsMockServer
     .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),

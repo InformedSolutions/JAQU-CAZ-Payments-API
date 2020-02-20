@@ -81,26 +81,11 @@ public class CleanAirZoneServiceTest {
     mockRepositoryResultForCleanAirZones();
 
     // when
-    CleanAirZonesResponse result = cleanAirZoneService.fetchAll();
+    Response<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
 
     // then
     assertThat(result).isNotNull();
-    assertThat(result.getCleanAirZones().get(0).getName()).isEqualTo(ANY_VALID_CAZ_NAME);
-  }
-  
-  @Test
-  public void shouldRethrowHttpException() {
-    // given    
-    HttpException mockHttpException = Mockito.mock(HttpException.class);
-    when(vccsRepository.findCleanAirZonesSync()).thenThrow(mockHttpException);
-    
-    // when
-    Throwable throwable =
-        catchThrowable(
-            () -> cleanAirZoneService.fetchAll());
-
-    // then
-    assertThat(throwable).isInstanceOf(HttpException.class);
+    assertThat(result.body().getCleanAirZones().get(0).getName()).isEqualTo(ANY_VALID_CAZ_NAME);
   }
   
   private void mockRepositoryResultForCleanAirZones() {
