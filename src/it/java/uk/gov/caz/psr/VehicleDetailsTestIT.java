@@ -18,7 +18,7 @@ import uk.gov.caz.psr.controller.PaymentsController;
 
 @IntegrationTest
 @AutoConfigureMockMvc
-class VehicleDetailsTestIT extends VccsCallsIT {
+class VehicleDetailsTestIT extends ExternalCallsIT {
 
   private ClientAndServer mockServer;
   

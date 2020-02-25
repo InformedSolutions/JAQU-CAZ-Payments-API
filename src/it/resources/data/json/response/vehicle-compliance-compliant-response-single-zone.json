@@ -1,0 +1,27 @@
+{
+    "registrationNumber": "TEST_VRN",
+    "isRetrofitted": false,
+    "isExempt": false,
+    "vehicleType": "Car",
+    "complianceOutcomes": [
+        {
+            "cleanAirZoneId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+            "name": "Birmingham",
+            "charge": 0.0,
+            "tariffCode": null,
+            "informationUrls": {
+                "emissionsStandards": "https://www.brumbreathes.co.uk/what-does-it-mean-for-me",
+                "mainInfo": "https://www.brumbreathes.co.uk/",
+                "hoursOfOperation": "https://www.birmingham.gov.uk/info/20076/pollution/1763/a_clean_air_zone_for_birmingham/3",
+                "pricing": "",
+                "exemptionOrDiscount": "https://www.brumbreathes.co.uk/exemptions-and-additional-support",
+                "payCaz": "",
+                "becomeCompliant": "https://www.brumbreathes.co.uk/info/6/upgrading-car/5/upgrading-car-1",
+                "financialAssistance": "https://www.brumbreathes.co.uk/exemptions-and-additional-support",
+                "boundary": "https://www.birmingham.gov.uk/info/20076/pollution/1763/a_clean_air_zone_for_birmingham/2",
+                "additionalInfo": "https://www.brumbreathes.co.uk/what-does-it-mean-for-me",
+                "publicTransportOptions": "https://www.brumbreathes.co.uk/info/15/drive-work-clean-air-zone-1/9/drive-work-clean-air-zone/4"
+            }
+        }
+    ]
+}

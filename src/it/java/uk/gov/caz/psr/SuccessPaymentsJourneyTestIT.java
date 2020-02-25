@@ -58,7 +58,7 @@ import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
-public class SuccessPaymentsJourneyTestIT extends VccsCallsIT {
+public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
   private static final List<LocalDate> TRAVEL_DATES = Arrays.asList(
       LocalDate.of(2019, 11, 10),

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import uk.gov.caz.correlationid.Constants;
+import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 
 @RequestMapping(value = ACCOUNTS_PATH, produces = {
@@ -67,5 +68,10 @@ public interface AccountControllerApiSpec {
   ResponseEntity<VehicleRetrievalResponseDto> retrieveVehiclesAndCharges(
       @PathVariable("accountId") UUID accountId, 
       @RequestParam(required = true) Map<String, String> queryStrings) throws IOException;
+  
+  @GetMapping("/{accountId}/chargeable-vehicles")
+  ResponseEntity<ChargeableAccountVehicleResponse> retrieveChargeableVehicles(
+      @PathVariable("accountId") UUID accountId, 
+      @RequestParam(required = true) Map<String, String> queryStrings);
   
 }

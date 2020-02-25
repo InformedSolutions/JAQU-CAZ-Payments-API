@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.controller;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -8,8 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
+import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
+import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 import uk.gov.caz.psr.service.AccountService;
 import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
@@ -24,12 +27,15 @@ public class AccountsController implements AccountControllerApiSpec {
   
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final AccountService accountService;
+  private final QueryStringValidator queryStringValidator;
 
   @Override
   public ResponseEntity<VehicleRetrievalResponseDto> retrieveVehiclesAndCharges(
       UUID accountId, Map<String, String> queryStrings) {
 
-    validateRequest(queryStrings);
+    queryStringValidator.validateRequest(queryStrings, 
+        Collections.emptyList(),
+        Arrays.asList(PAGE_NUMBER_QUERYSTRING_KEY, PAGE_SIZE_QUERYSTRING_KEY));
 
     String zones = "";
     
@@ -59,18 +65,41 @@ public class AccountsController implements AccountControllerApiSpec {
             accountVehicleRetrievalResponse.getTotalVrnsCount()));
   }
 
-  /**
-   * Helper method to test presence of required querystring parameters.
-   * @param map querystring parameter map.
-   */
-  private void validateRequest(Map<String, String> map) {
-    if (map.size() < 2 || queryStringAbsent(PAGE_NUMBER_QUERYSTRING_KEY, map)
-        || queryStringAbsent(PAGE_SIZE_QUERYSTRING_KEY, map)) {
-      throw new InvalidRequestPayloadException(
-          "Please supply 'pageNumber' and 'pageSize' query strings.");
-    }
+  @Override
+  public ResponseEntity<ChargeableAccountVehicleResponse> retrieveChargeableVehicles(UUID accountId,
+      Map<String, String> queryStrings) {
+    
+    queryStringValidator.validateRequest(queryStrings, 
+        Arrays.asList("cleanAirZoneId"), Arrays.asList(PAGE_SIZE_QUERYSTRING_KEY));
+    String direction = queryStrings.get("direction");
+    int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
+    
+    List<String> vrns = accountService.retrieveChargeableAccountVehicles(accountId,
+        direction, pageSize, 
+        queryStrings.get("vrn"), queryStrings.get("cleanAirZoneId"));
+
+    return ResponseEntity.ok()
+        .body(createResponseFromChargeableAccountVehicles(vrns, direction, pageSize));
   }
-  
+
+  private ChargeableAccountVehicleResponse createResponseFromChargeableAccountVehicles(
+      List<String> vrns, String direction, int pageSize) {
+    Collections.sort(vrns);
+    String firstVrn = vrns.get(0);
+    String lastVrn = vrns.get(vrns.size() - 1);
+    if (vrns.size() < pageSize + 1) {
+      firstVrn = direction.equals("previous") ? null : firstVrn;
+      lastVrn = direction.equals("next") ? null : lastVrn;
+    }
+    
+    return ChargeableAccountVehicleResponse
+      .builder()
+      .vrns(vrns)
+      .firstVrn(firstVrn)
+      .lastVrn(lastVrn)
+      .build();
+  }
+
   /**
    * Helper method to test for present of a key in a querystring parameter.
    * @param key the key to search for.
@@ -80,7 +109,7 @@ public class AccountsController implements AccountControllerApiSpec {
   private Boolean queryStringAbsent(String key, Map<String, String> map) {
     return !map.containsKey(key) || !StringUtils.hasText(map.get(key));
   }
-
+  
   private VehicleRetrievalResponseDto createResponseFromVehicleComplianceRetrievalResults(
       List<ComplianceResultsDto> results, String pageNumber, String pageSize, 
       int pageCount, long totalVrnsCount) {
@@ -92,5 +121,4 @@ public class AccountsController implements AccountControllerApiSpec {
         .totalVrnsCount(totalVrnsCount)
         .build();
   }
-
 }
