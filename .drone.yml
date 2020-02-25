@@ -681,7 +681,7 @@ steps:
       AWS_SECRETSMANAGER_URL: localstack:4584
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
-      
+
 
   # Package
   - name: package
@@ -794,26 +794,6 @@ steps:
 
   ################################################# End Sit Steps #######################################################
 ---
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   ################################################ Preprod Steps ############################################################
 
@@ -1027,6 +1007,219 @@ steps:
 
   ################################################ End Preprod Only Steps ############################################################
 
+---
+
+  ################################################ Prod Steps ############################################################
+
+kind: pipeline
+type: docker
+name: payments-api-prod
+
+trigger:
+  branch:
+    - master
+  event:
+    - pull_request
+    - push
+concurrency:
+  limit: 1
+
+volumes:
+  - name: package_directory
+    temp: {}
+
+steps:
+
+  # Invoke terraform scripts to deploy lambda function in Prod
+  - name: plan terraform updates in prod
+    image: hashicorp/terraform:0.12.3
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq wget
+      - pip install awscli
+      - mkdir ~/.ssh
+      - echo -n "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - touch ~/.ssh/known_hosts
+      - chmod 600 ~/.ssh/known_hosts
+      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
+      - LAMBDA_FUNCTION=payments-lambda-preprod
+      - ENV=preprod
+      - SIGNED_URL=`aws lambda get-function --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Code.Location'`
+      - VERSION=`aws lambda get-function --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Configuration.Version'`
+      - wget -O /opt/package/$LAMBDA_FUNCTION-$VERSION.zip $SIGNED_URL
+      - export TF_VAR_lambda_file=/opt/package/$LAMBDA_FUNCTION-$VERSION.zip
+      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
+      - cd JAQU-CAZ-IAC
+      - git checkout master
+      - cd terraform/projects/payments/layers/00.global
+      - PATH=$PATH:../../../../bin/
+      - chmod +x ../../../../bin/tf
+      - tf init
+      - tf workspace select default
+      - tf plan
+      - cd ../01.networking
+      - tf init
+      - tf workspace select prod || tf workspace new prod
+      - tf plan
+      - cd ../02.backends
+      - tf init
+      - tf workspace select prod || tf workspace new prod
+      - tf plan
+      - cd ../03.api
+      - tf init
+      - tf workspace select prod || tf workspace new prod
+      - tf plan
+    environment:
+      TF_VAR_access_key:
+        from_secret: aws_access_key_id
+      TF_VAR_secret_key:
+        from_secret: aws_secret_access_key
+      TF_VAR_account_id:
+        from_secret: aws_account_id
+      GIT_PRIVATE_SSH:
+        from_secret: github_private_key
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+    when:
+      event:
+        - pull_request
+
+  - name: provisioning warning
+    image: docker:git
+    commands:
+      - echo "Pipeline failed. If a deployment is being made for the first time into an environment terraform backends will not yet exist which means this is to be expected. If not terraform related, please see logs for further details"
+    when:
+      status:
+        - failure
+
+  # Invoke terraform scripts to deploy lambda function in prod
+  - name: deploy to prod
+    image: hashicorp/terraform:0.12.3
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq wget
+      - pip install awscli
+      - mkdir ~/.ssh
+      - echo -n "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - touch ~/.ssh/known_hosts
+      - chmod 600 ~/.ssh/known_hosts
+      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
+      - LAMBDA_FUNCTION=payments-lambda-preprod
+      - ENV=preprod
+      - SIGNED_URL=`aws lambda get-function --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Code.Location'`
+      - VERSION=`aws lambda get-function --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Configuration.Version'`
+      - wget -O /opt/package/$LAMBDA_FUNCTION-$VERSION.zip $SIGNED_URL
+      - export TF_VAR_lambda_file=/opt/package/$LAMBDA_FUNCTION-$VERSION.zip
+      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
+      - cd JAQU-CAZ-IAC
+      - git checkout master
+      - cd terraform/projects/payments/layers/00.global
+      - PATH=$PATH:../../../../bin/
+      - chmod +x ../../../../bin/tf
+      - tf init
+      - tf workspace select default
+      - tf apply -auto-approve
+      - cd ../01.networking
+      - tf init
+      - tf workspace select prod || tf workspace new prod
+      - tf apply -auto-approve
+      - cd ../02.backends
+      - tf init
+      - tf workspace select prod || tf workspace new prod
+      - tf apply -auto-approve
+      - cd ../03.api
+      - tf init
+      - tf workspace select prod || tf workspace new prod
+      - tf apply -auto-approve
+    environment:
+      TF_VAR_access_key:
+        from_secret: aws_access_key_id
+      TF_VAR_secret_key:
+        from_secret: aws_secret_access_key
+      TF_VAR_account_id:
+        from_secret: aws_account_id
+      GIT_PRIVATE_SSH:
+        from_secret: github_private_key
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+    when:
+      event:
+        - push
+
+  - name: apply db schema migrations
+    image: alpine:latest
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-prod --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+    when:
+      event:
+        - push
+
+  - name: codedeploy api prod
+    image: alpine:latest
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq
+      - pip install awscli
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh .
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh .
+      - bash deploy_lambda.sh
+      - bash deploy_dangling_payments.sh
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: prod
+      LAMBDA_BUCKET: jaqu-projects-lambda-bucket
+    when:
+      event:
+        - push
+
+  # subscribe to operational monitoring alert in api prod
+  - name: subscribe to operational monitoring alert in api prod
+    image: alpine:latest
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i prod -i payments JAQU-CAZ-OPERATIONALMONITORING@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: prod
+    when:
+      event:
+        - push
+
+
+  ################################################ End Preprod Only Steps ############################################################
 
 
   ################################################ Secrets #########################################################
