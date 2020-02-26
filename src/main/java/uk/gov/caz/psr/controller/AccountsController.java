@@ -121,4 +121,10 @@ public class AccountsController implements AccountControllerApiSpec {
         .totalVrnsCount(totalVrnsCount)
         .build();
   }
+
+  @Override
+  public ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
+      UUID accountId, String vrn) {
+    return null;
+  }
 }
