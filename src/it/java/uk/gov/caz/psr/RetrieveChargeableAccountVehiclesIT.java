@@ -5,9 +5,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +30,9 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
   private static final String PREVIOUS_CURSOR_RESPONSE = "account-vehicles-cursor-previous-response.json";
   private static final String EMPTY_CURSOR_RESPONSE = "account-vehicles-cursor-empty-response.json";
 
+  @Autowired
+  private DataSource dataSource;
+  
   @LocalServerPort
   int randomServerPort;
 
@@ -32,6 +40,11 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
   public void setupRestAssured() {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
+  }
+  
+  @AfterEach
+  public void clearDatabase() {
+    executeSqlFrom("data/sql/clear-all-caz-entrant-payments.sql");   
   }
   
   @Test
@@ -150,6 +163,7 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
             "vehicle-compliance-compliant-response-single-zone.json", 200);        
       }
     }
+    
     Collections.sort(chargeable);
     
     givenAssertion()
@@ -164,6 +178,28 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .responseContainsExpectedData(chargeable, null, chargeable.get(chargeable.size() - 1));
   }
   
+  @Test
+  public void shouldReturnHttpOkWhenEntrantPaymentsExist() throws JsonProcessingException {
+    executeSqlFrom("data/sql/add-entrant-payments.sql");
+    mockAccountServiceChargeableVehiclesCall(ACCOUNT_ID, 
+        "ABC123", NEXT_CURSOR_RESPONSE);
+    List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
+    for (String vrn : vrns) {
+      mockVccsComplianceCall(vrn, "vehicle-compliance-response-single-zone.json", 200);
+    }
+    
+    givenAssertion()
+      .forAccountId(ACCOUNT_ID)
+      .forPageSize("10")
+      .forVrn("ABC123")
+      .forCleanAirZoneId("4dc6ea23-77d3-4bfe-8180-7662c33f88ad")
+      .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
+      .then()
+      .responseIsReturnedWithHttpOkStatusCode()
+      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size()-1));
+    
+  }
+  
   private List<String> getAccountVehicleVrnsFromFile(String fileName) throws JsonProcessingException {
     return new ObjectMapper().readValue(readJson(fileName), 
         new TypeReference<List<String>>() {});
@@ -172,5 +208,10 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
   public RetrieveChargeableAccountVehiclesJourneyAssertion givenAssertion() {
     return new RetrieveChargeableAccountVehiclesJourneyAssertion();
   }
-  
+
+  private void executeSqlFrom(String classPathFile) {
+    ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+    populator.addScripts(new ClassPathResource(classPathFile));
+    populator.execute(dataSource);
+  }
 }

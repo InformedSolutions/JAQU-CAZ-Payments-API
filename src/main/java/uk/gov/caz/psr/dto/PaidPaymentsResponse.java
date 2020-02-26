@@ -31,6 +31,7 @@ public class PaidPaymentsResponse {
     List<PaidPaymentsResult> mappedResults = results.entrySet()
         .stream()
         .map(entry -> buildPaidPaymentResultFrom(entry.getKey(), entry.getValue()))
+        .sorted((object1, object2) -> object1.getVrn().compareTo(object2.getVrn()))
         .collect(Collectors.toList());
 
     return PaidPaymentsResponse.builder().results(mappedResults).build();

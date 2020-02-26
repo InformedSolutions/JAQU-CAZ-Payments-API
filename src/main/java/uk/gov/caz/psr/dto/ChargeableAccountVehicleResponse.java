@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.dto;
 
-import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 
@@ -8,7 +7,7 @@ import lombok.Value;
 @Value
 public class ChargeableAccountVehicleResponse {
   
-  List<String> vrns;
+  PaidPaymentsResponse paidPayments;
   String firstVrn;
   String lastVrn;
 

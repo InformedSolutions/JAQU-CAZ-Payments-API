@@ -2,9 +2,12 @@ package uk.gov.caz.psr.service;
 
 import com.amazonaws.util.StringUtils;
 import com.google.common.base.Preconditions;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -14,6 +17,8 @@ import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
+import uk.gov.caz.psr.dto.PaidPaymentsResponse;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
@@ -27,6 +32,7 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 public class AccountService {
   
   private final AccountsRepository accountsRepository;
+  private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final VccsRepository vccRepository;
   
@@ -63,7 +69,7 @@ public class AccountService {
    * @param cleanAirZoneId the Clean Air Zone to check compliance for
    * @return a list of chargeable VRNs
    */
-  public List<String> retrieveChargeableAccountVehicles(UUID accountId, String direction, 
+  public PaidPaymentsResponse retrieveChargeableAccountVehicles(UUID accountId, String direction, 
       int pageSize, String vrn, String cleanAirZoneId) {
     List<String> results = new ArrayList<String>();
     Boolean lastPage = false;
@@ -88,9 +94,18 @@ public class AccountService {
       }
     }
     
-    return results;
+    return PaidPaymentsResponse.from(getPaidEntrantPayments(results, cleanAirZoneId));
   }
   
+  private Map<String, List<EntrantPayment>> getPaidEntrantPayments(
+      List<String> results, String cleanAirZoneId) {
+    return getPaidEntrantPaymentsService.getResults(
+        new HashSet<String>(results),
+        LocalDate.now().minusDays(6),
+        LocalDate.now().plusDays(6),
+        UUID.fromString(cleanAirZoneId));
+  }
+
   private List<String> getChargeableVrnsFromVcc(List<String> accountVrns, 
       String cleanAirZoneId) {
     List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService

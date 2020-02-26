@@ -13,6 +13,7 @@ import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
+import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 import uk.gov.caz.psr.service.AccountService;
 import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
@@ -74,27 +75,26 @@ public class AccountsController implements AccountControllerApiSpec {
     String direction = queryStrings.get("direction");
     int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
     
-    List<String> vrns = accountService.retrieveChargeableAccountVehicles(accountId,
-        direction, pageSize, 
+    PaidPaymentsResponse vrnsAndEntryDates = accountService.retrieveChargeableAccountVehicles(
+        accountId, direction, pageSize, 
         queryStrings.get("vrn"), queryStrings.get("cleanAirZoneId"));
 
     return ResponseEntity.ok()
-        .body(createResponseFromChargeableAccountVehicles(vrns, direction, pageSize));
+        .body(createResponseFromChargeableAccountVehicles(vrnsAndEntryDates, direction, pageSize));
   }
 
   private ChargeableAccountVehicleResponse createResponseFromChargeableAccountVehicles(
-      List<String> vrns, String direction, int pageSize) {
-    Collections.sort(vrns);
-    String firstVrn = vrns.get(0);
-    String lastVrn = vrns.get(vrns.size() - 1);
-    if (vrns.size() < pageSize + 1) {
+      PaidPaymentsResponse results, String direction, int pageSize) {
+    String firstVrn = results.getResults().get(0).getVrn();
+    String lastVrn = results.getResults().get(results.getResults().size() - 1).getVrn();
+    if (results.getResults().size() < pageSize + 1) {
       firstVrn = direction.equals("previous") ? null : firstVrn;
       lastVrn = direction.equals("next") ? null : lastVrn;
     }
     
     return ChargeableAccountVehicleResponse
       .builder()
-      .vrns(vrns)
+      .paidPayments(results)
       .firstVrn(firstVrn)
       .lastVrn(lastVrn)
       .build();
