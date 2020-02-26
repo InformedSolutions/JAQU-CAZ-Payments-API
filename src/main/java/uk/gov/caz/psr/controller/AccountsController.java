@@ -8,6 +8,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
@@ -124,7 +125,8 @@ public class AccountsController implements AccountControllerApiSpec {
 
   @Override
   public ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
-      UUID accountId, String vrn) {
+      UUID accountId, String vrn,Map<String, String> queryStrings) {
+    
     return null;
   }
 }

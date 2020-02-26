@@ -139,6 +139,7 @@ public interface AccountControllerApiSpec {
           paramType = "path")})
   @GetMapping("/{accountId}/chargeable-vehicles/{vrn}")
   ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
-      @PathVariable("accountId") UUID accountId, @PathVariable("vrn") String vrn);
+      @PathVariable("accountId") UUID accountId, @PathVariable("vrn") String vrn, 
+      @RequestParam(required = true) Map<String, String> queryStrings);
   
 }
