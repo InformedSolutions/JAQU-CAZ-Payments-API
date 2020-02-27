@@ -9,6 +9,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Headers;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
@@ -83,7 +84,7 @@ public interface AccountsRepository {
    */
   @Headers("Accept: application/json")
   @GET("v1/accounts/{accountId}/vehicles/{vrn}")
-  Call<AccountVehicleRetrievalResponse> getAccountSingleVehicleVrn(
+  Call<AccountVehicleResponse> getAccountSingleVehicleVrn(
       @Path("accountId") UUID accountId, @Path("vrn") String vrn
     );
   
@@ -93,7 +94,7 @@ public interface AccountsRepository {
    * @param vrn the VRN to query.
    * @return details of a single vehicle vrn.
    */
-  default Response<AccountVehicleRetrievalResponse> getAccountSingleVehicleVrnSync(
+  default Response<AccountVehicleResponse> getAccountSingleVehicleVrnSync(
       UUID accountId, String vrn) {
     try {
       return getAccountSingleVehicleVrn(accountId, vrn).execute();
