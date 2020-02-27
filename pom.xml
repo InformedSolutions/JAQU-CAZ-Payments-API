@@ -36,7 +36,7 @@
     </sonar.coverage.jacoco.xmlReportPaths>
 
     <!-- Sonar rule exclusions - begin -->
-    <sonar.issue.ignore.multicriteria>j1,j2,j3,j4,j5,j6,j7,j8,j9</sonar.issue.ignore.multicriteria>
+    <sonar.issue.ignore.multicriteria>j1,j2,j3,j4,j5,j6,j7,j8,j9, j10</sonar.issue.ignore.multicriteria>
     <!-- Ignore 'URIs should not be hardcoded' rule -->
     <sonar.issue.ignore.multicriteria.j1.ruleKey>
       squid:S1075
@@ -108,6 +108,14 @@
     <sonar.issue.ignore.multicriteria.j9.resourceKey>
       **/psr/repository/EntrantPaymentRepository.java
     </sonar.issue.ignore.multicriteria.j9.resourceKey>
+
+    <!-- Ignore 'Tests should include assertions' rule-->
+    <sonar.issue.ignore.multicriteria.j10.ruleKey>
+      squid:S2699
+    </sonar.issue.ignore.multicriteria.j10.ruleKey>
+    <sonar.issue.ignore.multicriteria.j10.resourceKey>
+      **/psr/*IT.java
+    </sonar.issue.ignore.multicriteria.j10.resourceKey>
     <!-- Sonar rule exclusions - end -->
 
     <!-- to enable running only integration tests without unit tests -->
