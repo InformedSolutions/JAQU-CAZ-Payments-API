@@ -95,7 +95,7 @@ public class AccountsController implements AccountControllerApiSpec {
     
     ChargeableAccountVehicleResponse response = ChargeableAccountVehicleResponse
         .builder()
-        .paidPayments(vrnsAndEntryDates)
+        .chargeableAccountVehicles(vrnsAndEntryDates)
         .build();
     
     return ResponseEntity.ok()
@@ -113,7 +113,7 @@ public class AccountsController implements AccountControllerApiSpec {
     
     return ChargeableAccountVehicleResponse
       .builder()
-      .paidPayments(results)
+      .chargeableAccountVehicles(results)
       .firstVrn(firstVrn)
       .lastVrn(lastVrn)
       .build();

@@ -112,7 +112,7 @@ public class ExternalCallsIT {
       .when(requestGet("/v1/accounts/" + accountId + "/vehicles/sorted-page"), exactly(1))
       .respond(response(responseFile, 200));
   }
-
+  
   @SneakyThrows
   private String readFile(String filename) {
     return Resources.toString(Resources.getResource("data/external/" + filename),
