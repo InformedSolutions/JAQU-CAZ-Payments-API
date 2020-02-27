@@ -73,15 +73,24 @@ public class AccountsController implements AccountControllerApiSpec {
     
     queryStringValidator.validateRequest(queryStrings, 
         Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY), Arrays.asList(PAGE_SIZE_QUERYSTRING_KEY));
+    String cleanAirZoneId = queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY);
     String direction = queryStrings.get("direction");
     int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
+    String vrn = queryStrings.get("vrn");
     
-    PaidPaymentsResponse vrnsAndEntryDates = accountService.retrieveChargeableAccountVehicles(
-        accountId, direction, pageSize, 
-        queryStrings.get("vrn"), queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY));
-
+    List<String> chargeableVrns = accountService.retrieveChargeableAccountVehicles(
+        accountId, direction, pageSize, vrn, cleanAirZoneId);
+    PaidPaymentsResponse vrnsAndEntrantDates = PaidPaymentsResponse.from(
+        accountService.getPaidEntrantPayments(trimChargeableVehicles(chargeableVrns, pageSize), 
+            cleanAirZoneId));
+    
     return ResponseEntity.ok()
-        .body(createResponseFromChargeableAccountVehicles(vrnsAndEntryDates, direction, pageSize));
+        .body(createResponseFromChargeableAccountVehicles(chargeableVrns, vrnsAndEntrantDates, 
+            direction, pageSize, vrn == null));
+  }
+  
+  private List<String> trimChargeableVehicles(List<String> chargeableVrns, int pageSize) {
+    return chargeableVrns.size() > pageSize ? chargeableVrns.subList(0, pageSize) : chargeableVrns;
   }
 
   @Override
@@ -104,12 +113,14 @@ public class AccountsController implements AccountControllerApiSpec {
   }
   
   private ChargeableAccountVehicleResponse createResponseFromChargeableAccountVehicles(
-      PaidPaymentsResponse results, String direction, int pageSize) {
-    String firstVrn = results.getResults().get(0).getVrn();
+      List<String> chargeableVrns, PaidPaymentsResponse results, String direction, int pageSize, 
+      boolean firstPage) {
+    String firstVrn = firstPage ? null : results.getResults().get(0).getVrn();
     String lastVrn = results.getResults().get(results.getResults().size() - 1).getVrn();
-    if (results.getResults().size() < pageSize + 1) {
-      firstVrn = direction.equals("previous") ? null : firstVrn;
-      lastVrn = direction.equals("next") ? null : lastVrn;
+    String travelDirection = StringUtils.hasText(direction) ? direction : "next"; 
+    if (chargeableVrns.size() < pageSize + 1) {
+      firstVrn = travelDirection.equals("previous") ? null : firstVrn;
+      lastVrn = travelDirection.equals("next") ? null : lastVrn;
     }
     
     return ChargeableAccountVehicleResponse

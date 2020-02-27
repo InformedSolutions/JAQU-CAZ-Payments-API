@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,7 +32,7 @@ public class PaidPaymentsResponse {
     List<PaidPaymentsResult> mappedResults = results.entrySet()
         .stream()
         .map(entry -> buildPaidPaymentResultFrom(entry.getKey(), entry.getValue()))
-        .sorted((object1, object2) -> object1.getVrn().compareTo(object2.getVrn()))
+        .sorted(Comparator.comparing(PaidPaymentsResult::getVrn))
         .collect(Collectors.toList());
 
     return PaidPaymentsResponse.builder().results(mappedResults).build();

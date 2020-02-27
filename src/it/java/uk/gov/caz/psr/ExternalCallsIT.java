@@ -76,7 +76,7 @@ public class ExternalCallsIT {
   }
 
   
-  public void mockAccountServiceChargesCall(String accountId, String vrn) {
+  public void mockAccountServiceOffsetCall(String accountId, String vrn) {
     accountsMockServer
         .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
             exactly(1))
@@ -97,30 +97,30 @@ public class ExternalCallsIT {
       .respond(emptyResponse(statusCode));
   }
   
-  public void mockAccountServiceChargesCallWithEmptyResponse(String accountId) {
+  public void mockAccountServiceOffsetCallWithEmptyResponse(String accountId) {
     accountsMockServer
       .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
           exactly(1))
       .respond(response("account-vehicles-empty-response.json", 200));
   }
   
-  public void mockAccountServiceChargesCallWithError(String accountId, int statusCode) {
+  public void mockAccountServiceOffsetCallWithError(String accountId, int statusCode) {
     accountsMockServer
       .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
           exactly(1))
       .respond(emptyResponse(statusCode));
   }
   
-  public void mockAccountServiceChargeableVehiclesCall(String accountId, String cursor, 
+  public void mockAccountServiceCursorCall(String accountId, String cursor, 
       String responseFile) {
     Parameter parameter = new Parameter("vrn", cursor);
     accountsMockServer
       .when(requestGetWithQueryString("/v1/accounts/" + accountId + "/vehicles/sorted-page", 
-          parameter), exactly(1))
+          parameter))
       .respond(response(responseFile, 200));
   }
   
-  public void mockAccountServiceChargeableVehiclesCallWithoutCursor(String accountId, 
+  public void mockAccountServiceCursorCallWithoutCursorParameter(String accountId, 
       String responseFile) {
     accountsMockServer
       .when(requestGet("/v1/accounts/" + accountId + "/vehicles/sorted-page"), exactly(1))
