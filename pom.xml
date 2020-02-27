@@ -36,7 +36,7 @@
     </sonar.coverage.jacoco.xmlReportPaths>
 
     <!-- Sonar rule exclusions - begin -->
-    <sonar.issue.ignore.multicriteria>j1,j2,j3,j4,j5,j6,j7,j8,j9, j10</sonar.issue.ignore.multicriteria>
+    <sonar.issue.ignore.multicriteria>j1,j2,j3,j4,j5,j6,j7,j8,j9,j10</sonar.issue.ignore.multicriteria>
     <!-- Ignore 'URIs should not be hardcoded' rule -->
     <sonar.issue.ignore.multicriteria.j1.ruleKey>
       squid:S1075
