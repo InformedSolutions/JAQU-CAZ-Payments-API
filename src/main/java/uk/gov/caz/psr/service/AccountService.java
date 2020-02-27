@@ -4,6 +4,7 @@ import com.amazonaws.util.StringUtils;
 import com.google.common.base.Preconditions;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -11,9 +12,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
@@ -22,6 +25,7 @@ import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
+import uk.gov.caz.psr.service.exception.AccountVehicleNotFoundException;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
@@ -95,6 +99,32 @@ public class AccountService {
     }
     
     return PaidPaymentsResponse.from(getPaidEntrantPayments(results, cleanAirZoneId));
+  }
+  
+  /**
+   * Method for retrieving a single chargeable vehicle linked to an account by a quoted vrn.
+   * @param accountId the unique id of the user account
+   * @param vrn the vrn to query for chargeability
+   * @param cleanAirZoneId the clean air zone to check chargeability against
+   * @return a list of chargeable VRNs
+   */
+  public PaidPaymentsResponse retrieveSingleChargeableAccountVehicle(
+      UUID accountId, String vrn, String cleanAirZoneId) {
+
+    Response<AccountVehicleResponse> accountVehicle =
+        accountsRepository.getAccountSingleVehicleVrnSync(accountId, vrn);
+
+    // If vehicle could not be found, yield early 404.
+    if (accountVehicle.code() == HttpStatus.NOT_FOUND.value()) {
+      throw new AccountVehicleNotFoundException();
+    }
+
+    List<String> wrappedVrn = Arrays.asList(vrn);
+    List<String> chargeableVrns =
+        getChargeableVrnsFromVcc(wrappedVrn, cleanAirZoneId);
+
+    return PaidPaymentsResponse
+        .from(getPaidEntrantPayments(chargeableVrns, cleanAirZoneId));
   }
   
   private Map<String, List<EntrantPayment>> getPaidEntrantPayments(

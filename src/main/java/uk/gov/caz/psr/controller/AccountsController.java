@@ -83,6 +83,25 @@ public class AccountsController implements AccountControllerApiSpec {
         .body(createResponseFromChargeableAccountVehicles(vrnsAndEntryDates, direction, pageSize));
   }
 
+  @Override
+  public ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
+      UUID accountId, String vrn,Map<String, String> queryStrings) { 
+   
+    queryStringValidator.validateRequest(queryStrings, 
+        Arrays.asList("cleanAirZoneId"), null);
+    
+    PaidPaymentsResponse vrnsAndEntryDates = accountService.retrieveSingleChargeableAccountVehicle(
+        accountId, vrn, queryStrings.get("cleanAirZoneId"));
+    
+    ChargeableAccountVehicleResponse response = ChargeableAccountVehicleResponse
+        .builder()
+        .paidPayments(vrnsAndEntryDates)
+        .build();
+    
+    return ResponseEntity.ok()
+        .body(response);
+  }
+  
   private ChargeableAccountVehicleResponse createResponseFromChargeableAccountVehicles(
       PaidPaymentsResponse results, String direction, int pageSize) {
     String firstVrn = results.getResults().get(0).getVrn();
@@ -120,12 +139,5 @@ public class AccountsController implements AccountControllerApiSpec {
         .perPage(Integer.parseInt(pageSize))
         .totalVrnsCount(totalVrnsCount)
         .build();
-  }
-
-  @Override
-  public ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
-      UUID accountId, String vrn,Map<String, String> queryStrings) {
-    
-    return null;
   }
 }
