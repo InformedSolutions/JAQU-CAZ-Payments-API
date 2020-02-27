@@ -111,13 +111,13 @@ public interface AccountControllerApiSpec {
    *
    * @return {@link ChargeableAccountVehicleResponse} wrapped in {@link ResponseEntity}.
    */
-  @ApiOperation(value = "${swagger.operations.accounts.chargeable-vehicles.description}",
+  @ApiOperation(value = "${swagger.operations.accounts.chargeable-vehicles.vrn.description}",
       response = ChargeableAccountVehicleResponse.class)
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
       @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory " 
           + "element)"),
-      @ApiResponse(code = 404, message = "Account not found"),
+      @ApiResponse(code = 404, message = "Account vehicle not found"),
       @ApiResponse(code = 429, message = "Too many requests"),
     })
   @ApiImplicitParams({
