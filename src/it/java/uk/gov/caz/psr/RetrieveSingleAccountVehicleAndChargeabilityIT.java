@@ -26,8 +26,8 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
   
   @Test
   public void shouldReturn200OkAndResponseWhenValidRequest() {
-    mockAccountServiceChargesCall(ACCOUNT_ID, "CAS300");
-    mockVccsComplianceCall("CAS300", "vehicle-compliance-response.json", 200);
+    mockAccountServiceChargesSingleVrnCall(ACCOUNT_ID, "CAS300", 200);
+    mockVccsComplianceCall("CAS300", "vehicle-compliance-response-single-zone.json", 200);
 
     givenSingleAccountVehicleChargeRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -40,11 +40,9 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
   
   @Test
   public void shouldReturn400BadRequestAndResponseWhenZonesNotProvided() {
-    mockAccountServiceChargesCall(ACCOUNT_ID, "CAS300");
-    mockVccsCleanAirZonesCall();
-    mockVccsComplianceCall("CAS300", "vehicle-compliance-response.json", 200);
     givenSingleAccountVehicleChargeRetrieval()
       .forAccountId(ACCOUNT_ID)
+      .forVrn("CAS300")
       .whenRequestIsMadeToRetrieveASingleChargeableAccountVehicle()
       .then()
       .responseIsReturnedWithHttp400StatusCode();
@@ -52,14 +50,16 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
   
   @Test
   public void shouldReturn404NotFoundWhenVehicleCannotBeFoundOnAccount() {
-    mockAccountServiceChargesCall(ACCOUNT_ID, "CAS300");
+    mockAccountServiceChargesSingleVrnCallWithError(ACCOUNT_ID, "CAS300", 404);
     mockVccsCleanAirZonesCall();
-    mockVccsComplianceCall("CAS300", "vehicle-compliance-response.json", 200);
+    mockVccsComplianceCall("CAS300", "vehicle-compliance-response-single-zone.json", 200);
     givenSingleAccountVehicleChargeRetrieval()
-      .forAccountId(UUID.randomUUID().toString())
+      .forCleanAirZoneId(ZONE)
+      .forVrn("CAS300")
+      .forAccountId(ACCOUNT_ID)
       .whenRequestIsMadeToRetrieveASingleChargeableAccountVehicle()
       .then()
-      .responseIsReturnedWithHttp400StatusCode();
+      .responseIsReturnedWithHttp404StatusCode();
   }
 
   private RetrieveSingleChargeableAccountVehicleJourneyAssertion givenSingleAccountVehicleChargeRetrieval() {

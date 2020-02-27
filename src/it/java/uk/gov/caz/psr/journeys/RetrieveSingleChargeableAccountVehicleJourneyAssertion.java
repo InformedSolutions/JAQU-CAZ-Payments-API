@@ -68,12 +68,13 @@ public class RetrieveSingleChargeableAccountVehicleJourneyAssertion {
         .as(ChargeableAccountVehicleResponse.class);
     return this;
   }
+  
+  public void responseIsReturnedWithHttp404StatusCode() {
+    this.response.statusCode(404);
+  }
 
-  public RetrieveSingleChargeableAccountVehicleJourneyAssertion responseIsReturnedWithHttp400StatusCode() {
-    this.responseDto = response.statusCode(HttpStatus.BAD_REQUEST.value())
-        .header(Constants.X_CORRELATION_ID_HEADER, CORRELATION_ID).extract()
-        .as(ChargeableAccountVehicleResponse.class);
-    return this;
+  public void responseIsReturnedWithHttp400StatusCode() {
+    this.response.statusCode(400);
   }
   
   public void responseContainsExpectedDataWithEntrantPayments(List<String> expectedVrns, 
