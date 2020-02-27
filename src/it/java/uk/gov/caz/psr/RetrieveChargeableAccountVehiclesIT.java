@@ -65,7 +65,8 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size()-1));
+      .responseContainsExpectedData(vrns.subList(0, vrns.size() - 1), vrns.get(0), 
+          vrns.get(vrns.size()-2));
   }
   
   @Test
@@ -106,9 +107,10 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       throws JsonProcessingException {
     mockAccountServiceChargeableVehiclesCall(ACCOUNT_ID, 
         "ABC123", NEXT_CURSOR_RESPONSE);
+    mockAccountServiceChargeableVehiclesCall(ACCOUNT_ID, "LMN234", EMPTY_CURSOR_RESPONSE);
     List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
     for (int i = 0; i < vrns.size() - 1; i++) {
-      mockVccsComplianceCall(vrns.get(i), "vehicle-compliance-response-single-zone.json", 200);
+      mockVccsComplianceCall(vrns.get(i), "vehicle-compliance-response-single-zone.json", 200);    
     }
     mockVccsUnprocessableEntityComplianceCall(vrns.get(vrns.size() - 1));
     
@@ -121,7 +123,7 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size() - 1));
+      .responseContainsExpectedData(vrns.subList(0, vrns.size() - 1), vrns.get(0), null);
   }
   
   @Test
@@ -141,7 +143,8 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size() - 1));
+      .responseContainsExpectedData(vrns.subList(0, vrns.size() - 1), vrns.get(0), 
+          vrns.get(vrns.size() - 2));
   }
   
   @Test
@@ -196,7 +199,8 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size()-1));
+      .responseContainsExpectedData(vrns.subList(0, vrns.size() - 1), 
+          vrns.get(0), vrns.get(vrns.size() - 2));
     
   }
   

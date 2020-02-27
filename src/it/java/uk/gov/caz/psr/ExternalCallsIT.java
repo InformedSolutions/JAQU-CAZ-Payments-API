@@ -102,7 +102,7 @@ public class ExternalCallsIT {
     Parameter parameter = new Parameter("vrn", cursor);
     accountsMockServer
       .when(requestGetWithQueryString("/v1/accounts/" + accountId + "/vehicles/sorted-page", 
-          parameter), exactly(1))
+          parameter))
       .respond(response(responseFile, 200));
   }
   

@@ -87,9 +87,10 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
   public void responseContainsExpectedData(List<String> expectedVrns, 
       String firstVrn, String lastVrn) {
     List<PaidPaymentsResult> results = this.responseDto.getPaidPayments().getResults();
+    assertTrue(this.responseDto.getPaidPayments().getResults().size() <= Integer.parseInt(this.pageSize));
     assertEquals(expectedVrns, results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
-    assertEquals(this.responseDto.getFirstVrn(), firstVrn);
-    assertEquals(this.responseDto.getLastVrn(), lastVrn);
+    assertEquals(firstVrn, this.responseDto.getFirstVrn());
+    assertEquals(lastVrn, this.responseDto.getLastVrn());
   }
 
   public void responseContainsExpectedDataWithEntrantPayments(List<String> expectedVrns, 

@@ -72,22 +72,31 @@ public class AccountsController implements AccountControllerApiSpec {
     
     queryStringValidator.validateRequest(queryStrings, 
         Arrays.asList("cleanAirZoneId"), Arrays.asList(PAGE_SIZE_QUERYSTRING_KEY));
+    String cleanAirZoneId = queryStrings.get("cleanAirZoneId");
     String direction = queryStrings.get("direction");
     int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
     
-    PaidPaymentsResponse vrnsAndEntryDates = accountService.retrieveChargeableAccountVehicles(
+    List<String> chargeableVrns = accountService.retrieveChargeableAccountVehicles(
         accountId, direction, pageSize, 
         queryStrings.get("vrn"), queryStrings.get("cleanAirZoneId"));
-
+    PaidPaymentsResponse vrnsAndEntrantDates = PaidPaymentsResponse.from(
+        accountService.getPaidEntrantPayments(trimChargeableVehicles(chargeableVrns, pageSize), 
+            cleanAirZoneId));
+    
     return ResponseEntity.ok()
-        .body(createResponseFromChargeableAccountVehicles(vrnsAndEntryDates, direction, pageSize));
+        .body(createResponseFromChargeableAccountVehicles(chargeableVrns, vrnsAndEntrantDates, 
+            direction, pageSize));
+  }
+
+  private List<String> trimChargeableVehicles(List<String> chargeableVrns, int pageSize) {
+    return chargeableVrns.size() > pageSize ? chargeableVrns.subList(0, pageSize) : chargeableVrns;
   }
 
   private ChargeableAccountVehicleResponse createResponseFromChargeableAccountVehicles(
-      PaidPaymentsResponse results, String direction, int pageSize) {
+      List<String> chargeableVrns, PaidPaymentsResponse results, String direction, int pageSize) {
     String firstVrn = results.getResults().get(0).getVrn();
     String lastVrn = results.getResults().get(results.getResults().size() - 1).getVrn();
-    if (results.getResults().size() < pageSize + 1) {
+    if (chargeableVrns.size() < pageSize + 1) {
       firstVrn = direction.equals("previous") ? null : firstVrn;
       lastVrn = direction.equals("next") ? null : lastVrn;
     }

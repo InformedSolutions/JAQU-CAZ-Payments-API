@@ -69,7 +69,7 @@ public class AccountService {
    * @param cleanAirZoneId the Clean Air Zone to check compliance for
    * @return a list of chargeable VRNs
    */
-  public PaidPaymentsResponse retrieveChargeableAccountVehicles(UUID accountId, String direction, 
+  public List<String> retrieveChargeableAccountVehicles(UUID accountId, String direction, 
       int pageSize, String vrn, String cleanAirZoneId) {
     List<String> results = new ArrayList<String>();
     Boolean lastPage = false;
@@ -94,10 +94,10 @@ public class AccountService {
       }
     }
     
-    return PaidPaymentsResponse.from(getPaidEntrantPayments(results, cleanAirZoneId));
+    return results;
   }
   
-  private Map<String, List<EntrantPayment>> getPaidEntrantPayments(
+  public Map<String, List<EntrantPayment>> getPaidEntrantPayments(
       List<String> results, String cleanAirZoneId) {
     return getPaidEntrantPaymentsService.getResults(
         new HashSet<String>(results),
@@ -141,7 +141,7 @@ public class AccountService {
   private Boolean vrnIsChargeable(ComplianceResultsDto complianceOutcome) {
     Preconditions.checkArgument(complianceOutcome.getComplianceOutcomes().size() <= 1);
     if (complianceOutcome.getComplianceOutcomes().isEmpty()) {
-      return true;
+      return false;
     } else {
       float charge = complianceOutcome.getComplianceOutcomes().get(0).getCharge();
       return charge > 0;      
