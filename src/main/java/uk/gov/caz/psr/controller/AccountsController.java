@@ -75,17 +75,17 @@ public class AccountsController implements AccountControllerApiSpec {
     String cleanAirZoneId = queryStrings.get("cleanAirZoneId");
     String direction = queryStrings.get("direction");
     int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
+    String vrn = queryStrings.get("vrn");
     
     List<String> chargeableVrns = accountService.retrieveChargeableAccountVehicles(
-        accountId, direction, pageSize, 
-        queryStrings.get("vrn"), queryStrings.get("cleanAirZoneId"));
+        accountId, direction, pageSize, vrn, cleanAirZoneId);
     PaidPaymentsResponse vrnsAndEntrantDates = PaidPaymentsResponse.from(
         accountService.getPaidEntrantPayments(trimChargeableVehicles(chargeableVrns, pageSize), 
             cleanAirZoneId));
     
     return ResponseEntity.ok()
         .body(createResponseFromChargeableAccountVehicles(chargeableVrns, vrnsAndEntrantDates, 
-            direction, pageSize));
+            direction, pageSize, vrn == null));
   }
 
   private List<String> trimChargeableVehicles(List<String> chargeableVrns, int pageSize) {
@@ -93,12 +93,14 @@ public class AccountsController implements AccountControllerApiSpec {
   }
 
   private ChargeableAccountVehicleResponse createResponseFromChargeableAccountVehicles(
-      List<String> chargeableVrns, PaidPaymentsResponse results, String direction, int pageSize) {
-    String firstVrn = results.getResults().get(0).getVrn();
+      List<String> chargeableVrns, PaidPaymentsResponse results, String direction, int pageSize, 
+      boolean firstPage) {
+    String firstVrn = firstPage ? null : results.getResults().get(0).getVrn();
     String lastVrn = results.getResults().get(results.getResults().size() - 1).getVrn();
+    String travelDirection = StringUtils.hasText(direction) ? direction : "next"; 
     if (chargeableVrns.size() < pageSize + 1) {
-      firstVrn = direction.equals("previous") ? null : firstVrn;
-      lastVrn = direction.equals("next") ? null : lastVrn;
+      firstVrn = travelDirection.equals("previous") ? null : firstVrn;
+      lastVrn = travelDirection.equals("next") ? null : lastVrn;
     }
     
     return ChargeableAccountVehicleResponse
