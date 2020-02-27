@@ -3,7 +3,6 @@ package uk.gov.caz.psr.journeys;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -11,13 +10,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
-import lombok.RequiredArgsConstructor;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.controller.AccountsController;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 import uk.gov.caz.psr.dto.PaidPaymentsResponse.PaidPaymentsResult;
 
-@RequiredArgsConstructor
 public class RetrieveChargeableAccountVehiclesJourneyAssertion {
   
   private String accountId;
@@ -28,6 +25,10 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
   private ValidatableResponse response;
   private ChargeableAccountVehicleResponse responseDto;
   private static final String CORRELATION_ID = UUID.randomUUID().toString();
+  
+  public RetrieveChargeableAccountVehiclesJourneyAssertion() {
+    RestAssured.basePath = AccountsController.ACCOUNTS_PATH;    
+  }
 
   public RetrieveChargeableAccountVehiclesJourneyAssertion forAccountId(String accountId) {
     this.accountId = accountId;
@@ -56,7 +57,6 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
   
   public RetrieveChargeableAccountVehiclesJourneyAssertion 
   whenRequestIsMadeToRetrieveChargeableAccountVehicles() {
-    RestAssured.basePath = AccountsController.ACCOUNTS_PATH;
     this.response = RestAssured
       .given()
       .accept(MediaType.APPLICATION_JSON.toString())
@@ -97,8 +97,8 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
       String firstVrn, String lastVrn) {
     List<PaidPaymentsResult> results = this.responseDto.getPaidPayments().getResults();
     assertEquals(expectedVrns, results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
-    assertEquals(LocalDate.now().format(DateTimeFormatter.ISO_DATE), results.get(0).getPaidDates().get(0));
-    assertEquals(this.responseDto.getFirstVrn(), firstVrn);
-    assertEquals(this.responseDto.getLastVrn(), lastVrn);
+    assertEquals(LocalDate.now(), results.get(0).getPaidDates().get(0));
+    assertEquals(firstVrn, this.responseDto.getFirstVrn());
+    assertEquals(lastVrn, this.responseDto.getLastVrn());
   }
 }

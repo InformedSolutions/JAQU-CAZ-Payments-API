@@ -28,7 +28,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   
   @Test
   public void shouldReturn200OkAndResponseWhenValidRequest() {
-    mockAccountServiceChargesCall(ACCOUNT_ID, "CAS300");
+    mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
     mockVccsComplianceCall("CAS300", "vehicle-compliance-response.json", 200);
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -43,7 +43,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   
   @Test
   public void shouldReturn200OkAndResponseWhenZonesNotProvided() {
-    mockAccountServiceChargesCall(ACCOUNT_ID, "CAS300");
+    mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
     mockVccsCleanAirZonesCall();
     mockVccsComplianceCall("CAS300", "vehicle-compliance-response.json", 200);
     givenVehicleChargesRetrieval()
@@ -58,7 +58,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   
   @Test
   public void shouldReturn200OkAndResponseWhenUnknownVehicleType() {
-    mockAccountServiceChargesCall(ACCOUNT_ID, "CAS302");
+    mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS302");
     mockVccsUnprocessableEntityComplianceCall("CAS302");
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -73,7 +73,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
 
   @Test
   public void shouldReturn200OkAndEmptyResponseWhenNoVehiclesReturnedFromAccountsApi() {
-    mockAccountServiceChargesCallWithEmptyResponse(ACCOUNT_ID);
+    mockAccountServiceOffsetCallWithEmptyResponse(ACCOUNT_ID);
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
       .forPageNumber("0")
@@ -87,7 +87,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   
   @Test
   public void shouldReturn200OkAndResponseWhenUnrecognisedVrn() {
-    mockAccountServiceChargesCall(ACCOUNT_ID, "ABCDEF");
+    mockAccountServiceOffsetCall(ACCOUNT_ID, "ABCDEF");
     mockVccsComplianceCallError("ABCDEF", 404);
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -115,7 +115,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   
   @Test
   public void shouldReturn404NotFoundWhenAccountIdNotFound() {
-    mockAccountServiceChargesCallWithError(ACCOUNT_ID, 404);
+    mockAccountServiceOffsetCallWithError(ACCOUNT_ID, 404);
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
       .forPageNumber("0")
@@ -128,7 +128,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
  
   @Test
   public void shouldReturn503WhenVccsUnavailable() {
-    mockAccountServiceChargesCall(ACCOUNT_ID, "CAS300");
+    mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
     mockVccsComplianceCallError("CAS300", 503);
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -142,7 +142,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   
   @Test
   public void shouldReturn503WhenAccountServiceUnavailable() {
-    mockAccountServiceChargesCallWithError(ACCOUNT_ID, 503);
+    mockAccountServiceOffsetCallWithError(ACCOUNT_ID, 503);
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
       .forPageNumber("0")
