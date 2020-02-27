@@ -50,12 +50,8 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
   @Test
   public void shouldReturnHttpOkWhenValidRequestWithAllChargeableVehicles() 
       throws JsonProcessingException {
-    mockAccountServiceChargeableVehiclesCall(ACCOUNT_ID, 
-        "ABC123", NEXT_CURSOR_RESPONSE);
-    List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
-    for (String vrn : vrns) {
-      mockVccsComplianceCall(vrn, "vehicle-compliance-response-single-zone.json", 200);
-    }
+    
+    List<String> vrns = mockFullNextPageOfChargeableVrns();
     
     givenAssertion()
       .forAccountId(ACCOUNT_ID)
@@ -65,29 +61,19 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size()-1));
+      .responseContainsExpectedData(vrns.subList(0, vrns.size() - 1), vrns.get(0), 
+          vrns.get(vrns.size()-2));
   }
-  
+
+
   @Test
   public void shouldReturnHttpOkWhenValidRequestWithMixedVehicles() 
       throws JsonProcessingException {
-    mockAccountServiceChargeableVehiclesCall(
+    mockAccountServiceCursorCall(
         ACCOUNT_ID, "ABC123", NEXT_CURSOR_RESPONSE);
-    List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
-    List<String> chargeable = new ArrayList<String>();
-    for (int i = 0; i < vrns.size(); i++) {
-      // whatever is called next, return an empty response
-      mockAccountServiceChargeableVehiclesCall(
-          ACCOUNT_ID, vrns.get(i), EMPTY_CURSOR_RESPONSE);
-      if (i % 2 == 0) {
-        mockVccsComplianceCall(vrns.get(i), 
-            "vehicle-compliance-response-single-zone.json", 200);
-        chargeable.add(vrns.get(i));
-      } else {
-        mockVccsComplianceCall(vrns.get(i), 
-            "vehicle-compliance-compliant-response-single-zone.json", 200);        
-      }
-    }
+    mockAccountServiceCursorCall(
+        ACCOUNT_ID, "LMN234", EMPTY_CURSOR_RESPONSE);
+    List<String> chargeable = mockAccountVehiclesAndMakeHalfChargeable(NEXT_CURSOR_RESPONSE);
     
     givenAssertion()
       .forAccountId(ACCOUNT_ID)
@@ -98,19 +84,16 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(chargeable, vrns.get(0), null);
+      .responseContainsExpectedData(chargeable, chargeable.get(0), null);
   }
   
   @Test
   public void shouldReturnHttpOkWhenValidRequestWithUnprocessableVrn() 
       throws JsonProcessingException {
-    mockAccountServiceChargeableVehiclesCall(ACCOUNT_ID, 
-        "ABC123", NEXT_CURSOR_RESPONSE);
-    List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
-    for (int i = 0; i < vrns.size() - 1; i++) {
-      mockVccsComplianceCall(vrns.get(i), "vehicle-compliance-response-single-zone.json", 200);
-    }
-    mockVccsUnprocessableEntityComplianceCall(vrns.get(vrns.size() - 1));
+    String unprocessableVrn = "LMN234";
+    mockVccsUnprocessableEntityComplianceCall(unprocessableVrn);
+    List<String> vrns = mockFullNextPageOfChargeableVrns();
+    mockAccountServiceCursorCall(ACCOUNT_ID, unprocessableVrn, EMPTY_CURSOR_RESPONSE);
     
     givenAssertion()
       .forAccountId(ACCOUNT_ID)
@@ -121,18 +104,15 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size() - 1));
+      .responseContainsExpectedData(vrns.subList(0, vrns.size() - 1), vrns.get(0), null);
   }
   
   @Test
   public void shouldReturnHttpOkWhenValidRequestWithoutVrnOrDirection() 
       throws JsonProcessingException {
-    mockAccountServiceChargeableVehiclesCallWithoutCursor(ACCOUNT_ID, 
+    mockAccountServiceCursorCallWithoutCursorParameter(ACCOUNT_ID, 
         NEXT_CURSOR_RESPONSE);
-    List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
-    for (String vrn : vrns) {
-      mockVccsComplianceCall(vrn, "vehicle-compliance-response-single-zone.json", 200);
-    }
+    List<String> vrns = mockFullNextPageOfChargeableVrns();
     
     givenAssertion()
       .forAccountId(ACCOUNT_ID)
@@ -141,28 +121,18 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size() - 1));
+      .responseContainsExpectedData(vrns.subList(0, vrns.size() - 1), vrns.get(0), 
+          vrns.get(vrns.size() - 2));
   }
   
   @Test
   public void shouldReturnHttpOkAndNoFirstVrnWhenNoFurtherPreviousVrnsFound() 
       throws JsonProcessingException {
-    mockAccountServiceChargeableVehiclesCall(
+    mockAccountServiceCursorCall(
         ACCOUNT_ID, "LMN234", PREVIOUS_CURSOR_RESPONSE);
-    mockAccountServiceChargeableVehiclesCall(
+    mockAccountServiceCursorCall(
         ACCOUNT_ID, "ABC123", EMPTY_CURSOR_RESPONSE);
-    List<String> vrns = getAccountVehicleVrnsFromFile(PREVIOUS_CURSOR_RESPONSE);
-    List<String> chargeable = new ArrayList<String>();
-    for (int i = 0; i < vrns.size(); i++) {
-      if (i % 2 == 0) {
-        mockVccsComplianceCall(vrns.get(i), 
-            "vehicle-compliance-response-single-zone.json", 200);
-        chargeable.add(vrns.get(i));
-      } else {
-        mockVccsComplianceCall(vrns.get(i), 
-            "vehicle-compliance-compliant-response-single-zone.json", 200);        
-      }
-    }
+    List<String> chargeable = mockAccountVehiclesAndMakeHalfChargeable(PREVIOUS_CURSOR_RESPONSE);
     
     Collections.sort(chargeable);
     
@@ -178,15 +148,11 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .responseContainsExpectedData(chargeable, null, chargeable.get(chargeable.size() - 1));
   }
   
+
   @Test
   public void shouldReturnHttpOkWhenEntrantPaymentsExist() throws JsonProcessingException {
     executeSqlFrom("data/sql/add-entrant-payments.sql");
-    mockAccountServiceChargeableVehiclesCall(ACCOUNT_ID, 
-        "ABC123", NEXT_CURSOR_RESPONSE);
-    List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
-    for (String vrn : vrns) {
-      mockVccsComplianceCall(vrn, "vehicle-compliance-response-single-zone.json", 200);
-    }
+    List<String> vrns = mockFullNextPageOfChargeableVrns();
     
     givenAssertion()
       .forAccountId(ACCOUNT_ID)
@@ -196,7 +162,8 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns, vrns.get(0), vrns.get(vrns.size()-1));
+      .responseContainsExpectedDataWithEntrantPayments(vrns.subList(0, vrns.size() - 1), 
+          vrns.get(0), vrns.get(vrns.size() - 2));
     
   }
   
@@ -207,6 +174,33 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
 
   public RetrieveChargeableAccountVehiclesJourneyAssertion givenAssertion() {
     return new RetrieveChargeableAccountVehiclesJourneyAssertion();
+  }
+  
+  private List<String> mockAccountVehiclesAndMakeHalfChargeable(String responseFile) 
+      throws JsonProcessingException {
+    List<String> vrns = getAccountVehicleVrnsFromFile(responseFile);
+    List<String> chargeable = new ArrayList<String>();
+    for (int i = 0; i < vrns.size(); i++) {
+      if (i % 2 == 0) {
+        mockVccsComplianceCall(vrns.get(i), 
+            "vehicle-compliance-response-single-zone.json", 200);
+        chargeable.add(vrns.get(i));
+      } else {
+        mockVccsComplianceCall(vrns.get(i), 
+            "vehicle-compliance-compliant-response-single-zone.json", 200);        
+      }
+    }
+    return chargeable;
+  }
+  
+  private List<String> mockFullNextPageOfChargeableVrns() throws JsonProcessingException {
+    mockAccountServiceCursorCall(ACCOUNT_ID, 
+        "ABC123", NEXT_CURSOR_RESPONSE);
+    List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
+    for (String vrn : vrns) {
+      mockVccsComplianceCall(vrn, "vehicle-compliance-response-single-zone.json", 200);
+    }
+    return vrns;
   }
 
   private void executeSqlFrom(String classPathFile) {

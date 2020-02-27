@@ -2,6 +2,7 @@ package uk.gov.caz.psr.service;
 
 import com.amazonaws.util.StringUtils;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,7 +18,6 @@ import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
-import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
@@ -69,7 +69,7 @@ public class AccountService {
    * @param cleanAirZoneId the Clean Air Zone to check compliance for
    * @return a list of chargeable VRNs
    */
-  public PaidPaymentsResponse retrieveChargeableAccountVehicles(UUID accountId, String direction, 
+  public List<String> retrieveChargeableAccountVehicles(UUID accountId, String direction, 
       int pageSize, String vrn, String cleanAirZoneId) {
     List<String> results = new ArrayList<String>();
     Boolean lastPage = false;
@@ -81,23 +81,30 @@ public class AccountService {
       List<String> accountVrns = getAccountVrns(accountId, direction, pageSize * 3, vrnCursor);
       
       // check if the end of pages has been reached, if not set new cursor
-      if (accountVrns.size() < pageSize) {
+      if (accountVrns.size() < pageSize * 3) {
         lastPage = true;
       } else {
         vrnCursor = getVrnCursor(accountVrns, direction);
-      }      
+      }
       
-      List<String> chargeableVrns = getChargeableVrnsFromVcc(accountVrns, cleanAirZoneId);
+      List<String> chargeableVrns = getChargeableVrnsFromVcc(accountVrns, cleanAirZoneId, 
+          pageSize + 1);
       
-      if (! chargeableVrns.isEmpty()) {
+      if (!chargeableVrns.isEmpty()) {
         results.addAll(chargeableVrns);
       }
     }
     
-    return PaidPaymentsResponse.from(getPaidEntrantPayments(results, cleanAirZoneId));
+    return results;
   }
   
-  private Map<String, List<EntrantPayment>> getPaidEntrantPayments(
+  /**
+   * Gets entrant payments for a list of VRNs in a 13 day payment window.
+   * @param results map of VRNs against entrant payments
+   * @param cleanAirZoneId an identitier for the clean air zone
+   * @return
+   */
+  public Map<String, List<EntrantPayment>> getPaidEntrantPayments(
       List<String> results, String cleanAirZoneId) {
     return getPaidEntrantPaymentsService.getResults(
         new HashSet<String>(results),
@@ -107,14 +114,30 @@ public class AccountService {
   }
 
   private List<String> getChargeableVrnsFromVcc(List<String> accountVrns, 
-      String cleanAirZoneId) {
-    List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
-        .retrieveVehicleCompliance(accountVrns, cleanAirZoneId);
-    return complianceOutcomes
-        .stream()
-        .filter(complianceOutcome -> vrnIsChargeable(complianceOutcome))
-        .map(complianceOutcome -> complianceOutcome.getRegistrationNumber())
-        .collect(Collectors.toList());
+      String cleanAirZoneId, int pageSize) {
+    List<String> results = new ArrayList<String>();
+    // split accountVrns into chunks
+    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, 10);
+    // while results is less than page size do another batch
+    for (List<String> chunk : accountVrnChunks) {
+      List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
+          .retrieveVehicleCompliance(chunk, cleanAirZoneId);
+      List<String> chargeableVrns = complianceOutcomes
+          .stream()
+          .filter(complianceOutcome -> vrnIsChargeable(complianceOutcome))
+          .map(complianceOutcome -> complianceOutcome.getRegistrationNumber())
+          .collect(Collectors.toList());
+      
+      if (!chargeableVrns.isEmpty()) {
+        results.addAll(chargeableVrns);
+      }
+      
+      if (results.size() >= pageSize) {
+        break;
+      }
+    }
+    
+    return results;
   }
 
   private List<String> getAccountVrns(UUID accountId, String direction, int pageSize, 
@@ -126,22 +149,22 @@ public class AccountService {
 
   private String getVrnCursor(List<String> accountVrns, String direction) {
     Collections.sort(accountVrns);
-    if (direction.equals("next")) {
+    // assume next is direction is null or empty
+    if (StringUtils.isNullOrEmpty(direction) || direction.equals("next")) {
       return accountVrns.get(accountVrns.size() - 1);
-    } else if (direction.equals("previous")) {
+    } 
+    
+    if (direction.equals("previous")) {
       return accountVrns.get(0);
-    } else if (StringUtils.isNullOrEmpty(direction)) {
-      // assume 'next' if direction not set
-      return accountVrns.get(accountVrns.size() - 1);
-    } else { 
-      throw new IllegalArgumentException("Direction given is invalid.");
     }
+    
+    throw new IllegalArgumentException("Direction given is invalid.");
   }
 
   private Boolean vrnIsChargeable(ComplianceResultsDto complianceOutcome) {
     Preconditions.checkArgument(complianceOutcome.getComplianceOutcomes().size() <= 1);
     if (complianceOutcome.getComplianceOutcomes().isEmpty()) {
-      return true;
+      return false;
     } else {
       float charge = complianceOutcome.getComplianceOutcomes().get(0).getCharge();
       return charge > 0;      
