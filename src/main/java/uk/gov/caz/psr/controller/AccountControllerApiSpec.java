@@ -106,6 +106,7 @@ public interface AccountControllerApiSpec {
       @PathVariable("accountId") UUID accountId,
       @RequestParam(required = true) Map<String, String> queryStrings);
 
+
   /**
    * An endpoint to retrieve a single chargeable vehicle registered against an account.
    *
@@ -141,5 +142,4 @@ public interface AccountControllerApiSpec {
   ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
       @PathVariable("accountId") UUID accountId, @PathVariable("vrn") String vrn, 
       @RequestParam(required = true) Map<String, String> queryStrings);
-  
 }

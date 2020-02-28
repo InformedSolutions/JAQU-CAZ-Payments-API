@@ -93,7 +93,7 @@ public class AccountService {
       }
       
       List<String> chargeableVrns = getChargeableVrnsFromVcc(accountVrns, cleanAirZoneId, 
-          pageSize + 1);
+          pageSize);
       
       if (!chargeableVrns.isEmpty()) {
         results.addAll(chargeableVrns);
@@ -148,7 +148,8 @@ public class AccountService {
       String cleanAirZoneId, int pageSize) {
     List<String> results = new ArrayList<String>();
     // split accountVrns into chunks
-    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, 10);
+    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, pageSize);
+    
     // while results is less than page size do another batch
     for (List<String> chunk : accountVrnChunks) {
       List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
@@ -163,7 +164,7 @@ public class AccountService {
         results.addAll(chargeableVrns);
       }
       
-      if (results.size() >= pageSize) {
+      if (results.size() >= pageSize + 1) {
         break;
       }
     }

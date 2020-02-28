@@ -75,26 +75,11 @@ public class ExternalCallsIT {
     .respond(emptyResponse(statusCode));
   }
 
-  
   public void mockAccountServiceOffsetCall(String accountId, String vrn) {
     accountsMockServer
         .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
             exactly(1))
         .respond(responseWithVrn("account-vehicles-response.json", vrn, 200));
-  }
-  
-  public void mockAccountServiceChargesSingleVrnCall(String accountId, String vrn, int statusCode) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
-            exactly(1))
-        .respond(responseWithVrnAndAccountId("single-account-vehicle-response.json", vrn, accountId, statusCode));
-  }
-  
-  public void mockAccountServiceChargesSingleVrnCallWithError(String accountId, String vrn, int statusCode) {
-    accountsMockServer
-    .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
-          exactly(1))
-      .respond(emptyResponse(statusCode));
   }
   
   public void mockAccountServiceOffsetCallWithEmptyResponse(String accountId) {
@@ -125,6 +110,20 @@ public class ExternalCallsIT {
     accountsMockServer
       .when(requestGet("/v1/accounts/" + accountId + "/vehicles/sorted-page"), exactly(1))
       .respond(response(responseFile, 200));
+  }
+
+  public void mockAccountServiceChargesSingleVrnCall(String accountId, String vrn, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
+            exactly(1))
+        .respond(responseWithVrnAndAccountId("single-account-vehicle-response.json", vrn, accountId, statusCode));
+  }
+
+  public void mockAccountServiceChargesSingleVrnCallWithError(String accountId, String vrn, int statusCode) {
+    accountsMockServer
+    .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
+          exactly(1))
+      .respond(emptyResponse(statusCode));
   }
   
   @SneakyThrows

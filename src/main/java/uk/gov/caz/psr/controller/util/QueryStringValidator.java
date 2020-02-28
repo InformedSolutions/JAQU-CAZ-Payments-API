@@ -19,13 +19,12 @@ public class QueryStringValidator {
    */
   public void validateRequest(Map<String, String> map, List<String> requiredStringParams,
       List<String> requiredNumericalParams) {
-    
     for (String param : requiredStringParams) {
       if (queryStringInvalid(param, map)) {
         throw new InvalidRequestPayloadException("Incorrect parameters supplied");
       }
     }
-    
+
     if (requiredNumericalParams != null) {
       for (String param : requiredNumericalParams) {
         if (numericalQueryStringInvalid(param, map)) {

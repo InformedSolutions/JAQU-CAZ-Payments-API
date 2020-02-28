@@ -88,10 +88,6 @@ public class AccountsController implements AccountControllerApiSpec {
         .body(createResponseFromChargeableAccountVehicles(chargeableVrns, vrnsAndEntrantDates, 
             direction, pageSize, vrn == null));
   }
-  
-  private List<String> trimChargeableVehicles(List<String> chargeableVrns, int pageSize) {
-    return chargeableVrns.size() > pageSize ? chargeableVrns.subList(0, pageSize) : chargeableVrns;
-  }
 
   @Override
   public ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
@@ -112,6 +108,10 @@ public class AccountsController implements AccountControllerApiSpec {
         .body(response);
   }
   
+  private List<String> trimChargeableVehicles(List<String> chargeableVrns, int pageSize) {
+    return chargeableVrns.size() > pageSize ? chargeableVrns.subList(0, pageSize) : chargeableVrns;
+  }
+
   private ChargeableAccountVehicleResponse createResponseFromChargeableAccountVehicles(
       List<String> chargeableVrns, PaidPaymentsResponse results, String direction, int pageSize, 
       boolean firstPage) {
