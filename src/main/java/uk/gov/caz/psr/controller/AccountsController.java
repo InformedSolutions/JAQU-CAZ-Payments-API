@@ -25,6 +25,7 @@ public class AccountsController implements AccountControllerApiSpec {
   public static final String ACCOUNTS_PATH = "/v1/accounts";
   private static final String PAGE_NUMBER_QUERYSTRING_KEY = "pageNumber";
   private static final String PAGE_SIZE_QUERYSTRING_KEY = "pageSize";
+  private static final String CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY = "cleanAirZoneId";
   
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final AccountService accountService;
@@ -71,8 +72,8 @@ public class AccountsController implements AccountControllerApiSpec {
       Map<String, String> queryStrings) {
     
     queryStringValidator.validateRequest(queryStrings, 
-        Arrays.asList("cleanAirZoneId"), Arrays.asList(PAGE_SIZE_QUERYSTRING_KEY));
-    String cleanAirZoneId = queryStrings.get("cleanAirZoneId");
+        Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY), Arrays.asList(PAGE_SIZE_QUERYSTRING_KEY));
+    String cleanAirZoneId = queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY);
     String direction = queryStrings.get("direction");
     int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
     String vrn = queryStrings.get("vrn");
@@ -88,6 +89,25 @@ public class AccountsController implements AccountControllerApiSpec {
             direction, pageSize, vrn == null));
   }
 
+  @Override
+  public ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
+      UUID accountId, String vrn,Map<String, String> queryStrings) { 
+   
+    queryStringValidator.validateRequest(queryStrings, 
+        Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY), null);
+    
+    PaidPaymentsResponse vrnsAndEntryDates = accountService.retrieveSingleChargeableAccountVehicle(
+        accountId, vrn, queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY));
+    
+    ChargeableAccountVehicleResponse response = ChargeableAccountVehicleResponse
+        .builder()
+        .chargeableAccountVehicles(vrnsAndEntryDates)
+        .build();
+    
+    return ResponseEntity.ok()
+        .body(response);
+  }
+  
   private List<String> trimChargeableVehicles(List<String> chargeableVrns, int pageSize) {
     return chargeableVrns.size() > pageSize ? chargeableVrns.subList(0, pageSize) : chargeableVrns;
   }
@@ -105,7 +125,7 @@ public class AccountsController implements AccountControllerApiSpec {
     
     return ChargeableAccountVehicleResponse
       .builder()
-      .paidPayments(results)
+      .chargeableAccountVehicles(results)
       .firstVrn(firstVrn)
       .lastVrn(lastVrn)
       .build();

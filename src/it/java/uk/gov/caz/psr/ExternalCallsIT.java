@@ -75,7 +75,6 @@ public class ExternalCallsIT {
     .respond(emptyResponse(statusCode));
   }
 
-  
   public void mockAccountServiceOffsetCall(String accountId, String vrn) {
     accountsMockServer
         .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
@@ -113,6 +112,20 @@ public class ExternalCallsIT {
       .respond(response(responseFile, 200));
   }
 
+  public void mockAccountServiceChargesSingleVrnCall(String accountId, String vrn, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
+            exactly(1))
+        .respond(responseWithVrnAndAccountId("single-account-vehicle-response.json", vrn, accountId, statusCode));
+  }
+
+  public void mockAccountServiceChargesSingleVrnCallWithError(String accountId, String vrn, int statusCode) {
+    accountsMockServer
+    .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
+          exactly(1))
+      .respond(emptyResponse(statusCode));
+  }
+  
   @SneakyThrows
   private String readFile(String filename) {
     return Resources.toString(Resources.getResource("data/external/" + filename),
@@ -137,6 +150,13 @@ public class ExternalCallsIT {
         .withStatusCode(statusCode)
         .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
         .withBody(readJson(responseFile).replace("TEST_VRN", vrn));
+  }
+  
+  public static HttpResponse responseWithVrnAndAccountId(String responseFile, String vrn, String accountId, int statusCode) {
+    return HttpResponse.response()
+        .withStatusCode(statusCode)
+        .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
+        .withBody(readJson(responseFile).replace("TEST_VRN", vrn).replace("TEST_ACCOUNT", accountId));
   }
   
   public static HttpResponse emptyResponse(int statusCode) {

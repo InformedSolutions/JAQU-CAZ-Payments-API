@@ -7,7 +7,7 @@ import lombok.Value;
 @Value
 public class ChargeableAccountVehicleResponse {
   
-  PaidPaymentsResponse paidPayments;
+  PaidPaymentsResponse chargeableAccountVehicles;
   String firstVrn;
   String lastVrn;
 

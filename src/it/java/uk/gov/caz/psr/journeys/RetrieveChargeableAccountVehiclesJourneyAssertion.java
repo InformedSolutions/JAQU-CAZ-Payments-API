@@ -1,7 +1,7 @@
 package uk.gov.caz.psr.journeys;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -86,8 +86,8 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
 
   public void responseContainsExpectedData(List<String> expectedVrns, 
       String firstVrn, String lastVrn) {
-    List<PaidPaymentsResult> results = this.responseDto.getPaidPayments().getResults();
-    assertTrue(this.responseDto.getPaidPayments().getResults().size() <= Integer.parseInt(this.pageSize));
+    List<PaidPaymentsResult> results = this.responseDto.getChargeableAccountVehicles().getResults();
+    assertTrue(this.responseDto.getChargeableAccountVehicles().getResults().size() <= Integer.parseInt(this.pageSize));
     assertEquals(expectedVrns, results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
     assertEquals(firstVrn, this.responseDto.getFirstVrn());
     assertEquals(lastVrn, this.responseDto.getLastVrn());
@@ -95,7 +95,7 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
 
   public void responseContainsExpectedDataWithEntrantPayments(List<String> expectedVrns, 
       String firstVrn, String lastVrn) {
-    List<PaidPaymentsResult> results = this.responseDto.getPaidPayments().getResults();
+    List<PaidPaymentsResult> results = this.responseDto.getChargeableAccountVehicles().getResults();
     assertEquals(expectedVrns, results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
     assertEquals(LocalDate.now(), results.get(0).getPaidDates().get(0));
     assertEquals(firstVrn, this.responseDto.getFirstVrn());

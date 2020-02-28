@@ -9,6 +9,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Headers;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
@@ -71,6 +72,32 @@ public interface AccountsRepository {
     try {
       return getAccountVehicleVrnsByCursor(accountId.toString(), direction, 
           Integer.toString(pageSize), vrn).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+  
+  /**
+   * Method to create retrofit2 account service for get account vehicle call.
+   *
+   * @return {@link Call}
+   */
+  @Headers("Accept: application/json")
+  @GET("v1/accounts/{accountId}/vehicles/{vrn}")
+  Call<AccountVehicleResponse> getAccountSingleVehicleVrn(
+      @Path("accountId") UUID accountId, @Path("vrn") String vrn
+    );
+  
+  /**
+   * Synchronous wrapper for getAccountVehicleVrns call.
+   * @param accountId the identifier of the account
+   * @param vrn the VRN to query.
+   * @return details of a single vehicle vrn.
+   */
+  default Response<AccountVehicleResponse> getAccountSingleVehicleVrnSync(
+      UUID accountId, String vrn) {
+    try {
+      return getAccountSingleVehicleVrn(accountId, vrn).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }
