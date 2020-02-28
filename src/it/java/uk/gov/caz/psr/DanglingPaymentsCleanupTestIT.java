@@ -44,7 +44,7 @@ import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 @Sql(
     scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
-public class DanglingPaymentsCleanupTestIT extends VccsCallsIT {
+public class DanglingPaymentsCleanupTestIT extends ExternalCallsIT {
 
   private static final int EXPECTED_NON_DANGLING_PAYMENTS_COUNT = 6;
   private static final int INITIAL_DANGLING_PAYMENTS_COUNT = 3;

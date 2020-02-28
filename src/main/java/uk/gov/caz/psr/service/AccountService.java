@@ -1,17 +1,24 @@
 package uk.gov.caz.psr.service;
 
+import com.amazonaws.util.StringUtils;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-
 import org.springframework.stereotype.Service;
-
 import retrofit2.Response;
-
+import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
@@ -25,6 +32,8 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 public class AccountService {
   
   private final AccountsRepository accountsRepository;
+  private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
+  private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final VccsRepository vccRepository;
   
   /**
@@ -50,6 +59,118 @@ public class AccountService {
     }
   }
   
+  /**
+   * Fetches a list of vehicles from the Accounts Service and lazily checks their
+   * chargeability until it generates a full list of results.
+   * @param accountId the account whose vehicles should be returned
+   * @param direction 'next' or 'previous' in terms of pages
+   * @param pageSize the size of the list to be returned
+   * @param vrn the "cursor" on which to search the account vehicles
+   * @param cleanAirZoneId the Clean Air Zone to check compliance for
+   * @return a list of chargeable VRNs
+   */
+  public List<String> retrieveChargeableAccountVehicles(UUID accountId, String direction, 
+      int pageSize, String vrn, String cleanAirZoneId) {
+    List<String> results = new ArrayList<String>();
+    Boolean lastPage = false;
+    // initialise cursor at first VRN
+    String vrnCursor = vrn;
+    
+    while (results.size() < (pageSize + 1) && !lastPage) {
+      // get triple the number of vrns as will be on page to reduce overall request numbers
+      List<String> accountVrns = getAccountVrns(accountId, direction, pageSize * 3, vrnCursor);
+      
+      // check if the end of pages has been reached, if not set new cursor
+      if (accountVrns.size() < pageSize * 3) {
+        lastPage = true;
+      } else {
+        vrnCursor = getVrnCursor(accountVrns, direction);
+      }
+      
+      List<String> chargeableVrns = getChargeableVrnsFromVcc(accountVrns, cleanAirZoneId, 
+          pageSize + 1);
+      
+      if (!chargeableVrns.isEmpty()) {
+        results.addAll(chargeableVrns);
+      }
+    }
+    
+    return results;
+  }
+  
+  /**
+   * Gets entrant payments for a list of VRNs in a 13 day payment window.
+   * @param results map of VRNs against entrant payments
+   * @param cleanAirZoneId an identitier for the clean air zone
+   * @return
+   */
+  public Map<String, List<EntrantPayment>> getPaidEntrantPayments(
+      List<String> results, String cleanAirZoneId) {
+    return getPaidEntrantPaymentsService.getResults(
+        new HashSet<String>(results),
+        LocalDate.now().minusDays(6),
+        LocalDate.now().plusDays(6),
+        UUID.fromString(cleanAirZoneId));
+  }
+
+  private List<String> getChargeableVrnsFromVcc(List<String> accountVrns, 
+      String cleanAirZoneId, int pageSize) {
+    List<String> results = new ArrayList<String>();
+    // split accountVrns into chunks
+    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, pageSize - 1);
+    // while results is less than page size do another batch
+    for (List<String> chunk : accountVrnChunks) {
+      List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
+          .retrieveVehicleCompliance(chunk, cleanAirZoneId);
+      List<String> chargeableVrns = complianceOutcomes
+          .stream()
+          .filter(complianceOutcome -> vrnIsChargeable(complianceOutcome))
+          .map(complianceOutcome -> complianceOutcome.getRegistrationNumber())
+          .collect(Collectors.toList());
+      
+      if (!chargeableVrns.isEmpty()) {
+        results.addAll(chargeableVrns);
+      }
+      
+      if (results.size() >= pageSize) {
+        break;
+      }
+    }
+    
+    return results;
+  }
+
+  private List<String> getAccountVrns(UUID accountId, String direction, int pageSize, 
+      String vrnCursor) {
+    Response<List<String>> accountsResponse = accountsRepository
+        .getAccountVehicleVrnsByCursorSync(accountId, direction, pageSize, vrnCursor);
+    return accountsResponse.body();
+  }
+
+  private String getVrnCursor(List<String> accountVrns, String direction) {
+    Collections.sort(accountVrns);
+    // assume next is direction is null or empty
+    if (StringUtils.isNullOrEmpty(direction) || direction.equals("next")) {
+      return accountVrns.get(accountVrns.size() - 1);
+    } 
+    
+    if (direction.equals("previous")) {
+      return accountVrns.get(0);
+    }
+    
+    throw new IllegalArgumentException("Direction given is invalid.");
+  }
+
+  private Boolean vrnIsChargeable(ComplianceResultsDto complianceOutcome) {
+    Preconditions.checkArgument(complianceOutcome.getComplianceOutcomes().size() <= 1);
+    if (complianceOutcome.getComplianceOutcomes().isEmpty()) {
+      return false;
+    } else {
+      float charge = complianceOutcome.getComplianceOutcomes().get(0).getCharge();
+      return charge > 0;      
+    }
+  }
+
   /**
    * Helper method for retrieving a list of comma delimited clean air zones IDs.
    * @return a list of comma delimited clean air zones IDs.

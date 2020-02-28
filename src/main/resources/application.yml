@@ -175,6 +175,8 @@ swagger:
     accounts:
       vehicle-retrieval:
         descriptions: retrieves a page of vehicles associated with a particular account
+      chargeable-vehicles:
+        descriptions: retrieves a page of chargeable vehicles
     payments:
       create-vehicle-entrant:
         description: >-
