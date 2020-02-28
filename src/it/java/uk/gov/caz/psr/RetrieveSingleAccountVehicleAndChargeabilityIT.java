@@ -25,7 +25,7 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
   }
   
   @Test
-  public void shouldReturn200OkAndResponseWhenValidRequest() {
+  public void shouldReturn200OkAndResponseWhenValidRequestAndNoDuplicatePayments() {
     mockAccountServiceChargesSingleVrnCall(ACCOUNT_ID, "CAS300", 200);
     mockVccsComplianceCall("CAS300", "vehicle-compliance-response-single-zone.json", 200);
 
@@ -35,7 +35,8 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
       .forVrn("CAS300")
       .whenRequestIsMadeToRetrieveASingleChargeableAccountVehicle()
       .then()
-      .responseIsReturnedWithHttpOkStatusCode();
+      .responseIsReturnedWithHttpOkStatusCode()
+      .responseContainsExpectedData("CAS300", 0);
   }
   
   @Test
