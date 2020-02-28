@@ -117,7 +117,7 @@ public class AccountService {
       String cleanAirZoneId, int pageSize) {
     List<String> results = new ArrayList<String>();
     // split accountVrns into chunks
-    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, 10);
+    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, pageSize - 1);
     // while results is less than page size do another batch
     for (List<String> chunk : accountVrnChunks) {
       List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
