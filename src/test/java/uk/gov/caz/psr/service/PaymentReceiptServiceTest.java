@@ -11,23 +11,23 @@ import org.assertj.core.util.Arrays;
 import org.hibernate.mapping.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import uk.gov.caz.psr.dto.SendEmailRequest;
 
 public class PaymentReceiptServiceTest {
 
   private PaymentReceiptService paymentReceiptService;
-  private String templateId = "test-template-id";
   private ObjectMapper om = new ObjectMapper();
 
   @BeforeEach
   void init() {
-    paymentReceiptService = new PaymentReceiptService(templateId, new ObjectMapper());
+    paymentReceiptService = new PaymentReceiptService(new ObjectMapper());
   }
 
   @Test
   void canInstantiatePaymentReceiptService() {
     PaymentReceiptService paymentReceiptService =
-        new PaymentReceiptService("test", new ObjectMapper());
+        new PaymentReceiptService(new ObjectMapper());
     assertNotNull(paymentReceiptService);
   }
 
@@ -41,7 +41,7 @@ public class PaymentReceiptServiceTest {
     String reference = "1001";
     String externalId = "externalidentifier";
     ArrayList<String> dates = new ArrayList<String>() {{add("02 February 2020"); add("03 February 2020"); }};
-
+    
     // when
     SendEmailRequest request = paymentReceiptService.buildSendEmailRequest(
         testEmail, amount, cleanAirZoneName, reference, vrn, externalId, dates);
@@ -56,7 +56,6 @@ public class PaymentReceiptServiceTest {
     assertEquals(personalisation.get("reference"), reference);
     assertEquals(personalisation.get("vrn"), vrn);
     assertEquals(personalisation.get("caz"), cleanAirZoneName);
-    assertEquals(templateId, request.getTemplateId());
   }
 
 }
