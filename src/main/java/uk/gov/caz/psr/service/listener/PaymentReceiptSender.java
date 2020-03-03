@@ -3,7 +3,9 @@ package uk.gov.caz.psr.service.listener;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import uk.gov.caz.psr.dto.SendEmailRequest;
 import uk.gov.caz.psr.messaging.MessagingClient;
+import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
@@ -31,6 +34,7 @@ public class PaymentReceiptSender {
   private final MessagingClient messagingClient;
   private final PaymentReceiptService paymentReceiptService;
   private final CleanAirZoneService cleanAirZoneNameGetterService;
+  private static final String DATE_FORMAT = "dd MMMM YYYY";
 
   /**
    * Processes a payment event (given that its external status is SUCCESS).
@@ -48,13 +52,22 @@ public class PaymentReceiptSender {
     
     try {
       String cazName = cleanAirZoneNameGetterService.fetch(cleanAirZoneId);
-      String vrn = payment.getEntrantPayments().iterator().next().getVrn();
-      List<String> datesPaidFor = formatTravelDates(payment);
+      SendEmailRequest sendEmailRequest;      
+      if (payment.getUserId() == null) {
+        List<String> datesPaidFor = formatTravelDates(payment);
+        String vrn = payment.getEntrantPayments().iterator().next().getVrn();
+        sendEmailRequest =
+            paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount,
+                cazName, payment.getReferenceNumber().toString(), vrn,
+                payment.getExternalId(), datesPaidFor);
+      } else {
+        List<String> entrantDatesWithVrns = formatEntrantDatesWithVrns(payment);
+        sendEmailRequest = paymentReceiptService.buildSendEmailRequestForMultipleVrns(
+            payment.getEmailAddress(), totalAmount, cazName, 
+            payment.getReferenceNumber().toString(), entrantDatesWithVrns, 
+            payment.getExternalId());
+      }
 
-      SendEmailRequest sendEmailRequest =
-          paymentReceiptService.buildSendEmailRequest(payment.getEmailAddress(), totalAmount,
-              cazName, payment.getReferenceNumber().toString(), vrn,
-              payment.getExternalId(), datesPaidFor);
       messagingClient.publishMessage(sendEmailRequest);
     } catch (CleanAirZoneNotFoundException e) {
       log.error("Clean Air Zone not found in VCCS: {}", cleanAirZoneId);
@@ -64,13 +77,33 @@ public class PaymentReceiptSender {
   }
 
   /**
+   * Returns a list of travelDate - vrn - charge for a payment.
+   * @param payment the payment to fetch entrant payment information for
+   * @return a list of strings in the above format
+   */
+  private List<String> formatEntrantDatesWithVrns(Payment payment) {
+    Comparator<EntrantPayment> sortByTravelDate = Comparator
+        .comparing(EntrantPayment::getTravelDate);
+    Comparator<EntrantPayment> sortByVrn = Comparator.comparing(EntrantPayment::getVrn);
+    return payment.getEntrantPayments()
+        .stream()
+        .sorted(sortByTravelDate.thenComparing(sortByVrn))
+        .map(entrantPayment -> entrantPayment.getTravelDate()
+            .format(DateTimeFormatter.ofPattern(DATE_FORMAT)) + " - "
+            + entrantPayment.getVrn() + " - £" 
+            + String.format(Locale.UK, "%.2f", 
+                currencyFormatter.parsePennies(entrantPayment.getCharge())))
+        .collect(Collectors.toList());
+  }
+
+  /**
    * Returns a list of formatted travel dates for {@code payment}.
    */
   private List<String> formatTravelDates(Payment payment) {
     return payment.getEntrantPayments()
         .stream()
         .map(entrantPayment -> entrantPayment.getTravelDate()
-            .format(DateTimeFormatter.ofPattern("dd MMMM YYYY")))
+            .format(DateTimeFormatter.ofPattern(DATE_FORMAT)))
         .collect(Collectors.toList());
   }
 

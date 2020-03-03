@@ -8,6 +8,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +18,7 @@ import com.google.common.io.Resources;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,6 +82,8 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
   private String emailSqsQueueName;
   @Value("${aws.secret-name}")
   private String secretName;
+  @Value("${services.sqs.account-payment-template-id}")
+  private String fleetTemplateId;
 
   @LocalServerPort
   int randomServerPort;
@@ -266,7 +270,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .withNonNullPaymentAuthorisedTimestamp()
         .andAuditRecordsCreated()
         .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
+        .andPaymentReceiptForFleetIsSent(this.fleetTemplateId);
   }
 
   private void clearAllPayments() {
@@ -550,10 +554,24 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
       assertThat(messages).isNotEmpty();
     }
 
+    public void andPaymentReceiptForFleetIsSent(String fleetTemplateId) {
+      List<Message> messages = receiveSqsMessages();
+      assertThat(messages).isNotEmpty();
+      for (Message message : messages) {
+        String messageBody = message.getBody();
+        if (messageBody.contains(fleetTemplateId)) {
+          assertThat(messageBody.contains(TRAVEL_DATES.get(0)
+              .format(DateTimeFormatter.ofPattern("dd MMMM YYYY")) + " - " + VRNS.get(0)));          
+        }
+      }
+    }
+
     private List<Message> receiveSqsMessages() {
       GetQueueUrlResult queueUrlResult = sqsClient.getQueueUrl(emailSqsQueueName);
-      ReceiveMessageResult receiveMessageResult =
-          sqsClient.receiveMessage(queueUrlResult.getQueueUrl());
+      ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(
+          queueUrlResult.getQueueUrl());
+      receiveMessageRequest.withMaxNumberOfMessages(10);
+      ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
       return receiveMessageResult.getMessages();
     }
 
