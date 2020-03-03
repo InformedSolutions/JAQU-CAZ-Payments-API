@@ -43,14 +43,15 @@ public class VehicleComplianceIT extends ExternalCallsIT {
   void canFetchVehicleCompliance() throws Exception {
     
     String testVrn = "TESTVRN";
-    mockVccsComplianceCall(testVrn, "vehicle-compliance-response.json", 200);
+    String zone = UUID.randomUUID().toString();
+    mockVccsComplianceCall(testVrn, zone, "vehicle-compliance-response.json", 200);
     
     mockMvc
     .perform(get(GET_VEHICLE_COMPLIANCE_PATH.replace("{vrn}", testVrn))
         .header(X_CORRELATION_ID_HEADER, UUID.randomUUID())
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
-        .param("zones", UUID.randomUUID().toString()))
+        .param("zones", zone))
         .andExpect(status()
         .is2xxSuccessful());
   }

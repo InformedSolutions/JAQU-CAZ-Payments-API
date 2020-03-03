@@ -27,7 +27,7 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
   @Test
   public void shouldReturn200OkAndResponseWhenValidRequestAndNoDuplicatePayments() {
     mockAccountServiceChargesSingleVrnCall(ACCOUNT_ID, "CAS300", 200);
-    mockVccsComplianceCall("CAS300", "vehicle-compliance-response-single-zone.json", 200);
+    mockVccsComplianceCall("CAS300", ZONE, "vehicle-compliance-response-single-zone.json", 200);
 
     givenSingleAccountVehicleChargeRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -53,7 +53,7 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
   public void shouldReturn404NotFoundWhenVehicleCannotBeFoundOnAccount() {
     mockAccountServiceChargesSingleVrnCallWithError(ACCOUNT_ID, "CAS300", 404);
     mockVccsCleanAirZonesCall();
-    mockVccsComplianceCall("CAS300", "vehicle-compliance-response-single-zone.json", 200);
+    mockVccsComplianceCall("CAS300", ZONE, "vehicle-compliance-response-single-zone.json", 200);
     givenSingleAccountVehicleChargeRetrieval()
       .forCleanAirZoneId(ZONE)
       .forVrn("CAS300")

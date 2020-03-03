@@ -2,6 +2,7 @@ package uk.gov.caz.psr.controller.util;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -35,7 +36,18 @@ public class QueryStringValidator {
   }
   
   private Boolean queryStringInvalid(String key, Map<String, String> map) {
-    return !map.containsKey(key) || !StringUtils.hasText(map.get(key));
+    if (!map.containsKey(key) || !StringUtils.hasText(map.get(key))) {
+      return true;
+    }
+    
+    if (key.equals("cleanAirZoneId")) {
+      try {
+        UUID.fromString(map.get(key));
+      } catch (Exception e) {
+        return true;
+      }
+    }
+    return false;
   }
   
   private Boolean numericalQueryStringInvalid(String key, Map<String, String> map) {
@@ -45,7 +57,10 @@ public class QueryStringValidator {
     }
     
     try {
-      return Integer.parseInt(map.get(key)) < 0;
+      int value = Integer.parseInt(map.get(key));
+      Boolean queryStringInvalid = value < 0;
+      queryStringInvalid = key.equals("pageSize") ? value < 1 : queryStringInvalid;
+      return queryStringInvalid;
     } catch (Exception e) {
       log.info("Parameter {} was not a number", key);
       return true;

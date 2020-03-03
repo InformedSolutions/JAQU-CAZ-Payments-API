@@ -19,9 +19,10 @@ import retrofit2.Response;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
+import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
+import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
-import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
@@ -74,9 +75,9 @@ public class AccountService {
    * @param cleanAirZoneId the Clean Air Zone to check compliance for
    * @return a list of chargeable VRNs
    */
-  public List<String> retrieveChargeableAccountVehicles(UUID accountId, String direction, 
-      int pageSize, String vrn, String cleanAirZoneId) {
-    List<String> results = new ArrayList<String>();
+  public List<VrnWithTariffAndEntrancesPaid> retrieveChargeableAccountVehicles(UUID accountId, 
+      String direction, int pageSize, String vrn, UUID cleanAirZoneId) {
+    List<VrnWithTariffAndEntrancesPaid> results = new ArrayList<VrnWithTariffAndEntrancesPaid>();
     Boolean lastPage = false;
     // initialise cursor at first VRN
     String vrnCursor = vrn;
@@ -92,8 +93,8 @@ public class AccountService {
         vrnCursor = getVrnCursor(accountVrns, direction);
       }
       
-      List<String> chargeableVrns = getChargeableVrnsFromVcc(accountVrns, cleanAirZoneId, 
-          pageSize);
+      List<VrnWithTariffAndEntrancesPaid> chargeableVrns = 
+          getChargeableVrnsFromVcc(accountVrns, cleanAirZoneId, pageSize);
       
       if (!chargeableVrns.isEmpty()) {
         results.addAll(chargeableVrns);
@@ -110,8 +111,8 @@ public class AccountService {
    * @param cleanAirZoneId the clean air zone to check chargeability against
    * @return a list of chargeable VRNs
    */
-  public PaidPaymentsResponse retrieveSingleChargeableAccountVehicle(
-      UUID accountId, String vrn, String cleanAirZoneId) {
+  public ChargeableAccountVehiclesResult retrieveSingleChargeableAccountVehicle(
+      UUID accountId, String vrn, UUID cleanAirZoneId) {
 
     Response<AccountVehicleResponse> accountVehicle =
         accountsRepository.getAccountSingleVehicleVrnSync(accountId, vrn);
@@ -122,11 +123,14 @@ public class AccountService {
     }
 
     List<String> wrappedVrn = Arrays.asList(vrn);
-    List<String> chargeableVrns =
+    List<VrnWithTariffAndEntrancesPaid> vrnsWithTariff =
         getChargeableVrnsFromVcc(wrappedVrn, cleanAirZoneId, 1);
+    List<String> chargeableVrns = vrnsWithTariff.stream()
+        .map(vrnWithTariff -> vrnWithTariff.getVrn())
+        .collect(Collectors.toList());
 
-    return PaidPaymentsResponse
-        .from(getPaidEntrantPayments(chargeableVrns, cleanAirZoneId));
+    return ChargeableAccountVehiclesResult
+        .from(getPaidEntrantPayments(chargeableVrns, cleanAirZoneId), vrnsWithTariff);
   }
   
   /**
@@ -136,28 +140,29 @@ public class AccountService {
    * @return
    */
   public Map<String, List<EntrantPayment>> getPaidEntrantPayments(
-      List<String> results, String cleanAirZoneId) {
+      List<String> results, UUID cleanAirZoneId) {
     return getPaidEntrantPaymentsService.getResults(
         new HashSet<String>(results),
         LocalDate.now().minusDays(6),
         LocalDate.now().plusDays(6),
-        UUID.fromString(cleanAirZoneId));
+        cleanAirZoneId);
   }
 
-  private List<String> getChargeableVrnsFromVcc(List<String> accountVrns, 
-      String cleanAirZoneId, int pageSize) {
-    List<String> results = new ArrayList<String>();
+  private List<VrnWithTariffAndEntrancesPaid> getChargeableVrnsFromVcc(List<String> accountVrns, 
+      UUID cleanAirZoneId, int pageSize) {
+    List<VrnWithTariffAndEntrancesPaid> results = new ArrayList<VrnWithTariffAndEntrancesPaid>();
     // split accountVrns into chunks
     List<List<String>> accountVrnChunks = Lists.partition(accountVrns, pageSize);
     
     // while results is less than page size do another batch
     for (List<String> chunk : accountVrnChunks) {
       List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
-          .retrieveVehicleCompliance(chunk, cleanAirZoneId);
-      List<String> chargeableVrns = complianceOutcomes
+          .retrieveVehicleCompliance(chunk, cleanAirZoneId.toString());
+      List<VrnWithTariffAndEntrancesPaid> chargeableVrns = complianceOutcomes
           .stream()
           .filter(complianceOutcome -> vrnIsChargeable(complianceOutcome))
-          .map(complianceOutcome -> complianceOutcome.getRegistrationNumber())
+          .map(complianceOutcome -> ChargeableAccountVehiclesResult
+              .buildVrnWithTariffAndEntrancesPaidFrom(complianceOutcome, cleanAirZoneId))
           .collect(Collectors.toList());
       
       if (!chargeableVrns.isEmpty()) {
