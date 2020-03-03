@@ -5,15 +5,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
-import uk.gov.caz.psr.dto.PaidPaymentsResponse;
+import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
+import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 import uk.gov.caz.psr.service.AccountService;
 import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
@@ -73,20 +76,39 @@ public class AccountsController implements AccountControllerApiSpec {
     
     queryStringValidator.validateRequest(queryStrings, 
         Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY), Arrays.asList(PAGE_SIZE_QUERYSTRING_KEY));
-    String cleanAirZoneId = queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY);
-    String direction = queryStrings.get("direction");
-    int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
     String vrn = queryStrings.get("vrn");
+    UUID cleanAirZoneId = UUID.fromString(queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY));
+    String direction = checkDirectionQueryString(queryStrings.get("direction"), vrn);
+    int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
     
-    List<String> chargeableVrns = accountService.retrieveChargeableAccountVehicles(
-        accountId, direction, pageSize, vrn, cleanAirZoneId);
-    PaidPaymentsResponse vrnsAndEntrantDates = PaidPaymentsResponse.from(
-        accountService.getPaidEntrantPayments(trimChargeableVehicles(chargeableVrns, pageSize), 
-            cleanAirZoneId));
+    List<VrnWithTariffAndEntrancesPaid> vrnsWithTariffAndCharge = accountService
+        .retrieveChargeableAccountVehicles(accountId, direction, pageSize, vrn, cleanAirZoneId);
+    List<String> chargeableVrns = trimChargeableVehicles(vrnsWithTariffAndCharge, pageSize)
+        .stream()
+        .map(vrnWithTariffAndCharge -> vrnWithTariffAndCharge.getVrn())
+        .collect(Collectors.toList());
+    ChargeableAccountVehiclesResult vrnsAndEntrantDates = ChargeableAccountVehiclesResult.from(
+        accountService.getPaidEntrantPayments(chargeableVrns, cleanAirZoneId), 
+        vrnsWithTariffAndCharge);
     
     return ResponseEntity.ok()
-        .body(createResponseFromChargeableAccountVehicles(chargeableVrns, vrnsAndEntrantDates, 
-            direction, pageSize, vrn == null));
+        .body(createResponseFromChargeableAccountVehicles(vrnsWithTariffAndCharge, 
+            vrnsAndEntrantDates, direction, pageSize, vrn == null));
+  }
+
+  private String checkDirectionQueryString(String direction, String vrn) {
+    if (StringUtils.hasText(direction) && !direction.equals("next") 
+        && !direction.equals("previous")) {
+      throw new InvalidRequestPayloadException(
+          "Direction supplied must be one of either 'next' or 'previous'.");
+    }
+    
+    if (StringUtils.hasText(direction) && direction.equals("previous") 
+        && !StringUtils.hasText(vrn)) {
+      throw new InvalidRequestPayloadException(
+          "Direction cannot be set to 'previous' if no VRN has been provided.");
+    }
+    return direction;
   }
 
   @Override
@@ -95,9 +117,10 @@ public class AccountsController implements AccountControllerApiSpec {
    
     queryStringValidator.validateRequest(queryStrings, 
         Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY), null);
+    UUID cleanAirZoneId = UUID.fromString(queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY));
     
-    PaidPaymentsResponse vrnsAndEntryDates = accountService.retrieveSingleChargeableAccountVehicle(
-        accountId, vrn, queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY));
+    ChargeableAccountVehiclesResult vrnsAndEntryDates = accountService
+        .retrieveSingleChargeableAccountVehicle(accountId, vrn, cleanAirZoneId);
     
     ChargeableAccountVehicleResponse response = ChargeableAccountVehicleResponse
         .builder()
@@ -108,17 +131,19 @@ public class AccountsController implements AccountControllerApiSpec {
         .body(response);
   }
   
-  private List<String> trimChargeableVehicles(List<String> chargeableVrns, int pageSize) {
+  private List<VrnWithTariffAndEntrancesPaid> trimChargeableVehicles(
+      List<VrnWithTariffAndEntrancesPaid> chargeableVrns, int pageSize) {
     return chargeableVrns.size() > pageSize ? chargeableVrns.subList(0, pageSize) : chargeableVrns;
   }
 
   private ChargeableAccountVehicleResponse createResponseFromChargeableAccountVehicles(
-      List<String> chargeableVrns, PaidPaymentsResponse results, String direction, int pageSize, 
-      boolean firstPage) {
+      List<VrnWithTariffAndEntrancesPaid> vrnsWithTariffAndCharge, 
+      ChargeableAccountVehiclesResult results, String direction, 
+      int pageSize, boolean firstPage) {
     String firstVrn = firstPage ? null : results.getResults().get(0).getVrn();
     String lastVrn = results.getResults().get(results.getResults().size() - 1).getVrn();
     String travelDirection = StringUtils.hasText(direction) ? direction : "next"; 
-    if (chargeableVrns.size() < pageSize + 1) {
+    if (vrnsWithTariffAndCharge.size() < pageSize + 1) {
       firstVrn = travelDirection.equals("previous") ? null : firstVrn;
       lastVrn = travelDirection.equals("next") ? null : lastVrn;
     }

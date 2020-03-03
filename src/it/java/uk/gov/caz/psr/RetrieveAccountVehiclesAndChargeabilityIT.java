@@ -29,7 +29,9 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   @Test
   public void shouldReturn200OkAndResponseWhenValidRequest() {
     mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
-    mockVccsComplianceCall("CAS300", "vehicle-compliance-response.json", 200);
+    for (String zone : ZONES.split(",")) {
+      mockVccsComplianceCall("CAS300", zone, "vehicle-compliance-response.json", 200);      
+    }
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
       .forPageNumber("0")
@@ -40,12 +42,14 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
       .responseIsReturnedWithHttpOkStatusCode()
       .andResponseContainsExpectedData();
   }
-  
+
   @Test
   public void shouldReturn200OkAndResponseWhenZonesNotProvided() {
     mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
     mockVccsCleanAirZonesCall();
-    mockVccsComplianceCall("CAS300", "vehicle-compliance-response.json", 200);
+    for (String zone : ZONES.split(",")) {
+      mockVccsComplianceCall("CAS300", zone, "vehicle-compliance-response.json", 200);      
+    }
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
       .forPageNumber("0")

@@ -159,6 +159,13 @@ swagger:
         paid-dates: A list of days which are already paid.
       paid-payments-response:
         results: Collection of VRNs and dates which are already paid in a given date range.
+      chargeable-account-vehicles-result:
+        results: A list of vrns with charge, tariff and travel dates paid for
+      vrn-with-tariff-entrances:
+        vrn: the registration number of the vehicles
+        tariff-code: the identifier for the tariff on the travel date in question
+        charge: the charge to be paid in association with that tariff code
+        paid-dates: A list of days which are already paid      
       cleanAirZones:
         cleanAirZoneDetails: List of Clean Air Zones
       cleanAirZone:

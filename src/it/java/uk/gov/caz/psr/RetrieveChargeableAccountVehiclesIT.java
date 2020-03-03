@@ -9,6 +9,8 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.core.io.ClassPathResource;
@@ -51,18 +53,18 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
   public void shouldReturnHttpOkWhenValidRequestWithAllChargeableVehicles() 
       throws JsonProcessingException {
     
-    List<String> vrns = mockFullNextPageOfChargeableVrns();
+    List<String> vrns = mockFullNextPageOfChargeableVrns(CLEAN_AIR_ZONE_ID);
     
     givenAssertion()
       .forAccountId(ACCOUNT_ID)
-      .forPageSize("10")
+      .forPageSize("2")
       .forVrn("ABC123")
       .forCleanAirZoneId(CLEAN_AIR_ZONE_ID)
       .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
-      .responseContainsExpectedData(vrns.subList(0, vrns.size() - 1), vrns.get(0), 
-          vrns.get(vrns.size()-2));
+      .responseContainsExpectedData(vrns.subList(0, 2), vrns.get(0), 
+          vrns.get(1));
   }
 
 
@@ -92,7 +94,7 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       throws JsonProcessingException {
     String unprocessableVrn = "LMN234";
     mockVccsUnprocessableEntityComplianceCall(unprocessableVrn);
-    List<String> vrns = mockFullNextPageOfChargeableVrns();
+    List<String> vrns = mockFullNextPageOfChargeableVrns(CLEAN_AIR_ZONE_ID);
     mockAccountServiceCursorCall(ACCOUNT_ID, unprocessableVrn, EMPTY_CURSOR_RESPONSE);
     
     givenAssertion()
@@ -112,7 +114,7 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       throws JsonProcessingException {
     mockAccountServiceCursorCallWithoutCursorParameter(ACCOUNT_ID, 
         NEXT_CURSOR_RESPONSE);
-    List<String> vrns = mockFullNextPageOfChargeableVrns();
+    List<String> vrns = mockFullNextPageOfChargeableVrns(CLEAN_AIR_ZONE_ID);
     
     givenAssertion()
       .forAccountId(ACCOUNT_ID)
@@ -147,12 +149,11 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .responseIsReturnedWithHttpOkStatusCode()
       .responseContainsExpectedData(chargeable, null, chargeable.get(chargeable.size() - 1));
   }
-  
 
   @Test
   public void shouldReturnHttpOkWhenEntrantPaymentsExist() throws JsonProcessingException {
     executeSqlFrom("data/sql/add-entrant-payments.sql");
-    List<String> vrns = mockFullNextPageOfChargeableVrns();
+    List<String> vrns = mockFullNextPageOfChargeableVrns("4dc6ea23-77d3-4bfe-8180-7662c33f88ad");
     
     givenAssertion()
       .forAccountId(ACCOUNT_ID)
@@ -165,6 +166,24 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .responseContainsExpectedDataWithEntrantPayments(vrns.subList(0, vrns.size() - 1), 
           vrns.get(0), vrns.get(vrns.size() - 2));
     
+  }
+  
+  @ParameterizedTest
+  @CsvSource({",,,", "1,,10,", "4dc6ea23-77d3-4bfe-8180-7662c33f88ad,,,",
+    "4dc6ea23-77d3-4bfe-8180-7662c33f88ad,,0,","4dc6ea23-77d3-4bfe-8180-7662c33f88ad,,one,",
+    "4dc6ea23-77d3-4bfe-8180-7662c33f88ad,test,10,", "4dc6ea23-77d3-4bfe-8180-7662c33f88ad,previous,10,"})
+  public void shouldReturnHttpBadRequestWhenInvalidQueryStringsSupplied(String cleanAirZoneId,
+      String direction, String pageSize, String vrn) throws JsonProcessingException {
+    mockAccountServiceCursorCallWithoutCursorParameter(ACCOUNT_ID, NEXT_CURSOR_RESPONSE);
+    givenAssertion()
+    .forAccountId(ACCOUNT_ID)
+    .forPageSize(pageSize)
+    .forDirection(direction)
+    .forVrn(vrn)
+    .forCleanAirZoneId(cleanAirZoneId)
+    .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
+    .then()
+    .responseIsReturnedWithStatusCode(400);   
   }
   
   private List<String> getAccountVehicleVrnsFromFile(String fileName) throws JsonProcessingException {
@@ -182,23 +201,24 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
     List<String> chargeable = new ArrayList<String>();
     for (int i = 0; i < vrns.size(); i++) {
       if (i % 2 == 0) {
-        mockVccsComplianceCall(vrns.get(i), 
+        mockVccsComplianceCall(vrns.get(i), CLEAN_AIR_ZONE_ID,
             "vehicle-compliance-response-single-zone.json", 200);
         chargeable.add(vrns.get(i));
       } else {
-        mockVccsComplianceCall(vrns.get(i), 
+        mockVccsComplianceCall(vrns.get(i), CLEAN_AIR_ZONE_ID,
             "vehicle-compliance-compliant-response-single-zone.json", 200);        
       }
     }
     return chargeable;
   }
   
-  private List<String> mockFullNextPageOfChargeableVrns() throws JsonProcessingException {
+  private List<String> mockFullNextPageOfChargeableVrns(String cleanAirZoneId) 
+      throws JsonProcessingException {
     mockAccountServiceCursorCall(ACCOUNT_ID, 
         "ABC123", NEXT_CURSOR_RESPONSE);
     List<String> vrns = getAccountVehicleVrnsFromFile(NEXT_CURSOR_RESPONSE);
     for (String vrn : vrns) {
-      mockVccsComplianceCall(vrn, "vehicle-compliance-response-single-zone.json", 200);
+      mockVccsComplianceCall(vrn, cleanAirZoneId, "vehicle-compliance-response-single-zone.json", 200);
     }
     return vrns;
   }

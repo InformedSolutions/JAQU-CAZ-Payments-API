@@ -5,7 +5,7 @@
     "vehicleType": "Car",
     "complianceOutcomes": [
         {
-            "cleanAirZoneId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+            "cleanAirZoneId": "TEST_CAZ_ID",
             "name": "Birmingham",
             "charge": 8.0,
             "tariffCode": "BCC01-CAR",

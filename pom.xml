@@ -684,7 +684,8 @@
                 <exclude>**/psr/service/exception/ExternalServiceCallException.class</exclude>
                 <exclude>**/psr/repository/AccountsRepository.class</exclude>
                 <exclude>**/psr/service/AccountService.class</exclude>
-                <exclude>**/psr/controller/util/QueryStringValidator.class</exclude>
+                <exclude>**/psr/controller/util/QueryStringValidator.class</exclude>    
+                <exclude>**/psr/dto/ChargeableAccountVehiclesResult.class</exclude>                
               </excludes>
               <rules>
                 <rule>

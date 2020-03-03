@@ -2,6 +2,7 @@ package uk.gov.caz.psr.journeys;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +14,7 @@ import io.restassured.response.ValidatableResponse;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.controller.AccountsController;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
-import uk.gov.caz.psr.dto.PaidPaymentsResponse.PaidPaymentsResult;
+import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
 
 public class RetrieveChargeableAccountVehiclesJourneyAssertion {
   
@@ -83,19 +84,27 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
         .as(ChargeableAccountVehicleResponse.class);
     return this;
   }
+  
+  public void responseIsReturnedWithStatusCode(int statusCode) {
+    response.statusCode(statusCode);
+  }
 
   public void responseContainsExpectedData(List<String> expectedVrns, 
       String firstVrn, String lastVrn) {
-    List<PaidPaymentsResult> results = this.responseDto.getChargeableAccountVehicles().getResults();
+    List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles().getResults();
     assertTrue(this.responseDto.getChargeableAccountVehicles().getResults().size() <= Integer.parseInt(this.pageSize));
     assertEquals(expectedVrns, results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
+    for (VrnWithTariffAndEntrancesPaid result: results) {
+      assertTrue(result.getCharge() > 0);
+      assertNotNull(result.getTariffCode());
+    }
     assertEquals(firstVrn, this.responseDto.getFirstVrn());
     assertEquals(lastVrn, this.responseDto.getLastVrn());
   }
 
   public void responseContainsExpectedDataWithEntrantPayments(List<String> expectedVrns, 
       String firstVrn, String lastVrn) {
-    List<PaidPaymentsResult> results = this.responseDto.getChargeableAccountVehicles().getResults();
+    List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles().getResults();
     assertEquals(expectedVrns, results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
     assertEquals(LocalDate.now(), results.get(0).getPaidDates().get(0));
     assertEquals(firstVrn, this.responseDto.getFirstVrn());
