@@ -23,7 +23,12 @@ import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
 @Value
 @Builder
 public class ChargeableAccountVehiclesResult {
-  
+
+  /**
+   * A list of vrns with associated charge, tariff code and paid travel dates.
+   */
+  @ApiModelProperty(value = 
+      "${swagger.model.descriptions.chargeable-account-vehicles-result.results}")
   List<VrnWithTariffAndEntrancesPaid> results;
 
   /**
@@ -87,23 +92,26 @@ public class ChargeableAccountVehiclesResult {
     /**
      * A VRN for which the list of paid days is being returned.
      */
-    @ApiModelProperty(value = "${swagger.model.descriptions.paid-payments-result.vrn}")
+    @ApiModelProperty(value = "${swagger.model.descriptions.vrn-with-tariff-entrances.vrn}")
     String vrn;
     
     /**
      * The tariff code for the vehicle in a given Clean Air Zone.
      */
+    @ApiModelProperty(value = 
+        "${swagger.model.descriptions.vrn-with-tariff-entrances.tariff-code}")
     String tariffCode;
     
     /**
      * The charge incurred by the vehicle in a given Clean Air Zone.
      */
+    @ApiModelProperty(value = "${swagger.model.descriptions.vrn-with-tariff-entrances.charge}")
     double charge;
 
     /**
      * A list of days which are already paid.
      */
-    @ApiModelProperty(value = "${swagger.model.descriptions.paid-payments-result.paid-dates}")
+    @ApiModelProperty(value = "${swagger.model.descriptions.vrn-with-tariff-entrances.paid-dates}")
     @JsonFormat(shape = Shape.STRING, pattern = "yyyy-MM-dd")
     List<LocalDate> paidDates;
   }
