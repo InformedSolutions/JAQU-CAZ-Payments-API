@@ -68,34 +68,6 @@ public class RedisConfiguration {
         .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(expiration)).build();
   }
-  
-  /**
-   * Custom Cache Manager for managing LicenseInfo cache.
-   *
-   * @param redisConnectionFactory a configured redis connection factory.
-   * @return A customised cache manager instance
-   */
-  @Bean
-  public CacheManager licenseInfoCacheManager(RedisConnectionFactory redisConnectionFactory) {
-    Duration expiration = Duration.ofHours(licenseInfoRedisTtl);
-    return RedisCacheManager.builder(redisConnectionFactory)
-        .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl(expiration)).build();
-  }
-  
-  /**
-   * Custom Cache Manager for managing oAuth tokens.
-   *
-   * @param redisConnectionFactory a configured redis connection factory.
-   * @return A customised cache manager instance
-   */
-  @Bean
-  public CacheManager authTokenCacheManager(RedisConnectionFactory redisConnectionFactory) {
-    Duration expiration = Duration.ofMinutes(authTokenTtl);
-    return RedisCacheManager.builder(redisConnectionFactory)
-        .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl(expiration)).build();
-  }
 
   /**
    * Customised lettuce connection factory builder.
