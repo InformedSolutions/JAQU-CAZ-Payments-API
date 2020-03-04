@@ -17,5 +17,13 @@ services:
     networks:
       - localstack_network
 
+  redis:
+    image: grokzen/redis-cluster
+    container_name: redis.docker
+    ports:
+      - "7000-7009:7000-7009"
+    networks:
+      - localstack_network
+
 networks:
   localstack_network:

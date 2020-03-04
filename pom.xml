@@ -238,6 +238,10 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-aws-secrets-manager-config</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
     <!-- Spring-related : end -->
 
     <dependency>

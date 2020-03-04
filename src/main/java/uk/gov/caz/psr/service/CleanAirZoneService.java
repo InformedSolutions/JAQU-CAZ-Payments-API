@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
@@ -27,6 +28,7 @@ public class CleanAirZoneService {
    *
    * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
    */
+  @Cacheable(value = "cleanAirZones")
   public Response<CleanAirZonesResponse> fetchAll() {
     try {
       log.debug("Fetching all clean air zones from VCCS");
@@ -42,6 +44,7 @@ public class CleanAirZoneService {
    * @param cleanAirZoneId id of clean air zone
    * @return {@link String} if the CleanAirZone exist
    */
+  @Cacheable(value = "tariffs")
   public String fetch(UUID cleanAirZoneId) {
     Preconditions.checkNotNull(cleanAirZoneId, "cleanAirZoneId cannot be null");
 
