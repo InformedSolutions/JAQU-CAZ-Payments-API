@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.repository;
 
 import java.io.IOException;
+import org.springframework.cache.annotation.Cacheable;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.GET;

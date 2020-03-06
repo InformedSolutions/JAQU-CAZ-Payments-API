@@ -7,8 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
+import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse.CleanAirZoneDto;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
 
@@ -28,7 +28,7 @@ public class CleanAirZoneService {
    *
    * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
    */
-  @Cacheable(value = "cleanAirZones")
+  @Cacheable(value = "cleanAirZones", keyGenerator = "simpleKeyGenerator")
   public Response<CleanAirZonesResponse> fetchAll() {
     try {
       log.debug("Fetching all clean air zones from VCCS");

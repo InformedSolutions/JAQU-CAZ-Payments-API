@@ -1,7 +1,9 @@
 package uk.gov.caz.psr.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
+import retrofit2.Response;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -16,6 +18,11 @@ import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Slf4j
 @Configuration
@@ -33,20 +40,14 @@ public class RedisConfiguration {
 
   @Value("${redis.ttlInHours}")
   private Integer redisTtl;
-  
-  @Value("${redis.licenseinfo.ttlInHours}")
-  private Integer licenseInfoRedisTtl;
-
-  @Value("${redis.authToken.ttlInMinutes}")
-  private Integer authTokenTtl;
-  
+    
   /**
    * Customised redis template bean constructor.
    *
    * @param lettuceConnectionFactory a lettuce connection factory instance.
    * @return A customised redis template.
    */
-  @Bean
+  @Bean(name = "redisTemplate")
   public RedisTemplate<String, Object> redisTemplate(
       LettuceConnectionFactory lettuceConnectionFactory) {
     RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
@@ -62,11 +63,17 @@ public class RedisConfiguration {
    */
   @Primary
   @Bean
-  public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
+  public CacheManager cacheManager(
+      RedisConnectionFactory redisConnectionFactory) {
     Duration expiration = Duration.ofHours(redisTtl);
     return RedisCacheManager.builder(redisConnectionFactory)
         .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl(expiration)).build();
+            .serializeKeysWith(
+                SerializationPair.fromSerializer(new StringRedisSerializer()))
+            .serializeValuesWith(SerializationPair.fromSerializer(
+                new StringRedisSerializer()))
+            .entryTtl(expiration))
+        .build();
   }
 
   /**
