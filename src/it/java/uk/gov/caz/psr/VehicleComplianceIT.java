@@ -28,6 +28,11 @@ public class VehicleComplianceIT extends ExternalCallsIT {
   private static final String GET_VEHICLE_COMPLIANCE_PATH =
       PaymentsController.BASE_PATH + "/"
           + PaymentsController.GET_COMPLIANCE;
+ 
+  private static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH =
+      PaymentsController.BASE_PATH + "/"
+          + PaymentsController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE;
+ 
   
   @BeforeEach
   public void startMockServer() {
@@ -48,6 +53,23 @@ public class VehicleComplianceIT extends ExternalCallsIT {
     
     mockMvc
     .perform(get(GET_VEHICLE_COMPLIANCE_PATH.replace("{vrn}", testVrn))
+        .header(X_CORRELATION_ID_HEADER, UUID.randomUUID())
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .param("zones", zone))
+        .andExpect(status()
+        .is2xxSuccessful());
+  }
+  
+  @Test
+  void canFetchUnrecognisedVehicleCompliance() throws Exception {
+    
+    String type = "PRIVATE_CAR";
+    String zone = UUID.randomUUID().toString();
+    mockVccsUnknownVehicleComplianceCall(type, zone, "unknown-vehicle-compliance-response.json", 200);
+    
+    mockMvc
+    .perform(get(GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH.replace("{type}", type))
         .header(X_CORRELATION_ID_HEADER, UUID.randomUUID())
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)

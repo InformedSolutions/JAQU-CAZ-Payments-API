@@ -9,7 +9,8 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.dto.VehicleDto;
+import uk.gov.caz.definitions.dto.VehicleDto;
+import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
@@ -17,7 +18,7 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
  * Retrofit2 repository to create a vccs call.
  */
 public interface VccsRepository {
-  
+
   /**
    * Method to create retrofit2 vccs for cleanAirZones call.
    *
@@ -29,12 +30,17 @@ public interface VccsRepository {
 
   @Headers("Accept: application/json")
   @GET("v1/compliance-checker/vehicles/{vrn}/compliance")
-  Call<ComplianceResultsDto> findCompliance(@Path("vrn") String vrn, 
+  Call<ComplianceResultsDto> findCompliance(@Path("vrn") String vrn,
       @Query("zones") String zones);
-  
+
   @Headers("Accept: application/json")
   @GET("v1/compliance-checker/vehicles/{vrn}/details")
   Call<VehicleDto> findVehicleDetails(@Path("vrn") String vrn);
+
+  @Headers("Accept: application/json")
+  @GET("v1/compliance-checker/vehicles/unrecognised/{type}/compliance")
+  Call<VehicleTypeCazChargesDto> findUnknownVehicleCompliance(
+      @Path("type") String type, @Query("zones") String zones);
 
   /**
    * Wraps REST API call in {@link Response} making synchronous request.
@@ -50,18 +56,20 @@ public interface VccsRepository {
   }
 
   /**
-   * Wraps REST API call for finding compliance in {@link Response} by making a synchronous request.
+   * Wraps REST API call for finding compliance in {@link Response} by making a
+   * synchronous request.
    *
    * @return {@link Response} with REST response.
    */
-  default Response<ComplianceResultsDto> findComplianceSync(String vrn, String zones) {
+  default Response<ComplianceResultsDto> findComplianceSync(String vrn,
+      String zones) {
     try {
       return findCompliance(vrn, zones).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }
   }
-  
+
   /**
    * Wraps REST API call in {@link Response} making synchronous request.
    *
@@ -74,15 +82,29 @@ public interface VccsRepository {
       throw new ExternalServiceCallException(e.getMessage());
     }
   }
-  
+
+  /**
+   * Wraps REST API call in {@link Response} making synchronous request.
+   *
+   * @return {@link Response} with REST response.
+   */
+  default Response<VehicleTypeCazChargesDto> findUnknownVehicleComplianceSync(
+      String type, String zones) {
+    try {
+      return findUnknownVehicleCompliance(type, zones).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+
   /**
    * Wraps REST API call in {@link AsyncOp} making it asynchronous.
    *
    * @param vrn the vrn to find compliance of
    * @return {@link AsyncOp} with prepared REST call.
    */
-  default AsyncOp<ComplianceResultsDto> findComplianceAsync(
-      String vrn, String zones, String identifier) {
+  default AsyncOp<ComplianceResultsDto> findComplianceAsync(String vrn,
+      String zones, String identifier) {
     return AsyncOp.from("VCCS: " + identifier, findCompliance(vrn, zones));
   }
 }
