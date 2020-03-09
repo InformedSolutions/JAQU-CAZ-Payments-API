@@ -84,6 +84,8 @@ services:
     ports:
       - 4576
       - 4584
+  - name: redis
+    image: redis
 
 steps:
 
@@ -144,6 +146,8 @@ steps:
         from_secret: nexus_password
       AWS_SQS_URL: localstack:4576
       AWS_SECRETSMANAGER_URL: localstack:4584
+      REDIS_URL: redis
+      REDIS_CUSTOM_PORT: 6379
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 
@@ -334,7 +338,6 @@ services:
       POSTGRES_DB: vehicle_compliance
     ports:
       - 5432
-
   - name: localstack
     image: localstack/localstack:0.10.2
     environment:
@@ -343,6 +346,9 @@ services:
     ports:
       - 4576
       - 4584
+  - name: redis
+    image: redis
+      
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
@@ -402,6 +408,8 @@ steps:
         from_secret: nexus_password
       AWS_SQS_URL: localstack:4576
       AWS_SECRETSMANAGER_URL: localstack:4584
+      REDIS_URL: redis
+      REDIS_CUSTOM_PORT: 6379
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 
@@ -622,6 +630,9 @@ services:
     ports:
       - 4576
       - 4584
+  - name: redis
+    image: redis
+      
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
@@ -681,6 +692,8 @@ steps:
         from_secret: nexus_password
       AWS_SQS_URL: localstack:4576
       AWS_SECRETSMANAGER_URL: localstack:4584
+      REDIS_URL: redis
+      REDIS_CUSTOM_PORT: 6379
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 

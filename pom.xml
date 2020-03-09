@@ -18,7 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <rest-assured.version>4.0.0</rest-assured.version>
-    <internal.libraries.version>2.9.4-SNAPSHOT</internal.libraries.version>
+    <internal.libraries.version>2.9.5-SNAPSHOT</internal.libraries.version>
     <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
@@ -238,6 +238,10 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-aws-secrets-manager-config</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
     <!-- Spring-related : end -->
 
     <dependency>
@@ -277,12 +281,7 @@
     <!-- db: end -->
 
     <!-- development-related: begin -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
-    </dependency>
+    
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-configuration-processor</artifactId>

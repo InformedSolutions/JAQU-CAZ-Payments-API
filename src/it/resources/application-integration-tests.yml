@@ -24,6 +24,11 @@ aws:
     prefix: payments
     profileSeparator: .
 
+redis:
+  enabled: true
+  endpoint: ${redis.url:localhost}
+  port: ${redis.custom.port:6380}
+
 services:
   gov-uk-pay:
     root-url: http://localhost:1080

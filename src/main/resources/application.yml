@@ -37,6 +37,12 @@ services:
     template-id: 36c3e259-e03c-415e-bf62-c7fbdb9d49a5
     account-payment-template-id: 9580a96f-ae7e-45ab-8fcc-7524e5ac9290
 
+redis:
+  endpoint: localhost
+  port: 7000
+  ttlInHours: 24
+  enabled: true
+
 management:
   endpoints:
     web:
@@ -211,6 +217,9 @@ swagger:
     db:
       migration:
         description: Evolve DB schema 
+    cacheInvalidation:
+      cleanAirZones:
+        description: Evicting a cached clean-air-zones from redis
     cleanAirZones:
       description: Returns list of available CAZs         
     vehicle:

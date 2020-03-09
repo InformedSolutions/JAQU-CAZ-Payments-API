@@ -1,24 +1,21 @@
 package uk.gov.caz.psr.dto;
 
-import java.net.URI;
+import java.io.Serializable;
 import java.util.List;
-import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
+import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 
 /**
  * A value object that represents a response from VCCS request for CleanAirZones details.
  */
 @Value
 @Builder
-public class CleanAirZonesResponse {
-  List<CleanAirZoneDto> cleanAirZones;
+public class CleanAirZonesResponse implements Serializable {
+  /**
+   * Generated serialization id.
+   */
+  private static final long serialVersionUID = -350641265613442357L;
 
-  @Value
-  @Builder
-  public static class CleanAirZoneDto {
-    UUID cleanAirZoneId;
-    String name;
-    URI boundaryUrl;
-  }
+  List<CleanAirZoneDto> cleanAirZones;
 }

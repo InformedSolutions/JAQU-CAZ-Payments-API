@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import retrofit2.Response;
+import uk.gov.caz.definitions.dto.CacheableResponseDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
@@ -96,9 +98,11 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   }
 
   @Override
-  public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() {
-    Response<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
-    return ResponseEntity.status(result.code()).body(result.body());
+  public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() throws JsonProcessingException {
+    CacheableResponseDto<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
+    return ResponseEntity
+        .status(result.getCode())
+        .body(result.getBody());
   }
 
   @Override
