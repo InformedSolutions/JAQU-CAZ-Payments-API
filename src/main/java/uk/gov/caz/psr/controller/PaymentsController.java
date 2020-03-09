@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.dto.VehicleDto;
+import uk.gov.caz.psr.dto.CacheableResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
@@ -93,10 +94,10 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   
   @Override
   public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() {
-    Response<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
+    CacheableResponse<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
     return ResponseEntity
-        .status(result.code())
-        .body(result.body());
+        .status(result.response.code())
+        .body(result.response.body());
   }
 
   @Override

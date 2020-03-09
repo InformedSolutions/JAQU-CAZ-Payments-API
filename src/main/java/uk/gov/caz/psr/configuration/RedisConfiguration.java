@@ -1,9 +1,9 @@
 package uk.gov.caz.psr.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
-import retrofit2.Response;
+import uk.gov.caz.psr.dto.CacheableResponse;
+import uk.gov.caz.psr.dto.CacheableResponseDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -19,10 +19,11 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.GenericToStringSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 @Slf4j
 @Configuration
@@ -64,18 +65,24 @@ public class RedisConfiguration {
   @Primary
   @Bean
   public CacheManager cacheManager(
-      RedisConnectionFactory redisConnectionFactory) {
+      RedisConnectionFactory redisConnectionFactory,
+      ObjectMapper objectMapper) {
+    
+    SimpleModule module = new SimpleModule();
+    module.addDeserializer(CacheableResponse.class, new CacheableResponseDeserializer());
+    objectMapper.registerModule(module);
+
     Duration expiration = Duration.ofHours(redisTtl);
     return RedisCacheManager.builder(redisConnectionFactory)
         .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig()
             .serializeKeysWith(
                 SerializationPair.fromSerializer(new StringRedisSerializer()))
             .serializeValuesWith(SerializationPair.fromSerializer(
-                new StringRedisSerializer()))
+                new GenericJackson2JsonRedisSerializer(objectMapper)))
             .entryTtl(expiration))
         .build();
   }
-
+  
   /**
    * Customised lettuce connection factory builder.
    *

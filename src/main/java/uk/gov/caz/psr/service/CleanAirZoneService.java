@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
+import uk.gov.caz.psr.dto.CacheableResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
@@ -28,11 +29,12 @@ public class CleanAirZoneService {
    *
    * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
    */
-  @Cacheable(value = "cleanAirZones", keyGenerator = "simpleKeyGenerator")
-  public Response<CleanAirZonesResponse> fetchAll() {
+  @Cacheable(value = "cleanAirZones")
+  public CacheableResponse<CleanAirZonesResponse> fetchAll() {
     try {
       log.debug("Fetching all clean air zones from VCCS");
-      return vccsRepository.findCleanAirZonesSync();
+      Response<CleanAirZonesResponse> rawResponse = vccsRepository.findCleanAirZonesSync();
+      return CacheableResponse.<CleanAirZonesResponse>builder().response(rawResponse).build();
     } finally {
       log.debug("Fetching all clean air zones from VCCS: finish");
     }
