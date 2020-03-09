@@ -14,7 +14,7 @@ spring:
     enabled: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/vehicle_compliance
+    url: jdbc:postgresql://localhost:5433/vehicle_compliance
     username: postgres
     password: postgres
     hikari:
@@ -29,9 +29,9 @@ services:
     rootUrl: https://publicapi.payments.service.gov.uk
     api-key: to-be-replaced-by-external-value
   vehicle-compliance-checker:
-    root-url: https://ndzi384gxe.execute-api.eu-west-2.amazonaws.com/dev
+    root-url: http://localhost:1090
   accounts:
-    root-url: https://9ukejayzph.execute-api.eu-west-2.amazonaws.com/dev
+    root-url: http://localhost:1091
   sqs:
     new-queue-name: notify-gateway_new_dev.fifo
     template-id: 36c3e259-e03c-415e-bf62-c7fbdb9d49a5
