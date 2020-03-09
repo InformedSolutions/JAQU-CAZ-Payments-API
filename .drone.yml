@@ -87,7 +87,7 @@ services:
   - name: redis
     image: redis
     ports:
-      - 6379
+      - 6380
 
 steps:
 
@@ -350,7 +350,7 @@ services:
   - name: redis
     image: redis
     ports:
-      - 6379
+      - 6380
       
 steps:
 
@@ -634,7 +634,7 @@ services:
   - name: redis
     image: redis
     ports:
-      - 6379
+      - 6380
       
 steps:
 
