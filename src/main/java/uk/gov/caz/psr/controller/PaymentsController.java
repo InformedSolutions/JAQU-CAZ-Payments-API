@@ -16,6 +16,7 @@ import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CacheableResponseDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
+import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
@@ -44,13 +45,17 @@ public class PaymentsController implements PaymentsControllerApiSpec {
 
   @VisibleForTesting
   public static final String GET_CLEAN_AIR_ZONES = "clean-air-zones";
-  
+
   @VisibleForTesting
   public static final String GET_COMPLIANCE = "vehicles/{vrn}/compliance";
 
   @VisibleForTesting
   public static final String GET_VEHICLE_DETAILS = "vehicles/{vrn}/details";
-  
+
+  @VisibleForTesting
+  public static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE =
+      "vehicles/unrecognised/{type}/compliance";
+
   private final InitiatePaymentService initiatePaymentService;
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
@@ -58,23 +63,24 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
 
   @Override
-  public ResponseEntity<InitiatePaymentResponse> initiatePayment(InitiatePaymentRequest request) {
+  public ResponseEntity<InitiatePaymentResponse> initiatePayment(
+      InitiatePaymentRequest request) {
     request.validate();
     log.info("Received payment request {}", request);
     Payment payment = initiatePaymentService.createPayment(
         InitiatePaymentRequestToModelConverter.toPayment(request),
         InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(request),
-        request.getReturnUrl()
-    );
-    return ResponseEntity.status(HttpStatus.CREATED).body(InitiatePaymentResponse.from(payment));
+        request.getReturnUrl());
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(InitiatePaymentResponse.from(payment));
   }
 
   @Override
   public ResponseEntity<ReconcilePaymentResponse> reconcilePaymentStatus(
       UUID id) {
-    Optional<Payment> payment = reconcilePaymentStatusService.reconcilePaymentStatus(id);
-    return payment.map(ReconcilePaymentResponse::from)
-        .map(ResponseEntity::ok)
+    Optional<Payment> payment =
+        reconcilePaymentStatusService.reconcilePaymentStatus(id);
+    return payment.map(ReconcilePaymentResponse::from).map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
@@ -83,16 +89,14 @@ public class PaymentsController implements PaymentsControllerApiSpec {
       PaidPaymentsRequest paymentsRequest) {
     paymentsRequest.validate();
 
-    Map<String, List<EntrantPayment>> results = getPaidEntrantPaymentsService.getResults(
-        new HashSet<String>(paymentsRequest.getVrns()),
-        paymentsRequest.getStartDate(),
-        paymentsRequest.getEndDate(),
-        paymentsRequest.getCleanAirZoneId()
-    );
+    Map<String, List<EntrantPayment>> results = getPaidEntrantPaymentsService
+        .getResults(new HashSet<String>(paymentsRequest.getVrns()),
+            paymentsRequest.getStartDate(), paymentsRequest.getEndDate(),
+            paymentsRequest.getCleanAirZoneId());
 
     return ResponseEntity.ok(PaidPaymentsResponse.from(results));
   }
-  
+
   @Override
   public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() throws JsonProcessingException {
     CacheableResponseDto<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
@@ -104,22 +108,28 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   @Override
   public ResponseEntity<ComplianceResultsDto> getCompliance(String vrn,
       String zones) {
-    Response<ComplianceResultsDto> result = 
+    Response<ComplianceResultsDto> result =
         vehicleComplianceRetrievalService.retrieveVehicleCompliance(vrn, zones);
-    
-    return ResponseEntity
-        .status(result.code())
-        .body(result.body());
+
+    return ResponseEntity.status(result.code()).body(result.body());
   }
-  
+
   @Override
   public ResponseEntity<VehicleDto> getVehicleDetails(String vrn) {
-    Response<VehicleDto> result = 
+    Response<VehicleDto> result =
         vehicleComplianceRetrievalService.retrieveVehicleDetails(vrn);
-    
-    return ResponseEntity
-        .status(result.code())
-        .body(result.body());
+
+    return ResponseEntity.status(result.code()).body(result.body());
   }
-  
+
+  @Override
+  public ResponseEntity<VehicleTypeCazChargesDto> getUnrecognisedVehicle(
+      String type, String zones) {
+    Response<VehicleTypeCazChargesDto> result =
+        vehicleComplianceRetrievalService.retrieveUnknownVehicleCompliance(type,
+            zones);
+
+    return ResponseEntity.status(result.code()).body(result.body());
+  }
+
 }

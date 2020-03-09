@@ -10,6 +10,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.UUID;
+import javassist.NotFoundException;
 import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
+import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
@@ -164,4 +166,23 @@ public interface PaymentsControllerApiSpec {
   @GetMapping(PaymentsController.GET_COMPLIANCE)
   ResponseEntity<ComplianceResultsDto> getCompliance(@PathVariable String vrn,
       @RequestParam("zones") String zones);
+  
+  /**
+   * Get charges for given type.
+   *
+   * @param type non-null string
+   */
+  @ApiOperation(value = "${swagger.operations.vehicle.unrecognised.description}",
+      response = VehicleTypeCazChargesDto.class)
+  @ApiResponses({@ApiResponse(code = 500, message = "Internal Server Error / No message available"),
+      @ApiResponse(code = 400, message = "type param missing"),
+      @ApiResponse(code = 400, message = "zones parameter malformed"),
+      @ApiResponse(code = 200, message = "Vehicle compliance details")})
+  @ApiImplicitParams({@ApiImplicitParam(name = "X-Correlation-ID", required = true,
+      value = "CorrelationID to track the request from the API gateway through"
+          + " the Enquiries stack",
+      paramType = "header")})
+  @GetMapping(PaymentsController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE)
+  ResponseEntity<VehicleTypeCazChargesDto> getUnrecognisedVehicle(@PathVariable("type") String type,
+      @RequestParam("zones") String zones) throws NotFoundException;
 }

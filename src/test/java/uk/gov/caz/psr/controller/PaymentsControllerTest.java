@@ -107,6 +107,10 @@ class PaymentsControllerTest {
       PaymentsController.BASE_PATH + "/"
           + PaymentsController.GET_VEHICLE_DETAILS;
   
+  private static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH =
+      PaymentsController.BASE_PATH + "/"
+          + PaymentsController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE;
+  
   @Nested
   class InitiatePayment {
 
@@ -574,6 +578,22 @@ class PaymentsControllerTest {
         throws Exception {
       mockMvc
           .perform(get(GET_VEHICLE_DETAILS_PATH.replace("{vrn}", "TESTVRN"))
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
+          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
+              .value("Missing request header 'X-Correlation-ID'"));
+    }
+  }
+  
+  @Nested
+  class UnknownVehicleCompliance {
+
+    @Test
+    public void shouldReturn400StatusCodeWhenVehicleDetailsFetchedWithoutCorrelationId()
+        throws Exception {
+      mockMvc
+          .perform(get(GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH.replace("{type}", "CAR"))
               .contentType(MediaType.APPLICATION_JSON)
               .accept(MediaType.APPLICATION_JSON)
               .param("zones", ANY_CLEAN_AIR_ZONE_ID))

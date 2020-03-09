@@ -50,6 +50,13 @@ public class ExternalCallsIT {
         .respond(responseWithVrnAndCleanAirZoneId(filePath, vrn, cleanAirZoneId, statusCode));
   }
 
+  public void mockVccsUnknownVehicleComplianceCall(String type, String cleanAirZoneId, String filePath, int statusCode) {
+    vccsMockServer
+        .when(requestGet("/v1/compliance-checker/vehicles/unrecognised/" + type + "/compliance"),
+            exactly(1))
+        .respond(responseWithUnrecognisedCompliance(filePath, cleanAirZoneId, statusCode));
+  }
+  
   public void mockVccsUnprocessableEntityComplianceCall(String vrn) {
     vccsMockServer
     .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),
@@ -158,6 +165,14 @@ public class ExternalCallsIT {
         .withStatusCode(statusCode)
         .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
         .withBody(readJson(filePath).replace("TEST_VRN", vrn).replace("TEST_CAZ_ID", cleanAirZoneId));
+  }
+  
+  public static HttpResponse responseWithUnrecognisedCompliance(String filePath, String cleanAirZoneId, int statusCode) {
+    return HttpResponse.response()
+        .withStatusCode(statusCode)
+        .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
+        .withBody(readJson(filePath)
+        .replace("TEST_CAZ_ID", cleanAirZoneId));
   }
   
   public static HttpResponse responseWithVrnAndAccountId(String responseFile, String vrn, String accountId, int statusCode) {
