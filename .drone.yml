@@ -87,7 +87,7 @@ services:
   - name: redis
     image: redis
     ports:
-      - 6380
+      - "6380:6379"
 
 steps:
 
@@ -338,7 +338,6 @@ services:
       POSTGRES_DB: vehicle_compliance
     ports:
       - 5432
-
   - name: localstack
     image: localstack/localstack:0.10.2
     environment:
@@ -350,7 +349,7 @@ services:
   - name: redis
     image: redis
     ports:
-      - 6380
+      - "6380:6379"
       
 steps:
 
@@ -634,7 +633,7 @@ services:
   - name: redis
     image: redis
     ports:
-      - 6380
+      - "6380:6379"
       
 steps:
 
