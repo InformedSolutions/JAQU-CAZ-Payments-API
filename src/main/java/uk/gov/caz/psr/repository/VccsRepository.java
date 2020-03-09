@@ -1,6 +1,8 @@
 package uk.gov.caz.psr.repository;
 
 import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Repository;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.GET;
@@ -17,8 +19,12 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 /**
  * Retrofit2 repository to create a vccs call.
  */
+@Repository
 public interface VccsRepository {
 
+  @Slf4j
+  final class Logger {}
+  
   /**
    * Method to create retrofit2 vccs for cleanAirZones call.
    *
@@ -49,9 +55,12 @@ public interface VccsRepository {
    */
   default Response<CleanAirZonesResponse> findCleanAirZonesSync() {
     try {
+      Logger.log.debug("Begin: Fetching clean air zones from VCCS");
       return findCleanAirZones().execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
+    } finally {
+      Logger.log.debug("End: Fetching clean air zones from VCCS");
     }
   }
 
@@ -64,9 +73,12 @@ public interface VccsRepository {
   default Response<ComplianceResultsDto> findComplianceSync(String vrn,
       String zones) {
     try {
+      Logger.log.debug("Begin: Fetching compliance result from VCCS");
       return findCompliance(vrn, zones).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
+    } finally {
+      Logger.log.debug("End: Fetching compliance result from VCCS");
     }
   }
 
@@ -77,9 +89,12 @@ public interface VccsRepository {
    */
   default Response<VehicleDto> findVehicleDetailsSync(String vrn) {
     try {
+      Logger.log.debug("Begin: Fetching vehicle details from VCCS");
       return findVehicleDetails(vrn).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
+    } finally {
+      Logger.log.debug("End: Fetching vehicle details from VCCS");
     }
   }
 
@@ -91,9 +106,12 @@ public interface VccsRepository {
   default Response<VehicleTypeCazChargesDto> findUnknownVehicleComplianceSync(
       String type, String zones) {
     try {
+      Logger.log.debug("Begin: Fetching unknown vehicle compliance result from VCCS");
       return findUnknownVehicleCompliance(type, zones).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
+    } finally {
+      Logger.log.debug("End: Fetching unknown vehicle compliance result from VCCS");
     }
   }
 
