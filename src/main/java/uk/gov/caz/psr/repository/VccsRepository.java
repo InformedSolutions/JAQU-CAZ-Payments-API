@@ -55,12 +55,12 @@ public interface VccsRepository {
    */
   default Response<CleanAirZonesResponse> findCleanAirZonesSync() {
     try {
-      Logger.log.debug("Begin: Fetching clean air zones from VCCS");
+      Logger.log.info("Begin: Fetching clean air zones from VCCS");
       return findCleanAirZones().execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     } finally {
-      Logger.log.debug("End: Fetching clean air zones from VCCS");
+      Logger.log.info("End: Fetching clean air zones from VCCS");
     }
   }
 
@@ -73,12 +73,12 @@ public interface VccsRepository {
   default Response<ComplianceResultsDto> findComplianceSync(String vrn,
       String zones) {
     try {
-      Logger.log.debug("Begin: Fetching compliance result from VCCS");
+      Logger.log.info("Begin: Fetching compliance result from VCCS");
       return findCompliance(vrn, zones).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     } finally {
-      Logger.log.debug("End: Fetching compliance result from VCCS");
+      Logger.log.info("End: Fetching compliance result from VCCS");
     }
   }
 
@@ -89,12 +89,12 @@ public interface VccsRepository {
    */
   default Response<VehicleDto> findVehicleDetailsSync(String vrn) {
     try {
-      Logger.log.debug("Begin: Fetching vehicle details from VCCS");
+      Logger.log.info("Begin: Fetching vehicle details from VCCS");
       return findVehicleDetails(vrn).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     } finally {
-      Logger.log.debug("End: Fetching vehicle details from VCCS");
+      Logger.log.info("End: Fetching vehicle details from VCCS");
     }
   }
 
@@ -106,12 +106,12 @@ public interface VccsRepository {
   default Response<VehicleTypeCazChargesDto> findUnknownVehicleComplianceSync(
       String type, String zones) {
     try {
-      Logger.log.debug("Begin: Fetching unknown vehicle compliance result from VCCS");
+      Logger.log.info("Begin: Fetching unknown vehicle compliance result from VCCS");
       return findUnknownVehicleCompliance(type, zones).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     } finally {
-      Logger.log.debug("End: Fetching unknown vehicle compliance result from VCCS");
+      Logger.log.info("End: Fetching unknown vehicle compliance result from VCCS");
     }
   }
 
