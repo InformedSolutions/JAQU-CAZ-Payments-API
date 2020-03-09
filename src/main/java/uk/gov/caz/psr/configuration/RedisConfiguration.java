@@ -2,8 +2,6 @@ package uk.gov.caz.psr.configuration;
 
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.caz.psr.dto.CacheableResponse;
-import uk.gov.caz.psr.dto.CacheableResponseDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -18,7 +16,6 @@ import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Configuration
@@ -59,8 +56,7 @@ public class RedisConfiguration {
   @Primary
   @Bean
   public CacheManager cacheManager(
-      RedisConnectionFactory redisConnectionFactory,
-      ObjectMapper objectMapper) {
+      RedisConnectionFactory redisConnectionFactory) {
     Duration expiration = Duration.ofHours(redisTtl);
     return RedisCacheManager.builder(redisConnectionFactory)
         .cacheDefaults(

@@ -2,12 +2,10 @@ package uk.gov.caz.psr.dto;
 
 import java.io.Serializable;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.Value;
 
 @Builder
 @Value
-@Getter
 public class CacheableResponse<T> implements Serializable {
 
   /**
