@@ -10,7 +10,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import retrofit2.Response;
+import uk.gov.caz.definitions.dto.CacheableResponseDto;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.repository.VccsRepository;
@@ -73,16 +75,16 @@ public class CleanAirZoneServiceTest {
   }
 
   @Test
-  public void shouldReturnCleanAirZonesFromFetchAll() {
+  public void shouldReturnCleanAirZonesFromFetchAll() throws JsonProcessingException {
     // given
     mockRepositoryResultForCleanAirZones();
 
     // when
-    Response<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
+    CacheableResponseDto<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
 
     // then
     assertThat(result).isNotNull();
-    assertThat(result.body().getCleanAirZones().get(0).getName()).isEqualTo(ANY_VALID_CAZ_NAME);
+    assertThat(result.getBody().getCleanAirZones().get(0).getName()).isEqualTo(ANY_VALID_CAZ_NAME);
   }
   
   private void mockRepositoryResultForCleanAirZones() {

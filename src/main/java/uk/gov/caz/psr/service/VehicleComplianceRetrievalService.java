@@ -15,7 +15,7 @@ import retrofit2.Response;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.async.rest.AsyncRestService;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.dto.VehicleDto;
+import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 import uk.gov.caz.psr.util.AsyncOperationsMatcher;

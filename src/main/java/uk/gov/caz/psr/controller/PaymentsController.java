@@ -13,9 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import retrofit2.Response;
+import uk.gov.caz.definitions.dto.CacheableResponseDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.dto.VehicleDto;
-import uk.gov.caz.psr.dto.CacheableResponse;
+import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
@@ -95,7 +95,7 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   
   @Override
   public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() throws JsonProcessingException {
-    CacheableResponse<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
+    CacheableResponseDto<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
     return ResponseEntity
         .status(result.getCode())
         .body(result.getBody());

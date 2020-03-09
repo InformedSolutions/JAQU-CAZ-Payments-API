@@ -9,7 +9,7 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.dto.VehicleDto;
+import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 

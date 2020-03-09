@@ -5,11 +5,12 @@ import com.google.common.base.Preconditions;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
+import uk.gov.caz.definitions.dto.CacheableResponseDto;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
-import uk.gov.caz.psr.dto.CacheableResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
@@ -31,13 +32,13 @@ public class CleanAirZoneService {
    * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
    */
   @Cacheable(value = "cleanAirZones")
-  public CacheableResponse<CleanAirZonesResponse> fetchAll()
+  public CacheableResponseDto<CleanAirZonesResponse> fetchAll()
       throws JsonProcessingException {
     try {
       log.debug("Fetching all clean air zones from VCCS");
       Response<CleanAirZonesResponse> response =
           vccsRepository.findCleanAirZonesSync();
-      return CacheableResponse.<CleanAirZonesResponse>builder()
+      return CacheableResponseDto.<CleanAirZonesResponse>builder()
           .code(response.code()).body(response.body()).build();
     } finally {
       log.debug("Fetching all clean air zones from VCCS: finish");
@@ -81,5 +82,14 @@ public class CleanAirZoneService {
         .findFirst()
         .orElseThrow(() -> new CleanAirZoneNotFoundException(cleanAirZoneId));
     return cleanAirZone.getName();
+  }
+  
+  /**
+   * Service layer implementation for evicting a cached clean-air-zones from
+   * redis.
+   */
+  @CacheEvict(value = {"cleanAirZones", "tariffs"}, allEntries = true)
+  public void cacheEvictCleanAirZones() {
+    log.info("Evicting cached clean-air-zones.");
   }
 }

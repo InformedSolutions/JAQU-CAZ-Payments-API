@@ -217,6 +217,9 @@ swagger:
     db:
       migration:
         description: Evolve DB schema 
+    cacheInvalidation:
+      cleanAirZones:
+        description: Evicting a cached clean-air-zones from redis
     cleanAirZones:
       description: Returns list of available CAZs         
     vehicle:
