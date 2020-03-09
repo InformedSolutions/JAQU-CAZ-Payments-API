@@ -1,5 +1,7 @@
 package uk.gov.caz.psr.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -30,11 +32,13 @@ public class CleanAirZoneService {
    * @return {@link CleanAirZonesResponse} A list of parsed Clean Air Zones
    */
   @Cacheable(value = "cleanAirZones")
-  public CacheableResponse<CleanAirZonesResponse> fetchAll() {
+  public CacheableResponse<CleanAirZonesResponse> fetchAll() throws JsonProcessingException  {
     try {
       log.debug("Fetching all clean air zones from VCCS");
-      Response<CleanAirZonesResponse> rawResponse = vccsRepository.findCleanAirZonesSync();
-      return CacheableResponse.<CleanAirZonesResponse>builder().response(rawResponse).build();
+      Response<CleanAirZonesResponse> response =
+          vccsRepository.findCleanAirZonesSync();
+      return CacheableResponse.<CleanAirZonesResponse>builder().code(response.code())
+          .body(response.body()).build();
     } finally {
       log.debug("Fetching all clean air zones from VCCS: finish");
     }

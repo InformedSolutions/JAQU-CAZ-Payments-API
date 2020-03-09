@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.HashSet;
 import java.util.List;
@@ -93,11 +94,11 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   }
   
   @Override
-  public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() {
+  public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() throws JsonProcessingException {
     CacheableResponse<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
     return ResponseEntity
-        .status(result.response.code())
-        .body(result.response.body());
+        .status(result.getCode())
+        .body(result.getBody());
   }
 
   @Override

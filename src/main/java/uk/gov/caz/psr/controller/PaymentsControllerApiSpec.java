@@ -20,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.dto.VehicleDto;
+import uk.gov.caz.psr.dto.CacheableResponse;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
@@ -114,7 +116,7 @@ public interface PaymentsControllerApiSpec {
       value = "CorrelationID to track the request from the API gateway through"
           + " the Enquiries stack",
       paramType = "header")})
-  ResponseEntity<CleanAirZonesResponse> getCleanAirZones();
+  ResponseEntity<CleanAirZonesResponse> getCleanAirZones() throws JsonProcessingException;
   
   /**
    * Get vehicle details.

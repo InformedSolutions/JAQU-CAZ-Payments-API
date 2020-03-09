@@ -18,18 +18,12 @@ import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 
 @Slf4j
 @Configuration
 @EnableCaching
-@ConditionalOnProperty(
-    value = "redis.enabled", havingValue = "true",
+@ConditionalOnProperty(value = "redis.enabled", havingValue = "true",
     matchIfMissing = false)
 public class RedisConfiguration {
 
@@ -41,7 +35,7 @@ public class RedisConfiguration {
 
   @Value("${redis.ttlInHours}")
   private Integer redisTtl;
-    
+
   /**
    * Customised redis template bean constructor.
    *
@@ -67,22 +61,13 @@ public class RedisConfiguration {
   public CacheManager cacheManager(
       RedisConnectionFactory redisConnectionFactory,
       ObjectMapper objectMapper) {
-    
-    SimpleModule module = new SimpleModule();
-    module.addDeserializer(CacheableResponse.class, new CacheableResponseDeserializer());
-    objectMapper.registerModule(module);
-
     Duration expiration = Duration.ofHours(redisTtl);
     return RedisCacheManager.builder(redisConnectionFactory)
-        .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig()
-            .serializeKeysWith(
-                SerializationPair.fromSerializer(new StringRedisSerializer()))
-            .serializeValuesWith(SerializationPair.fromSerializer(
-                new GenericJackson2JsonRedisSerializer(objectMapper)))
-            .entryTtl(expiration))
+        .cacheDefaults(
+            RedisCacheConfiguration.defaultCacheConfig().entryTtl(expiration))
         .build();
   }
-  
+
   /**
    * Customised lettuce connection factory builder.
    *
@@ -92,7 +77,8 @@ public class RedisConfiguration {
   @Profile("!integration-tests")
   public LettuceConnectionFactory lettuceConnectionFactory() {
     log.info("Creating redis-connection for a cluster");
-    RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration();
+    RedisClusterConfiguration clusterConfiguration =
+        new RedisClusterConfiguration();
     clusterConfiguration.clusterNode(redisClusterEndpoint, redisClusterPort);
     return new LettuceConnectionFactory(clusterConfiguration);
   }
