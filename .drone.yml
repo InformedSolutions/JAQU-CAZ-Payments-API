@@ -84,6 +84,10 @@ services:
     ports:
       - 4576
       - 4584
+  - name: redis
+    image: redis
+    ports:
+      - 6379
 
 steps:
 
@@ -343,6 +347,11 @@ services:
     ports:
       - 4576
       - 4584
+  - name: redis
+    image: redis
+    ports:
+      - 6379
+      
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
@@ -622,6 +631,11 @@ services:
     ports:
       - 4576
       - 4584
+  - name: redis
+    image: redis
+    ports:
+      - 6379
+      
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
