@@ -262,7 +262,7 @@ class InitiateEntrantPaymentsServiceTest {
 
           // then
           assertThat(throwable).isInstanceOf(IllegalStateException.class)
-              .hasMessageStartingWith("The corresponding payment has already been paid with its state equal to");
+              .hasMessageStartingWith("The corresponding payment has been completed or not finished");
           verify(entrantPaymentRepository, never()).insert(any(EntrantPayment.class));
           verify(entrantPaymentMatchRepository, never())
               .updateLatestToFalseFor(existingEntrantPaymentId);
@@ -289,6 +289,47 @@ class InitiateEntrantPaymentsServiceTest {
               .build();
         });
       }
+
+      @Nested
+      class WhenRelatedPaymentHasNotCompletedExternally {
+
+        @Test
+        public void shouldThrowIllegalStateException() {
+          // given
+          LocalDate notMatchingDate = LocalDate.now();
+          LocalDate matchingDate = LocalDate.now().minusDays(1);
+          List<SingleEntrantPayment> transactions = Arrays.asList(SingleEntrantPayment.builder()
+                  .charge(ANY_CHARGE)
+                  .travelDate(matchingDate)
+                  .vrn(ANY_VRN)
+                  .tariffCode(ANY_TARIFF_CODE)
+                  .build(),
+              SingleEntrantPayment.builder()
+                  .charge(ANY_CHARGE)
+                  .travelDate(notMatchingDate)
+                  .vrn(ANY_VRN)
+                  .tariffCode(ANY_TARIFF_CODE)
+                  .build()
+          );
+          List<LocalDate> travelDates = Arrays.asList(matchingDate, notMatchingDate);
+          UUID existingEntrantPaymentId = UUID.fromString("d34f9d3a-54c7-40e3-9611-60caa783a8b7");
+          mockExistingEntrantPayments(matchingDate, travelDates, existingEntrantPaymentId);
+          mockPaymentRepositoriesWithNotFinishedPayment(existingEntrantPaymentId);
+
+        // when
+        Throwable throwable = catchThrowable(() -> service.processEntrantPaymentsForPayment(
+            ANY_PAYMENT_ID, ANY_CLEAN_AIR_ZONE_ID, transactions));
+
+          // then
+          assertThat(throwable).isInstanceOf(IllegalStateException.class)
+              .hasMessageStartingWith("The corresponding payment has been completed or not finished");
+          verify(entrantPaymentRepository, never()).insert(any(EntrantPayment.class));
+          verify(entrantPaymentMatchRepository, never())
+              .updateLatestToFalseFor(existingEntrantPaymentId);
+          verify(entrantPaymentRepository, never()).update(any(EntrantPayment.class));
+          verify(entrantPaymentMatchRepository, never()).insert(any());
+        }
+      }
     }
   }
 
@@ -296,6 +337,12 @@ class InitiateEntrantPaymentsServiceTest {
     Payment existingPayment = createPayment(ExternalPaymentStatus.INITIATED).build();
     when(paymentRepository.findByEntrantPayment(existingEntrantPaymentId))
         .thenReturn(Optional.of(existingPayment));
+  }
+
+  private void mockPaymentRepositoriesWithNotFinishedPayment(UUID existingEntrantPaymentId) {
+    Payment existingPayment = createPayment(ExternalPaymentStatus.INITIATED).build();
+    mockPaymentRepositoryWithNotFinishedPayment(existingEntrantPaymentId);
+    when(cleanupDanglingPaymentService.processDanglingPayment(any())).thenReturn(existingPayment);
   }
 
   private void mockPaymentRepositoryWithFinishedPayment(UUID existingEntrantPaymentId) {

@@ -124,10 +124,10 @@ public class InitiateEntrantPaymentsService {
         .map(Payment::getExternalPaymentStatus)
         .orElse(null);
 
-    if (relatedPaymentStatus != null && relatedPaymentStatus == ExternalPaymentStatus.SUCCESS) {
-      throw new IllegalStateException(
-          "The corresponding payment has already been paid with its state equal to "
-              + relatedPaymentStatus);
+    if (relatedPaymentStatus != null && (relatedPaymentStatus.isNotFinished()
+        || relatedPaymentStatus == ExternalPaymentStatus.SUCCESS)) {
+      throw new IllegalStateException("The corresponding payment has been completed or not "
+          + "finished yet, its state is equal to " + relatedPaymentStatus);
     }
   }
 
