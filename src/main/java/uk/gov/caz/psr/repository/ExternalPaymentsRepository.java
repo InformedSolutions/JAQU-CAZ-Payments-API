@@ -103,9 +103,6 @@ public class ExternalPaymentsRepository {
     Preconditions.checkNotNull(payment.getId(), "Payment must have set its internal identifier");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(returnUrl),
         "Return url cannot be null or empty");
-    //    TODO: Fix with the payment updates CAZ-1716
-    //    Preconditions.checkArgument(!payment.getVehicleEntrantPayments().isEmpty(),
-    //        "Vehicle entrant payments cannot be null or empty");
     try {
       log.info("Create the payment for {}: start", payment.getId());
       RequestEntity<CreateCardPaymentRequest> request =
@@ -131,15 +128,14 @@ public class ExternalPaymentsRepository {
 
   /**
    * Converts a status returned from the GOV UK Pay service to {@link ExternalPaymentStatus}. If the
-   * value does not match any existing one, {@link ExternalPaymentStatus#UNKNOWN} is returned.
+   * value does not match any existing one, {@link IllegalArgumentException} is rethrown.
    */
   private ExternalPaymentStatus toModelStatus(String status) {
     try {
       return ExternalPaymentStatus.valueOf(status.toUpperCase());
     } catch (IllegalArgumentException e) {
-      log.error("Unrecognized external payment status '{}', returning {}", status,
-          ExternalPaymentStatus.UNKNOWN);
-      return ExternalPaymentStatus.UNKNOWN;
+      log.error("Unrecognized external payment status '{}'", status);
+      throw e;
     }
   }
 

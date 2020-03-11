@@ -36,16 +36,12 @@ public class ReconcilePaymentStatusService {
    */
   public Optional<Payment> reconcilePaymentStatus(UUID id) {
     Preconditions.checkNotNull(id, "ID cannot be null");
-    Payment internalPayment = internalPaymentsRepository.findById(id).orElse(null);
-    Payment payment;
+    Payment payment = internalPaymentsRepository.findById(id).orElse(null);
 
-    if (internalPayment == null) {
+    if (payment == null) {
       log.warn("Payment '{}' not found in the database", id);
 
       return Optional.empty();
-    } else {
-      // TODO: CAZ-1879 - fetching CAZ name from VCCS
-      payment = internalPayment.toBuilder().cleanAirZoneName("cleanAirZoneName").build();
     }
 
     String externalPaymentId = payment.getExternalId();

@@ -40,7 +40,7 @@ public class ReconcilePaymentStatusTestIT {
 
   @Autowired
   private PaymentRepository paymentRepository;
-  
+
   @BeforeEach
   public void init() throws JsonProcessingException {
     ObjectMapper om = new ObjectMapper();

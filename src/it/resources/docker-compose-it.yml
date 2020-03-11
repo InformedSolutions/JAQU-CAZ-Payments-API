@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: caz-payments
+      POSTGRES_DB: vehicle_compliance
 
   localstack-it:
     image: localstack/localstack:0.10.2
@@ -22,6 +22,12 @@ services:
       - "~/tmp/localstack:/tmp/localstack"
     networks:
       - localstack_network
+      
+  redis-it:
+    image: redis
+    container_name: redis.docker
+    ports:
+      - 6380:6379
       
 networks:
   localstack_network:

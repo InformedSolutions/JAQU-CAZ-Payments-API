@@ -24,7 +24,7 @@ public class Payment {
    * The unique payment identifier from GOV UK Pay service.
    */
   String externalId;
-  
+
   /**
    * The central reference number of the payment.
    */
@@ -77,18 +77,18 @@ public class Payment {
    * payment. A transient field, not saved in the database.
    */
   String emailAddress;
-  
-  /**
-   * The name of the Clean Air Zone the payment is being made to. A transient field, not saved
-   * in the database.
-   */
-  String cleanAirZoneName;
 
   /**
    * An identifier of the Clean Air Zone. A transient field, not saved in the database. This value
    * is non-null only when a new payment is initiated.
    */
   UUID cleanAirZoneId;
+
+  /**
+   * An identifier of the account/user which is making the payment. {@code null} for citizen
+   * journeys.
+   */
+  UUID userId;
 
   /**
    * An overridden lombok's builder.
@@ -110,8 +110,8 @@ public class Payment {
               + "authorisedTimestamp is not null and external payment status is 'SUCCESS'");
 
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
-          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl, 
-          emailAddress, cleanAirZoneName, cleanAirZoneId);
+          externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl,
+          emailAddress, cleanAirZoneId, userId);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

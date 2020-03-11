@@ -50,8 +50,7 @@ class ReconcilePaymentStatusServiceTest {
   private ReconcilePaymentStatusService reconcilePaymentStatusService;
 
   private final UUID cazIdentifier = UUID.fromString("ab3e9f4b-4076-4154-b6dd-97c5d4800b47");
-  // TODO: CAZ-1879 - adjust CAZ name
-  private final static String CLEAN_AIR_ZONE_NAME = "cleanAirZoneName";
+  private final static String CLEAN_AIR_ZONE_NAME = "Leeds";
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPassedNullValue() {
@@ -120,7 +119,6 @@ class ReconcilePaymentStatusServiceTest {
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     String externalId = "ext-id";
     Payment payment = mockInternalPaymentWith(paymentId, externalId);
-    payment = payment.toBuilder().cleanAirZoneName(CLEAN_AIR_ZONE_NAME).build();
     mockSameExternalStatusFor(payment);
     mockGetPaymentResultConverter(payment.getExternalPaymentStatus());
 
@@ -144,7 +142,7 @@ class ReconcilePaymentStatusServiceTest {
     String email = "example@email.com";
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     Payment payment = mockInternalPaymentWith(paymentId, "ext-id",
-        initExternalPaymentDetails.getExternalPaymentStatus(), this.cazIdentifier, CLEAN_AIR_ZONE_NAME);
+        initExternalPaymentDetails.getExternalPaymentStatus(), this.cazIdentifier);
     Payment paymentWithEmail = payment.toBuilder().emailAddress(email).build();
     mockSuccessStatusFor(payment, email);
     mockStatusUpdaterWithSuccess(paymentWithEmail, newExternalPaymentDetails);
@@ -167,7 +165,7 @@ class ReconcilePaymentStatusServiceTest {
 
     UUID paymentId = UUID.fromString("c56fcd5f-fde6-4d7d-aa3f-8ff192a6244f");
     mockInternalPaymentWith(paymentId, "ext-id",
-        initExternalPaymentDetails.getExternalPaymentStatus(), null, CLEAN_AIR_ZONE_NAME);
+        initExternalPaymentDetails.getExternalPaymentStatus(), null);
     
     // when
     Throwable throwable =
@@ -183,9 +181,9 @@ class ReconcilePaymentStatusServiceTest {
   }
 
   private Payment mockInternalPaymentWith(UUID paymentId, String externalId,
-      ExternalPaymentStatus newStatus, UUID cazIdentifier, String cazName) {
+      ExternalPaymentStatus newStatus, UUID cazIdentifier) {
     Payment payment = TestObjectFactory.Payments.forRandomDaysWithId(paymentId, externalId, cazIdentifier)
-        .toBuilder().externalPaymentStatus(newStatus).cleanAirZoneName(cazName).build();
+        .toBuilder().externalPaymentStatus(newStatus).build();
     mockInternalPaymentInDatabase(paymentId, payment, cazIdentifier);
     return payment;
   }

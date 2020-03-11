@@ -2,8 +2,11 @@ package uk.gov.caz.psr.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -14,8 +17,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.RowMapper;
 import uk.gov.caz.psr.model.EntrantPayment;
-import uk.gov.caz.psr.model.VehicleEntrant;
+import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,25 +132,25 @@ class EntrantPaymentRepositoryTest {
   }
 
   @Nested
-  class FindSuccessfullyPaid {
+  class FindOneByVrnAndCazEntryDate {
 
     @Test
-    public void shouldThrowNullPointerExceptionWhenCazEntrantIsNull() {
+    public void shouldThrowNotUniqueEntrantPaymentFoundExceptionWhenMoreThanOneRowIsReturned() {
       // given
-      VehicleEntrant vehicleEntrant = null;
+      mockMoreThanOneRowReturned();
 
       // when
-      Throwable throwable = catchThrowable(
-          () -> entrantPaymentRepository.findSuccessfullyPaid(vehicleEntrant));
+      Throwable throwable = catchThrowable(() ->
+          entrantPaymentRepository.findOneByVrnAndCazEntryDate(UUID.randomUUID(), "VRN123", LocalDate.now()));
 
       // then
-      assertThat(throwable).isInstanceOf(NullPointerException.class)
-          .hasMessage("Vehicle Entrant cannot be null");
+      assertThat(throwable).isInstanceOf(NotUniqueVehicleEntrantPaymentFoundException.class);
     }
-  }
 
-  @Nested
-  class FindOneByVrnAndCazEntryDate {
+    private void mockMoreThanOneRowReturned() {
+      when(jdbcTemplate.query(any(String.class), any(PreparedStatementSetter.class), any(RowMapper.class)))
+          .thenReturn(Arrays.asList(EntrantPayments.anyPaid(), EntrantPayments.anyPaid()));
+    }
 
     @Test
     public void shouldThrowNullPointerExceptionWhenCleanZoneIdIsNull() {
@@ -192,83 +197,6 @@ class EntrantPaymentRepositoryTest {
           .hasMessage("VRN cannot be empty");
     }
 
-//    TODO: Fix with the payment updates CAZ-1716
-//    @Test
-//    public void shouldThrowNIllegalStateExceptionWhenFoundMoreThanOneVehicleEntrantPayment() {
-//      // given
-//      mockMultipleItemsFoundInDatabaseForFindOneWithVrn();
-//
-//      // when
-//      Throwable throwable = catchThrowable(
-//          () -> vehicleEntrantPaymentRepository
-//              .findOnePaidByVrnAndCazEntryDate(UUID.randomUUID(), "VRN", LocalDate.now()));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(NotUniqueVehicleEntrantPaymentFoundException.class)
-//          .hasMessage("Not able to find unique VehicleEntrantPayment");
-//    }
-//
-//    @Test
-//    public void shouldReturnOptionalEmptyWhenNoVehicleEntrantPaymentFound() {
-//      // given
-//      mockNoItemsFoundInDatabaseForFindOneWithVrn();
-//
-//      // when
-//      Optional<CazEntrantPayment> response = vehicleEntrantPaymentRepository
-//          .findOnePaidByVrnAndCazEntryDate(UUID.randomUUID(), "VRN", LocalDate.now());
-//
-//      // then
-//      assertThat(response).isEqualTo(Optional.empty());
-//    }
-  }
-
-  @Nested
-  class FindOnePaidByCazEntryDateAndExternalPaymentId {
-
-    @Test
-    public void shouldThrowNullPointerExceptionWhenCleanZoneIdIsNull() {
-      // given
-      UUID cleanZoneId = null;
-
-      // when
-      Throwable throwable = catchThrowable(
-          () -> entrantPaymentRepository
-              .findOnePaidByCazEntryDateAndExternalPaymentId(cleanZoneId, LocalDate.now(),
-                  "external_payment_id"));
-
-      // then
-      assertThat(throwable).isInstanceOf(NullPointerException.class)
-          .hasMessage("cleanZoneId cannot be null");
-    }
-
-    @Test
-    public void shouldThrowNullPointerExceptionWhenCazEntryDateIsNull() {
-      // given
-      LocalDate cazEntryDate = null;
-
-      // when
-      Throwable throwable = catchThrowable(
-          () -> entrantPaymentRepository
-              .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), cazEntryDate,
-                  "external_payment_id"));
-
-      // then
-      assertThat(throwable).isInstanceOf(NullPointerException.class)
-          .hasMessage("cazEntryDate cannot be null");
-    }
-
-    @Test
-    public void shouldThrowNIllegalArgumentExceptionWhenExternalPaymentIsEmpty() {
-      // when
-      Throwable throwable = catchThrowable(
-          () -> entrantPaymentRepository
-              .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), LocalDate.now(),
-                  ""));
-
-      // then
-      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-          .hasMessage("externalPaymentId cannot be empty");
-    }
   }
 
   @Nested
@@ -347,73 +275,105 @@ class EntrantPaymentRepositoryTest {
           .hasMessage("cleanAirZoneId cannot be null");
     }
   }
+
+  @Nested
+  class FindByVrnAndCazEntryDates {
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenCazEntryDatesAreNull() {
+      // given
+      UUID cazId = UUID.randomUUID();
+      String vrn = "VRN321";
+      List<LocalDate> cazEntryDates = null;
+
+      // when
+      Throwable throwable = catchThrowable(() ->
+          entrantPaymentRepository.findByVrnAndCazEntryDates(cazId, vrn, cazEntryDates));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("cazEntryDates cannot be null or empty");
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenCazEntryDatesAreEmpty() {
+      // given
+      UUID cazId = UUID.randomUUID();
+      String vrn = "VRN321";
+      List<LocalDate> cazEntryDates = Collections.emptyList();
+
+      // when
+      Throwable throwable = catchThrowable(() ->
+          entrantPaymentRepository.findByVrnAndCazEntryDates(cazId, vrn, cazEntryDates));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("cazEntryDates cannot be null or empty");
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenVrnIsNull() {
+      // given
+      UUID cazId = UUID.randomUUID();
+      String vrn = null;
+      List<LocalDate> cazEntryDates = Collections.singletonList(LocalDate.now());
+
+      // when
+      Throwable throwable = catchThrowable(() ->
+          entrantPaymentRepository.findByVrnAndCazEntryDates(cazId, vrn, cazEntryDates));
+
+      // then
+      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("VRN cannot be empty");
+    }
+  }
+
+  @Nested
+  class FindByVrnAndCaz {
+	  
+	  @Test
+	  public void shouldThrowIllegalArgumentExceptionWhenVrnIsNull() {
+	      // given
+	      UUID cazId = UUID.randomUUID();
+	      String vrn = null;
+
+	      // when
+	      Throwable throwable = catchThrowable(() ->
+	          entrantPaymentRepository.countByVrnAndCaz(cazId, vrn));
+
+	      // then
+	      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+	          .hasMessage("VRN cannot be empty");
+	  }
+	  
+	  @Test
+	  public void shouldThrowIllegalArgumentExceptionWhenVrnIsEmpty() {
+	      // given
+	      UUID cazId = UUID.randomUUID();
+	      String vrn = "";
+
+	      // when
+	      Throwable throwable = catchThrowable(() ->
+	          entrantPaymentRepository.countByVrnAndCaz(cazId, vrn));
+
+	      // then
+	      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+	          .hasMessage("VRN cannot be empty");
+	  }
+	  
+	  @Test
+	  public void shouldThrowIllegalArgumentExceptionWhenCazIdIsEmpty() {
+	      // given
+	      UUID cazId = null;
+	      String vrn = "VRN321";
+
+	      // when
+	      Throwable throwable = catchThrowable(() ->
+	          entrantPaymentRepository.countByVrnAndCaz(cazId, vrn));
+
+	      // then
+	      assertThat(throwable).isInstanceOf(NullPointerException.class)
+	          .hasMessage("cleanZoneId cannot be null");
+	  }
+  }
 }
-
-//    TODO: Fix with the payment updates CAZ-1716
-//    @Test
-//    public void shouldThrowNIllegalStateExceptionWhenFoundMoreThanOneVehicleEntrantPayment() {
-//      // given
-//      mockMultipleItemsFoundInDatabaseForFindOneWithExternalPayment();
-//
-//      // when
-//      Throwable throwable = catchThrowable(
-//          () -> vehicleEntrantPaymentRepository
-//              .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), LocalDate.now(),
-//                  "test"));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(NotUniqueVehicleEntrantPaymentFoundException.class)
-//          .hasMessage("Not able to find unique VehicleEntrantPayment");
-//    }
-
-//    @Test
-//    public void shouldReturnOptionalEmptyWhenNoVehicleEntrantPaymentFound() {
-//      // given
-//      mockNoItemsFoundInDatabaseForFindOneWithExternalPayment();
-//
-//      // when
-//      Optional<CazEntrantPayment> response = vehicleEntrantPaymentRepository
-//          .findOnePaidByCazEntryDateAndExternalPaymentId(UUID.randomUUID(), LocalDate.now(),
-//              "test");
-//
-//      // then
-//      assertThat(response).isEqualTo(Optional.empty());
-//    }
-//  }
-
-//  private void mockMultipleItemsFoundInDatabaseForFindOneWithExternalPayment() {
-//    List<CazEntrantPayment> vehicleEntrantPayments = CazEntrantPayments.forRandomDays();
-//
-//    when(jdbcTemplate.query(
-//        eq(VehicleEntrantPaymentRepository.SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL),
-//        any(PreparedStatementSetter.class),
-//        any(VehicleEntrantPaymentRowMapper.class)
-//    )).thenReturn(vehicleEntrantPayments);
-//  }
-
-//  private void mockMultipleItemsFoundInDatabaseForFindOneWithVrn() {
-//    List<CazEntrantPayment> vehicleEntrantPayments = CazEntrantPayments.forRandomDays();
-//
-//    when(jdbcTemplate.query(
-//        eq(CazEntrantPaymentRepository.SELECT_BY_VRN_CAZ_ENTRY_DATE_AND_STATUS_SQL),
-//        any(PreparedStatementSetter.class),
-//        any(CazEntrantPaymentRepository.class)
-//    )).thenReturn(vehicleEntrantPayments);
-//  }
-
-//  private void mockNoItemsFoundInDatabaseForFindOneWithExternalPayment() {
-//    when(jdbcTemplate.query(
-//        eq(VehicleEntrantPaymentRepository.SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL),
-//        any(PreparedStatementSetter.class),
-//        any(VehicleEntrantPaymentRowMapper.class)
-//    )).thenReturn(Collections.emptyList());
-//  }
-
-//  private void mockNoItemsFoundInDatabaseForFindOneWithVrn() {
-//    when(jdbcTemplate.query(
-//        eq(CazEntrantPaymentRepository.SELECT_BY_VRN_CAZ_ENTRY_DATE_AND_STATUS_SQL),
-//        any(PreparedStatementSetter.class),
-//        any(CazEntrantPaymentRowMapper.class)
-//    )).thenReturn(Collections.emptyList());
-//  }
-//}

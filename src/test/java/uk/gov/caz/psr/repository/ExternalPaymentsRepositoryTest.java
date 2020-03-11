@@ -31,7 +31,6 @@ import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.dto.external.Link;
 import uk.gov.caz.psr.dto.external.PaymentLinks;
 import uk.gov.caz.psr.dto.external.PaymentState;
-import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -116,25 +115,8 @@ class ExternalPaymentsRepositoryTest {
           .hasMessage("Return url cannot be null or empty");
     }
 
-//    TODO: Fix with the payment updates CAZ-1716
-//    @Test
-//    public void shouldThrowIllegalArgumentExceptionWhenVehicleEntrantPaymentsIsEmpty() {
-//      // given
-//      Payment payment = createPayment(UUID.fromString("5b793d4e-fba9-11e9-9334-6b0964eb9a87"));
-//      Payment paymentWithEmptyVehicleEntrants = payment.toBuilder()
-//          .vehicleEntrantPayments(new ArrayList<VehicleEntrantPayment>())
-//          .build();
-//
-//      // when
-//      Throwable throwable = catchThrowable(() -> paymentsRepository.create(paymentWithEmptyVehicleEntrants, ANY_RETURN_URL));
-//
-//      // then
-//      assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-//          .hasMessage("Vehicle entrant payments cannot be null or empty");
-//    }
-
     @Test
-    public void shouldSetUnknownStatusIfNoneIsMatched() {
+    public void shouldRethrowIllegalArgumentExceptionIfNoneIsMatched() {
       // given
       UUID paymentId = UUID.fromString("9d4fc418-fbae-11e9-8f23-cf92e47420e6");
       mockRestTemplateResultWithUnrecognizedStatus();
@@ -142,11 +124,11 @@ class ExternalPaymentsRepositoryTest {
       when(credentialRetrievalManager.getApiKey(payment.getCleanAirZoneId())).thenReturn(Optional.of("test-api-key"));
 
       // when
-      Payment result = paymentsRepository.create(payment, ANY_RETURN_URL);
+      Throwable result = catchThrowable(() ->
+          paymentsRepository.create(payment, ANY_RETURN_URL));
 
       // then
-      assertThat(result).isNotNull();
-      assertThat(result.getExternalPaymentStatus()).isEqualTo(ExternalPaymentStatus.UNKNOWN);
+      assertThat(result).isInstanceOf(IllegalArgumentException.class);
     }
 
     private void mockRestTemplateResultWithUnrecognizedStatus() {

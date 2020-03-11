@@ -7,9 +7,6 @@ springfox:
       v2:
         path: /v1/swagger-docs
 
-server:
-  port: 8081
-
 spring:
   jpa:
     open-in-view: false
@@ -17,11 +14,11 @@ spring:
     enabled: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/caz-payments
+    url: jdbc:postgresql://localhost:5433/vehicle_compliance
     username: postgres
     password: postgres
     hikari:
-      maximum-pool-size: 1
+      maximum-pool-size: 2
   profiles:
     active: dev
 
@@ -31,9 +28,20 @@ services:
   gov-uk-pay:
     rootUrl: https://publicapi.payments.service.gov.uk
     api-key: to-be-replaced-by-external-value
+  vehicle-compliance-checker:
+    root-url: http://localhost:1090
+  accounts:
+    root-url: http://localhost:1091
   sqs:
     new-queue-name: notify-gateway_new_dev.fifo
-    template-id: a4282196-a623-4b78-acfa-70b0a0b4a19b
+    template-id: 36c3e259-e03c-415e-bf62-c7fbdb9d49a5
+    account-payment-template-id: 9580a96f-ae7e-45ab-8fcc-7524e5ac9290
+
+redis:
+  endpoint: localhost
+  port: 7000
+  ttlInHours: 24
+  enabled: true
 
 management:
   endpoints:
@@ -138,10 +146,15 @@ swagger:
         status: Payment Status of created Vehicle Entrant
       payments-initiate:
         vrn: Vehicle registration number
-        days: Array of ISO 8601 formatted dates string that specifies the dates for which user wants to pay.
+        travel-date: ISO 8601 formatted date string that specifies the date for which user wants to pay
+        tariff-code: Tariff code
         clean-zone-id: Clean Air Zone identifier
-        amount: Amount to pay
-        return-url: Front end URL used as return URL after payment.
+        charge: Amount to pay
+        return-url: Front end URL used as return URL after payment
+        transactions: Collection of objects representing a single vehicle entrant against which the payment is made
+        user-id: Identifies the fleet's account which is making the payment
+      payments-get-status:
+        clean-air-zone-name: Clean Air Zone name
       paid-payments-request:
         clean-zone-id: Clean Air Zone identifier
         start-date: First day in date range in which the payments are going to be checked.
@@ -152,8 +165,32 @@ swagger:
         paid-dates: A list of days which are already paid.
       paid-payments-response:
         results: Collection of VRNs and dates which are already paid in a given date range.
+      chargeable-account-vehicles-result:
+        results: A list of vrns with charge, tariff and travel dates paid for
+      vrn-with-tariff-entrances:
+        vrn: the registration number of the vehicles
+        tariff-code: the identifier for the tariff on the travel date in question
+        charge: the charge to be paid in association with that tariff code
+        paid-dates: A list of days which are already paid      
+      cleanAirZones:
+        cleanAirZoneDetails: List of Clean Air Zones
+      cleanAirZone:
+        cleanAirZoneId: System ID of the clean air zone
+        name: Name of the Clean Air Zone
+        boundaryUrl: URL provided by zone operators, boundary
+      vehicle:
+        complianceResult:
+          cleanAirZoneId: System ID of the clean air zone
+          name: Official name of the zone
+          charge: Charge to pay in £, 0 means 'no charge'
+          charges: List of Charges
 
   operations:
+    accounts:
+      vehicle-retrieval:
+        descriptions: retrieves a page of vehicles associated with a particular account
+      chargeable-vehicles:
+        descriptions: retrieves a page of chargeable vehicles
     payments:
       create-vehicle-entrant:
         description: >-
@@ -179,4 +216,14 @@ swagger:
           to a vehicle that has entered their CAZ (a 'vehicle entrant')
     db:
       migration:
-        description: Evolve DB schema          
+        description: Evolve DB schema 
+    cacheInvalidation:
+      cleanAirZones:
+        description: Evicting a cached clean-air-zones from redis
+    cleanAirZones:
+      description: Returns list of available CAZs         
+    vehicle:
+      details:
+        description: Returns vehicle registation details
+      compliance:
+        description: Returns vehicle compliance details

@@ -2,8 +2,8 @@
 
 spring:
   datasource:
-    url: jdbc:postgresql://${postgres.url:localhost:9999}/caz-payments
-#    url: jdbc:postgresql://${postgres.url:localhost:5432}/caz-payments
+    url: jdbc:postgresql://${postgres.url:localhost:9999}/vehicle_compliance
+#    url: jdbc:postgresql://${postgres.url:localhost:5432}/vehicle_compliance
     hikari:
       maximum-pool-size: 1
   jpa:
@@ -24,11 +24,21 @@ aws:
     prefix: payments
     profileSeparator: .
 
+redis:
+  enabled: true
+  endpoint: ${redis.url:localhost}
+  port: ${redis.custom.port:6380}
+
 services:
   gov-uk-pay:
     root-url: http://localhost:1080
     api-key: dummy
+  vehicle-compliance-checker:
+    root-url: http://localhost:1090
+  accounts:
+    root-url: http://localhost:1091
   sqs:
     message-group-id-payments: TEST_RECEIPT
     new-queue-name: testqueue.fifo
     template-id: test-template-id
+    account-payment-template-id: test-fleet-template-id

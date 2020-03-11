@@ -15,9 +15,7 @@ public enum ExternalPaymentStatus {
   SUCCESS,
   FAILED,
   CANCELLED,
-  ERROR,
-
-  UNKNOWN;
+  ERROR;
 
   /**
    * Returns true if {@code paymentStatus} represents a pending payment status, false otherwise.

@@ -22,7 +22,6 @@ import org.springframework.util.CollectionUtils;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.model.VehicleEntrant;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
 
 /**
@@ -67,6 +66,10 @@ public class EntrantPaymentRepository {
         + "ep." + EntrantPaymentColumns.COL_CASE_REFERENCE + " "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment ep ";
   }
+  
+  private static String selectCount() {
+    return "SELECT COUNT(*) FROM caz_payment.t_clean_air_zone_entrant_payment";
+  }
 
   private static final String SELECT_BY_PAYMENT_ID_SQL =
       selectAllColumns()
@@ -75,13 +78,6 @@ public class EntrantPaymentRepository {
           + EntrantPaymentMatchColumns.COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID + " = "
           + "ep." + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_ID
           + " WHERE entrant_payment_match." + EntrantPaymentMatchColumns.COL_PAYMENT_ID + " = ?";
-
-  private static final String SELECT_PAID_SQL =
-      selectAllColumns() + " WHERE "
-          + EntrantPaymentColumns.COL_TRAVEL_DATE + " = ? AND "
-          + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
-          + EntrantPaymentColumns.COL_VRN + " = ? AND "
-          + EntrantPaymentColumns.COL_PAYMENT_STATUS + " = ?";
 
   @VisibleForTesting
   static final String SELECT_BY_VRN_CAZ_ENTRY_DATE_SQL =
@@ -96,24 +92,10 @@ public class EntrantPaymentRepository {
           + EntrantPaymentColumns.COL_VRN + " = ? AND "
           + EntrantPaymentColumns.COL_TRAVEL_DATE + " = ANY (?)";
 
-  //    @VisibleForTesting
-  //    static final String SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL = "SELECT "
-  //        + "t_clean_air_zone_entrant_payment.payment_id, "
-  //        + "t_clean_air_zone_entrant_payment.vehicle_entrant_payment_id, "
-  //        + "t_clean_air_zone_entrant_payment.vrn, "
-  //        + "t_clean_air_zone_entrant_payment.clean_air_zone_id, "
-  //        + "t_clean_air_zone_entrant_payment.travel_date, "
-  //        + "t_clean_air_zone_entrant_payment.tariff_code, "
-  //        + "t_clean_air_zone_entrant_payment.charge, "
-  //        + "t_clean_air_zone_entrant_payment.payment_status, "
-  //        + "t_clean_air_zone_entrant_payment.case_reference "
-  //        + "FROM t_clean_air_zone_entrant_payment "
-  //        + "INNER JOIN payment "
-  //        + "ON t_clean_air_zone_entrant_payment.payment_id = payment.payment_id "
-  //        + "WHERE t_clean_air_zone_entrant_payment.clean_air_zone_id = ? AND "
-  //        + "vehicle_entrant_payment.travel_date = ? AND "
-  //        + "vehicle_entrant_payment.payment_status = ? AND "
-  //        + "payment.payment_provider_id = ?";
+  private static final String SELECT_BY_VRN_CAZ_SQL =
+      selectCount() + " WHERE "
+          + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
+          + EntrantPaymentColumns.COL_VRN + " = ?";
 
   private static final String UPDATE_SQL = "UPDATE caz_payment.t_clean_air_zone_entrant_payment "
       + "SET " + EntrantPaymentColumns.COL_PAYMENT_STATUS + " = ?, "
@@ -276,32 +258,6 @@ public class EntrantPaymentRepository {
   }
 
   /**
-   * Finds single {@link EntrantPayment} entity for the passed {@link VehicleEntrant} whose status
-   * is equal to 'PAID'. If none is found, {@link Optional#empty()} is returned.
-   *
-   * @param vehicleEntrant provided VehicleEntrant object.
-   * @return An optional containing {@link EntrantPayment} entity.
-   * @throws NullPointerException if {@code vehicleEntrant} is null.
-   */
-  public Optional<EntrantPayment> findSuccessfullyPaid(VehicleEntrant vehicleEntrant) {
-    Preconditions.checkNotNull(vehicleEntrant, "Vehicle Entrant cannot be null");
-
-    List<EntrantPayment> results = jdbcTemplate.query(SELECT_PAID_SQL,
-        preparedStatement -> {
-          preparedStatement.setObject(1, vehicleEntrant.getCazEntryDate());
-          preparedStatement.setObject(2, vehicleEntrant.getCleanZoneId());
-          preparedStatement.setString(3, vehicleEntrant.getVrn());
-          preparedStatement.setString(4, InternalPaymentStatus.PAID.name());
-        },
-        ROW_MAPPER
-    );
-    if (results.isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(results.iterator().next());
-  }
-
-  /**
    * Finds single of {@link EntrantPayment} entity for the passed params. If none is found, {@link
    * Optional#empty()} is returned. If more then one found throws {@link
    * NotUniqueVehicleEntrantPaymentFoundException}.
@@ -343,6 +299,24 @@ public class EntrantPaymentRepository {
   }
 
   /**
+   * Finds number of instances of a VRN in the EntrantPayment table.
+   *
+   * @param cleanAirZoneId provided Clean Air Zone ID.
+   * @param vrn provided VRN number
+   * @return integer
+   */
+  public Integer countByVrnAndCaz(UUID cleanAirZoneId, String vrn) {
+    Preconditions.checkNotNull(cleanAirZoneId, "cleanZoneId cannot be null");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
+
+    return jdbcTemplate.queryForObject(
+        SELECT_BY_VRN_CAZ_SQL,
+        new Object[] {cleanAirZoneId, vrn},
+        Integer.class
+    );
+  }
+
+  /**
    * Finds a list of {@link EntrantPayment}s based on {@code cleanZoneId}, {@code vrn} and {@code
    * cazEntryDates}.
    *
@@ -352,7 +326,7 @@ public class EntrantPaymentRepository {
       List<LocalDate> cazEntryDates) {
     Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
     Preconditions.checkArgument(!CollectionUtils.isEmpty(cazEntryDates),
-        "cazEntryDate cannot be null or empty");
+        "cazEntryDates cannot be null or empty");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
 
     List<EntrantPayment> results = jdbcTemplate.query(connection -> {
@@ -366,49 +340,6 @@ public class EntrantPaymentRepository {
     }, ROW_MAPPER);
 
     return results;
-  }
-
-  /**
-   * Finds single of {@link EntrantPayment} entity for the passed params. If none is found, {@link
-   * Optional#empty()} is returned. If more then one found throws {@link
-   * NotUniqueVehicleEntrantPaymentFoundException}.
-   *
-   * @param cleanZoneId provided Clean Air Zone ID
-   * @param cazEntryDate Date of entry to provided CAZ
-   * @param externalPaymentId Payment Id from GOV.UK PAY
-   * @return list of found {@link EntrantPayment}.
-   * @throws NullPointerException if {@code cleanZoneId} is null.
-   * @throws NullPointerException if {@code cazEntryDate} is null.
-   * @throws IllegalArgumentException if {@code vrn} is empty.
-   * @throws NotUniqueVehicleEntrantPaymentFoundException if method found more than one
-   *     VehicleEntrantPayment.
-   */
-  public Optional<EntrantPayment> findOnePaidByCazEntryDateAndExternalPaymentId(
-      UUID cleanZoneId, LocalDate cazEntryDate, String externalPaymentId) {
-    Preconditions.checkNotNull(cleanZoneId, "cleanZoneId cannot be null");
-    Preconditions.checkNotNull(cazEntryDate, "cazEntryDate cannot be null");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(externalPaymentId),
-        "externalPaymentId cannot be empty");
-    //    TODO: Fix with the payment updates CAZ-1716
-    //    List<CazEntrantPayment> results = jdbcTemplate
-    //        .query(SELECT_BY_EXTERNAL_PAYMENT_VRN_AND_STATUS_SQL,
-    //            preparedStatement -> {
-    //              preparedStatement.setObject(1, cleanZoneId);
-    //              preparedStatement.setObject(2, cazEntryDate);
-    //              preparedStatement.setString(3, InternalPaymentStatus.PAID.name());
-    //              preparedStatement.setString(4, externalPaymentId);
-    //            },
-    //            ROW_MAPPER
-    //        );
-    //    if (results.size() > 1) {
-    //      throw new NotUniqueVehicleEntrantPaymentFoundException(null,
-    //          "Not able to find unique VehicleEntrantPayment");
-    //    }
-    //    if (results.isEmpty()) {
-    //      return Optional.empty();
-    //    }
-    //    return Optional.of(results.iterator().next());
-    return Optional.empty();
   }
 
   /**
@@ -461,7 +392,7 @@ public class EntrantPaymentRepository {
           .tariffCode(resultSet.getString(EntrantPaymentColumns.COL_TARIFF_CODE))
           .charge(resultSet.getInt(EntrantPaymentColumns.COL_CHARGE))
           .internalPaymentStatus(InternalPaymentStatus.valueOf(
-              resultSet.getString(EntrantPaymentColumns.COL_PAYMENT_STATUS)))
+              resultSet.getString(EntrantPaymentColumns.COL_PAYMENT_STATUS).toUpperCase()))
           .vehicleEntrantCaptured(
               resultSet.getBoolean(EntrantPaymentColumns.COL_VEHICLE_ENTRANT_CAPTURED))
           .updateActor(EntrantPaymentUpdateActor

@@ -31,19 +31,4 @@ public class PaymentStatus {
    * and Local Authority.
    */
   String caseReference;
-
-
-  private static final PaymentStatus EMPTY = PaymentStatus.builder()
-      .status(InternalPaymentStatus.NOT_PAID)
-      .build();
-
-  /**
-   * Helper method which returns built object with NOT_PAID status.
-   *
-   * @return {@link PaymentStatus}
-   */
-  public static PaymentStatus getEmptyPaymentStatusResponse() {
-    return EMPTY;
-  }
-
 }
