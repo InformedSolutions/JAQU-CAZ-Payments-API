@@ -1,15 +1,17 @@
 package uk.gov.caz.psr.repository;
 
 import java.io.IOException;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import retrofit2.Call;
 import retrofit2.Response;
+import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
+import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
-import uk.gov.caz.async.rest.AsyncOp;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
@@ -37,6 +39,11 @@ public interface VccsRepository {
   @Headers("Accept: application/json")
   @GET("v1/compliance-checker/vehicles/{vrn}/compliance")
   Call<ComplianceResultsDto> findCompliance(@Path("vrn") String vrn,
+      @Query("zones") String zones);
+  
+  @Headers("Accept: application/json")
+  @POST("v1/compliance-checker/vehicles/bulk-compliance")
+  Call<List<ComplianceResultsDto>> findComplianceInBulk(@Body List<String> vrns,
       @Query("zones") String zones);
 
   @Headers("Accept: application/json")
@@ -83,6 +90,23 @@ public interface VccsRepository {
   }
 
   /**
+   * Wraps REST API call for finding compliance in bulk in {@link Response} by making a
+   * synchronous request.
+   *
+   * @return {@link Response} with REST response.
+   */
+  default Response<List<ComplianceResultsDto>> findComplianceInBulkSync(List<String> vrns,
+      String zones) {
+    try {
+      return findComplianceInBulk(vrns, zones).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    } finally {
+      Logger.log.info("End: Fetching compliance result from VCCS");
+    }
+  }
+
+  /**
    * Wraps REST API call in {@link Response} making synchronous request.
    *
    * @return {@link Response} with REST response.
@@ -113,16 +137,5 @@ public interface VccsRepository {
     } finally {
       Logger.log.info("End: Fetching unknown vehicle compliance result from VCCS");
     }
-  }
-
-  /**
-   * Wraps REST API call in {@link AsyncOp} making it asynchronous.
-   *
-   * @param vrn the vrn to find compliance of
-   * @return {@link AsyncOp} with prepared REST call.
-   */
-  default AsyncOp<ComplianceResultsDto> findComplianceAsync(String vrn,
-      String zones, String identifier) {
-    return AsyncOp.from("VCCS: " + identifier, findCompliance(vrn, zones));
   }
 }

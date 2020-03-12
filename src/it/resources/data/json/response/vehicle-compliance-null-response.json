@@ -1,4 +1,7 @@
 {
-    "status": 422,
-    "message": "Unable to determine compliance due to null"
+    "registrationNumber": "TEST_VRN",
+    "isRetrofitted": false,
+    "isExempt": false,
+    "vehicleType": null,
+    "complianceOutcomes": []
 }

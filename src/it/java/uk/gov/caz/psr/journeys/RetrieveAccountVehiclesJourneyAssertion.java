@@ -96,8 +96,8 @@ public class RetrieveAccountVehiclesJourneyAssertion {
     checkResponseSize();
     ComplianceResultsDto firstVehicle = this.vehicleResponseDto.getVehicles().get(0);
     assertEquals(vrn, firstVehicle.getRegistrationNumber());
-    assertEquals(null, firstVehicle.getIsExempt());
-    assertEquals(null, firstVehicle.getIsRetrofitted());
+    assertEquals(false, firstVehicle.getIsExempt());
+    assertEquals(false, firstVehicle.getIsRetrofitted());
     assertEquals(null, firstVehicle.getVehicleType());
     assertTrue(firstVehicle.getComplianceOutcomes().isEmpty());
   }

@@ -4,6 +4,7 @@ import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
