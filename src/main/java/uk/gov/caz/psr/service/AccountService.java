@@ -27,7 +27,7 @@ import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
-import uk.gov.caz.psr.service.exception.AccountVehicleNotFoundException;
+import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
@@ -121,7 +121,7 @@ public class AccountService {
 
     // If vehicle could not be found, yield early 404.
     if (accountVehicle.code() == HttpStatus.NOT_FOUND.value()) {
-      throw new AccountVehicleNotFoundException();
+      throw new ChargeableAccountVehicleNotFoundException();
     }
 
     List<String> wrappedVrn = Arrays.asList(vrn);
