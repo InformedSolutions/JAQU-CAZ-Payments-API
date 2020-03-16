@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
@@ -89,7 +91,7 @@ public class AccountService {
       if (accountVrns.size() < pageSize * 3) {
         lastPage = true;
       } else {
-        vrnCursor = getVrnCursor(accountVrns, direction);
+        vrnCursor = accountVrns.get(accountVrns.size() - 1);
       }
 
       List<VrnWithTariffAndEntrancesPaid> chargeableVrns =
@@ -99,8 +101,18 @@ public class AccountService {
         results.addAll(chargeableVrns);
       }
     }
-
+    
+    orderResultsAccordingToDirection(results, direction);
     return results;
+  }
+
+  private void orderResultsAccordingToDirection(List<VrnWithTariffAndEntrancesPaid> results, 
+      String direction) {
+    if (StringUtils.hasText(direction) && direction.equals("previous")) {
+      results.sort(Comparator.comparing(VrnWithTariffAndEntrancesPaid::getVrn).reversed());
+    } else {
+      results.sort(Comparator.comparing(VrnWithTariffAndEntrancesPaid::getVrn));
+    }
   }
 
   /**
@@ -189,16 +201,6 @@ public class AccountService {
       } else {
         throw new ExternalServiceCallException();        
       }
-    }
-  }
-
-  private String getVrnCursor(List<String> accountVrns, String direction) {
-    Collections.sort(accountVrns);
-    if (direction.equals("previous")) {
-      return accountVrns.get(0);
-    } else {
-      // assume paging direction is forward
-      return accountVrns.get(accountVrns.size() - 1);      
     }
   }
 

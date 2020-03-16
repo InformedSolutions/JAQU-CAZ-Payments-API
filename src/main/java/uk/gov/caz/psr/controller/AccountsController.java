@@ -144,11 +144,6 @@ public class AccountsController implements AccountControllerApiSpec {
 
   private List<VrnWithTariffAndEntrancesPaid> trimChargeableVehicles(
       List<VrnWithTariffAndEntrancesPaid> chargeableVrns, int pageSize, String direction) {
-    if (direction.equals("previous")) {
-      return chargeableVrns.size() > pageSize 
-          ? chargeableVrns.subList(chargeableVrns.size() - pageSize, chargeableVrns.size()) 
-              : chargeableVrns;
-    }
     return chargeableVrns.size() > pageSize ? chargeableVrns.subList(0, pageSize) : chargeableVrns;
   }
 
