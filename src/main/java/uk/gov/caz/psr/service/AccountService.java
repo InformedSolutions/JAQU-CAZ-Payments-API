@@ -1,12 +1,10 @@
 package uk.gov.caz.psr.service;
 
-import com.amazonaws.util.StringUtils;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +13,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
@@ -91,7 +90,7 @@ public class AccountService {
       if (accountVrns.size() < pageSize * 3) {
         lastPage = true;
       } else {
-        vrnCursor = getVrnCursor(accountVrns, direction);
+        vrnCursor = accountVrns.get(accountVrns.size() - 1);
       }
 
       List<VrnWithTariffAndEntrancesPaid> chargeableVrns =
@@ -101,8 +100,18 @@ public class AccountService {
         results.addAll(chargeableVrns);
       }
     }
-
+    
+    orderResultsAccordingToDirection(results, direction);
     return results;
+  }
+
+  private void orderResultsAccordingToDirection(List<VrnWithTariffAndEntrancesPaid> results, 
+      String direction) {
+    if (StringUtils.hasText(direction) && direction.equals("previous")) {
+      results.sort(Comparator.comparing(VrnWithTariffAndEntrancesPaid::getVrn).reversed());
+    } else {
+      results.sort(Comparator.comparing(VrnWithTariffAndEntrancesPaid::getVrn));
+    }
   }
 
   /**
@@ -183,30 +192,22 @@ public class AccountService {
       String vrnCursor) {
     Response<List<String>> accountsResponse = accountsRepository
         .getAccountVehicleVrnsByCursorSync(accountId, direction, pageSize, vrnCursor);
-    return accountsResponse.body();
-  }
-
-  private String getVrnCursor(List<String> accountVrns, String direction) {
-    Collections.sort(accountVrns);
-    // assume next is direction is null or empty
-    if (StringUtils.isNullOrEmpty(direction) || direction.equals("next")) {
-      return accountVrns.get(accountVrns.size() - 1);
+    if (accountsResponse.isSuccessful()) {
+      return accountsResponse.body();      
+    } else {
+      if (accountsResponse.code() == 404) {
+        throw new AccountNotFoundException();
+      } else {
+        throw new ExternalServiceCallException();        
+      }
     }
-
-    if (direction.equals("previous")) {
-      return accountVrns.get(0);
-    }
-
-    throw new IllegalArgumentException("Direction given is invalid.");
   }
 
   private Boolean vrnIsChargeable(ComplianceResultsDto complianceOutcome) {
-    Preconditions.checkArgument(complianceOutcome.getComplianceOutcomes().size() <= 1);
     if (complianceOutcome.getComplianceOutcomes().isEmpty()) {
       return false;
     } else {
-      float charge = complianceOutcome.getComplianceOutcomes().get(0).getCharge();
-      return charge > 0;
+      return complianceOutcome.getComplianceOutcomes().get(0).getCharge() > 0;
     }
   }
 

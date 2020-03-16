@@ -100,13 +100,4 @@ public class VehicleComplianceRetrievalService {
       log.debug("Fetching unknown compliance details from VCCS: finish");
     }
   }
-
-  /**
-   * Helper method to get timeout seconds.
-   *
-   * @return timeout
-   */
-  long calculateTimeoutInSeconds() {
-    return Long.valueOf(serviceCallTimeout);
-  }
 }

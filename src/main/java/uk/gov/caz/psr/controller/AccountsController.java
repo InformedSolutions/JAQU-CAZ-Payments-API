@@ -47,7 +47,7 @@ public class AccountsController implements AccountControllerApiSpec {
 
     // If no collection of zones has been passed via querystring, 
     // retrieve all zones from service layer.
-    if (queryStringAbsent("zones", queryStrings)) {
+    if (queryStringValidator.queryStringInvalid("zones", queryStrings)) {
       zones = accountService.getZonesQueryStringEquivalent();
     } else {
       zones = queryStrings.get("zones");
@@ -103,7 +103,7 @@ public class AccountsController implements AccountControllerApiSpec {
 
     return ResponseEntity.ok()
         .body(createResponseFromChargeableAccountVehicles(vrnsWithTariffAndCharge,
-            vrnsAndEntrantDates, direction, pageSize, vrn == null));
+            vrnsAndEntrantDates, direction, pageSize, !StringUtils.hasText(vrn)));
   }
 
   private String checkDirectionQueryString(String direction, String vrn) {
@@ -165,18 +165,7 @@ public class AccountsController implements AccountControllerApiSpec {
         .lastVrn(lastVrn)
         .build();
   }
-
-  /**
-   * Helper method to test for present of a key in a querystring parameter.
-   *
-   * @param key the key to search for.
-   * @param map the collection of keys to query against.
-   * @return Boolean indicator as to whether the key exists in the map.
-   */
-  private Boolean queryStringAbsent(String key, Map<String, String> map) {
-    return !map.containsKey(key) || !StringUtils.hasText(map.get(key));
-  }
-
+  
   private VehicleRetrievalResponseDto createResponseFromVehicleComplianceRetrievalResults(
       List<ComplianceResultsDto> results, String pageNumber, String pageSize,
       int pageCount, long totalVrnsCount) {
