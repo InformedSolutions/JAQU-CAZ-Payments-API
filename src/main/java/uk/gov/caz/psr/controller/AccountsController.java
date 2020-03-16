@@ -87,8 +87,7 @@ public class AccountsController implements AccountControllerApiSpec {
 
     List<VrnWithTariffAndEntrancesPaid> vrnsWithTariffAndCharge = accountService
         .retrieveChargeableAccountVehicles(accountId, direction, pageSize, vrn, cleanAirZoneId);
-    List<String> chargeableVrns = trimChargeableVehicles(vrnsWithTariffAndCharge, pageSize, 
-        direction)
+    List<String> chargeableVrns = trimChargeableVehicles(vrnsWithTariffAndCharge, pageSize)
         .stream()
         .map(vrnWithTariffAndCharge -> vrnWithTariffAndCharge.getVrn())
         .collect(Collectors.toList());
@@ -143,7 +142,7 @@ public class AccountsController implements AccountControllerApiSpec {
   }
 
   private List<VrnWithTariffAndEntrancesPaid> trimChargeableVehicles(
-      List<VrnWithTariffAndEntrancesPaid> chargeableVrns, int pageSize, String direction) {
+      List<VrnWithTariffAndEntrancesPaid> chargeableVrns, int pageSize) {
     return chargeableVrns.size() > pageSize ? chargeableVrns.subList(0, pageSize) : chargeableVrns;
   }
 
