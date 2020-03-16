@@ -167,7 +167,6 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
       .responseContainsExpectedDataWithEntrantPayments(vrns.subList(0, 3), vrns.get(0), vrns.get(2));
-    
   }
   
   @Test

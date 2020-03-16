@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
@@ -35,6 +37,7 @@ public class CleanupDanglingPaymentService {
    * @return Processed {@code danglingPayment} with the new, updated external status (if different
    *     than the current one) and loaded associated {@link uk.gov.caz.psr.model.EntrantPayment}s.
    */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Payment processDanglingPayment(Payment danglingPayment) {
     checkPreconditions(danglingPayment);
 
