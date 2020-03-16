@@ -4,9 +4,7 @@ import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.matchers.Times.exactly;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -57,7 +55,7 @@ public class ExternalCallsIT {
     vccsMockServer
         .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
             exactly(1))
-        .respond(bulkComplianceResponseWithVrnAndCleanAirZoneId(Collections.singletonList(filePath), vrns, 
+        .respond(bulkComplianceResponseWithVrnAndCleanAirZoneId(filePath, vrns, 
             cleanAirZoneId, statusCode));
   }
   
@@ -223,12 +221,26 @@ public class ExternalCallsIT {
   public static HttpResponse bulkComplianceResponseWithVrnAndCleanAirZoneId(List<String> filePaths, 
       List<String> vrns, String cleanAirZoneId, int statusCode) throws JsonProcessingException {
     List<ComplianceResultsDto> responses = new ArrayList<>();
+    int fileNum = 0;
     for (String vrn : vrns) {
-      int randomIndex = new Random().nextInt(filePaths.size());
-      responses.add(getBody(filePaths.get(randomIndex), vrn, cleanAirZoneId));
-      if (!filePaths.get(randomIndex).contains("compliant")) {
-        chargeableVrns.add(vrn);
+      responses.add(getBody(filePaths.get(fileNum), vrn, cleanAirZoneId));
+      if (fileNum == 0) {
+        chargeableVrns.add(vrn);        
       }
+      fileNum = 1 - fileNum;
+    }
+    return HttpResponse.response()
+        .withStatusCode(statusCode)
+        .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
+        .withBody(objectMapper.writeValueAsString(responses));
+  }
+  
+  public static HttpResponse bulkComplianceResponseWithVrnAndCleanAirZoneId(String filePath, 
+      List<String> vrns, String cleanAirZoneId, int statusCode) throws JsonProcessingException {
+    List<ComplianceResultsDto> responses = new ArrayList<>();
+    for (String vrn : vrns) {
+      responses.add(getBody(filePath, vrn, cleanAirZoneId));
+      chargeableVrns.add(vrn);
     }
     return HttpResponse.response()
         .withStatusCode(statusCode)
