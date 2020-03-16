@@ -1,7 +1,5 @@
 package uk.gov.caz.psr.service;
 
-import com.amazonaws.util.StringUtils;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -183,30 +181,32 @@ public class AccountService {
       String vrnCursor) {
     Response<List<String>> accountsResponse = accountsRepository
         .getAccountVehicleVrnsByCursorSync(accountId, direction, pageSize, vrnCursor);
-    return accountsResponse.body();
+    if (accountsResponse.isSuccessful()) {
+      return accountsResponse.body();      
+    } else {
+      if (accountsResponse.code() == 404) {
+        throw new AccountNotFoundException();
+      } else {
+        throw new ExternalServiceCallException();        
+      }
+    }
   }
 
   private String getVrnCursor(List<String> accountVrns, String direction) {
     Collections.sort(accountVrns);
-    // assume next is direction is null or empty
-    if (StringUtils.isNullOrEmpty(direction) || direction.equals("next")) {
-      return accountVrns.get(accountVrns.size() - 1);
-    }
-
     if (direction.equals("previous")) {
       return accountVrns.get(0);
+    } else {
+      // assume paging direction is forward
+      return accountVrns.get(accountVrns.size() - 1);      
     }
-
-    throw new IllegalArgumentException("Direction given is invalid.");
   }
 
   private Boolean vrnIsChargeable(ComplianceResultsDto complianceOutcome) {
-    Preconditions.checkArgument(complianceOutcome.getComplianceOutcomes().size() <= 1);
     if (complianceOutcome.getComplianceOutcomes().isEmpty()) {
       return false;
     } else {
-      float charge = complianceOutcome.getComplianceOutcomes().get(0).getCharge();
-      return charge > 0;
+      return complianceOutcome.getComplianceOutcomes().get(0).getCharge() > 0;
     }
   }
 

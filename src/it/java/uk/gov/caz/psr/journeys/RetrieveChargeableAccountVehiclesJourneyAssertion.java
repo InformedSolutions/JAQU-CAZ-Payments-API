@@ -73,6 +73,20 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
       .then();
     return this;
   }
+
+  public RetrieveChargeableAccountVehiclesJourneyAssertion 
+  whenRequestIsMadeToRetrieveChargeableAccountVehiclesWithoutQueryStrings() {
+    this.response = RestAssured
+        .given()
+        .accept(MediaType.APPLICATION_JSON.toString())
+        .contentType(MediaType.APPLICATION_JSON.toString())
+        .pathParam("account_id", this.accountId)
+        .header(Constants.X_CORRELATION_ID_HEADER, CORRELATION_ID)
+        .when()
+        .get("/{account_id}/chargeable-vehicles")
+        .then();
+      return this;
+  }
   
   public RetrieveChargeableAccountVehiclesJourneyAssertion then() {
     return this;
