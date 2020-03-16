@@ -686,7 +686,7 @@
                 <exclude>**/psr/controller/util/QueryStringValidator.class</exclude>    
                 <exclude>**/psr/dto/ChargeableAccountVehiclesResult.class</exclude> 
                 <!-- Permit exclusion of nested Logger class injected via DI in VCCS Repository -->
-                <exclude>**/psr/repository/VccsRepository$*.class</exclude>                
+                <exclude>**/psr/repository/VccsRepository$*.class</exclude>     
               </excludes>
               <rules>
                 <rule>
