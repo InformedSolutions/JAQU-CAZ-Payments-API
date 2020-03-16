@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.controller;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -56,11 +57,14 @@ public class AccountsController implements AccountControllerApiSpec {
         accountService.retrieveAccountVehicles(accountId,
             queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
             queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
-
-    List<ComplianceResultsDto> results = vehicleComplianceRetrievalService
-        .retrieveVehicleCompliance(
-            accountVehicleRetrievalResponse.getVrns(),
-            zones);
+    
+    List<ComplianceResultsDto> results = new ArrayList<>();
+    if (accountVehicleRetrievalResponse.getTotalVrnsCount() > 0) {
+      results = vehicleComplianceRetrievalService
+          .retrieveVehicleCompliance(
+              accountVehicleRetrievalResponse.getVrns(),
+              zones);      
+    }
 
     return ResponseEntity.ok()
         .body(createResponseFromVehicleComplianceRetrievalResults(results,
