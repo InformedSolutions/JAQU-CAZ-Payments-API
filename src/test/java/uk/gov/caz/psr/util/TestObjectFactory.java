@@ -270,10 +270,12 @@ public class TestObjectFactory {
     }
 
     public static PaymentStatus with(InternalPaymentStatus internalPaymentStatus,
-        String caseReference, String externalId, Long paymentReference) {
+        String caseReference, String externalId, Long paymentReference, PaymentMethod paymentMethod) {
       return PaymentStatus.builder().caseReference(caseReference).paymentReference(paymentReference)
           .status(internalPaymentStatus)
-          .externalId(externalId).build();
+          .externalId(externalId)
+          .paymentMethod(paymentMethod)
+          .build();
     }
   }
 

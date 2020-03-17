@@ -71,6 +71,7 @@ swagger:
           systems in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
         vrn: Vehicle registration number
         date-of-caz-entry: ISO 8601 formatted date string indicating the date that the vehicle identified by the VRN attribute entered the CAZ.
+        payment-method: Method of the payment
       payment-info:
         results: An array containig details about payments of queried VRNs
         vrn: Vehicle registration number

@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 
 @Repository
@@ -27,7 +28,8 @@ public class PaymentStatusRepository {
       + "entrant_payment.payment_status, "
       + "entrant_payment.case_reference, "
       + "payment.payment_provider_id, "
-      + "payment.central_reference_number "
+      + "payment.central_reference_number, "
+      + "payment.payment_method "
       + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
       + "LEFT OUTER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
       + "ON entrant_payment.clean_air_zone_entrant_payment_id = "
@@ -77,12 +79,14 @@ public class PaymentStatusRepository {
 
     @Override
     public PaymentStatus mapRow(ResultSet resultSet, int i) throws SQLException {
+      String paymentMethod = resultSet.getString("payment_method");
       return PaymentStatus.builder()
           .externalId(resultSet.getString("payment_provider_id"))
           .paymentReference(resultSet.getLong("central_reference_number"))
           .status(InternalPaymentStatus.valueOf(
               resultSet.getString("payment_status")))
           .caseReference(resultSet.getString("case_reference"))
+          .paymentMethod(paymentMethod == null ? null : PaymentMethod.valueOf(paymentMethod))
           .build();
     }
   }
