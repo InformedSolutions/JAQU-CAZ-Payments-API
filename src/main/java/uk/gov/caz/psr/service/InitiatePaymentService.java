@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.SingleEntrantPayment;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 
 /**
@@ -17,7 +17,7 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 @AllArgsConstructor
 public class InitiatePaymentService {
 
-  private final ExternalPaymentsRepository externalPaymentsRepository;
+  private final ExternalCardPaymentsRepository externalCardPaymentsRepository;
   private final PaymentRepository paymentRepository;
   private final InitiateEntrantPaymentsService initiateEntrantPaymentsService;
 
@@ -28,7 +28,7 @@ public class InitiatePaymentService {
   public Payment createPayment(Payment payment, List<SingleEntrantPayment> entrantPayments,
       String returnUrl) {
     Payment paymentWithInternalId = paymentRepository.insert(payment);
-    Payment paymentWithExternalId = externalPaymentsRepository.create(paymentWithInternalId,
+    Payment paymentWithExternalId = externalCardPaymentsRepository.create(paymentWithInternalId,
         returnUrl);
     initiateEntrantPaymentsService.processEntrantPaymentsForPayment(paymentWithInternalId.getId(),
         payment.getCleanAirZoneId(), entrantPayments);

@@ -55,7 +55,7 @@ import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
@@ -613,7 +613,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .when(HttpRequest.request().withMethod("POST")
             .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
-            .withPath(ExternalPaymentsRepository.CREATE_URI))
+            .withPath(ExternalCardPaymentsRepository.CREATE_URI))
         .respond(HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
             .withBody(readFile("create-payment-response.json")));

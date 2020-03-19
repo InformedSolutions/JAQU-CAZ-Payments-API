@@ -24,7 +24,7 @@ import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -33,7 +33,7 @@ import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 public class InitiatePaymentServiceTest {
 
   @Mock
-  private ExternalPaymentsRepository externalPaymentsRepository;
+  private ExternalCardPaymentsRepository externalCardPaymentsRepository;
 
   @Mock
   private PaymentRepository internalPaymentsRepository;
@@ -62,7 +62,7 @@ public class InitiatePaymentServiceTest {
     // then
     assertThat(result).isEqualTo(paymentWithExternalId);
     verify(internalPaymentsRepository).insert(paymentWithoutInternalId);
-    verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
+    verify(externalCardPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository).update(paymentWithExternalId);
     verify(initiateEntrantPaymentsService).processEntrantPaymentsForPayment(
         eq(paymentWithInternalId.getId()), eq(request.getCleanAirZoneId()), anyList()
@@ -87,7 +87,7 @@ public class InitiatePaymentServiceTest {
     // then
     assertThat(throwable).isInstanceOf(RestClientException.class);
     verify(internalPaymentsRepository).insert(paymentWithoutInternalId);
-    verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
+    verify(externalCardPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository, never()).update(any());
     verify(initiateEntrantPaymentsService, never()).processEntrantPaymentsForPayment(
         eq(paymentWithInternalId.getId()), eq(request.getCleanAirZoneId()), anyList()
@@ -126,14 +126,14 @@ public class InitiatePaymentServiceTest {
 
   private Payment mockSuccessPaymentCreation(Payment payment, InitiatePaymentRequest request) {
     Payment externalPayment = toPaymentWithExternalPaymentDetails(payment);
-    given(externalPaymentsRepository.create(payment, request.getReturnUrl()))
+    given(externalCardPaymentsRepository.create(payment, request.getReturnUrl()))
         .willReturn(externalPayment);
     return externalPayment;
   }
 
 
   private void mockFailedPaymentCreation(Payment payment, InitiatePaymentRequest request) {
-    given(externalPaymentsRepository.create(payment, request.getReturnUrl()))
+    given(externalCardPaymentsRepository.create(payment, request.getReturnUrl()))
         .willThrow(new RestClientException(""));
   }
 
