@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
+import uk.gov.caz.psr.dto.ChargeSettlementPaymentMethod;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
 import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
@@ -86,6 +87,7 @@ public class EntrantPaymentInfoConverter {
         .paymentProviderId(paymentInfo.getExternalId())
         .totalPaid(currencyFormatter.parsePenniesToBigDecimal(paymentInfo.getTotalPaid()))
         .lineItems(toVehicleEntrantPayments(entrantPaymentInfoList))
+        .paymentMethod(ChargeSettlementPaymentMethod.from(paymentInfo.getPaymentMethod()))
         .build();
   }
 

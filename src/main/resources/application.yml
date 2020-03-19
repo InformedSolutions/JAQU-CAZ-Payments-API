@@ -103,6 +103,7 @@ swagger:
         travel-date: >-
           ISO 8601 formatted date string that specifies a date(s) for which the vehicle has paid to travel in to the CAZ
           (identified by the x-api-key header parameter)
+        payment-method: Method of the payment
       payment-info-request:
         payment-provider-id: >-
           GOV.UK Pay unique payment identifier. Can be used to obtain data associated with a specific GOV.UK Pay payment transaction.

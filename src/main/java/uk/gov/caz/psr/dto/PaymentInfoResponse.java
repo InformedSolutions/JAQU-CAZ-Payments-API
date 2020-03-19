@@ -41,6 +41,9 @@ public class PaymentInfoResponse {
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.total-paid}")
     BigDecimal totalPaid;
 
+    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-method}")
+    ChargeSettlementPaymentMethod paymentMethod;
+
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.line-items}")
     List<VehicleEntrantPaymentInfo> lineItems;
 
