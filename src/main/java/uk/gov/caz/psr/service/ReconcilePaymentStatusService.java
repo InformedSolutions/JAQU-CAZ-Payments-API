@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.external.GetPaymentResult;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
 
@@ -21,7 +21,7 @@ import uk.gov.caz.psr.util.GetPaymentResultConverter;
 @Slf4j
 public class ReconcilePaymentStatusService {
 
-  private final ExternalPaymentsRepository externalPaymentsRepository;
+  private final ExternalCardPaymentsRepository externalCardPaymentsRepository;
   private final PaymentRepository internalPaymentsRepository;
   private final PaymentStatusUpdater paymentStatusUpdater;
   private final GetPaymentResultConverter getPaymentResultConverter;
@@ -52,7 +52,7 @@ public class ReconcilePaymentStatusService {
 
     UUID cleanAirZoneId = getCleanAirZoneId(payment);
     GetPaymentResult paymentInfo =
-        externalPaymentsRepository.findByIdAndCazId(externalPaymentId, cleanAirZoneId)
+        externalCardPaymentsRepository.findByIdAndCazId(externalPaymentId, cleanAirZoneId)
             .orElseThrow(() -> new IllegalStateException(
                 "External payment not found with id " + "'" + externalPaymentId + "'"));
     ExternalPaymentDetails externalPaymentDetails =

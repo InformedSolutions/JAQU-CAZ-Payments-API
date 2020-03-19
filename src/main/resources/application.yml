@@ -57,6 +57,7 @@ management:
 
 aws:
   secret-name: /config/payments.dev # will be overridden for different environments
+  direct-debit-secret-name: /config/payments-direct-debit.dev # will be overridden for different environments
 
 swagger:
   model:

@@ -36,7 +36,7 @@ import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
-class ExternalPaymentsRepositoryTest {
+class ExternalCardPaymentsRepositoryTest {
 
   private static final String ANY_ROOT_URL = "http://localhost";
   private static final String ANY_RETURN_URL = "http://localhost/return-url";
@@ -50,12 +50,12 @@ class ExternalPaymentsRepositoryTest {
   @Mock
   private CredentialRetrievalManager credentialRetrievalManager;
 
-  private ExternalPaymentsRepository paymentsRepository;
+  private ExternalCardPaymentsRepository paymentsRepository;
 
   @BeforeEach
   public void setUp() {
     when(restTemplateBuilder.build()).thenReturn(restTemplate);
-    paymentsRepository = new ExternalPaymentsRepository(ANY_ROOT_URL, restTemplateBuilder, credentialRetrievalManager);
+    paymentsRepository = new ExternalCardPaymentsRepository(ANY_ROOT_URL, restTemplateBuilder, credentialRetrievalManager);
   }
 
   @Nested
@@ -121,7 +121,7 @@ class ExternalPaymentsRepositoryTest {
       UUID paymentId = UUID.fromString("9d4fc418-fbae-11e9-8f23-cf92e47420e6");
       mockRestTemplateResultWithUnrecognizedStatus();
       Payment payment = createPayment(paymentId);
-      when(credentialRetrievalManager.getApiKey(payment.getCleanAirZoneId())).thenReturn(Optional.of("test-api-key"));
+      when(credentialRetrievalManager.getCardApiKey(payment.getCleanAirZoneId())).thenReturn(Optional.of("test-api-key"));
 
       // when
       Throwable result = catchThrowable(() ->
@@ -147,7 +147,7 @@ class ExternalPaymentsRepositoryTest {
       given(restTemplate.exchange(any(), eq(CreatePaymentResult.class)))
           .willThrow(HttpClientErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR, "",
               new HttpHeaders(), null, null));
-      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
+      when(credentialRetrievalManager.getCardApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
 
       // when
       Throwable throwable =
@@ -195,7 +195,7 @@ class ExternalPaymentsRepositoryTest {
     @Test
     public void shouldThrowIllegalStateExceptionWhenApiKeyCannotBeFound() {
       // given
-      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.empty());
+      when(credentialRetrievalManager.getCardApiKey(Mockito.any(UUID.class))).thenReturn(Optional.empty());
       String id = "payment id";
       UUID cazId = UUID.randomUUID();
 
@@ -212,7 +212,7 @@ class ExternalPaymentsRepositoryTest {
       // given
       given(restTemplate.exchange(any(), eq(GetPaymentResult.class))).willThrow(
           HttpClientErrorException.create(HttpStatus.NOT_FOUND, "", new HttpHeaders(), null, null));
-      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
+      when(credentialRetrievalManager.getCardApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
       String id = "payment id";
       UUID cazId = UUID.randomUUID();
 
@@ -229,7 +229,7 @@ class ExternalPaymentsRepositoryTest {
       given(restTemplate.exchange(any(), eq(GetPaymentResult.class)))
           .willThrow(HttpClientErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR, "",
               new HttpHeaders(), null, null));
-      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
+      when(credentialRetrievalManager.getCardApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
       String id = "payment id";
       UUID cazId = UUID.randomUUID();
 
@@ -247,7 +247,7 @@ class ExternalPaymentsRepositoryTest {
       String id = "payment id";
       UUID cazId = UUID.randomUUID();
 
-      when(credentialRetrievalManager.getApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
+      when(credentialRetrievalManager.getCardApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
 
       // when
       Optional<GetPaymentResult> result = paymentsRepository.findByIdAndCazId(id, cazId);

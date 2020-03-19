@@ -14,7 +14,7 @@ import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
 
 /**
@@ -25,7 +25,7 @@ import uk.gov.caz.psr.util.GetPaymentResultConverter;
 @AllArgsConstructor
 public class CleanupDanglingPaymentService {
 
-  private final ExternalPaymentsRepository externalPaymentsRepository;
+  private final ExternalCardPaymentsRepository externalCardPaymentsRepository;
   private final GetPaymentResultConverter getPaymentResultConverter;
   private final PaymentStatusUpdater paymentStatusUpdater;
   private final EntrantPaymentRepository entrantPaymentRepository;
@@ -47,7 +47,7 @@ public class CleanupDanglingPaymentService {
       UUID cleanAirZoneId = getCleanAirZoneId(danglingPayment);
       String externalId = danglingPayment.getExternalId();
 
-      GetPaymentResult paymentInfo = externalPaymentsRepository
+      GetPaymentResult paymentInfo = externalCardPaymentsRepository
           .findByIdAndCazId(externalId, cleanAirZoneId)
           .orElseThrow(() -> new IllegalStateException("External payment not found with "
               + "id '" + externalId + "'"));
