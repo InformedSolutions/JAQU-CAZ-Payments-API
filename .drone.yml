@@ -36,6 +36,46 @@ steps:
       JAQU_NEXUS_PASSWORD:
         from_secret: nexus_password
 
+     # Build end to end tests docker image
+  - name: build end to end test image
+    image: docker:git
+    commands:
+      - mkdir ~/.ssh
+      - echo -n "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - touch ~/.ssh/known_hosts
+      - chmod 600 ~/.ssh/known_hosts
+      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
+      - git clone git@github.com:InformedSolutions/JAQU-CAZ-QA-selenium.git
+      - cd JAQU-CAZ-QA-selenium
+      - docker build -t selenium-jaqu .
+    environment:
+      GIT_PRIVATE_SSH:
+        from_secret: github_private_key
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+
+  # Run end to end tests
+  - name: run api end to end tests
+    image: selenium-jaqu
+    pull: never
+    environment:
+      BASEURL_CHARGE_SETTLEMENT_OAUTH: 'https://payments-userpool-dev.auth.eu-west-2.amazoncognito.com'
+      BASEURL_CHARGE_SETTLEMENT_API: 'https://t4oig4d3g0.execute-api.eu-west-2.amazonaws.com/dev'
+      CHARGE_SETTLEMENT_CLIENT_ID: 
+        from_secret: charge_settlement_id
+      CHARGE_SETTLEMENT_CLIENT_SECRET: 
+        from_secret:  charge_settlement_secret
+      CHARGE_SETTLEMENT_COGNITO_ID:
+        from_secret: charge_settlement_cognito_id
+      LOCATION: 'local'
+    commands:
+      - sleep 5m
+      - cd JAQU-CAZ-QA-selenium
+      - cucumber -t @CHARGESETTLEMENT --retry 2
+
+
   ################################################# End Nightly Steps ############################################################
 
 ---
@@ -1297,5 +1337,26 @@ name: nexus_password
 get:
   path: /secret/drone.global
   name: nexusPassword
+
+---
+kind: secret
+name: charge_settlement_id
+get:
+  path: /secret/drone.global
+  name: chargeSettlementId
+
+---
+kind: secret
+name: charge_settlement_secret
+get:
+  path: /secret/drone.global
+  name: chargeSettlementSecret
+
+---
+kind: secret
+name: charge_settlement_cognito_id
+get:
+  path: /secret/drone.global
+  name: chargeSettlementCognitoId
 
   ################################################ End Secrets #########################################################
