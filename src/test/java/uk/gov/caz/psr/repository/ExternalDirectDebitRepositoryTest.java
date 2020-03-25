@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
 import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
+import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 @ExtendWith(MockitoExtension.class)
 class ExternalDirectDebitRepositoryTest {
@@ -41,7 +42,8 @@ class ExternalDirectDebitRepositoryTest {
   @BeforeEach
   public void initRepo() {
     mockRestTemplate();
-    repository = new ExternalDirectDebitRepository("some-url", restTemplateBuilder, credentialRetrievalManager);
+    repository = new ExternalDirectDebitRepository("some-url", restTemplateBuilder,
+        credentialRetrievalManager);
   }
 
   private void mockRestTemplate() {
@@ -61,72 +63,101 @@ class ExternalDirectDebitRepositoryTest {
   @Nested
   class CreateMandate {
 
-    @Test
-    public void shouldRethrowRestClientResponseException() {
-      mockApiKeyPresence();
-      mockRestClientResponseExceptionUponRestTemplateCallForResponseClass(MandateResponse.class);
+    @Nested
+    class WhenRestClientResponseExceptionIsThrown {
 
-      Throwable throwable = catchThrowable(() -> repository.createMandate("return-url", "reference", CAZ_ID));
+      @Test
+      public void shouldThrowExternalServiceCallException() {
+        mockApiKeyPresence();
+        mockRestClientResponseExceptionUponRestTemplateCallForResponseClass(MandateResponse.class);
 
-      assertThat(throwable).isInstanceOf(RestClientResponseException.class);
+        Throwable throwable = catchThrowable(
+            () -> repository.createMandate("return-url", "reference", CAZ_ID));
+
+        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
+      }
     }
 
-    @Test
-    public void shouldRethrowResourceAccessException() {
-      mockApiKeyPresence();
-      mockResourceAccessExceptionUponRestTemplateCallForResponseClass(MandateResponse.class);
+    @Nested
+    class WhenResourceAccessExceptionIsThrown {
 
-      Throwable throwable = catchThrowable(() -> repository.createMandate("return-url", "reference", CAZ_ID));
+      @Test
+      public void shouldThrowExternalServiceCallException() {
+        mockApiKeyPresence();
+        mockResourceAccessExceptionUponRestTemplateCallForResponseClass(MandateResponse.class);
 
-      assertThat(throwable).isInstanceOf(ResourceAccessException.class);
+        Throwable throwable = catchThrowable(
+            () -> repository.createMandate("return-url", "reference", CAZ_ID));
+
+        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
+      }
     }
   }
 
   @Nested
   class GetMandate {
 
-    @Test
-    public void shouldRethrowRestClientResponseException() {
-      mockApiKeyPresence();
-      mockRestClientResponseExceptionUponRestTemplateCallForResponseClass(MandateResponse.class);
+    @Nested
+    class WhenRestClientResponseExceptionIsThrown {
 
-      Throwable throwable = catchThrowable(() -> repository.getMandate("mandate-id", CAZ_ID));
+      @Test
+      public void shouldThrowExternalServiceCallException() {
+        mockApiKeyPresence();
+        mockRestClientResponseExceptionUponRestTemplateCallForResponseClass(MandateResponse.class);
 
-      assertThat(throwable).isInstanceOf(RestClientResponseException.class);
+        Throwable throwable = catchThrowable(() -> repository.getMandate("mandate-id", CAZ_ID));
+
+        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
+      }
     }
 
-    @Test
-    public void shouldRethrowResourceAccessException() {
-      mockApiKeyPresence();
-      mockResourceAccessExceptionUponRestTemplateCallForResponseClass(MandateResponse.class);
+    @Nested
+    class WhenResourceAccessExceptionIsThrown {
 
-      Throwable throwable = catchThrowable(() -> repository.getMandate("mandate-id", CAZ_ID));
+      @Test
+      public void shouldThrowExternalServiceCallException() {
+        mockApiKeyPresence();
+        mockResourceAccessExceptionUponRestTemplateCallForResponseClass(MandateResponse.class);
 
-      assertThat(throwable).isInstanceOf(ResourceAccessException.class);
+        Throwable throwable = catchThrowable(() -> repository.getMandate("mandate-id", CAZ_ID));
+
+        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
+      }
     }
   }
 
   @Nested
   class CollectPayments {
 
-    @Test
-    public void shouldRethrowRestClientResponseException() {
-      mockApiKeyPresence();
-      mockRestClientResponseExceptionUponRestTemplateCallForResponseClass(DirectDebitPayment.class);
+    @Nested
+    class WhenRestClientResponseExceptionIsThrown {
 
-      Throwable throwable = catchThrowable(() -> repository.collectPayment("mandate-id", 200, "ref", CAZ_ID));
+      @Test
+      public void shouldThrowExternalServiceCallException() {
+        mockApiKeyPresence();
+        mockRestClientResponseExceptionUponRestTemplateCallForResponseClass(
+            DirectDebitPayment.class);
 
-      assertThat(throwable).isInstanceOf(RestClientResponseException.class);
+        Throwable throwable = catchThrowable(
+            () -> repository.collectPayment("mandate-id", 200, "ref", CAZ_ID));
+
+        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
+      }
     }
 
-    @Test
-    public void shouldRethrowResourceAccessException() {
-      mockApiKeyPresence();
-      mockResourceAccessExceptionUponRestTemplateCallForResponseClass(DirectDebitPayment.class);
+    @Nested
+    class WhenResourceAccessExceptionIsThrown {
 
-      Throwable throwable = catchThrowable(() -> repository.collectPayment("mandate-id", 200, "ref", CAZ_ID));
+      @Test
+      public void shouldThrowExternalServiceCallException() {
+        mockApiKeyPresence();
+        mockResourceAccessExceptionUponRestTemplateCallForResponseClass(DirectDebitPayment.class);
 
-      assertThat(throwable).isInstanceOf(ResourceAccessException.class);
+        Throwable throwable = catchThrowable(
+            () -> repository.collectPayment("mandate-id", 200, "ref", CAZ_ID));
+
+        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
+      }
     }
   }
 

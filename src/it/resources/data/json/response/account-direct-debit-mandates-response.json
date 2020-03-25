@@ -1,0 +1,10 @@
+{
+  "directDebitMandates": [
+    {
+      "directDebitMandateId": "78960f4b-09e7-437d-a59a-a0dd2d5fd057",
+      "accountId": "36354a93-4e42-483c-ae2f-74511f6ab60e",
+      "cleanAirZoneId": "53e03a28-0627-11ea-9511-ffaaee87e375",
+      "paymentProviderMandateId": "i4nuo03jginfke5c3ebrvgig6a"
+    }
+  ]
+}

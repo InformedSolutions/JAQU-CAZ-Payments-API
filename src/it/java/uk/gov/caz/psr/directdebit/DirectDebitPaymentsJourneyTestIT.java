@@ -42,7 +42,8 @@ public class DirectDebitPaymentsJourneyTestIT {
 
   @BeforeEach
   public void setApiKeyInSecretsManager() {
-    secretsManagerInitialisation.createSecret(apiKeySecretName);
+    secretsManagerInitialisation.createSecret(apiKeySecretName,
+        "53e03a28-0627-11ea-9511-ffaaee87e375");
   }
 
   @AfterEach

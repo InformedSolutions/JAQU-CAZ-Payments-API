@@ -1,0 +1,20 @@
+{
+  "cleanAirZones": [
+    {
+      "cazId": "53e03a28-0627-11ea-9511-ffaaee87e375",
+      "cazName": "Birmingham",
+      "mandates": [
+        {
+          "id": "i4nuo03jginfke5c3ebrvgig6a",
+          "reference": "12345",
+          "status": "created"
+        }
+      ]
+    },
+    {
+      "cazId" : "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3",
+      "cazName": "Leeds",
+      "mandates": []
+    }
+  ]
+}

@@ -10,7 +10,6 @@ import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -293,8 +292,8 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
   }
 
   @BeforeEach
-  public void createSecret() throws JsonProcessingException {
-    secretsManagerInitialisation.createSecret(secretName);
+  public void createSecret() {
+    secretsManagerInitialisation.createSecret(secretName, "53e03a28-0627-11ea-9511-ffaaee87e375");
   }
 
   @AfterEach
