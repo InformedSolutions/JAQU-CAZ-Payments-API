@@ -202,6 +202,9 @@ swagger:
           Fetches information about already paid days in specific CAZ in order to prevent
           him from paying for the same day more than one time. Upon completion of this operation the
           list of provided VRNs along with list of paid days is returned.
+      direct-debit-mandates:
+        description: >-
+          Returns a list of clean air zones with the associated direct debit mandates.
     charge-settlement:
       payment-status-update:
         description: >-

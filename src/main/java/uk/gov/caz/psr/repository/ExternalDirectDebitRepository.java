@@ -18,6 +18,7 @@ import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.CreateMandateRequest;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
 import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
+import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
  * REST http client for GOV UK PAY service dealing with direct-debit-related endpoints.
@@ -64,10 +65,10 @@ public class ExternalDirectDebitRepository {
     } catch (RestClientResponseException e) {
       log.error("Error while creating the direct debit payment: '{}', response body: '{}'",
           e.getMessage(), e.getResponseBodyAsString());
-      throw e;
+      throw new ExternalServiceCallException(e.getMessage());
     } catch (ResourceAccessException e) {
       log.error("I/O error while creating the direct debit payment: '{}'", e.getMessage());
-      throw e;
+      throw new ExternalServiceCallException(e.getMessage());
     } finally {
       log.info("Create a new mandate: finish");
     }
@@ -88,10 +89,10 @@ public class ExternalDirectDebitRepository {
     } catch (RestClientResponseException e) {
       log.error("Error while getting the mandate '{}': '{}', response body: '{}'", mandateId,
           e.getMessage(), e.getResponseBodyAsString());
-      throw e;
+      throw new ExternalServiceCallException(e.getMessage());
     } catch (ResourceAccessException e) {
       log.error("I/O error while getting the mandate '{}': '{}'", mandateId, e.getMessage());
-      throw e;
+      throw new ExternalServiceCallException(e.getMessage());
     } finally {
       log.info("Get mandate '{}': finish", mandateId);
     }
@@ -116,10 +117,10 @@ public class ExternalDirectDebitRepository {
     } catch (RestClientResponseException e) {
       log.error("Error while collecting the direct debit payment: '{}', response body: '{}'",
           e.getMessage(), e.getResponseBodyAsString());
-      throw e;
+      throw new ExternalServiceCallException(e.getMessage());
     } catch (ResourceAccessException e) {
       log.error("I/O error while collecting the direct debit payment: '{}'", e.getMessage());
-      throw e;
+      throw new ExternalServiceCallException(e.getMessage());
     } finally {
       log.info("Collect the direct debit payment: finish");
     }

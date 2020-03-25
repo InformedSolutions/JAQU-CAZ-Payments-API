@@ -5,7 +5,10 @@ import com.amazonaws.services.secretsmanager.model.CreateSecretRequest;
 import com.amazonaws.services.secretsmanager.model.PutSecretValueRequest;
 import com.amazonaws.services.secretsmanager.model.ResourceExistsException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
@@ -18,11 +21,12 @@ public class SecretsManagerInitialisation {
   private final AWSSecretsManager secretsManager;
 
   @SneakyThrows
-  public void createSecret(String secretName) {
-    String cazIdFormatted = "53e03a28-0627-11ea-9511-ffaaee87e375".replace("-", "");
-    String secretString = objectMapper.writeValueAsString(
-        Collections.singletonMap(cazIdFormatted, "testApiKey")
-    );
+  public void createSecret(String secretName, String ...cleanAirZoneId) {
+    Map<String, String> apiKeysMap = Arrays.asList(cleanAirZoneId)
+        .stream()
+        .map(cazId -> cazId.replace("-", ""))
+        .collect(Collectors.toMap(Function.identity(), string -> "testApiKey"));
+    String secretString = objectMapper.writeValueAsString(apiKeysMap);
     try {
       CreateSecretRequest createSecretRequest = new CreateSecretRequest()
           .withName(secretName)
