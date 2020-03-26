@@ -265,8 +265,12 @@ public class TestObjectFactory {
   public static class PaymentStatusFactory {
 
     public static PaymentStatus anyWithStatus(InternalPaymentStatus internalPaymentStatus) {
-      return PaymentStatus.builder().caseReference("any-valid-case-reference")
-          .status(internalPaymentStatus).externalId(UUID.randomUUID().toString()).build();
+      return PaymentStatus.builder()
+          .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+          .caseReference("any-valid-case-reference")
+          .status(internalPaymentStatus)
+          .externalId(UUID.randomUUID().toString())
+          .build();
     }
 
     public static PaymentStatus with(InternalPaymentStatus internalPaymentStatus,

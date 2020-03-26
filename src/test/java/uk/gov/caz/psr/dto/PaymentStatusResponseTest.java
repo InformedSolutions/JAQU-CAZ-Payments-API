@@ -3,12 +3,10 @@ package uk.gov.caz.psr.dto;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 
-@ExtendWith(MockitoExtension.class)
 public class PaymentStatusResponseTest {
 
   private final String ANY_EXTERNAL_ID = "some-external-id";
@@ -18,6 +16,7 @@ public class PaymentStatusResponseTest {
   public void shouldBuildCompletePaymentStatusFromPaymentStatus() {
     // given
     PaymentStatus paymentStatus = PaymentStatus.builder()
+        .paymentMethod(PaymentMethod.DIRECT_DEBIT)
         .status(InternalPaymentStatus.PAID)
         .externalId(ANY_EXTERNAL_ID)
         .caseReference(ANY_CASE_REFERENCE)
@@ -30,5 +29,6 @@ public class PaymentStatusResponseTest {
     assertThat(result.getPaymentProviderId()).isEqualTo(paymentStatus.getExternalId());
     assertThat(result.getCaseReference()).isEqualTo(paymentStatus.getCaseReference());
     assertThat(result.getPaymentStatus()).isEqualTo(ChargeSettlementPaymentStatus.PAID);
+    assertThat(result.getPaymentMethod()).isEqualTo(ChargeSettlementPaymentMethod.DIRECT_DEBIT);
   }
 }
