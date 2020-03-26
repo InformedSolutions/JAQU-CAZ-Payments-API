@@ -25,6 +25,9 @@ public class PaymentStatusResponse {
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.case-reference}")
   String caseReference;
 
+  @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-method}")
+  ChargeSettlementPaymentMethod paymentMethod;
+
   /**
    * Helper method to map {@link PaymentStatus} to ${@link PaymentStatusResponse}.
    *
@@ -37,6 +40,7 @@ public class PaymentStatusResponse {
         .cazPaymentReference(paymentStatus.getPaymentReference())
         .paymentProviderId(paymentStatus.getExternalId())
         .caseReference(paymentStatus.getCaseReference())
+        .paymentMethod(ChargeSettlementPaymentMethod.from(paymentStatus.getPaymentMethod()))
         .build();
   }
 }
