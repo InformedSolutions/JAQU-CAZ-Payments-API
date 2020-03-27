@@ -30,6 +30,8 @@
       **/amazonaws/StreamLambdaHandler.java,
       **/amazonaws/CleanupDanglingPaymentsHandler.java,
       **/psr/repository/VccsRepository.java
+      <!-- Remove with CAZ-2168 -->
+      **/psr/repository/ExternalDirectDebitRepository.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -680,7 +682,9 @@
                 <exclude>**/psr/repository/VccsRepository.class</exclude>             
                 <exclude>**/psr/repository/AccountsRepository.class</exclude>             
                 <!-- Permit exclusion of nested Logger class injected via DI in VCCS Repository -->
-                <exclude>**/psr/repository/VccsRepository$*.class</exclude>     
+                <exclude>**/psr/repository/VccsRepository$*.class</exclude>
+                <!-- Remove with CAZ-2168 -->
+                <exclude>**/psr/repository/ExternalDirectDebitRepository*.class</exclude>
               </excludes>
               <rules>
                 <rule>

@@ -23,6 +23,9 @@ public class MandateResponse {
 
   MandateStatus state;
 
+  @JsonProperty("_links")
+  MandateLinks links;
+
   @JsonProperty("bank_statement_reference")
   String bankStatementReference;
 
