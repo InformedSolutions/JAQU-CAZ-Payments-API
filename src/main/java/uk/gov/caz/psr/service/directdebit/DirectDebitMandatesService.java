@@ -15,6 +15,7 @@ import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
+import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
 import uk.gov.caz.psr.model.directdebit.CleanAirZoneWithMandates;
 import uk.gov.caz.psr.model.directdebit.Mandate;
@@ -48,6 +49,26 @@ public class DirectDebitMandatesService {
           accountId);
     } finally {
       log.info("Getting direct debit mandates for account '{}' : finish", accountId);
+    }
+  }
+
+  /**
+   * Creates DirectDebitMandate in External Payment provider, store details in AccountsAPI and
+   * returns nextUrl to confirm Mandate creation on the frontend.
+   */
+  public String createDirectDebitMandate(UUID cleanAirZoneId, UUID accountId, String returnUrl) {
+    try {
+      log.info("Creating direct debit mandate for account '{}' : start", accountId);
+      MandateResponse externalDirectDebitMandate = externalDirectDebitRepository
+          .createMandate(returnUrl, UUID.randomUUID().toString(), cleanAirZoneId);
+      accountsRepository.createDirectDebitMandateSync(accountId,
+          CreateDirectDebitMandateRequest.builder()
+              .cleanAirZoneId(cleanAirZoneId)
+              .mandateId(externalDirectDebitMandate.getMandateId())
+              .build());
+      return externalDirectDebitMandate.getLinks().getNextUrl().getHref();
+    } finally {
+      log.info("Creating direct debit mandate for account '{}' : finish", accountId);
     }
   }
 
