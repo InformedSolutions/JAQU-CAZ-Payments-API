@@ -9,4 +9,16 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: name_of_your_database
+      POSTGRES_DB: vehicle_compliance
+
+  sonarqube:
+    image: sonarqube
+    container_name: sonarqube.docker
+    ports:
+      - 9000:9000
+
+  redis:
+    image: grokzen/redis-cluster
+    container_name: redis.docker
+    ports:
+      - "7000-7009:7000-7009"

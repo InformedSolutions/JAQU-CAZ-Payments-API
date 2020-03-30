@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: payments
+
+aws:
+  secretsmanager:
+    prefix: /config
+    defaultContext: payments
+    profileSeparator: .
+    failFast: true
+    enabled: true
+
+cloud:
+  aws:
+    region:
+      auto: false
+      static: eu-west-2
+    stack:
+      auto: false

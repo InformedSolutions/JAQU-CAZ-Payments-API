@@ -1,9 +1,0 @@
-### Integration tests configuration
-
-# Uncomment if microservice uses Postgres/RDS, delete otherwise
-#spring:
-#  datasource:
-#    url: jdbc:postgresql://localhost:9999/name_of_your_database
-aws:
-  s3:
-    endpoint: http://localhost:4572

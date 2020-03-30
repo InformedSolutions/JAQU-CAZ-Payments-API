@@ -12,7 +12,7 @@
 	create-archetype
 
 build:
-	./mvnw verify
+	./mvnw verify -P jacoco
 
 build-yolo:
 	./mvnw verify -DskipTests
@@ -69,9 +69,15 @@ create-archetype: clean
 	./mvnw -f target/generated-sources/archetype/pom.xml install
 
 local-db-up:
-	docker-compose -f docker/docker-compose.yml -p postgres_docker up -d
+	docker-compose -f docker/docker-compose.yml -p postgres_docker up -d postgres
 
 local-db-down:
+	docker-compose -f docker/docker-compose.yml -p postgres_docker down
+
+local-up:
+	docker-compose -f docker/docker-compose.yml -p postgres_docker up -d
+
+local-down:
 	docker-compose -f docker/docker-compose.yml -p postgres_docker down
 
 # Example run: 'make sam-local-run EVENT=src/test/resources/sample_lambda_events/import_10_taxis.json'
@@ -90,3 +96,20 @@ local-services-down: local-db-down localstack-down
 
 localstack-run:
 	SPRING_PROFILES_ACTIVE='localstack,development' AWS_PROFILE='localstack' AWS_REGION='eu-west-2' ./mvnw spring-boot:run
+
+local-integration-up:
+	docker-compose -f src/it/resources/docker-compose-it.yml up -d
+
+local-integration-down:
+	docker-compose -f src/it/resources/docker-compose-it.yml down
+
+docker-stop:
+	docker stop `docker ps -a -q`
+
+docker-rm:
+	docker rm `docker ps -a -q`
+
+docker-clean: docker-stop docker-rm
+
+sonar:
+	./mvnw sonar:sonar

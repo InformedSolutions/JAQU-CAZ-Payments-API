@@ -1,0 +1,56 @@
+{
+  "amount": 4200,
+  "description": "Driving in a Clean Air Zone charge",
+  "reference": "2827167e-fa0e-11e9-8c20-5705c5450e03",
+  "language": "en",
+  "email": "radoslaw.morytko@informed.com",
+  "state": {
+    "status": "success",
+    "finished": true
+  },
+  "payment_id": "kac1ksqi26f9t2h7q3henmlamc",
+  "payment_provider": "sandbox",
+  "created_date": "2019-11-11T10:17:48.359Z",
+  "refund_summary": {
+    "status": "available",
+    "amount_available": 4200,
+    "amount_submitted": 0
+  },
+  "settlement_summary": {
+    "capture_submit_time": "2019-11-11T10:18:23.564Z",
+    "captured_date": "2019-11-11"
+  },
+  "card_details": {
+    "last_digits_card_number": "5556",
+    "first_digits_card_number": "400005",
+    "cardholder_name": "Radek test",
+    "expiry_date": "12/22",
+    "billing_address": {
+      "line1": "a",
+      "line2": "b",
+      "postcode": "SW1W 0NY",
+      "city": "Leeds",
+      "country": "GB"
+    },
+    "card_brand": "Visa",
+    "card_type": "debit"
+  },
+  "delayed_capture": false,
+  "provider_id": "fbbdb625-a32d-4b09-b729-dbf8c4650ebe",
+  "return_url": "http://localhost/return-url",
+  "card_brand": "Visa",
+  "_links": {
+    "self": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/kac1ksqi26f9t2h7q3henmlamc",
+      "method": "GET"
+    },
+    "events": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/kac1ksqi26f9t2h7q3henmlamc/events",
+      "method": "GET"
+    },
+    "refunds": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/kac1ksqi26f9t2h7q3henmlamc/refunds",
+      "method": "GET"
+    }
+  }
+}

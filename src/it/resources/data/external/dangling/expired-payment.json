@@ -1,0 +1,37 @@
+{
+  "amount": 1000,
+  "description": "Driving in a Clean Air Zone charge",
+  "reference": "a5f0687c-046c-11ea-b55b-677d1f5017cf",
+  "language": "en",
+  "state": {
+    "status": "failed",
+    "finished": true,
+    "message": "Payment expired",
+    "code": "P0020"
+  },
+  "payment_id": "expired-payment-id",
+  "payment_provider": "sandbox",
+  "created_date": "2019-11-11T10:18:47.580Z",
+  "refund_summary": {
+    "status": "unavailable",
+    "amount_available": 1000,
+    "amount_submitted": 0
+  },
+  "settlement_summary": {},
+  "delayed_capture": false,
+  "return_url": "http://localhost",
+  "_links": {
+    "self": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/expired-payment-id",
+      "method": "GET"
+    },
+    "events": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/expired-payment-id/events",
+      "method": "GET"
+    },
+    "refunds": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/expired-payment-id/refunds",
+      "method": "GET"
+    }
+  }
+}

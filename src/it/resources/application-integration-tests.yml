@@ -1,0 +1,44 @@
+### Integration tests configuration
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${postgres.url:localhost:9999}/vehicle_compliance
+#    url: jdbc:postgresql://${postgres.url:localhost:5432}/vehicle_compliance
+    hikari:
+      maximum-pool-size: 1
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true # this is to make sure we don't have a N+1 query problem
+        show_sql: true
+        format_sql: true
+
+aws:
+  secret-name: payments
+  sqs:
+    endpoint: http://${aws.sqs.url:localhost:4576}
+  secretsmanager:
+    endpoint: http://${aws.secretsmanager.url:localhost:4584}
+    environment: localstack
+    name: config
+    prefix: payments
+    profileSeparator: .
+
+redis:
+  enabled: true
+  endpoint: ${redis.url:localhost}
+  port: ${redis.custom.port:6380}
+
+services:
+  gov-uk-pay:
+    root-url: http://localhost:1080
+    api-key: dummy
+  vehicle-compliance-checker:
+    root-url: http://localhost:1090
+  accounts:
+    root-url: http://localhost:1091
+  sqs:
+    message-group-id-payments: TEST_RECEIPT
+    new-queue-name: testqueue.fifo
+    template-id: test-template-id
+    account-payment-template-id: test-fleet-template-id

@@ -9,18 +9,25 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: name_of_your_database
+      POSTGRES_DB: vehicle_compliance
 
   localstack-it:
-    image: localstack/localstack
+    image: localstack/localstack:0.10.2
     ports:
-      - "4572:4572"
+      - "4576:4576"
+      - "4584:4584"
     environment:
-      - SERVICES=s3
+      - SERVICES=sqs,secretsmanager
     volumes:
       - "~/tmp/localstack:/tmp/localstack"
     networks:
       - localstack_network
-
+      
+  redis-it:
+    image: redis
+    container_name: redis.docker
+    ports:
+      - 6380:6379
+      
 networks:
   localstack_network:

@@ -31,8 +31,12 @@ HELP.md
 ### Vagrant ###
 .vagrant
 
+### Node ###
+node_modules
+
 bin/
 .checkstyle
 *.log
 .attach*
 .pmd*
+.DS_Store

@@ -1,0 +1,37 @@
+{
+  "amount": 1000,
+  "description": "Driving in a Clean Air Zone charge",
+  "reference": "33afefda-046c-11ea-b55b-5b826ca628bc",
+  "language": "en",
+  "state": {
+    "status": "failed",
+    "finished": true,
+    "message": "Payment was cancelled by the user",
+    "code": "P0030"
+  },
+  "payment_id": "cancelled-payment-id",
+  "payment_provider": "sandbox",
+  "created_date": "2019-11-11T10:15:36.744Z",
+  "refund_summary": {
+    "status": "unavailable",
+    "amount_available": 1000,
+    "amount_submitted": 0
+  },
+  "settlement_summary": {},
+  "delayed_capture": false,
+  "return_url": "http://localhost",
+  "_links": {
+    "self": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/cancelled-payment-id",
+      "method": "GET"
+    },
+    "events": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/cancelled-payment-id/events",
+      "method": "GET"
+    },
+    "refunds": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/payments/cancelled-payment-id/refunds",
+      "method": "GET"
+    }
+  }
+}
