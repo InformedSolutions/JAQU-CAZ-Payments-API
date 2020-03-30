@@ -1412,11 +1412,5 @@ get:
   path: /secret/drone.global
   name: chargeSettlementSecretSt
 
----
-kind: secret
-name: charge_settlement_cognito_id
-get:
-  path: /secret/drone.global
-  name: chargeSettlementCognitoId
 
   ################################################ End Secrets #########################################################
