@@ -608,6 +608,45 @@ steps:
       event:
         - push
 
+  # Build end to end tests docker image
+  - name: build end to end test image
+    image: docker:git
+    commands:
+      - mkdir ~/.ssh
+      - echo -n "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - touch ~/.ssh/known_hosts
+      - chmod 600 ~/.ssh/known_hosts
+      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
+      - git clone git@github.com:InformedSolutions/JAQU-CAZ-QA-selenium.git
+      - cd JAQU-CAZ-QA-selenium
+      - docker build -t selenium-jaqu .
+    environment:
+      GIT_PRIVATE_SSH:
+        from_secret: github_private_key
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+
+  # Run end to end tests
+  - name: run api end to end tests
+    image: selenium-jaqu
+    pull: never
+    environment:
+      BASEURL_CHARGE_SETTLEMENT_OAUTH: 'https://payments-userpool-st.auth.eu-west-2.amazoncognito.com'
+      BASEURL_CHARGE_SETTLEMENT_API: 'https://po4uq9js5f.execute-api.eu-west-2.amazonaws.com/st'
+      CHARGE_SETTLEMENT_CLIENT_ID: 
+        from_secret: charge_settlement_id_St
+      CHARGE_SETTLEMENT_CLIENT_SECRET: 
+        from_secret:  charge_settlement_secret_St
+      CHARGE_SETTLEMENT_COGNITO_ID:
+        from_secret: charge_settlement_cognito_id
+      LOCATION: 'local'
+    commands:
+      - sleep 5m
+      - cd JAQU-CAZ-QA-selenium
+      - cucumber -t @CHARGESETTLEMENT --retry 2
+
 
   ################################################# End ST steps #######################################################
 ---
@@ -1351,6 +1390,27 @@ name: charge_settlement_secret
 get:
   path: /secret/drone.global
   name: chargeSettlementSecret
+
+---
+kind: secret
+name: charge_settlement_cognito_id
+get:
+  path: /secret/drone.global
+  name: chargeSettlementCognitoId
+
+---
+kind: secret
+name: charge_settlement_id_St
+get:
+  path: /secret/drone.global
+  name: chargeSettlementIdSt
+
+---
+kind: secret
+name: charge_settlement_secret_St
+get:
+  path: /secret/drone.global
+  name: chargeSettlementSecretSt
 
 ---
 kind: secret
