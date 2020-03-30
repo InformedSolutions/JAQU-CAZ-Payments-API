@@ -147,6 +147,7 @@ swagger:
       caz-entrant-payment:
         entrant-payment-id: Id of created or updated record
         status: Payment Status of created Vehicle Entrant
+        payment-method: Payment Method of related Payment record. Can be "card" | "direct_debit" | "null"
       payments-initiate:
         vrn: Vehicle registration number
         travel-date: ISO 8601 formatted date string that specifies the date for which user wants to pay
