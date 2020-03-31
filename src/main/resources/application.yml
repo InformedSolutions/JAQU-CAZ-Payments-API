@@ -211,6 +211,9 @@ swagger:
       direct-debit-mandates:
         description: >-
           Returns a list of clean air zones with the associated direct debit mandates.
+      direct-debit-mandates-for-caz:
+        description: >-
+          Returns a list of account's direct debit mandates assigned to selected Clean air zone.
     charge-settlement:
       payment-status-update:
         description: >-
