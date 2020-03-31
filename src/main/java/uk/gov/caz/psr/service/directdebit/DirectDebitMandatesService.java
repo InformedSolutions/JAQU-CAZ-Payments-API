@@ -73,6 +73,25 @@ public class DirectDebitMandatesService {
   }
 
   /**
+   * Obtains the registered direct debit mandates for the given account by its identifier {@code
+   * accountId} and cleanAirZone {@code cleanAirZoneId}.
+   */
+  public List<Mandate> getMandatesForCazWithStatus(UUID accountId, UUID cleanAirZoneId) {
+    try {
+      log.info("Getting direct debit mandates for Account '{}' and CleanAirZone '{}' : start",
+          accountId, cleanAirZoneId);
+
+      List<DirectDebitMandate> directDebitMandates = getMandatesFromAccountsForCaz(accountId,
+          cleanAirZoneId);
+      return toMandates(directDebitMandates, accountId);
+
+    } finally {
+      log.info("Getting direct debit mandates for Account '{}' and CleanAirZone '{}' : finish",
+          accountId, cleanAirZoneId);
+    }
+  }
+
+  /**
    * Creates DirectDebitMandate in External Payment provider, store details in AccountsAPI and
    * returns nextUrl to confirm Mandate creation on the frontend.
    */
@@ -130,6 +149,16 @@ public class DirectDebitMandatesService {
         .mandates(toMandates(mandatesByCazId.getOrDefault(caz.getCleanAirZoneId(),
             Collections.emptyList()), accountId))
         .build();
+  }
+
+  /**
+   * Gets mandates from the accounts microservice for provided CAZ id.
+   */
+  private List<DirectDebitMandate> getMandatesFromAccountsForCaz(UUID accountId,
+      UUID cleanAirZoneId) {
+    return getMandatesFromAccounts(accountId).stream()
+        .filter(mandate -> mandate.getCleanAirZoneId().equals(cleanAirZoneId))
+        .collect(Collectors.toList());
   }
 
   /**

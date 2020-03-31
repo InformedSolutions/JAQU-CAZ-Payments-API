@@ -3,11 +3,13 @@ package uk.gov.caz.psr.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
 import static uk.gov.caz.psr.controller.DirectDebitMandatesController.BASE_PATH;
+import static uk.gov.caz.psr.controller.DirectDebitMandatesController.FOR_CAZ_PATH;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
@@ -26,6 +28,7 @@ import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.psr.dto.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.service.directdebit.DirectDebitMandatesService;
 import uk.gov.caz.psr.util.CleanAirZoneWithMandatesToDtoConverter;
+import uk.gov.caz.psr.util.MandatesToDtoConverter;
 
 @ContextConfiguration(classes = {ExceptionController.class, Configuration.class,
     DirectDebitMandatesController.class})
@@ -34,6 +37,9 @@ class DirectDebitMandatesControllerTest {
 
   @MockBean
   private CleanAirZoneWithMandatesToDtoConverter cleanAirZoneWithMandatesToDtoConverter;
+
+  @MockBean
+  private MandatesToDtoConverter mandatesToDtoConverter;
 
   @MockBean
   private DirectDebitMandatesService directDebitMandatesService;
@@ -51,6 +57,7 @@ class DirectDebitMandatesControllerTest {
 
   private static final String VALID_CORRELATION_HEADER = "79b7a48f-27c7-4947-bd1c-670f981843ef";
   private static final UUID ANY_ACCOUNT_ID = UUID.randomUUID();
+  private static final UUID ANY_CLEAN_AIR_ZONE_ID = UUID.randomUUID();
 
   @Nested
   class Create {
@@ -156,6 +163,34 @@ class DirectDebitMandatesControllerTest {
     private String validRequestPayload() {
       CreateDirectDebitMandateRequest requestParams = baseRequestBuilder().build();
       return toJsonString(requestParams);
+    }
+  }
+
+  @Nested
+  class GetDirectDebitMandatesForCaz {
+
+    @Test
+    public void missingCorrelationIdShouldResultIn400AndValidMessage()
+        throws Exception {
+      mockMvc
+          .perform(get(FOR_CAZ_PATH, ANY_ACCOUNT_ID, ANY_CLEAN_AIR_ZONE_ID)
+              .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message")
+              .value("Missing request header 'X-Correlation-ID'"));
+      verify(directDebitMandatesService, never())
+          .getMandatesForCazWithStatus(any(), any());
+    }
+
+    @Test
+    public void validRequestShouldResultIn200() throws Exception {
+      mockMvc
+          .perform(get(FOR_CAZ_PATH, ANY_ACCOUNT_ID, ANY_CLEAN_AIR_ZONE_ID)
+              .accept(MediaType.APPLICATION_JSON)
+              .header(X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER))
+          .andExpect(status().isOk());
+      verify(directDebitMandatesService)
+          .getMandatesForCazWithStatus(any(), any());
     }
   }
 
