@@ -60,7 +60,7 @@ public class SuccessAddingVehicleEntrantIT {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = VehicleEntrantController.BASE_PATH + "/" +
-        VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS;
+        VehicleEntrantController.CREATE_VEHICLE_ENTRANT_AND_GET_PAYMENT_DETAILS_PATH;
   }
 
   @Test
