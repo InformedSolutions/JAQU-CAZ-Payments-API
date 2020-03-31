@@ -8,6 +8,7 @@ import retrofit2.Response;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
+import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -16,6 +17,7 @@ import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
+import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
@@ -151,6 +153,29 @@ public interface AccountsRepository {
       UUID accountId, CreateDirectDebitMandateRequest body) {
     try {
       return createDirectDebitMandate(accountId, body).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+
+  /**
+   * Updates mandates in the account microservice.
+   */
+  @Headers({
+      "Accept: application/json",
+      "Content-Type: application/json"
+  })
+  @PATCH("v1/accounts/{accountId}/direct-debit-mandates")
+  Call<Void> updateDirectDebitMandates(@Path("accountId") UUID accountId,
+      @Body DirectDebitMandatesUpdateRequest body);
+
+  /**
+   * A synchronous wrapper for {@code updateDirectDebitMandates} call.
+   */
+  default Response<Void> updateDirectDebitMandatesSync(UUID accountId,
+      DirectDebitMandatesUpdateRequest body) {
+    try {
+      return updateDirectDebitMandates(accountId, body).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }

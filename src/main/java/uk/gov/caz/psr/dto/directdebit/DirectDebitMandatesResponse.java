@@ -28,7 +28,6 @@ public class DirectDebitMandatesResponse {
     public static class Mandate {
 
       String id;
-      String reference;
       String status;
     }
   }

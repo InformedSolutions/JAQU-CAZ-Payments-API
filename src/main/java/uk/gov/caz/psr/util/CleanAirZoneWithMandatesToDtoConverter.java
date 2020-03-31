@@ -41,7 +41,6 @@ public class CleanAirZoneWithMandatesToDtoConverter {
     return mandates.stream()
         .map(mandate -> DirectDebitMandatesResponse.CleanAirZoneWithMandates.Mandate.builder()
             .id(mandate.getId())
-            .reference(mandate.getReference())
             .status(mandate.getStatus())
             .build())
         .collect(Collectors.toList());

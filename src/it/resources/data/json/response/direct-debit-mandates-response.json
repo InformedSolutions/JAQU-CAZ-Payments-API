@@ -6,8 +6,11 @@
       "mandates": [
         {
           "id": "i4nuo03jginfke5c3ebrvgig6a",
-          "reference": "12345",
-          "status": "created"
+          "status": "CREATED"
+        },
+        {
+          "id": "j4nuo03jginfke5c3ebrvgig6a",
+          "status": "FAILED"
         }
       ]
     },
