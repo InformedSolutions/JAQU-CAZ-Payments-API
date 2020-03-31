@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0006-1.0-add-payment-provider-mandate-id
+      author: informed
+      changes:
+        - addColumn:
+            schemaName: CAZ_PAYMENT
+            tableName: T_PAYMENT
+            columns:
+              - column:
+                  name: PAYMENT_PROVIDER_MANDATE_ID
+                  type: varchar(100)
+                  constraints:
+                    nullable: true

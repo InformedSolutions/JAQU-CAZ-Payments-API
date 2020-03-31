@@ -50,6 +50,7 @@ public class PaymentRepository {
     private static final String PAYMENT_PROVIDER_STATUS = "payment_provider_status";
     private static final String REFERENCE_NUMBER = "central_reference_number";
     private static final String USER_ID = "user_id";
+    private static final String PAYMENT_MANDATE_PROVIDER_ID = "payment_provider_mandate_id";
   }
 
   /**
@@ -66,7 +67,7 @@ public class PaymentRepository {
         .withTableName(TABLE_NAME)
         .usingGeneratedKeyColumns(Columns.PAYMENT_ID, Columns.REFERENCE_NUMBER)
         .usingColumns(Columns.PAYMENT_METHOD, Columns.TOTAL_PAID, Columns.PAYMENT_PROVIDER_STATUS,
-            Columns.USER_ID);
+            Columns.USER_ID, Columns.PAYMENT_MANDATE_PROVIDER_ID);
     this.entrantPaymentRepository = entrantPaymentRepository;
   }
 
@@ -183,7 +184,8 @@ public class PaymentRepository {
         .addValue("total_paid", payment.getTotalPaid())
         .addValue("payment_provider_status", payment.getExternalPaymentStatus().name())
         .addValue("payment_method", payment.getPaymentMethod().name())
-        .addValue("user_id", payment.getUserId());
+        .addValue("user_id", payment.getUserId())
+        .addValue("payment_provider_mandate_id", payment.getPaymentProviderMandateId());
   }
 
   /**
@@ -200,6 +202,7 @@ public class PaymentRepository {
         + "payment.payment_provider_status, "
         + "payment.central_reference_number, "
         + "payment.user_id, "
+        + "payment.payment_provider_mandate_id, "
         + "payment.payment_provider_id "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
         + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
@@ -220,8 +223,8 @@ public class PaymentRepository {
 
     private static final String ALL_PAYMENT_ATTRIBUTES =
         "payment_id, payment_method, payment_provider_id, central_reference_number, "
-        + "total_paid, payment_provider_status, user_id, payment_submitted_timestamp, "
-        + "payment_authorised_timestamp ";
+        + "total_paid, payment_provider_status, user_id, payment_provider_mandate_id,"
+        + " payment_submitted_timestamp, payment_authorised_timestamp ";
 
     static final String SELECT_DANGLING_PAYMENTS =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE "
@@ -265,6 +268,7 @@ public class PaymentRepository {
           .authorisedTimestamp(
               fromTimestampToLocalDateTime(resultSet, "payment_authorised_timestamp"))
           .userId(userId == null ? null : UUID.fromString(userId))
+          .paymentProviderMandateId(resultSet.getString(Columns.PAYMENT_MANDATE_PROVIDER_ID))
           .entrantPayments(entrantPayments)
           .build();
     }
