@@ -2,20 +2,31 @@ package uk.gov.caz.psr.service.directdebit;
 
 import static java.util.stream.Collectors.groupingBy;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
+import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate.DirectDebitMandateStatus;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
+import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
+import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest.SingleDirectDebitMandateUpdate;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
 import uk.gov.caz.psr.model.directdebit.CleanAirZoneWithMandates;
 import uk.gov.caz.psr.model.directdebit.Mandate;
@@ -32,6 +43,15 @@ import uk.gov.caz.psr.util.ResponseBodyUtils;
 @AllArgsConstructor
 @Slf4j
 public class DirectDebitMandatesService {
+
+  @VisibleForTesting
+  static final EnumSet<DirectDebitMandateStatus> CACHEABLE_STATUSES = EnumSet.of(
+      DirectDebitMandateStatus.ABANDONED,
+      DirectDebitMandateStatus.FAILED,
+      DirectDebitMandateStatus.CANCELLED,
+      DirectDebitMandateStatus.INACTIVE,
+      DirectDebitMandateStatus.ERROR
+  );
 
   private final VccsRepository vccsRepository;
   private final AccountsRepository accountsRepository;
@@ -94,23 +114,21 @@ public class DirectDebitMandatesService {
         accountId);
 
     return cleanAirZones.stream()
-        .map(caz -> toCleanAirZoneWithMandates(mandatesByCazId, caz))
+        .map(caz -> toCleanAirZoneWithMandates(mandatesByCazId, caz, accountId))
         .collect(Collectors.toList());
   }
 
   /**
-   * Creates an instance of {@link CleanAirZoneWithMandates} with the current status of a mandate
-   * obtained externally.
+   * Creates an instance of {@link CleanAirZoneWithMandates}.
    */
   private CleanAirZoneWithMandates toCleanAirZoneWithMandates(
-      Map<UUID, List<DirectDebitMandate>> mandatesByCazId, CleanAirZoneDto caz) {
+      Map<UUID, List<DirectDebitMandate>> mandatesByCazId, CleanAirZoneDto caz,
+      UUID accountId) {
     return CleanAirZoneWithMandates.builder()
         .cleanAirZoneId(caz.getCleanAirZoneId())
         .cazName(caz.getName())
-        .mandates(
-            updateStatusOf(mandatesByCazId.getOrDefault(caz.getCleanAirZoneId(),
-                Collections.emptyList()))
-        )
+        .mandates(toMandates(mandatesByCazId.getOrDefault(caz.getCleanAirZoneId(),
+            Collections.emptyList()), accountId))
         .build();
   }
 
@@ -140,22 +158,138 @@ public class DirectDebitMandatesService {
   }
 
   /**
-   * For every mandate in the {@code mandates} fetches its actual status in GOV UK Pay service and
-   * create a new instance of {@link Mandate} with it and data from {@link DirectDebitMandate}.
+   * For every mandate whose status is in {@link #CACHEABLE_STATUSES} fetches its current
+   * status from GOV UK Pay service and create a new instance of {@link Mandate} with it and data
+   * from {@link DirectDebitMandate}.
    */
-  private List<Mandate> updateStatusOf(List<DirectDebitMandate> mandates) {
-    return mandates.stream()
-        .map(mandate -> {
-          MandateResponse externalMandate = externalDirectDebitRepository
-              .getMandate(mandate.getPaymentProviderMandateId(),
-                  mandate.getCleanAirZoneId());
-          return Mandate.builder()
-              .id(mandate.getPaymentProviderMandateId())
-              .reference(externalMandate.getReference())
-              .status(externalMandate.getState().getStatus())
-              .build();
-        })
+  private List<Mandate> toMandates(List<DirectDebitMandate> mandates, UUID accountId) {
+    List<MandateWithCachedAndActualStatuses> mandatesWithExternallyFetchedStatus =
+        mandatesWithExternallyFetchedStatus(mandates);
+    List<Mandate> mandatesWithCachedStatus = mandatesWithCachedStatus(mandates);
+
+    updateMandateStatuses(accountId, mandatesWithExternallyFetchedStatus);
+
+    return ImmutableList.copyOf(
+        merge(mandatesWithExternallyFetchedStatus, mandatesWithCachedStatus)
+    );
+  }
+
+  /**
+   * Conditionally updates mandates' state in accounts service.
+   */
+  private void updateMandateStatuses(UUID accountId,
+      List<MandateWithCachedAndActualStatuses> mandatesWithExternallyFetchedStatus) {
+    Optional<DirectDebitMandatesUpdateRequest> optionalRequest = buildUpdateStatusInAccountsRequest(
+        mandatesWithExternallyFetchedStatus);
+    optionalRequest.ifPresent(updateRequest -> {
+      Response<Void> response = accountsRepository.updateDirectDebitMandatesSync(accountId,
+          updateRequest);
+      log.info("Request to update statuses of {} mandates in accounts service result, "
+              + "status code: {}, message: {}, error body: {}",
+          updateRequest.getDirectDebitMandates().size(), response.code(), response.message(),
+          getErrorBody(response));
+    });
+  }
+
+  /**
+   * Optionally creates an instance of {@link DirectDebitMandatesUpdateRequest} if any of the cached
+   * statuses has stale value.
+   */
+  private Optional<DirectDebitMandatesUpdateRequest> buildUpdateStatusInAccountsRequest(
+      List<MandateWithCachedAndActualStatuses> mandatesWithExternallyFetchedStatus) {
+    List<SingleDirectDebitMandateUpdate> mandates = mandatesWithExternallyFetchedStatus.stream()
+        .filter(mandate -> mandate.getActualStatus() != mandate.getCachedStatus())
+        .map(mandate -> SingleDirectDebitMandateUpdate.builder()
+            .mandateId(mandate.getPaymentProviderMandateId())
+            .status(mandate.getActualStatus().name())
+            .build())
         .collect(Collectors.toList());
+
+    return mandates.isEmpty()
+        ? Optional.empty()
+        : Optional.of(DirectDebitMandatesUpdateRequest.builder()
+            .directDebitMandates(mandates)
+            .build());
+  }
+
+  /**
+   * Merges provided two lists into one.
+   */
+  private Iterable<Mandate> merge(List<MandateWithCachedAndActualStatuses> a, List<Mandate> b) {
+    return Iterables.concat(
+        a.stream().map(this::toMandate).collect(Collectors.toList()),
+        b
+    );
+  }
+
+  /**
+   * Maps {@link MandateWithCachedAndActualStatuses} to {@link Mandate}.
+   */
+  private Mandate toMandate(MandateWithCachedAndActualStatuses mandate) {
+    return Mandate.builder()
+        .id(mandate.getPaymentProviderMandateId())
+        .status(mandate.getActualStatus().name())
+        .build();
+  }
+
+  /**
+   * Selects only those mandates which have a cacheable status from the provided {@code mandates}
+   * and maps it to {@link Mandate}.
+   */
+  private List<Mandate> mandatesWithCachedStatus(List<DirectDebitMandate> mandates) {
+    return mandates.stream()
+        .filter(DirectDebitMandatesService::shouldUseCachedStatus)
+        .map(mandate -> toMandateWithStatus(mandate, mandate.getStatus()))
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Selects only those mandates which does not have a cacheable status from the provided {@code
+   * mandates} and maps it to {@link Mandate}.
+   */
+  private List<MandateWithCachedAndActualStatuses> mandatesWithExternallyFetchedStatus(
+      List<DirectDebitMandate> mandates) {
+    return mandates.stream()
+        .filter(DirectDebitMandatesService::shouldFetchStatusExternally)
+        .map(mandate -> toMandateWithBothStatuses(mandate, fetchExternalStatusOf(mandate)))
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Creates an instance of {@link MandateWithCachedAndActualStatuses} based on the passed
+   * arguments.
+   */
+  private MandateWithCachedAndActualStatuses toMandateWithBothStatuses(DirectDebitMandate mandate,
+      DirectDebitMandateStatus externalStatus) {
+    return MandateWithCachedAndActualStatuses.builder()
+        .paymentProviderMandateId(mandate.getPaymentProviderMandateId())
+        .actualStatus(externalStatus)
+        .cachedStatus(mandate.getStatus())
+        .build();
+  }
+
+  /**
+   * Fetches the current status of a mandate from the external service.
+   */
+  private DirectDebitMandateStatus fetchExternalStatusOf(DirectDebitMandate mandate) {
+    DirectDebitMandateStatus newStatus = DirectDebitMandateStatus.valueOf(
+        externalDirectDebitRepository
+            .getMandate(mandate.getPaymentProviderMandateId(), mandate.getCleanAirZoneId())
+            .getState()
+            .getStatus()
+            .toUpperCase()
+    );
+    return newStatus;
+  }
+
+  /**
+   * Maps the provided arguments to an instance of {@link Mandate}.
+   */
+  private Mandate toMandateWithStatus(DirectDebitMandate mandate, DirectDebitMandateStatus status) {
+    return Mandate.builder()
+        .id(mandate.getPaymentProviderMandateId())
+        .status(status.name())
+        .build();
   }
 
   /**
@@ -163,5 +297,37 @@ public class DirectDebitMandatesService {
    */
   private <T> String getErrorBody(Response<T> response) {
     return ResponseBodyUtils.readQuietly(response.errorBody());
+  }
+
+  /**
+   * Predicate that specifies whether a status for the {@code mandate} should be fetched externally
+   * or not.
+   */
+  private static boolean shouldFetchStatusExternally(DirectDebitMandate mandate) {
+    return !shouldUseCachedStatus(mandate);
+  }
+
+  /**
+   * Predicate that specifies whether a status for the {@code mandate} should not be fetched
+   * externally.
+   */
+  private static boolean shouldUseCachedStatus(DirectDebitMandate mandate) {
+    return CACHEABLE_STATUSES.contains(mandate.getStatus());
+  }
+
+  /**
+   * Helper value object holding two mandate statuses, the cached one and the actual one (kept
+   * externally).
+   */
+  @Value
+  @Builder
+  private static class MandateWithCachedAndActualStatuses {
+
+    @NonNull
+    String paymentProviderMandateId;
+    @NonNull
+    DirectDebitMandateStatus cachedStatus;
+    @NonNull
+    DirectDebitMandateStatus actualStatus;
   }
 }

@@ -50,6 +50,7 @@ public class GetCazWithMandatesTestIT {
     mockSuccessVccsCleanAirZonesResponse();
     mockSuccessMandateQueryResponseInGovUkPay();
     mockSuccessMandateQueryResponseInAccounts(accountId);
+    mockSuccessMandateUpdateResponse(accountId);
 
     // when
     ValidatableResponse response = makeRequestToGetMandates(accountId);
@@ -70,6 +71,7 @@ public class GetCazWithMandatesTestIT {
     mockFailVccsCleanAirZonesCall();
     mockSuccessMandateQueryResponseInGovUkPay();
     mockSuccessMandateQueryResponseInAccounts(accountId);
+    mockSuccessMandateUpdateResponse(accountId);
 
     // when
     ValidatableResponse response = makeRequestToGetMandates(accountId);
@@ -86,6 +88,7 @@ public class GetCazWithMandatesTestIT {
     mockSuccessVccsCleanAirZonesResponse();
     mockFailMandateQueryResponseInGovUkPay();
     mockSuccessMandateQueryResponseInAccounts(accountId);
+    mockSuccessMandateUpdateResponse(accountId);
 
     // when
     ValidatableResponse response = makeRequestToGetMandates(accountId);
@@ -102,6 +105,7 @@ public class GetCazWithMandatesTestIT {
     mockSuccessVccsCleanAirZonesResponse();
     mockSuccessMandateQueryResponseInGovUkPay();
     mockFailMandateQueryResponseInAccounts(accountId);
+    mockSuccessMandateUpdateResponse(accountId);
 
     // when
     ValidatableResponse response = makeRequestToGetMandates(accountId);
@@ -118,6 +122,7 @@ public class GetCazWithMandatesTestIT {
     mockSuccessVccsCleanAirZonesResponse();
     mockSuccessMandateQueryResponseInGovUkPay();
     mockEmptyMandateQueryResponseInAccounts(accountId);
+    mockSuccessMandateUpdateResponse(accountId);
 
     // when
     ValidatableResponse response = makeRequestToGetMandates(accountId);
@@ -184,6 +189,15 @@ public class GetCazWithMandatesTestIT {
         .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
             .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
             .withBody(readInternalResponse("account-direct-debit-mandates-empty-response.json")));
+  }
+
+  private void mockSuccessMandateUpdateResponse(String accountId) {
+    accountsServiceMockServer.when(HttpRequest.request().withMethod("PATCH")
+        .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
+        .withPath(String.format("/v1/accounts/%s/direct-debit-mandates", accountId)))
+        .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
+            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+            .withBody("{\"message\": \"Direct debit mandates updated successfully\"}"));
   }
 
   private ForwardChainExpectation whenRequestToVccsIsMade() {

@@ -11,6 +11,5 @@ import lombok.Value;
 public class Mandate {
 
   String id;
-  String reference;
   String status;
 }
