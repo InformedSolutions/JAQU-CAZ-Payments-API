@@ -29,7 +29,8 @@ public class PaymentStatusRepository {
       + "entrant_payment.case_reference, "
       + "payment.payment_provider_id, "
       + "payment.central_reference_number, "
-      + "payment.payment_method "
+      + "payment.payment_method, "
+      + "payment.payment_provider_mandate_id "
       + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
       + "LEFT OUTER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
       + "ON entrant_payment.clean_air_zone_entrant_payment_id = "
@@ -86,6 +87,7 @@ public class PaymentStatusRepository {
           .status(InternalPaymentStatus.valueOf(
               resultSet.getString("payment_status")))
           .caseReference(resultSet.getString("case_reference"))
+          .paymentProviderMandateId(resultSet.getString("payment_provider_mandate_id"))
           .paymentMethod(paymentMethod == null ? null : PaymentMethod.valueOf(paymentMethod))
           .build();
     }

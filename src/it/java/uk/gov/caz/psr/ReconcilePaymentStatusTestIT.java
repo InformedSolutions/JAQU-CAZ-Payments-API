@@ -41,11 +41,6 @@ public class ReconcilePaymentStatusTestIT {
   @Autowired
   private PaymentRepository paymentRepository;
 
-  @BeforeEach
-  public void init() throws JsonProcessingException {
-    ObjectMapper om = new ObjectMapper();
-  }
-
   @ParameterizedTest
   @ValueSource(strings = {"a", "1111", "a-1-b-2"})
   public void shouldReturn400StatusWhenIdHasInvalidFormat(String id) throws Exception {
