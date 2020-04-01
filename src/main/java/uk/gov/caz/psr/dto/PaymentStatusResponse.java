@@ -1,10 +1,14 @@
 package uk.gov.caz.psr.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import io.swagger.annotations.ApiModelProperty;
+import javax.annotation.Nullable;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
+import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.PaymentStatus;
 
 @Value
@@ -28,6 +32,14 @@ public class PaymentStatusResponse {
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-method}")
   ChargeSettlementPaymentMethod paymentMethod;
 
+  @Nullable
+  @JsonInclude(Include.NON_NULL)
+  @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.payment-mandate-id}")
+  String paymentMandateId;
+
+  @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.telephone-payment}")
+  boolean telephonePayment;
+
   /**
    * Helper method to map {@link PaymentStatus} to ${@link PaymentStatusResponse}.
    *
@@ -41,6 +53,12 @@ public class PaymentStatusResponse {
         .paymentProviderId(paymentStatus.getExternalId())
         .caseReference(paymentStatus.getCaseReference())
         .paymentMethod(ChargeSettlementPaymentMethod.from(paymentStatus.getPaymentMethod()))
+        .paymentMandateId(
+            PaymentMethod.DIRECT_DEBIT.equals(paymentStatus.getPaymentMethod())
+                ? paymentStatus.getPaymentProviderMandateId()
+                : null
+        )
+        .telephonePayment(false)
         .build();
   }
 }

@@ -36,4 +36,9 @@ public class PaymentStatus {
    * The method of payment.
    */
   PaymentMethod paymentMethod;
+
+  /**
+   * Payment provider mandate ID.
+   */
+  String paymentProviderMandateId;
 }
