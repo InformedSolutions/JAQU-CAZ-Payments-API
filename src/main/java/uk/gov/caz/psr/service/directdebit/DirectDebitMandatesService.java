@@ -25,6 +25,7 @@ import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate.DirectDebitMandateStatus;
 import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
+import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest.SingleDirectDebitMandateUpdate;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
@@ -100,11 +101,16 @@ public class DirectDebitMandatesService {
       log.info("Creating direct debit mandate for account '{}' : start", accountId);
       MandateResponse externalDirectDebitMandate = externalDirectDebitRepository
           .createMandate(returnUrl, UUID.randomUUID().toString(), cleanAirZoneId);
-      accountsRepository.createDirectDebitMandateSync(accountId,
-          CreateDirectDebitMandateRequest.builder()
-              .cleanAirZoneId(cleanAirZoneId)
-              .mandateId(externalDirectDebitMandate.getMandateId())
-              .build());
+      Response<CreateDirectDebitMandateResponse> response = accountsRepository
+          .createDirectDebitMandateSync(accountId,
+              CreateDirectDebitMandateRequest.builder()
+                  .cleanAirZoneId(cleanAirZoneId)
+                  .mandateId(externalDirectDebitMandate.getMandateId())
+                  .build());
+      if (!response.isSuccessful()) {
+        throw new ExternalServiceCallException("Accounts service call failed, status code: "
+            + response.code() + ", error body: '" + getErrorBody(response) + "'");
+      }
       return externalDirectDebitMandate.getLinks().getNextUrl().getHref();
     } finally {
       log.info("Creating direct debit mandate for account '{}' : finish", accountId);

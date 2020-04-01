@@ -230,7 +230,7 @@ public class DirectDebitControllerTestIT {
   }
 
   private void mockSuccessCreateMandateQueryResponseInAccounts(String accountId) {
-    whenRequestToAccountsIsMade(accountId)
+    whenRequestToAccountsIsMadeToCreateMandate(accountId)
         .respond(HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
             .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
             .withBody(readInternalResponse("account-create-direct-debit-mandate-response.json")));
@@ -318,6 +318,14 @@ public class DirectDebitControllerTestIT {
         .when(HttpRequest.request().withMethod("GET")
             .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
             .withPath("/v1/compliance-checker/clean-air-zones"));
+  }
+
+  private ForwardChainExpectation whenRequestToAccountsIsMadeToCreateMandate(String accountId) {
+    return accountsServiceMockServer
+        .when(HttpRequest.request().withMethod("POST")
+            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
+            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+            .withPath(String.format("/v1/accounts/%s/direct-debit-mandates", accountId)));
   }
 
   private ForwardChainExpectation whenRequestToAccountsIsMade(String accountId) {
