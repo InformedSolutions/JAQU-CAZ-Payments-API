@@ -268,13 +268,23 @@ public class DirectDebitMandatesService {
   }
 
   /**
+   * Maps the provided arguments to an instance of {@link Mandate}.
+   */
+  private Mandate toMandate(DirectDebitMandate mandate) {
+    return Mandate.builder()
+        .id(mandate.getPaymentProviderMandateId())
+        .status(mandate.getStatus().name()) // status cannot be null here
+        .build();
+  }
+
+  /**
    * Selects only those mandates which have a cacheable status from the provided {@code mandates}
    * and maps it to {@link Mandate}.
    */
   private List<Mandate> mandatesWithCachedStatus(List<DirectDebitMandate> mandates) {
     return mandates.stream()
         .filter(DirectDebitMandatesService::shouldUseCachedStatus)
-        .map(mandate -> toMandateWithStatus(mandate, mandate.getStatus()))
+        .map(this::toMandate)
         .collect(Collectors.toList());
   }
 
@@ -318,16 +328,6 @@ public class DirectDebitMandatesService {
   }
 
   /**
-   * Maps the provided arguments to an instance of {@link Mandate}.
-   */
-  private Mandate toMandateWithStatus(DirectDebitMandate mandate, DirectDebitMandateStatus status) {
-    return Mandate.builder()
-        .id(mandate.getPaymentProviderMandateId())
-        .status(status.name())
-        .build();
-  }
-
-  /**
    * Quietly returns contents of the error body.
    */
   private <T> String getErrorBody(Response<T> response) {
@@ -361,8 +361,7 @@ public class DirectDebitMandatesService {
     @NonNull
     String paymentProviderMandateId;
     @NonNull
-    DirectDebitMandateStatus cachedStatus;
-    @NonNull
     DirectDebitMandateStatus actualStatus;
+    DirectDebitMandateStatus cachedStatus;
   }
 }
