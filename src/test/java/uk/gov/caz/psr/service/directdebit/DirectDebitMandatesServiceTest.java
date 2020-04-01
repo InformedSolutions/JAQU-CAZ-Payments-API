@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.service.directdebit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.SneakyThrows;
+import okhttp3.MediaType;
+import okhttp3.ResponseBody;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +46,7 @@ import uk.gov.caz.psr.model.directdebit.CleanAirZoneWithMandates;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.ExternalDirectDebitRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
+import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 @ExtendWith(MockitoExtension.class)
 class DirectDebitMandatesServiceTest {
@@ -82,6 +86,25 @@ class DirectDebitMandatesServiceTest {
       assertThat(response).isEqualTo(NEXT_URL);
     }
 
+    @Nested
+    class UponExceptionFromAccountsServiceCall {
+
+      @Test
+      public void shouldThrowExternalServiceCallException() {
+        // given
+        mockValidCreateDirectDebitMandateInExternalProvider();
+        mockFailureOfCreationOFDirectDebitMandateInAccountService();
+
+        // when
+        Throwable throwable = catchThrowable(() -> directDebitMandatesService
+            .createDirectDebitMandate(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL));
+
+        // then
+        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class)
+            .hasMessageStartingWith("Accounts service call failed");
+      }
+    }
+
     private void mockValidCreateDirectDebitMandateInExternalProvider() {
       when(externalDirectDebitRepository.createMandate(any(), any(), any()))
           .thenReturn(MandateResponse.builder()
@@ -91,6 +114,11 @@ class DirectDebitMandatesServiceTest {
                   .nextUrl(new Link(NEXT_URL, "GET"))
                   .build())
               .build());
+    }
+
+    private void mockFailureOfCreationOFDirectDebitMandateInAccountService() {
+      given(accountsRepository.createDirectDebitMandateSync(any(), any()))
+          .willReturn(Response.error(400, ResponseBody.create(MediaType.get("application/json"), "")));
     }
 
     private void mockSuccessCreateDirectDebitMandateInAccountService() {
@@ -176,6 +204,7 @@ class DirectDebitMandatesServiceTest {
 
       @Nested
       class WhenExternalStatusIsSame {
+
         @ParameterizedTest
         @MethodSource("uk.gov.caz.psr.service.directdebit.DirectDebitMandatesServiceTest#notCacheableStatuses")
         public void shouldNotUpdateMandatesInAccounts(DirectDebitMandateStatus status) {
@@ -188,7 +217,8 @@ class DirectDebitMandatesServiceTest {
           directDebitMandatesService.getDirectDebitMandates(ANY_ACCOUNT_ID);
 
           // then
-          verify(accountsRepository, never()).updateDirectDebitMandatesSync(eq(ANY_ACCOUNT_ID), any());
+          verify(accountsRepository, never())
+              .updateDirectDebitMandatesSync(eq(ANY_ACCOUNT_ID), any());
         }
       }
     }
@@ -219,7 +249,8 @@ class DirectDebitMandatesServiceTest {
       );
     }
 
-    private void mockDirectDebitMandatesInAccountsWithStatuses(DirectDebitMandateStatus ... statuses) {
+    private void mockDirectDebitMandatesInAccountsWithStatuses(
+        DirectDebitMandateStatus... statuses) {
       List<DirectDebitMandate> mandates = Stream.of(statuses)
           .map(status -> DirectDebitMandate.builder()
               .accountId(ANY_ACCOUNT_ID)
