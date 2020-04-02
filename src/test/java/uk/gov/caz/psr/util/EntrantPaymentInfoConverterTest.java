@@ -23,6 +23,7 @@ import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
 import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.info.EntrantPaymentInfo;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.model.info.PaymentInfo;
@@ -78,7 +79,7 @@ class EntrantPaymentInfoConverterTest {
   @Test
   public void shouldConvertPassedCollection() {
     // given
-    Collection<EntrantPaymentMatchInfo> input = singleEntrantPaymentInfo();
+    Collection<EntrantPaymentMatchInfo> input = singleEntrantPaymentInfo(PaymentMethod.DIRECT_DEBIT);
     given(currencyFormatter.parsePenniesToBigDecimal(anyInt()))
         .willAnswer(answer -> BigDecimal.valueOf(74));
 
@@ -94,6 +95,8 @@ class EntrantPaymentInfoConverterTest {
     SinglePaymentInfo payment = paymentsInfo.getPayments().iterator().next();
     assertThat(payment.getPaymentDate()).isEqualTo(ANY_SUBMITTED_TIMESTAMP.toLocalDate());
     assertThat(payment.getPaymentProviderId()).isEqualTo(ANY_EXTERNAL_ID);
+    assertThat(payment.getPaymentMandateId()).isEqualTo(ANY_EXTERNAL_ID);
+    assertThat(payment.isTelephonePayment()).isFalse();
     assertThat(payment.getTotalPaid()).isEqualTo(BigDecimal.valueOf(ANY_TOTAL_PAID));
     assertThat(payment.getLineItems()).hasSize(1);
     SinglePaymentInfo.VehicleEntrantPaymentInfo lineItem = payment.getLineItems().iterator().next();
@@ -103,8 +106,27 @@ class EntrantPaymentInfoConverterTest {
     assertThat(lineItem.getPaymentStatus()).isEqualTo(ChargeSettlementPaymentStatus.REFUNDED);
   }
 
-  private Collection<EntrantPaymentMatchInfo> singleEntrantPaymentInfo() {
-    EntrantPaymentMatchInfo result = buildEntrantPaymentMatchInfo();
+  @Test
+  public void shouldNotIncludePaymentMandateIdIfPaymentMethodIsNotDirectDebit() {
+    // given
+    Collection<EntrantPaymentMatchInfo> input = singleEntrantPaymentInfo(PaymentMethod.CREDIT_DEBIT_CARD);
+    given(currencyFormatter.parsePenniesToBigDecimal(anyInt()))
+        .willAnswer(answer -> BigDecimal.valueOf(74));
+
+    // when
+    PaymentInfoResponse paymentInfoResponse = converter.toPaymentInfoResponse(input);
+
+    // then
+    assertThat(paymentInfoResponse).isNotNull();
+    assertThat(paymentInfoResponse.getResults()).hasSize(1);
+    PaymentsInfo paymentsInfo = paymentInfoResponse.getResults().iterator().next();
+    assertThat(paymentsInfo.getPayments()).hasSize(1);
+    SinglePaymentInfo payment = paymentsInfo.getPayments().iterator().next();
+    assertThat(payment.getPaymentMandateId()).isNull();
+  }
+
+  private Collection<EntrantPaymentMatchInfo> singleEntrantPaymentInfo(PaymentMethod directDebit) {
+    EntrantPaymentMatchInfo result = buildEntrantPaymentMatchInfo(directDebit);
     return Collections.singletonList(result);
   }
 
@@ -113,12 +135,12 @@ class EntrantPaymentInfoConverterTest {
     return Collections.singletonList(result);
   }
 
-  private EntrantPaymentMatchInfo buildEntrantPaymentMatchInfo() {
+  private EntrantPaymentMatchInfo buildEntrantPaymentMatchInfo(PaymentMethod directDebit) {
     EntrantPaymentMatchInfo result = new EntrantPaymentMatchInfo();
     result.setId(UUID.fromString("7e2bf5c2-3cfc-11ea-b5aa-f7f8fb54cc82"));
     result.setLatest(true);
     result.setEntrantPaymentInfo(buildEntrantPaymentInfo());
-    result.setPaymentInfo(buildPaymentInfo());
+    result.setPaymentInfo(buildPaymentInfo(directDebit));
     return result;
   }
 
@@ -136,22 +158,24 @@ class EntrantPaymentInfoConverterTest {
   }
 
   private EntrantPaymentMatchInfo buildEntrantPaymentMatchInfoWithNullSubmittedTimestamp() {
-    EntrantPaymentMatchInfo result = buildEntrantPaymentMatchInfo();
-    result.setPaymentInfo(buildPaymentInfoWith(null));
+    EntrantPaymentMatchInfo result = buildEntrantPaymentMatchInfo(PaymentMethod.DIRECT_DEBIT);
+    result.setPaymentInfo(buildPaymentInfoWith(null, PaymentMethod.DIRECT_DEBIT));
     return result;
   }
 
-  private PaymentInfo buildPaymentInfo() {
-    return buildPaymentInfoWith(ANY_SUBMITTED_TIMESTAMP);
+  private PaymentInfo buildPaymentInfo(PaymentMethod paymentMethod) {
+    return buildPaymentInfoWith(ANY_SUBMITTED_TIMESTAMP, paymentMethod);
   }
 
-  private PaymentInfo buildPaymentInfoWith(LocalDateTime timestamp) {
+  private PaymentInfo buildPaymentInfoWith(LocalDateTime timestamp, PaymentMethod paymentMethod) {
     PaymentInfo paymentInfo = new PaymentInfo();
     paymentInfo.setId(UUID.fromString("996c6c95-960d-4dfd-98a2-6effa9a1cbda"));
     paymentInfo.setExternalId(ANY_EXTERNAL_ID);
     paymentInfo.setTotalPaid(EntrantPaymentInfoConverterTest.ANY_TOTAL_PAID);
     paymentInfo.setExternalPaymentStatus(ExternalPaymentStatus.SUCCESS);
+    paymentInfo.setPaymentMethod(paymentMethod);
     paymentInfo.setSubmittedTimestamp(timestamp);
+    paymentInfo.setPaymentProviderMandateId(ANY_EXTERNAL_ID);
     return paymentInfo;
   }
 }
