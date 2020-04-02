@@ -17,6 +17,7 @@ import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.PaymentInfoResponse;
 import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
 import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo;
+import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.info.EntrantPaymentInfo;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.model.info.PaymentInfo;
@@ -88,6 +89,10 @@ public class EntrantPaymentInfoConverter {
         .totalPaid(currencyFormatter.parsePenniesToBigDecimal(paymentInfo.getTotalPaid()))
         .lineItems(toVehicleEntrantPayments(entrantPaymentInfoList))
         .paymentMethod(ChargeSettlementPaymentMethod.from(paymentInfo.getPaymentMethod()))
+        .paymentMandateId(PaymentMethod.DIRECT_DEBIT.equals(paymentInfo.getPaymentMethod())
+            ? paymentInfo.getPaymentProviderMandateId()
+            : null)
+        .telephonePayment(false)
         .build();
   }
 

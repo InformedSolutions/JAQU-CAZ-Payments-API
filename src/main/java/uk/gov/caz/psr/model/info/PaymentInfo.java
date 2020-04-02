@@ -43,4 +43,7 @@ public class PaymentInfo {
 
   @Column(name = "payment_submitted_timestamp")
   private LocalDateTime submittedTimestamp;
+
+  @Column(name = "payment_provider_mandate_id")
+  private String paymentProviderMandateId;
 }
