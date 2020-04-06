@@ -11,9 +11,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
+import uk.gov.caz.psr.dto.Transaction;
+import uk.gov.caz.psr.dto.directdebit.CreateDirectDebitPaymentRequest;
+import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
+import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPaymentState;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -161,6 +164,16 @@ public class TestObjectFactory {
           .build();
     }
 
+    public static Payment forDirectDebitRequest(CreateDirectDebitPaymentRequest request) {
+      List<EntrantPayment> entrantPayments = Collections.emptyList();
+
+      return createPaymentWith(entrantPayments, null, null, request.getCleanAirZoneId())
+          .toBuilder()
+          .paymentMethod(PaymentMethod.DIRECT_DEBIT)
+          .totalPaid(request.getTransactions().stream().mapToInt(Transaction::getCharge).sum())
+          .build();
+    }
+
     private static Payment createPaymentWith(List<EntrantPayment> entrantPayments,
         UUID paymentId, String externalId, UUID cazIdentifier) {
       return Payment.builder()
@@ -301,6 +314,29 @@ public class TestObjectFactory {
         ExternalPaymentStatus externalPaymentStatus) {
       return ExternalPaymentDetails.builder().email("example@email.com")
           .externalPaymentStatus(externalPaymentStatus).build();
+    }
+  }
+
+  public static class DirectDebitPayments {
+
+    public static DirectDebitPayment any() {
+      return DirectDebitPayment.builder()
+          .amount(1000)
+          .mandateId("exampleMandateId")
+          .state(DirectDebitPaymentState.builder().status("success").build())
+          .reference(UUID.randomUUID().toString())
+          .paymentId(UUID.randomUUID().toString())
+          .build();
+    }
+
+    public static DirectDebitPayment anyWithStatus(String status) {
+      return DirectDebitPayment.builder()
+          .amount(1000)
+          .mandateId("exampleMandateId")
+          .state(DirectDebitPaymentState.builder().status(status).build())
+          .reference(UUID.randomUUID().toString())
+          .paymentId(UUID.randomUUID().toString())
+          .build();
     }
   }
 

@@ -196,6 +196,12 @@ swagger:
         clean-zone-id: Clean Air Zone identifier
         return-url: Front end URL used as return URL after direct debit mandate createion
         account-id: Identifies the fleet's account which is creating direct debit mandate
+      create-direct-debit-payment:
+        clean-zone-id: Clean Air Zone identifier
+        mandate-id: Identifies the direct debit mandate in payment provider.
+        account-id: Identifies the fleet's account which is creating direct debit mandate
+        user-id: Identifies the fleet's user which is making the payment
+        transactions: Collection of objects representing a single vehicle entrant against which the payment is made
 
   operations:
     accounts:
@@ -219,6 +225,8 @@ swagger:
       direct-debit-mandates-for-caz:
         description: >-
           Returns a list of account's direct debit mandates assigned to selected Clean air zone.
+      create-direct-debit:
+        description: Create Payment via DirectDebit payment method.
     charge-settlement:
       payment-status-update:
         description: >-

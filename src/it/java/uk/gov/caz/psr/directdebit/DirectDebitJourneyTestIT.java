@@ -9,7 +9,12 @@ import com.google.common.io.Resources;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,21 +27,30 @@ import org.mockserver.model.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.DirectDebitMandatesController;
+import uk.gov.caz.psr.controller.DirectDebitPaymentsController;
 import uk.gov.caz.psr.dto.CreateDirectDebitMandateRequest;
+import uk.gov.caz.psr.dto.Transaction;
+import uk.gov.caz.psr.dto.directdebit.CreateDirectDebitPaymentRequest;
 import uk.gov.caz.psr.repository.ExternalDirectDebitRepository;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
-public class DirectDebitControllerTestIT {
+public class DirectDebitJourneyTestIT {
 
   public static final String ANY_CORRELATION_ID = "007400af-abb5-4370-b50b-0ebff994741f";
   @Autowired
   private SecretsManagerInitialisation secretsManagerInitialisation;
+  @Autowired
+  private DataSource dataSource;
   @Autowired
   private ObjectMapper objectMapper;
   @Value("${aws.direct-debit-secret-name}")
@@ -47,6 +61,16 @@ public class DirectDebitControllerTestIT {
   private ClientAndServer govUkPayMockServer;
   private ClientAndServer accountsServiceMockServer;
   private ClientAndServer vccsServiceMockServer;
+
+  private static final List<LocalDate> TRAVEL_DATES = Arrays.asList(
+      LocalDate.of(2019, 11, 10),
+      LocalDate.of(2019, 11, 2)
+  );
+  private static final List<String> VRNS = Arrays.asList(
+      "ND84VSX",
+      "DL76MWX",
+      "DS98UDG"
+  );
 
   @Nested
   class CreateMandate {
@@ -197,6 +221,118 @@ public class DirectDebitControllerTestIT {
               readInternalResponse("direct-debit-mandates-for-caz-response.json"));
     }
 
+  }
+
+  @Nested
+  class CreatePayment {
+
+    @Test
+    public void successfullyCreatedDirectDebitPayment() {
+      // given
+      String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
+      String mandateId = "i4nuo03jginfke5c3ebrvgig6a";
+
+      clearAllPayments();
+      setupRestAssuredForCreateDirectDebitPayment();
+      mockSuccessCreateDirectDebitPaymentInGovUkPay();
+
+      // when
+      ValidatableResponse response = makeRequestToCreateDirectDebitPayment(accountId, mandateId);
+
+      // then
+      response.statusCode(HttpStatus.CREATED.value());
+      response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
+      response.contentType(ContentType.JSON);
+      assertThat(response.extract().body().asString()
+          .contains("\"externalPaymentId\":\"u6dogn2lb0nedi1pl5i61hl41a\""))
+          .isTrue();
+      assertThat(response.extract().body().asString()
+          .contains("\"paymentStatus\":\"SUCCESS\""))
+          .isTrue();
+    }
+
+    @Test
+    public void failedCreatedDirectDebitPayment() {
+      // given
+      String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
+      String mandateId = "i4nuo03jginfke5c3ebrvgig6a";
+
+      clearAllPayments();
+      setupRestAssuredForCreateDirectDebitPayment();
+      mockFailedCreateDirectDebitPaymentInGovUkPay();
+
+      // when
+      ValidatableResponse response = makeRequestToCreateDirectDebitPayment(accountId, mandateId);
+
+      // then
+      response.statusCode(HttpStatus.CREATED.value());
+      response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
+      response.contentType(ContentType.JSON);
+      assertThat(response.extract().body().asString()
+          .contains("\"externalPaymentId\":\"u6dogn2lb0nedi1pl5i61hl41a\""))
+          .isTrue();
+      assertThat(response.extract().body().asString()
+          .contains("\"paymentStatus\":\"ERROR\""))
+          .isTrue();
+    }
+
+    private void clearAllPayments() {
+      executeSqlFrom("data/sql/clear-all-payments.sql");
+    }
+
+    private ValidatableResponse makeRequestToCreateDirectDebitPayment(String accountId,
+        String mandateId) {
+      return RestAssured.given()
+          .body(toJsonString(createDirectDebitPaymentRequestDto(accountId, mandateId)))
+          .accept(MediaType.APPLICATION_JSON_VALUE)
+          .contentType(MediaType.APPLICATION_JSON_VALUE)
+          .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+          .when()
+          .post()
+          .then();
+    }
+
+    private CreateDirectDebitPaymentRequest createDirectDebitPaymentRequestDto(String accountId,
+        String mandateId) {
+      return CreateDirectDebitPaymentRequest.builder()
+          .accountId(accountId)
+          .cleanAirZoneId(UUID.fromString("53e03a28-0627-11ea-9511-ffaaee87e375"))
+          .mandateId(mandateId)
+          .transactions(
+              VRNS.stream()
+                  .flatMap(vrn -> TRAVEL_DATES.stream()
+                      .map(travelDate -> Transaction.builder()
+                          .charge(4200)
+                          .travelDate(travelDate)
+                          .vrn(vrn)
+                          .tariffCode("tariffCode")
+                          .build())
+                  ).collect(Collectors.toList())
+          )
+          .build();
+    }
+
+    private void mockSuccessCreateDirectDebitPaymentInGovUkPay() {
+      whenCreatePaymentRequestToGovUkPayIsMade()
+          .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+              .withBody(readDirectDebitFile("create-payment-response.json")));
+    }
+
+    private void mockFailedCreateDirectDebitPaymentInGovUkPay() {
+      whenCreatePaymentRequestToGovUkPayIsMade()
+          .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+              .withBody(readDirectDebitFile("create-failed-payment-response.json")));
+    }
+
+    private ForwardChainExpectation whenCreatePaymentRequestToGovUkPayIsMade() {
+      return govUkPayMockServer
+          .when(HttpRequest.request().withMethod("POST")
+              .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+              .withPath(ExternalDirectDebitRepository.COLLECT_PAYMENT_URI));
+    }
   }
 
   private ValidatableResponse makeRequestToCreateMandate(String accountId) {
@@ -361,6 +497,10 @@ public class DirectDebitControllerTestIT {
     RestAssured.basePath = DirectDebitMandatesController.FOR_CAZ_PATH;
   }
 
+  public void setupRestAssuredForCreateDirectDebitPayment() {
+    RestAssured.basePath = DirectDebitPaymentsController.BASE_PATH;
+  }
+
   @AfterEach
   public void stopMockServers() {
     vccsServiceMockServer.stop();
@@ -398,6 +538,12 @@ public class DirectDebitControllerTestIT {
         .returnUrl("http://return-url.pl")
         .cleanAirZoneId(UUID.fromString("53e03a28-0627-11ea-9511-ffaaee87e375"))
         .build();
+  }
+
+  private void executeSqlFrom(String classPathFile) {
+    ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+    populator.addScripts(new ClassPathResource(classPathFile));
+    populator.execute(dataSource);
   }
 
   @SneakyThrows
