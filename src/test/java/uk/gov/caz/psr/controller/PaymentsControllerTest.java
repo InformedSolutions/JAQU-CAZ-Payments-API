@@ -37,8 +37,8 @@ import org.springframework.test.web.servlet.ResultActions;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
+import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.service.CleanAirZoneService;
@@ -47,6 +47,7 @@ import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
+import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -268,8 +269,8 @@ class PaymentsControllerTest {
 
       verify(initiatePaymentService).createPayment(
           InitiatePaymentRequestToModelConverter.toPayment(requestParams),
-          InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(
-              requestParams),
+          PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(
+              requestParams.getTransactions()),
           requestParams.getReturnUrl());
     }
 
@@ -278,8 +279,8 @@ class PaymentsControllerTest {
         Payment successfullyCreatedPayment) {
       given(initiatePaymentService.createPayment(
           InitiatePaymentRequestToModelConverter.toPayment(requestParams),
-          InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(
-              requestParams),
+          PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(
+              requestParams.getTransactions()),
           requestParams.getReturnUrl())).willReturn(successfullyCreatedPayment);
     }
 
