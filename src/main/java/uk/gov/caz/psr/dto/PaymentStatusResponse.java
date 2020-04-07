@@ -61,4 +61,16 @@ public class PaymentStatusResponse {
         .telephonePayment(false)
         .build();
   }
+  
+  
+  /**
+   * Helper method to map {@link PaymentStatus} to ${@link PaymentStatusResponse}.
+   *
+   * @return {@link PaymentStatusResponse}
+   */
+  public static PaymentStatusResponse notFound() {
+    return PaymentStatusResponse.builder()
+        .paymentStatus(ChargeSettlementPaymentStatus.NOT_PAID)
+        .build();
+  }
 }
