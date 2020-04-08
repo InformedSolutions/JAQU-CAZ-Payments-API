@@ -6,16 +6,21 @@ import uk.gov.caz.psr.model.PaymentMethod;
  * A method of payment in GOV UK Pay service.
  */
 public enum ChargeSettlementPaymentMethod {
-  CREDIT_DEBIT_CARD,
+  CARD,
   DIRECT_DEBIT;
 
   /**
-   * Maps {@link PaymentMethod} to {@link ChargeSettlementPaymentMethod}. If {@code paymentMethod}
-   * is {@code null}, {@code null} is returned.
+   * Maps {CreateDirectDebitPaymentServiceTest@link PaymentMethod} to {@link
+   * ChargeSettlementPaymentMethod}. If {@code paymentMethod} is {@code null}, {@code null} is
+   * returned.
    */
   public static ChargeSettlementPaymentMethod from(PaymentMethod paymentMethod) {
-    return paymentMethod == null
-        ? null
-        : ChargeSettlementPaymentMethod.valueOf(paymentMethod.name());
+    if (paymentMethod == null) {
+      return null;
+    } else if (paymentMethod.equals(PaymentMethod.CREDIT_DEBIT_CARD)) {
+      return ChargeSettlementPaymentMethod.CARD;
+    } else {
+      return ChargeSettlementPaymentMethod.DIRECT_DEBIT;
+    }
   }
 }
