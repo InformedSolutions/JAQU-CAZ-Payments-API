@@ -64,7 +64,7 @@ public class PaymentStatusResponse {
   
   
   /**
-   * Helper method to map {@link PaymentStatus} to ${@link PaymentStatusResponse}.
+   * Helper method to create ${@link PaymentStatusResponse} when entrant is not found.
    *
    * @return {@link PaymentStatusResponse}
    */
