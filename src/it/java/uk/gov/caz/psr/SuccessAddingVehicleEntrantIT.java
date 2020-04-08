@@ -40,7 +40,8 @@ import uk.gov.caz.psr.dto.VehicleEntrantDto;
 import uk.gov.caz.psr.util.AuditTableWrapper;
 
 @FullyRunningServerIntegrationTest
-@Sql(scripts = "classpath:data/sql/add-entrant-payments.sql",
+@Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
+    "classpath:data/sql/add-entrant-payments.sql"},
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
     "classpath:data/sql/clear-all-caz-entrant-payments.sql"},
