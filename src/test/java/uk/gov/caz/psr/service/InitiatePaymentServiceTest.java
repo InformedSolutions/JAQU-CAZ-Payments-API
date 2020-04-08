@@ -21,12 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestClientException;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
+import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
+import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +56,7 @@ public class InitiatePaymentServiceTest {
     // when
     Payment result = initiatePaymentService.createPayment(
         InitiatePaymentRequestToModelConverter.toPayment(request),
-        InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(request),
+        PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(request.getTransactions()),
         request.getReturnUrl()
     );
 
@@ -80,8 +81,8 @@ public class InitiatePaymentServiceTest {
     // when
     Throwable throwable = catchThrowable(() -> initiatePaymentService.createPayment(
         InitiatePaymentRequestToModelConverter.toPayment(request),
-        InitiatePaymentRequestToModelConverter
-            .toSingleEntrantPayments(request), request.getReturnUrl()
+        PaymentTransactionsToEntrantsConverter
+            .toSingleEntrantPayments(request.getTransactions()), request.getReturnUrl()
     ));
 
     // then

@@ -5,27 +5,27 @@ import java.util.List;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;
 import org.springframework.util.StringUtils;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.Transaction;
+import uk.gov.caz.psr.dto.directdebit.CreateDirectDebitPaymentRequest;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 
 /**
- * Converters DTO to model for {@link InitiatePaymentRequest}.
+ * Converters DTO to model for {@link CreateDirectDebitPaymentRequest}.
  */
 @UtilityClass
-public class InitiatePaymentRequestToModelConverter {
+public class DirectDebitPaymentRequestToModelConverter {
 
   /**
    * Builds Payment based on request data.
    *
    * @param request A data which need to be used to create the payment.
    */
-  public static Payment toPayment(InitiatePaymentRequest request) {
+  public static Payment toPayment(CreateDirectDebitPaymentRequest request) {
     return Payment.builder()
         .externalPaymentStatus(ExternalPaymentStatus.INITIATED)
-        .paymentMethod(PaymentMethod.CREDIT_DEBIT_CARD)
+        .paymentMethod(PaymentMethod.DIRECT_DEBIT)
         .totalPaid(calculateTotal(request.getTransactions()))
         .entrantPayments(Collections.emptyList())
         .cleanAirZoneId(request.getCleanAirZoneId())

@@ -31,6 +31,7 @@ import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
+import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 
 @RestController
 @AllArgsConstructor
@@ -69,7 +70,7 @@ public class PaymentsController implements PaymentsControllerApiSpec {
     log.info("Received payment request {}", request);
     Payment payment = initiatePaymentService.createPayment(
         InitiatePaymentRequestToModelConverter.toPayment(request),
-        InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(request),
+        PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(request.getTransactions()),
         request.getReturnUrl());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(InitiatePaymentResponse.from(payment));
