@@ -75,7 +75,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private PaymentRepository paymentsRepository;
 
   @Test
-  public void shouldReturn404WhenDoesNotExistInDatabase() throws Exception {
+  public void shouldReturn200NotPaidWhenDoesNotExistInDatabase() throws Exception {
     String nonExistingVrn = "CAS222";
 
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
@@ -86,7 +86,10 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", nonExistingVrn)
         .param("dateOfCazEntry", NOT_PAID_NOT_EXISTING_DATE_STRING))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            getResponseWith(InternalPaymentStatus.NOT_PAID, null,
+                null, null, null)));
   }
 
   @ParameterizedTest
@@ -96,7 +99,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
       "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
       "N D8  4v SX " // with whitespaces and changed capitalisation
   })
-  public void shouldReturn404WhenEntrantNotRecordedAndFailedWasCreated(String vrn)
+  public void shouldReturn200WhenEntrantNotRecordedAndFailedWasCreated(String vrn)
       throws Exception {
 
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
@@ -107,7 +110,10 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", vrn)
         .param("dateOfCazEntry", FAILED_PAYMENT_NOT_EXISTING_DATE_STRING))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            getResponseWith(InternalPaymentStatus.NOT_PAID, null,
+                null, null, null)));
   }
 
   @ParameterizedTest

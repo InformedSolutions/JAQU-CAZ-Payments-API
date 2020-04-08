@@ -61,4 +61,16 @@ public class PaymentStatusResponse {
         .telephonePayment(false)
         .build();
   }
+  
+  
+  /**
+   * Helper method to create ${@link PaymentStatusResponse} when entrant is not found.
+   *
+   * @return {@link PaymentStatusResponse}
+   */
+  public static PaymentStatusResponse notFound() {
+    return PaymentStatusResponse.builder()
+        .paymentStatus(ChargeSettlementPaymentStatus.NOT_PAID)
+        .build();
+  }
 }
