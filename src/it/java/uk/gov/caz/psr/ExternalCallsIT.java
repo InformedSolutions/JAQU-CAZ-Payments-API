@@ -2,41 +2,49 @@ package uk.gov.caz.psr;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.matchers.Times.exactly;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.SneakyThrows;
-import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.Parameter;
 import org.springframework.util.ResourceUtils;
+import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 
 public class ExternalCallsIT {
 
-  private ClientAndServer vccsMockServer;
-  private ClientAndServer accountsMockServer;
+  private static ClientAndServer vccsMockServer;
+  private static ClientAndServer accountsMockServer;
   private static ObjectMapper objectMapper = new ObjectMapper();
   protected static List<String> chargeableVrns = new ArrayList<>();
   
-  @BeforeEach
-  public void startVccsMockServer() {
+  @BeforeAll
+  public static void startVccsMockServer() {
     vccsMockServer = startClientAndServer(1090);
     accountsMockServer = startClientAndServer(1091);
   }
 
-  @AfterEach
-  public void stopVccsMockServer() {
+  @AfterAll
+  public static void stopVccsMockServer() {
     vccsMockServer.stop();
     accountsMockServer.stop();
+  }
+
+  @AfterEach
+  public void resetMockServers() {
+    vccsMockServer.reset();
+    accountsMockServer.reset();
   }
 
   public void mockVccsCleanAirZonesCall() {

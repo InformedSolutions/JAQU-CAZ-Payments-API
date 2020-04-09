@@ -29,7 +29,9 @@ import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
@@ -98,7 +100,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
   @Autowired
   private SecretsManagerInitialisation secretsManagerInitialisation;
 
-  private ClientAndServer mockServer;
+  private static ClientAndServer mockServer;
 
   @Test
   public void testPaymentJourneys() {
@@ -277,8 +279,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
   }
 
   @BeforeEach
-  public void startMockServer() {
-    mockServer = startClientAndServer(1080);
+  public void setupRestAssured() {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = "/v1/payments";
@@ -296,8 +297,13 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
     secretsManagerInitialisation.createSecret(secretName, "53e03a28-0627-11ea-9511-ffaaee87e375");
   }
 
-  @AfterEach
-  public void stopMockServer() {
+  @BeforeAll
+  public static void startMockServer() {
+    mockServer = startClientAndServer(1080);
+  }
+
+  @AfterAll
+  public static void stopMockServer() {
     mockServer.stop();
   }
 
