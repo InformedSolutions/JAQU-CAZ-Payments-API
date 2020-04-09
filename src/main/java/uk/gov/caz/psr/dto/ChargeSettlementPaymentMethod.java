@@ -1,12 +1,17 @@
 package uk.gov.caz.psr.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.caz.psr.model.PaymentMethod;
 
 /**
  * A method of payment in GOV UK Pay service.
  */
 public enum ChargeSettlementPaymentMethod {
+
+  @JsonProperty("card")
   CARD,
+
+  @JsonProperty("direct_debit")
   DIRECT_DEBIT;
 
   /**
