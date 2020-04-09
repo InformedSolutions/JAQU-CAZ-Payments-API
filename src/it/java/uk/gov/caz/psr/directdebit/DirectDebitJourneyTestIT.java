@@ -16,7 +16,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,8 +33,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.DirectDebitMandatesController;
@@ -58,9 +58,9 @@ public class DirectDebitJourneyTestIT {
   @LocalServerPort
   int randomServerPort;
 
-  private ClientAndServer govUkPayMockServer;
-  private ClientAndServer accountsServiceMockServer;
-  private ClientAndServer vccsServiceMockServer;
+  private static ClientAndServer govUkPayMockServer;
+  private static ClientAndServer accountsServiceMockServer;
+  private static ClientAndServer vccsServiceMockServer;
 
   private static final List<LocalDate> TRAVEL_DATES = Arrays.asList(
       LocalDate.of(2019, 11, 10),
@@ -478,14 +478,6 @@ public class DirectDebitJourneyTestIT {
             .withPath("/v1/directdebit/mandates/.*"));
   }
 
-
-  @BeforeEach
-  public void startMockServers() {
-    accountsServiceMockServer = startClientAndServer(1091);
-    govUkPayMockServer = startClientAndServer(1080);
-    vccsServiceMockServer = startClientAndServer(1090);
-  }
-
   @BeforeEach
   public void setupRestAssuredForBasePath() {
     RestAssured.port = randomServerPort;
@@ -501,11 +493,25 @@ public class DirectDebitJourneyTestIT {
     RestAssured.basePath = DirectDebitPaymentsController.BASE_PATH;
   }
 
-  @AfterEach
-  public void stopMockServers() {
+  @BeforeAll
+  public static void startMockServers() {
+    accountsServiceMockServer = startClientAndServer(1091);
+    govUkPayMockServer = startClientAndServer(1080);
+    vccsServiceMockServer = startClientAndServer(1090);
+  }
+
+  @AfterAll
+  public static void stopMockServers() {
     vccsServiceMockServer.stop();
     govUkPayMockServer.stop();
     accountsServiceMockServer.stop();
+  }
+
+  @AfterEach
+  public void resetMockServers() {
+    vccsServiceMockServer.reset();
+    govUkPayMockServer.reset();
+    accountsServiceMockServer.reset();
   }
 
   @BeforeEach
