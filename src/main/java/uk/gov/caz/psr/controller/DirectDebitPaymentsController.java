@@ -27,8 +27,7 @@ public class DirectDebitPaymentsController implements DirectDebitPaymentsControl
     request.validate();
     Payment payment = createDirectDebitPaymentService.createPayment(
         DirectDebitPaymentRequestToModelConverter.toPayment(request),
-        PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(request.getTransactions()),
-        request.getMandateId()
+        PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(request.getTransactions())
     );
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(CreateDirectDebitPaymentResponse.from(payment));

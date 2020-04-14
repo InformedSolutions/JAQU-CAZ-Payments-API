@@ -29,14 +29,13 @@ public class CreateDirectDebitPaymentService {
    * Creates Payment in Payment Provider, inserts Payment details into database.
    */
   @Transactional
-  public Payment createPayment(Payment payment, List<SingleEntrantPayment> entrantPayments,
-      String mandateId) {
+  public Payment createPayment(Payment payment, List<SingleEntrantPayment> entrantPayments) {
     try {
       log.info("Create DirectPayment process: start");
       Payment paymentWithInternalId = initializePaymentWithEntrants(payment, entrantPayments);
 
       DirectDebitPayment directDebitPayment = externalDirectDebitRepository
-          .collectPayment(mandateId,
+          .collectPayment(paymentWithInternalId.getPaymentProviderMandateId(),
               paymentWithInternalId.getTotalPaid(),
               paymentWithInternalId.getReferenceNumber().toString(),
               payment.getCleanAirZoneId());

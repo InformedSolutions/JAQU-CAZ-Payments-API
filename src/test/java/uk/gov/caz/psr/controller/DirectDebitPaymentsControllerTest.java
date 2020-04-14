@@ -76,8 +76,7 @@ public class DirectDebitPaymentsControllerTest {
               .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("Missing request header 'X-Correlation-ID'"));
-      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList(),
-          any());
+      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
     }
 
     @Test
@@ -91,8 +90,7 @@ public class DirectDebitPaymentsControllerTest {
               .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("'transactions' cannot be null or empty"));
-      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList(),
-          any());
+      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
     }
 
     @ParameterizedTest
@@ -106,8 +104,7 @@ public class DirectDebitPaymentsControllerTest {
               .accept(MediaType.APPLICATION_JSON)
               .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest());
-      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList(),
-          any());
+      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
     }
 
     @Test
@@ -121,8 +118,7 @@ public class DirectDebitPaymentsControllerTest {
               .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("'charge' in all transactions must be positive"));
-      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList(),
-          any());
+      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
     }
 
     @Test
@@ -136,8 +132,7 @@ public class DirectDebitPaymentsControllerTest {
               .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("Request cannot have duplicated travel date(s)"));
-      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList(),
-          any());
+      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
     }
 
     @Test
@@ -152,8 +147,7 @@ public class DirectDebitPaymentsControllerTest {
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("'mandateId' cannot be null or empty"));
 
-      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList(),
-          any());
+      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
     }
 
     @Test
@@ -168,8 +162,7 @@ public class DirectDebitPaymentsControllerTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message").value(
               "'tariffCode' in all transactions cannot be null or empty"));
-      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList(),
-          any());
+      verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
     }
 
     @Nested
@@ -188,8 +181,7 @@ public class DirectDebitPaymentsControllerTest {
                 .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
             .andExpect(status().isBadRequest()).andExpect(
             jsonPath("$.message").value("'userId' must be a valid UUID"));
-        verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList(),
-            any());
+        verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
       }
     }
 
@@ -224,8 +216,7 @@ public class DirectDebitPaymentsControllerTest {
       verify(createDirectDebitPaymentService).createPayment(
           DirectDebitPaymentRequestToModelConverter.toPayment(requestParams),
           PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(
-              requestParams.getTransactions()),
-          requestParams.getMandateId());
+              requestParams.getTransactions()));
     }
 
     private String paymentRequestWithEmptyTransactions() {
@@ -288,8 +279,7 @@ public class DirectDebitPaymentsControllerTest {
       given(createDirectDebitPaymentService.createPayment(
           DirectDebitPaymentRequestToModelConverter.toPayment(requestParams),
           PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(
-              requestParams.getTransactions()),
-          requestParams.getMandateId())).willReturn(successfullyCreatedPayment);
+              requestParams.getTransactions()))).willReturn(successfullyCreatedPayment);
     }
 
     @SneakyThrows

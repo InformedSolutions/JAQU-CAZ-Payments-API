@@ -170,6 +170,7 @@ public class TestObjectFactory {
       return createPaymentWith(entrantPayments, null, null, request.getCleanAirZoneId())
           .toBuilder()
           .paymentMethod(PaymentMethod.DIRECT_DEBIT)
+          .paymentProviderMandateId("exampleMandateId")
           .totalPaid(request.getTransactions().stream().mapToInt(Transaction::getCharge).sum())
           .build();
     }

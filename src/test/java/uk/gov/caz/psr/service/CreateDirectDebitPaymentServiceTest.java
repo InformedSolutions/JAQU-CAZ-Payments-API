@@ -53,8 +53,7 @@ class CreateDirectDebitPaymentServiceTest {
     // when
     Throwable throwable = catchThrowable(() -> createDirectDebitPaymentService.createPayment(
         DirectDebitPaymentRequestToModelConverter.toPayment(request),
-        PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(request.getTransactions()),
-        request.getMandateId()
+        PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(request.getTransactions())
     ));
 
     // then
