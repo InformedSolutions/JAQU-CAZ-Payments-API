@@ -294,7 +294,7 @@ steps:
       - apk add --update bash python python-dev py-pip jq
       - pip install awscli
       - >
-        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-dev --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-dev --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json
       - status_code=$(cat output.json | jq '.statusCode')
       - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
     environment:
@@ -573,7 +573,7 @@ steps:
       - apk add --update bash python python-dev py-pip jq
       - pip install awscli
       - >
-        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-st --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-st --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json
       - status_code=$(cat output.json | jq '.statusCode')
       - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
     environment:
@@ -850,7 +850,7 @@ steps:
       - apk add --update bash python python-dev py-pip jq
       - pip install awscli
       - >
-        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-sit --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-sit --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json
       - status_code=$(cat output.json | jq '.statusCode')
       - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
     environment:
@@ -1128,7 +1128,7 @@ steps:
       - apk add --update bash python python-dev py-pip jq
       - pip install awscli
       - >
-        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-uat --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-uat --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json
       - status_code=$(cat output.json | jq '.statusCode')
       - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
     environment:
@@ -1321,7 +1321,7 @@ steps:
       - apk add --update bash python python-dev py-pip jq
       - pip install awscli
       - >
-        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-preprod --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-preprod --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json
       - status_code=$(cat output.json | jq '.statusCode')
       - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
     environment:
@@ -1535,7 +1535,7 @@ steps:
       - apk add --update bash python python-dev py-pip jq
       - pip install awscli
       - >
-        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-prod --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"03736edafacd11e98f0b362b9e155667\"]}}" output.json
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-prod --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json
       - status_code=$(cat output.json | jq '.statusCode')
       - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
     environment:
