@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.HashSet;
 import java.util.List;
@@ -12,12 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import retrofit2.Response;
-import uk.gov.caz.definitions.dto.CacheableResponseDto;
-import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.definitions.dto.VehicleDto;
-import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
@@ -25,11 +18,9 @@ import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
-import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 
@@ -44,24 +35,9 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   @VisibleForTesting
   public static final String GET_PAID_VEHICLE_ENTRANTS = "paid";
 
-  @VisibleForTesting
-  public static final String GET_CLEAN_AIR_ZONES = "clean-air-zones";
-
-  @VisibleForTesting
-  public static final String GET_COMPLIANCE = "vehicles/{vrn}/compliance";
-
-  @VisibleForTesting
-  public static final String GET_VEHICLE_DETAILS = "vehicles/{vrn}/details";
-
-  @VisibleForTesting
-  public static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE =
-      "vehicles/unrecognised/{type}/compliance";
-
   private final InitiatePaymentService initiatePaymentService;
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
-  private final CleanAirZoneService cleanAirZoneService;
-  private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
 
   @Override
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(
@@ -97,40 +73,4 @@ public class PaymentsController implements PaymentsControllerApiSpec {
 
     return ResponseEntity.ok(PaidPaymentsResponse.from(results));
   }
-
-  @Override
-  public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() throws JsonProcessingException {
-    CacheableResponseDto<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
-    return ResponseEntity
-        .status(result.getCode())
-        .body(result.getBody());
-  }
-
-  @Override
-  public ResponseEntity<ComplianceResultsDto> getCompliance(String vrn,
-      String zones) {
-    Response<ComplianceResultsDto> result =
-        vehicleComplianceRetrievalService.retrieveVehicleCompliance(vrn, zones);
-
-    return ResponseEntity.status(result.code()).body(result.body());
-  }
-
-  @Override
-  public ResponseEntity<VehicleDto> getVehicleDetails(String vrn) {
-    Response<VehicleDto> result =
-        vehicleComplianceRetrievalService.retrieveVehicleDetails(vrn);
-
-    return ResponseEntity.status(result.code()).body(result.body());
-  }
-
-  @Override
-  public ResponseEntity<VehicleTypeCazChargesDto> getUnrecognisedVehicle(
-      String type, String zones) {
-    Response<VehicleTypeCazChargesDto> result =
-        vehicleComplianceRetrievalService.retrieveUnknownVehicleCompliance(type,
-            zones);
-
-    return ResponseEntity.status(result.code()).body(result.body());
-  }
-
 }

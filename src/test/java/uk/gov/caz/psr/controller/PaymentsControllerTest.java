@@ -5,13 +5,13 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
 import static uk.gov.caz.psr.controller.PaymentsController.BASE_PATH;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
@@ -41,11 +41,9 @@ import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
-import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
@@ -66,12 +64,6 @@ class PaymentsControllerTest {
   @MockBean
   private GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
 
-  @MockBean
-  private CleanAirZoneService cleanAirZoneService;
-
-  @MockBean
-  private VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
-  
   @Autowired
   private MockMvc mockMvc;
 
@@ -82,8 +74,6 @@ class PaymentsControllerTest {
   public void resetMocks() {
     Mockito.reset(initiatePaymentService);
     Mockito.reset(getPaidEntrantPaymentsService);
-    Mockito.reset(cleanAirZoneService);
-    Mockito.reset(vehicleComplianceRetrievalService);
   }
 
   private static final Transaction ANY_TRANSACTION =
@@ -91,27 +81,10 @@ class PaymentsControllerTest {
           .travelDate(LocalDate.of(2019, 1, 1)).vrn("some-vrn").build();
 
   private static final String ANY_CORRELATION_ID = UUID.randomUUID().toString();
-  private static final String ANY_CLEAN_AIR_ZONE_ID = UUID.randomUUID().toString();
-  
+
   private static final String GET_PAID_PATH = PaymentsController.BASE_PATH + "/"
       + PaymentsController.GET_PAID_VEHICLE_ENTRANTS;
 
-  private static final String GET_CLEAN_AIR_ZONES_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_CLEAN_AIR_ZONES;
-
-  private static final String GET_COMPLIANCE_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_COMPLIANCE;
-  
-  private static final String GET_VEHICLE_DETAILS_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_VEHICLE_DETAILS;
-  
-  private static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE;
-  
   @Nested
   class InitiatePayment {
 
@@ -536,70 +509,6 @@ class PaymentsControllerTest {
       given(
           getPaidEntrantPaymentsService.getResults(any(), any(), any(), any()))
               .willReturn(result);
-    }
-  }
-
-  @Nested
-  class GetCleanAirZones {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenCleanAirZonesAreFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_CLEAN_AIR_ZONES_PATH)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-
-  }
-  
-  @Nested
-  class GetCompliance {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenComplianceFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_COMPLIANCE_PATH.replace("{vrn}", "TESTVRN"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-  }
-  
-  @Nested
-  class VehicleDetails {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenVehicleDetailsFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_VEHICLE_DETAILS_PATH.replace("{vrn}", "TESTVRN"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-  }
-  
-  @Nested
-  class UnknownVehicleCompliance {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenVehicleDetailsFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH.replace("{type}", "CAR"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
     }
   }
 

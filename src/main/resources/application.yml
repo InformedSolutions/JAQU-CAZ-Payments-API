@@ -32,6 +32,8 @@ services:
     root-url: http://localhost:1090
   accounts:
     root-url: http://localhost:1091
+  whitelist:
+    root-url: http://localhost:1092
   sqs:
     new-queue-name: notify-gateway_new_dev.fifo
     template-id: 36c3e259-e03c-415e-bf62-c7fbdb9d49a5
@@ -240,6 +242,10 @@ swagger:
         description: >-
           Allows LAs to query and retrieve data about a payment that has been made via GOV.UK Pay in relation
           to a vehicle that has entered their CAZ (a 'vehicle entrant')
+    whitelist:
+      vehicle-details:
+        description: >-
+          Gets details of a whitelisted vehicle. It is a proxy to the whitelist service
     db:
       migration:
         description: Evolve DB schema 
