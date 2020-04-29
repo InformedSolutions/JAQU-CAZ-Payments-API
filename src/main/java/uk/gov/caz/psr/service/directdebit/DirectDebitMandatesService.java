@@ -20,10 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
+import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate.DirectDebitMandateStatus;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
@@ -121,7 +121,7 @@ public class DirectDebitMandatesService {
    * Gets clean air zones from VCCS microservice.
    */
   private List<CleanAirZoneDto> getCleanAirZones() {
-    Response<CleanAirZonesResponse> response = vccsRepository.findCleanAirZonesSync();
+    Response<CleanAirZonesDto> response = vccsRepository.findCleanAirZonesSync();
     if (!response.isSuccessful()) {
       throw new ExternalServiceCallException("VCCS call failed, status code: "
           + response.code() + ", error body: '" + getErrorBody(response) + "'");
@@ -193,9 +193,9 @@ public class DirectDebitMandatesService {
   }
 
   /**
-   * For every mandate whose status is in {@link #CACHEABLE_STATUSES} fetches its current
-   * status from GOV UK Pay service and create a new instance of {@link Mandate} with it and data
-   * from {@link DirectDebitMandate}.
+   * For every mandate whose status is in {@link #CACHEABLE_STATUSES} fetches its current status
+   * from GOV UK Pay service and create a new instance of {@link Mandate} with it and data from
+   * {@link DirectDebitMandate}.
    */
   private List<Mandate> toMandates(List<DirectDebitMandate> mandates, UUID accountId) {
     List<MandateWithCachedAndActualStatuses> mandatesWithExternallyFetchedStatus =
