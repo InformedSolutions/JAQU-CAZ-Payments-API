@@ -54,6 +54,8 @@ public class DirectDebitMandatesService {
       DirectDebitMandateStatus.ERROR
   );
 
+  private static final String ERROR_BODY = ", error body: '";
+
   private final VccsRepository vccsRepository;
   private final AccountsRepository accountsRepository;
   private final ExternalDirectDebitRepository externalDirectDebitRepository;
@@ -109,7 +111,7 @@ public class DirectDebitMandatesService {
                   .build());
       if (!response.isSuccessful()) {
         throw new ExternalServiceCallException("Accounts service call failed, status code: "
-            + response.code() + ", error body: '" + getErrorBody(response) + "'");
+            + response.code() + ERROR_BODY + getErrorBody(response) + "'");
       }
       return externalDirectDebitMandate.getLinks().getNextUrl().getHref();
     } finally {
@@ -124,7 +126,7 @@ public class DirectDebitMandatesService {
     Response<CleanAirZonesResponse> response = vccsRepository.findCleanAirZonesSync();
     if (!response.isSuccessful()) {
       throw new ExternalServiceCallException("VCCS call failed, status code: "
-          + response.code() + ", error body: '" + getErrorBody(response) + "'");
+          + response.code() + ERROR_BODY + getErrorBody(response) + "'");
     }
     return response.body().getCleanAirZones();
   }
@@ -184,7 +186,7 @@ public class DirectDebitMandatesService {
         .getAccountDirectDebitMandatesSync(accountId);
     if (!response.isSuccessful()) {
       throw new ExternalServiceCallException("Accounts call failed, status code: "
-          + response.code() + ", error body: '" + getErrorBody(response) + "'");
+          + response.code() + ERROR_BODY + getErrorBody(response) + "'");
     }
     List<DirectDebitMandate> directDebitMandates = response.body().getDirectDebitMandates();
     log.info("Got {} direct debit mandates for account '{}'", directDebitMandates.size(),
@@ -193,9 +195,9 @@ public class DirectDebitMandatesService {
   }
 
   /**
-   * For every mandate whose status is in {@link #CACHEABLE_STATUSES} fetches its current
-   * status from GOV UK Pay service and create a new instance of {@link Mandate} with it and data
-   * from {@link DirectDebitMandate}.
+   * For every mandate whose status is in {@link #CACHEABLE_STATUSES} fetches its current status
+   * from GOV UK Pay service and create a new instance of {@link Mandate} with it and data from
+   * {@link DirectDebitMandate}.
    */
   private List<Mandate> toMandates(List<DirectDebitMandate> mandates, UUID accountId) {
     List<MandateWithCachedAndActualStatuses> mandatesWithExternallyFetchedStatus =
