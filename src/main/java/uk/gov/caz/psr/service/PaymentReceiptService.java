@@ -17,13 +17,13 @@ import uk.gov.caz.psr.dto.SendEmailRequest;
 @RequiredArgsConstructor
 @Service
 public class PaymentReceiptService {
-  
+
   @Value("${services.sqs.template-id}")
   private String singleVehicleTemplateId;
-  
+
   @Value("${services.sqs.account-payment-template-id}")
   private String multipleVehicleTemplateId;
-  
+
   private final ObjectMapper objectMapper;
 
   /**
@@ -39,23 +39,25 @@ public class PaymentReceiptService {
    * @return SendEmailRequest
    * @throws JsonProcessingException if the amount cannot be serialized into a json string
    */
-  public SendEmailRequest buildSendEmailRequest(String email, double amount, 
-      String cazName, String reference, String vrn, String externalId, 
+  public SendEmailRequest buildSendEmailRequest(String email, double amount,
+      String cazName, String reference, String vrn, String externalId,
       List<String> datesPaidFor)
       throws JsonProcessingException {
     return SendEmailRequest.builder().emailAddress(email)
-        .personalisation(createPersonalisationPayload(amount, cazName, reference, vrn, 
+        .personalisation(createPersonalisationPayload(amount, cazName, reference, vrn,
             externalId, datesPaidFor))
         .templateId(this.singleVehicleTemplateId).build();
   }
 
   /**
    * Builds an email request which supports multiple VRNs.
+   *
    * @param emailAddress the email address of the recipient
    * @param totalAmount the total amount paid
    * @param cazName the name of the Clean Air Zone paid for
    * @param referenceNumber the internal reference of the payment
-   * @param travelDatesWithVrns a list of formatted strings containing travel date, vrn and charge
+   * @param travelDatesWithVrns a list of formatted strings containing travel date, vrn and
+   *     charge
    * @param externalId the external identifier of the payment
    * @return SendEmailRequest an instance of {@link SendEmailRequest}
    * @throws JsonProcessingException if the amount cannot be serialized into a json string
@@ -63,17 +65,16 @@ public class PaymentReceiptService {
   public SendEmailRequest buildSendEmailRequestForMultipleVrns(String emailAddress,
       double totalAmount, String cazName, String referenceNumber, List<String> travelDatesWithVrns,
       String externalId) throws JsonProcessingException {
-    // TODO Auto-generated method stub
     return SendEmailRequest.builder().emailAddress(emailAddress)
-        .personalisation(createPersonalisationPayloadForMultipleVrns(cazName, 
+        .personalisation(createPersonalisationPayloadForMultipleVrns(cazName,
             travelDatesWithVrns, externalId, referenceNumber, totalAmount))
         .templateId(this.multipleVehicleTemplateId).build();
   }
 
   private String createPersonalisationPayloadForMultipleVrns(String cazName,
-      List<String> chargesPaid, String externalId, String reference, double amount) 
-          throws JsonProcessingException {
-    Map<String, Object> personalisationMap = new HashMap<String, Object>();    
+      List<String> chargesPaid, String externalId, String reference, double amount)
+      throws JsonProcessingException {
+    Map<String, Object> personalisationMap = new HashMap<>();
     personalisationMap.put("caz", cazName);
     personalisationMap.put("charges", chargesPaid);
     personalisationMap.put("external_id", externalId);
@@ -82,10 +83,10 @@ public class PaymentReceiptService {
     return objectMapper.writeValueAsString(personalisationMap);
   }
 
-  private String createPersonalisationPayload(double amount, String cazName, 
-      String reference, String vrn, String externalId, List<String> datesPaidFor) 
-          throws JsonProcessingException {
-    Map<String, Object> personalisationMap = new HashMap<String, Object>();    
+  private String createPersonalisationPayload(double amount, String cazName,
+      String reference, String vrn, String externalId, List<String> datesPaidFor)
+      throws JsonProcessingException {
+    Map<String, Object> personalisationMap = new HashMap<>();
     personalisationMap.put("amount", String.format(Locale.UK, "%.2f", amount));
     personalisationMap.put("caz", cazName);
     personalisationMap.put("date", datesPaidFor);

@@ -36,7 +36,7 @@ public class GetPaidEntrantPaymentsService {
   public Map<String, List<EntrantPayment>> getResults(Set<String> vrns, LocalDate startDate,
       LocalDate endDate, UUID cleanAirZoneId) {
 
-    Map<String, List<EntrantPayment>> results = vrns.stream()
+    return vrns.stream()
         .collect(
             Collectors.toMap(
                 Function.identity(),
@@ -44,6 +44,5 @@ public class GetPaidEntrantPaymentsService {
                     endDate, cleanAirZoneId)
             )
         );
-    return results;
   }
 }
