@@ -6,15 +6,18 @@
       "mandates": [
         {
           "id": "i4nuo03jginfke5c3ebrvgig6a",
-          "status": "CREATED"
+          "status": "CREATED",
+          "created": null
         },
         {
           "id": "k4nuo03jginfke5c3ebrvgig6a",
-          "status": "CREATED"
+          "status": "CREATED",
+          "created": null
         },
         {
           "id": "j4nuo03jginfke5c3ebrvgig6a",
-          "status": "FAILED"
+          "status": "FAILED",
+          "created": null
         }
       ]
     },

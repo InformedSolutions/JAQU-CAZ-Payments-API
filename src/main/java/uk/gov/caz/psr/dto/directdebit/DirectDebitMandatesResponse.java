@@ -1,10 +1,10 @@
 package uk.gov.caz.psr.dto.directdebit;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 import lombok.Builder;
 import lombok.Value;
 

@@ -353,7 +353,7 @@ public class DirectDebitMandatesService {
 
   /**
    * Helper value object holding two mandate statuses, the cached one and the actual one (kept
-   * externally).
+   * externally), accompanied by the external mandate creation date.
    */
   @Value
   @Builder
