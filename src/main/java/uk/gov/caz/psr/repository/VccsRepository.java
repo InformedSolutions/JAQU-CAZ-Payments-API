@@ -12,10 +12,10 @@ import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
@@ -25,8 +25,10 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 public interface VccsRepository {
 
   @Slf4j
-  final class Logger {}
-  
+  final class Logger {
+
+  }
+
   /**
    * Method to create retrofit2 vccs for cleanAirZones call.
    *
@@ -34,13 +36,13 @@ public interface VccsRepository {
    */
   @Headers("Accept: application/json")
   @GET("v1/compliance-checker/clean-air-zones")
-  Call<CleanAirZonesResponse> findCleanAirZones();
+  Call<CleanAirZonesDto> findCleanAirZones();
 
   @Headers("Accept: application/json")
   @GET("v1/compliance-checker/vehicles/{vrn}/compliance")
   Call<ComplianceResultsDto> findCompliance(@Path("vrn") String vrn,
       @Query("zones") String zones);
-  
+
   @Headers("Accept: application/json")
   @POST("v1/compliance-checker/vehicles/bulk-compliance")
   Call<List<ComplianceResultsDto>> findComplianceInBulk(@Body List<String> vrns,
@@ -60,7 +62,7 @@ public interface VccsRepository {
    *
    * @return {@link Response} with REST response.
    */
-  default Response<CleanAirZonesResponse> findCleanAirZonesSync() {
+  default Response<CleanAirZonesDto> findCleanAirZonesSync() {
     try {
       Logger.log.info("Begin: Fetching clean air zones from VCCS");
       return findCleanAirZones().execute();
@@ -72,8 +74,8 @@ public interface VccsRepository {
   }
 
   /**
-   * Wraps REST API call for finding compliance in {@link Response} by making a
-   * synchronous request.
+   * Wraps REST API call for finding compliance in {@link Response} by making a synchronous
+   * request.
    *
    * @return {@link Response} with REST response.
    */
@@ -90,8 +92,8 @@ public interface VccsRepository {
   }
 
   /**
-   * Wraps REST API call for finding compliance in bulk in {@link Response} by making a
-   * synchronous request.
+   * Wraps REST API call for finding compliance in bulk in {@link Response} by making a synchronous
+   * request.
    *
    * @return {@link Response} with REST response.
    */

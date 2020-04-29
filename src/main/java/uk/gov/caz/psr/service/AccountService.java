@@ -16,12 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
+import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
@@ -214,7 +214,7 @@ public class AccountService {
    * @return a list of comma delimited clean air zones IDs.
    */
   public String getZonesQueryStringEquivalent() {
-    Response<CleanAirZonesResponse> zones = vccRepository.findCleanAirZonesSync();
+    Response<CleanAirZonesDto> zones = vccRepository.findCleanAirZonesSync();
     List<CleanAirZoneDto> cleanAirZoneDtos = zones.body().getCleanAirZones();
     List<String> mappedZoneIds = new ArrayList<>();
 

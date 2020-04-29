@@ -73,7 +73,7 @@ class ProxyCallsTestIT extends ExternalCallsIT {
   }
 
   @Test
-  public void canFetchVehicleDetails() throws Exception {
+  public void canFetchVehicleDetails() {
     String testVrn = "TESTVRN";
     mockVccsVehicleDetailsCall();
     String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
@@ -115,7 +115,7 @@ class ProxyCallsTestIT extends ExternalCallsIT {
   }
 
   @Test
-  void canFetchUnrecognisedVehicleCompliance() throws Exception {
+  void canFetchUnrecognisedVehicleCompliance() {
     String type = "PRIVATE_CAR";
     String zone = UUID.randomUUID().toString();
     String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
