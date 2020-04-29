@@ -6,6 +6,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -265,6 +266,7 @@ public class DirectDebitMandatesService {
   private Mandate toMandate(MandateWithCachedAndActualStatuses mandate) {
     return Mandate.builder()
         .id(mandate.getPaymentProviderMandateId())
+        .created(mandate.getCreated())
         .status(mandate.getActualStatus().name())
         .build();
   }
@@ -276,6 +278,7 @@ public class DirectDebitMandatesService {
     return Mandate.builder()
         .id(mandate.getPaymentProviderMandateId())
         .status(mandate.getStatus().name()) // status cannot be null here
+        .created(mandate.getCreated())
         .build();
   }
 
@@ -298,7 +301,7 @@ public class DirectDebitMandatesService {
       List<DirectDebitMandate> mandates) {
     return mandates.stream()
         .filter(DirectDebitMandatesService::shouldFetchStatusExternally)
-        .map(mandate -> toMandateWithBothStatuses(mandate, fetchExternalStatusOf(mandate)))
+        .map(mandate -> toMandateWithBothStatuses(mandate))
         .collect(Collectors.toList());
   }
 
@@ -306,27 +309,23 @@ public class DirectDebitMandatesService {
    * Creates an instance of {@link MandateWithCachedAndActualStatuses} based on the passed
    * arguments.
    */
-  private MandateWithCachedAndActualStatuses toMandateWithBothStatuses(DirectDebitMandate mandate,
-      DirectDebitMandateStatus externalStatus) {
+  private MandateWithCachedAndActualStatuses toMandateWithBothStatuses(DirectDebitMandate mandate) {
+
+    MandateResponse externalMandate = externalDirectDebitRepository.getMandate(
+        mandate.getPaymentProviderMandateId(), mandate.getCleanAirZoneId());
+    
+    DirectDebitMandateStatus externalStatus = DirectDebitMandateStatus.valueOf(
+        externalMandate
+        .getState()
+        .getStatus()
+        .toUpperCase());
+    
     return MandateWithCachedAndActualStatuses.builder()
         .paymentProviderMandateId(mandate.getPaymentProviderMandateId())
         .actualStatus(externalStatus)
         .cachedStatus(mandate.getStatus())
+        .created(externalMandate.getCreatedDate())
         .build();
-  }
-
-  /**
-   * Fetches the current status of a mandate from the external service.
-   */
-  private DirectDebitMandateStatus fetchExternalStatusOf(DirectDebitMandate mandate) {
-    DirectDebitMandateStatus newStatus = DirectDebitMandateStatus.valueOf(
-        externalDirectDebitRepository
-            .getMandate(mandate.getPaymentProviderMandateId(), mandate.getCleanAirZoneId())
-            .getState()
-            .getStatus()
-            .toUpperCase()
-    );
-    return newStatus;
   }
 
   /**
@@ -362,6 +361,9 @@ public class DirectDebitMandatesService {
 
     @NonNull
     String paymentProviderMandateId;
+
+    Date created;
+    
     @NonNull
     DirectDebitMandateStatus actualStatus;
     DirectDebitMandateStatus cachedStatus;

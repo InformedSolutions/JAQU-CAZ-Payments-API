@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.dto.external.directdebit.mandates;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Date;
 import lombok.Builder;
 import lombok.Value;
 
@@ -30,7 +31,7 @@ public class MandateResponse {
   String bankStatementReference;
 
   @JsonProperty("created_date")
-  String createdDate;
+  Date createdDate;
 
   String description;
 

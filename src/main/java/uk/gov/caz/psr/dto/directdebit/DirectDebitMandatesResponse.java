@@ -1,7 +1,10 @@
 package uk.gov.caz.psr.dto.directdebit;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 import lombok.Builder;
 import lombok.Value;
 
@@ -29,6 +32,9 @@ public class DirectDebitMandatesResponse {
 
       String id;
       String status;
+      
+      @JsonFormat(shape = Shape.STRING, pattern = "yyyy-MM-dd")
+      Date created;
     }
   }
 }
