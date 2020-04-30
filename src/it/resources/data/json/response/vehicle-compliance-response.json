@@ -12,7 +12,6 @@
             "informationUrls": {
                 "emissionsStandards": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality/minimum-emissions-standards-clean-air-charging-zone",
                 "mainInfo": "https://cleanairleeds.co.uk/",
-                "pricing": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality/daily-charges-clean-air-charging-zone",
                 "exemptionOrDiscount": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality/exempt-vehicles-clean-air-charging-zone",
                 "payCaz": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality",
                 "becomeCompliant": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality/support-for-taxis-and-private-hire-clean-air-charging-zone",
@@ -30,7 +29,6 @@
             "informationUrls": {
                 "emissionsStandards": "https://www.brumbreathes.co.uk/what-does-it-mean-for-me",
                 "mainInfo": "https://www.brumbreathes.co.uk/",
-                "pricing": "test",
                 "exemptionOrDiscount": "https://www.brumbreathes.co.uk/exemptions-and-additional-support",
                 "payCaz": "test",
                 "becomeCompliant": "https://www.brumbreathes.co.uk/info/6/upgrading-car/5/upgrading-car-1",
