@@ -6,6 +6,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -265,6 +266,7 @@ public class DirectDebitMandatesService {
   private Mandate toMandate(MandateWithCachedAndActualStatuses mandate) {
     return Mandate.builder()
         .id(mandate.getPaymentProviderMandateId())
+        .created(mandate.getCreated())
         .status(mandate.getActualStatus().name())
         .build();
   }
@@ -312,6 +314,7 @@ public class DirectDebitMandatesService {
         .paymentProviderMandateId(mandate.getPaymentProviderMandateId())
         .actualStatus(externalStatus)
         .cachedStatus(mandate.getStatus())
+        .created(mandate.getCreated())
         .build();
   }
 
@@ -354,7 +357,7 @@ public class DirectDebitMandatesService {
 
   /**
    * Helper value object holding two mandate statuses, the cached one and the actual one (kept
-   * externally).
+   * externally), alongside the date the mandate was created.
    */
   @Value
   @Builder
@@ -362,6 +365,9 @@ public class DirectDebitMandatesService {
 
     @NonNull
     String paymentProviderMandateId;
+    
+    Date created;
+    
     @NonNull
     DirectDebitMandateStatus actualStatus;
     DirectDebitMandateStatus cachedStatus;
