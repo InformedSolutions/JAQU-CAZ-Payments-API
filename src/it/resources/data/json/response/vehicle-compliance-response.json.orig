@@ -1,0 +1,44 @@
+{
+    "registrationNumber": "TEST_VRN",
+    "isRetrofitted": false,
+    "isExempt": false,
+    "vehicleType": "Car",
+    "complianceOutcomes": [
+        {
+            "cleanAirZoneId": "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3",
+            "name": "Leeds",
+            "charge": 0.0,
+            "tariffCode": "LCC01-CAR",
+            "informationUrls": {
+                "mainInfo": "https://cleanairleeds.co.uk/",
+<<<<<<< HEAD
+=======
+                "pricing": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality/daily-charges-clean-air-charging-zone",
+>>>>>>> CAZB-1184 removing unused links - operation hours
+                "exemptionOrDiscount": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality/exempt-vehicles-clean-air-charging-zone",
+                "becomeCompliant": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality/support-for-taxis-and-private-hire-clean-air-charging-zone",
+                "boundary": "https://www.arcgis.com/home/webmap/viewer.html?webmap=de0120ae980b473982a3149ab072fdfc&extent=-1.733%2c53.7378%2c-1.333%2c53.8621",
+                "additionalInfo": "https://www.leeds.gov.uk/business/environmental-health-for-business/air-quality?utm_source=Clean_Air_Leeds_Website&utm_medium=referral&utm_term=What_Are_We_Doing",
+                "publicTransportOptions": "https://cleanairleeds.co.uk/what-can-i-do/residents"
+            }
+        },
+        {
+            "cleanAirZoneId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+            "name": "Birmingham",
+            "charge": 8.0,
+            "tariffCode": "BCC01-CAR",
+            "informationUrls": {
+                "mainInfo": "https://www.brumbreathes.co.uk/",
+<<<<<<< HEAD
+=======
+                "pricing": "test",
+>>>>>>> CAZB-1184 removing unused links - operation hours
+                "exemptionOrDiscount": "https://www.brumbreathes.co.uk/exemptions-and-additional-support",
+                "becomeCompliant": "https://www.brumbreathes.co.uk/info/6/upgrading-car/5/upgrading-car-1",
+                "boundary": "https://www.birmingham.gov.uk/info/20076/pollution/1763/a_clean_air_zone_for_birmingham/2",
+                "additionalInfo": "https://www.brumbreathes.co.uk/what-does-it-mean-for-me",
+                "publicTransportOptions": "https://www.brumbreathes.co.uk/info/15/drive-work-clean-air-zone-1/9/drive-work-clean-air-zone/4"
+            }
+        }
+    ]
+}
