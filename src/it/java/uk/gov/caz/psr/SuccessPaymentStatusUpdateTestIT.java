@@ -25,7 +25,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,8 +59,7 @@ public class SuccessPaymentStatusUpdateTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private JdbcTemplate jdbcTemplate;
-  
-  private static final String TEST_VRN = "MARYSIA";
+
   private static final String FORMATTED_VRN = "ND84VSX";
   private static final LocalDate TRAVEL_DATE_ONE = LocalDate.of(2019, 11, 1);
   private static final LocalDate TRAVEL_DATE_TWO = LocalDate.of(2019, 11, 3);
@@ -98,13 +96,6 @@ public class SuccessPaymentStatusUpdateTestIT {
   private PaymentStatusUpdateRequest paymentStatusUpdateRequest(String vrn) {
     return PaymentStatusUpdateRequest.builder()
         .vrn(vrn)
-        .statusUpdates(validStatusUpdates())
-        .build();
-  }
-
-  private PaymentStatusUpdateRequest paymentStatusUpdateRequestForNonExistingParams() {
-    return PaymentStatusUpdateRequest.builder()
-        .vrn(TEST_VRN)
         .statusUpdates(validStatusUpdates())
         .build();
   }
@@ -173,11 +164,6 @@ public class SuccessPaymentStatusUpdateTestIT {
       return this;
     }
 
-    public PaymentStatusUpdateJourneyAssertion entrantPaymentIsCreatedInTheDatabase() {
-      verifyThatNewEntrantPaymentWasCreated();
-      return this;
-    }
-
     private void verifyThatRefundedEntrantPaymentsExists() {
       int vehicleEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment.t_clean_air_zone_entrant_payment",
@@ -185,14 +171,6 @@ public class SuccessPaymentStatusUpdateTestIT {
               + "vrn = 'ND84VSX' AND "
               + "payment_status = '" + InternalPaymentStatus.REFUNDED.name() + "'");
       assertThat(vehicleEntrantCount).isEqualTo(EXPECTED_NUMBER_OF_REFUNDED_RECORDS);
-    }
-
-    private void verifyThatNewEntrantPaymentWasCreated() {
-      int entrantPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          "caz_payment.t_clean_air_zone_entrant_payment",
-          "vrn = 'MARYSIA'"
-      );
-      assertThat(entrantPaymentCount).isEqualTo(2);
     }
 
     public PaymentStatusUpdateJourneyAssertion masterRecordExistsForVrn(String vrn) {
