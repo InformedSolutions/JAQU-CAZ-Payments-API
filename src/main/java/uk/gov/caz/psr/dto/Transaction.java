@@ -3,6 +3,7 @@ package uk.gov.caz.psr.dto;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
 import lombok.Builder;
+import lombok.ToString;
 import lombok.Value;
 
 /**
@@ -13,6 +14,7 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class Transaction {
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.vrn}")
+  @ToString.Exclude
   String vrn;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.charge}")

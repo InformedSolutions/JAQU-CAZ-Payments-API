@@ -108,6 +108,8 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
     testPaymentJourneyWithEmptyDatabase();
 
+    testPaymentJourneyWithTelephonePaymentSetToTrue();
+
     testPaymentJourneyWithUserId();
 
     testPaymentJourneyWhenEntrantPaymentsExist();
@@ -248,6 +250,30 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .andPaymentReceiptIsSent();
   }
 
+  private void testPaymentJourneyWithTelephonePaymentSetToTrue() {
+    clearAllPayments();
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequestWithTrueTelephonePayment())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpCreatedStatusCode()
+        .paymentEntityIsCreatedInDatabaseWithTrueTelephonePayment()
+        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
+        .withNullPaymentAuthorisedTimestamp()
+        .withMatchedEntrantPayments()
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
+
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .withNonNullPaymentAuthorisedTimestamp()
+        .andAuditRecordsCreated()
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptForFleetIsSent(fleetTemplateId);
+  }
 
   private void testPaymentJourneyWithUserId() {
     clearAllPayments();
@@ -360,8 +386,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
     public PaymentJourneyAssertion whenSubmitted() {
       boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
-      this.initialPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
-          includeUserId ? "user_id = '" + initiatePaymentRequest.getUserId() + "'" : "");
+      this.initialPaymentsCount = getCurrentPaymentsCount();
 
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
       this.validatableResponse = RestAssured.given()
@@ -392,16 +417,21 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
     }
 
     public PaymentJourneyAssertion paymentEntityIsCreatedInDatabase() {
-      boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
-      int currentPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
-          includeUserId ? "user_id = '" + initiatePaymentRequest.getUserId() + "'" : "");
+      int currentPaymentsCount = getCurrentPaymentsCount();
       assertThat(currentPaymentsCount).isGreaterThan(initialPaymentsCount);
       verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus.CREATED);
       return this;
     }
 
+    private int getCurrentPaymentsCount() {
+      boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
+      return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
+          "telephone_payment is " + initiatePaymentRequest.getTelephonePayment().toString()
+           + (includeUserId ? " AND user_id = '" + initiatePaymentRequest.getUserId() + "'" : ""));
+    }
+
     public PaymentJourneyAssertion andNoNewPaymentEntityIsCreatedInDatabase() {
-      int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, PAYMENT_TABLE);
+      int currentPaymentsCount = getCurrentPaymentsCount();
       assertThat(currentPaymentsCount).isEqualTo(initialPaymentsCount);
       return this;
     }
@@ -566,7 +596,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         String messageBody = message.getBody();
         if (messageBody.contains(fleetTemplateId)) {
           assertThat(messageBody.contains(TRAVEL_DATES.get(0)
-              .format(DateTimeFormatter.ofPattern("dd MMMM YYYY")) + " - " + VRNS.get(0)));          
+              .format(DateTimeFormatter.ofPattern("dd MMMM YYYY")) + " - " + VRNS.get(0)));
         }
       }
     }
@@ -584,6 +614,18 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
       paymentEntityIsCreatedInDatabase();
       return this;
     }
+
+    public PaymentJourneyAssertion paymentEntityIsCreatedInDatabaseWithTrueTelephonePayment() {
+      paymentEntityIsCreatedInDatabase();
+      return this;
+    }
+  }
+
+  private InitiatePaymentRequest initiatePaymentRequestWithTrueTelephonePayment() {
+    return initiatePaymentRequest()
+        .toBuilder()
+        .telephonePayment(Boolean.TRUE)
+        .build();
   }
 
   private InitiatePaymentRequest initiatePaymentRequestWithUserId() {
@@ -595,6 +637,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
   private InitiatePaymentRequest initiatePaymentRequest() {
     return InitiatePaymentRequest.builder()
+        .telephonePayment(Boolean.FALSE)
         .transactions(
             VRNS.stream()
                 .flatMap(vrn -> TRAVEL_DATES.stream()
