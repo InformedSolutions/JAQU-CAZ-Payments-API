@@ -4,8 +4,6 @@ spring:
   datasource:
     url: jdbc:postgresql://${postgres.url:localhost:9999}/vehicle_compliance
 #    url: jdbc:postgresql://${postgres.url:localhost:5432}/vehicle_compliance
-    hikari:
-      maximum-pool-size: 1
   jpa:
     properties:
       hibernate:

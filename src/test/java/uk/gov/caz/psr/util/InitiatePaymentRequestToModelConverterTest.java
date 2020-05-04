@@ -24,6 +24,7 @@ class InitiatePaymentRequestToModelConverterTest {
       String userId = null;
       UUID cleanAirZoneId = UUID.fromString("196dc608-25dc-42aa-ad99-9a834697ef87");
       InitiatePaymentRequest request = InitiatePaymentRequest.builder()
+          .telephonePayment(Boolean.TRUE)
           .userId(userId)
           .returnUrl("http://localhost")
           .cleanAirZoneId(cleanAirZoneId)
@@ -39,6 +40,7 @@ class InitiatePaymentRequestToModelConverterTest {
       assertThat(payment.getEntrantPayments()).isEmpty();
       assertThat(payment.getCleanAirZoneId()).isEqualTo(cleanAirZoneId);
       assertThat(payment.getUserId()).isNull();
+      assertThat(payment.isTelephonePayment()).isTrue();
     }
   }
 
@@ -51,6 +53,7 @@ class InitiatePaymentRequestToModelConverterTest {
       String userId = "06ab9c88-24ac-4033-87f7-289ac1ce13fd";
       UUID cleanAirZoneId = UUID.fromString("196dc608-25dc-42aa-ad99-9a834697ef87");
       InitiatePaymentRequest request = InitiatePaymentRequest.builder()
+          .telephonePayment(Boolean.FALSE)
           .userId(userId)
           .returnUrl("http://localhost")
           .cleanAirZoneId(cleanAirZoneId)
@@ -66,6 +69,7 @@ class InitiatePaymentRequestToModelConverterTest {
       assertThat(payment.getEntrantPayments()).isEmpty();
       assertThat(payment.getCleanAirZoneId()).isEqualTo(cleanAirZoneId);
       assertThat(payment.getUserId()).isEqualTo(UUID.fromString(userId));
+      assertThat(payment.isTelephonePayment()).isFalse();
     }
   }
 }

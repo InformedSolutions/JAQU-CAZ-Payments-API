@@ -109,6 +109,7 @@ public class InitiatePaymentServiceTest {
                     .build())
                 .collect(Collectors.toList())
         )
+        .telephonePayment(Boolean.FALSE)
         .cleanAirZoneId(UUID.randomUUID())
         .returnUrl("https://example.return.url")
         .build();

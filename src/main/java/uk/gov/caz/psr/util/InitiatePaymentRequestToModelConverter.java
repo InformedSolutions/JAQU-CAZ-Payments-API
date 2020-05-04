@@ -32,6 +32,7 @@ public class InitiatePaymentRequestToModelConverter {
         .userId(StringUtils.hasText(request.getUserId())
             ? UUID.fromString(request.getUserId())
             : null)
+        .telephonePayment(request.getTelephonePayment())
         .build();
   }
 
