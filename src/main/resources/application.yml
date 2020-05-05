@@ -40,6 +40,7 @@ services:
     new-queue-name: notify-gateway_new_dev.fifo
     template-id: 36c3e259-e03c-415e-bf62-c7fbdb9d49a5
     account-payment-template-id: 9580a96f-ae7e-45ab-8fcc-7524e5ac9290
+    offline-payment-id: 0bc9d95a-7d57-49e4-af04-53efbfd2a518
 
 redis:
   endpoint: localhost
