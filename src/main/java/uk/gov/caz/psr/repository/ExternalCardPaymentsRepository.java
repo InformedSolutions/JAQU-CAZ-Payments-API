@@ -195,9 +195,11 @@ public class ExternalCardPaymentsRepository {
    * Creates {@link URI} for {@code create} operation.
    */
   private CreateCardPaymentRequest buildCreateBody(Payment payment, String returnUrl) {
-    return CreateCardPaymentRequest.builder().amount(payment.getTotalPaid())
+    return CreateCardPaymentRequest.builder()
+        .amount(payment.getTotalPaid())
         .description("Driving in a Clean Air Zone charge")
         .reference(payment.getReferenceNumber().toString())
+        .moto(payment.isTelephonePayment())
         .returnUrl(returnUrl).build();
   }
 
