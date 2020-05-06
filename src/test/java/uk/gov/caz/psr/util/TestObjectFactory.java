@@ -206,16 +206,12 @@ public class TestObjectFactory {
           .internalPaymentStatus(InternalPaymentStatus.PAID).build();
     }
 
-    public static List<EntrantPayment> forRandomDays() {
-      int daysSize = 5;
-      LocalDate today = LocalDate.now();
-      Set<LocalDate> localDates = new HashSet<>();
-      while (localDates.size() != daysSize) {
-        localDates.add(today.plusDays(random.nextInt(7)));
-      }
-
-      return EntrantPaymentsBuilder.forDays(localDates)
-          .withStatus(InternalPaymentStatus.PAID).build();
+    public static EntrantPayment forTravelDate(LocalDate travelDate, String vrn) {
+      return EntrantPaymentsBuilder.forDays(Collections.singleton(travelDate))
+          .withStatus(InternalPaymentStatus.PAID)
+          .withVrn(vrn)
+          .build()
+          .get(0);
     }
   }
 

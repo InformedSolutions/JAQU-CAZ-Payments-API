@@ -105,7 +105,7 @@ public class InitiatePaymentRequest {
   }
 
   /**
-   * Returns a lambda that verifies if 'charge' is not null.
+   * Returns a lambda that verifies if 'telephonePayment' is not null.
    */
   private static Function<InitiatePaymentRequest, Boolean> telephonePaymentNotNull() {
     return request -> Objects.nonNull(request.getTelephonePayment());
