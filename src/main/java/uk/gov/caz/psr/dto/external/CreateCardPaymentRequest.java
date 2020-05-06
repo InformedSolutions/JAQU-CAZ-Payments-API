@@ -11,6 +11,7 @@ import lombok.Value;
 @Value
 @Builder
 public class CreateCardPaymentRequest {
+
   @NonNull
   Integer amount;
 
@@ -23,4 +24,10 @@ public class CreateCardPaymentRequest {
   @JsonProperty("return_url")
   @NonNull
   String returnUrl;
+
+  /**
+   * Mail Order / Telephone Order (MOTO) payment flag (as per documentation at
+   * https://govukpay-api-browser.cloudapps.digital/?shell#tocscreatecardpaymentrequest}
+   */
+  boolean moto;
 }
