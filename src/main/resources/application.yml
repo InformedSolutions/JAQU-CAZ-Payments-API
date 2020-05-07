@@ -192,6 +192,7 @@ swagger:
         cleanAirZoneId: System ID of the clean air zone
         name: Name of the Clean Air Zone
         boundaryUrl: URL provided by zone operators, boundary
+        exemptionUrl: URL provided by zone operators, exemption
       vehicle:
         complianceResult:
           cleanAirZoneId: System ID of the clean air zone
