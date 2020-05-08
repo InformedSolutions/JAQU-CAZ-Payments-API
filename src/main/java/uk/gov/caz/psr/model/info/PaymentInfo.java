@@ -46,4 +46,7 @@ public class PaymentInfo {
 
   @Column(name = "payment_provider_mandate_id")
   private String paymentProviderMandateId;
+
+  @Column(name = "telephone_payment")
+  private boolean telephonePayment;
 }

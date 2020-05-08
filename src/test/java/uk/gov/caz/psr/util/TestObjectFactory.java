@@ -284,16 +284,19 @@ public class TestObjectFactory {
     }
 
     public static PaymentStatus with(InternalPaymentStatus internalPaymentStatus,
-        String caseReference, String externalId, Long paymentReference, PaymentMethod paymentMethod) {
+        String caseReference, String externalId, Long paymentReference, PaymentMethod paymentMethod,
+        boolean telephonePayment) {
       return PaymentStatus.builder().caseReference(caseReference).paymentReference(paymentReference)
           .status(internalPaymentStatus)
           .externalId(externalId)
           .paymentMethod(paymentMethod)
+          .telephonePayment(telephonePayment)
           .build();
     }
   }
 
   public static class PaymentStatusErrorFactory {
+
     public static PaymentStatusErrorResponse with(String title, String detail, String field) {
       return PaymentStatusErrorResponse.builder().title(title).detail(detail)
           .field(field).build();

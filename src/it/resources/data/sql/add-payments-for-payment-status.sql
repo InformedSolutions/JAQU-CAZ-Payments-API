@@ -1,12 +1,14 @@
 INSERT INTO caz_payment.t_payment(
-	payment_id, payment_method, payment_provider_status, payment_provider_id, total_paid, payment_submitted_timestamp, payment_authorised_timestamp, central_reference_number)
+	payment_id, payment_method, payment_provider_status, payment_provider_id, total_paid, payment_submitted_timestamp, payment_authorised_timestamp, central_reference_number, telephone_payment)
 	VALUES
-	  ('b71b72a5-902f-4a16-a91d-1a4463b801db', 'CREDIT_DEBIT_CARD', 'SUCCESS', '12345test', 100, now(), now(), 3000),
-	  ('b73a9b3c-d692-4e7e-b094-1715c5e4a036', 'CREDIT_DEBIT_CARD', 'SUCCESS', '54321test', 200, now(), now(), 3001),
+	  ('b71b72a5-902f-4a16-a91d-1a4463b801db', 'CREDIT_DEBIT_CARD', 'SUCCESS', '12345test', 100, now(), now(), 3000, false),
+	  ('b73a9b3c-d692-4e7e-b094-1715c5e4a036', 'CREDIT_DEBIT_CARD', 'SUCCESS', '54321test', 200, now(), now(), 3001, false),
 	  -- Payment which is not finished
-	  ('3e109f68-c11f-48dc-b27a-fa6a6bd387f6', 'CREDIT_DEBIT_CARD', 'STARTED', '12test345', 100, now(), null, 3002),
+	  ('3e109f68-c11f-48dc-b27a-fa6a6bd387f6', 'CREDIT_DEBIT_CARD', 'STARTED', '12test345', 100, now(), null, 3002, false),
 	  -- Payment which is Failed
-	  ('b17311f7-da17-48c2-9f17-a0df482dfcfc', 'CREDIT_DEBIT_CARD', 'FAILED', '321321test', 300, now(), now(), 3003);
+	  ('b17311f7-da17-48c2-9f17-a0df482dfcfc', 'CREDIT_DEBIT_CARD', 'FAILED', '321321test', 300, now(), now(), 3003, false),
+	  -- Telephone Payment
+	  ('bc881609-e667-4f68-95df-ebcc3950820a', 'CREDIT_DEBIT_CARD', 'SUCCESS', '987654tyu', 50, now(), now(), 3004, true);
 
 
 INSERT INTO caz_payment.t_clean_air_zone_entrant_payment(
@@ -14,6 +16,7 @@ INSERT INTO caz_payment.t_clean_air_zone_entrant_payment(
 	VALUES
 	  -- Valid with PAID status
 	  ('43ea77cc-93cb-4df3-b731-5244c0de9cc8', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-01', 50, 'tariffCode!', 'PAID', 'case-reference123', 'USER', true),
+	  ('e8238b84-2e14-4207-a28a-c6b9605fccdf', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-10', 50, 'tariffCode!', 'PAID', 'case-reference123', 'USER', true),
 
     -- Valid with REFUNDED status
 	  ('688f8278-2f0f-4710-bb7c-6b0cca04c1bc', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-02', 50, 'tariffCode!', 'REFUNDED', 'case-reference123', 'LA', true),
@@ -49,4 +52,5 @@ INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(
   ('512b0982-3e7e-4be6-b0ef-2b3310627a0a', '9c3f36fa-0ddd-4204-b106-3fc90af6efb6', 'b71b72a5-902f-4a16-a91d-1a4463b801db', false),
   ('279c55ba-6bf6-444e-afe7-c328d2820a3f', '9f6212bc-596f-47ee-a927-928441e405c5', '3e109f68-c11f-48dc-b27a-fa6a6bd387f6', true),
   ('46fda8a5-230d-4ff7-a74d-cf063f66cacf', '88b91c4c-a859-48a4-b179-d23df75a2d92', 'b73a9b3c-d692-4e7e-b094-1715c5e4a036', true),
-  ('7905c9d9-df42-4795-8ef9-8d7cd4c6fce7', 'ee491b03-5d68-4b6a-a645-e528a68933d9', 'b17311f7-da17-48c2-9f17-a0df482dfcfc', true);
+  ('7905c9d9-df42-4795-8ef9-8d7cd4c6fce7', 'ee491b03-5d68-4b6a-a645-e528a68933d9', 'b17311f7-da17-48c2-9f17-a0df482dfcfc', true),
+  ('75381373-18e3-4903-b75e-f77510d29747', 'e8238b84-2e14-4207-a28a-c6b9605fccdf', 'bc881609-e667-4f68-95df-ebcc3950820a', true);

@@ -41,4 +41,9 @@ public class PaymentStatus {
    * Payment provider mandate ID.
    */
   String paymentProviderMandateId;
+
+  /**
+   * Indicates whether payment was done over phone.
+   */
+  boolean telephonePayment;
 }
