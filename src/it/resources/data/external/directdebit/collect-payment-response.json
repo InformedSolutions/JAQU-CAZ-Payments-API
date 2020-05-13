@@ -1,0 +1,23 @@
+{
+  "amount": 12000,
+  "description": "Driving in a clean air zone",
+  "reference": "12345",
+  "payment_id": "4u2jjkg2cjgh6rf91l142j5nu",
+  "payment_provider": "sandbox",
+  "created_date": "2020-03-19T13:28:44.893Z",
+  "mandate_id": "i4nuo03jginfke5c3ebrvgig6a",
+  "provider_id": "4u2jjkg2cjgh6rf91l142j5nu",
+  "_links": {
+    "self": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/directdebit/payments/4u2jjkg2cjgh6rf91l142j5nu",
+      "method": "GET"
+    },
+    "mandate": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/directdebit/mandates/i4nuo03jginfke5c3ebrvgig6a",
+      "method": "GET"
+    }
+  },
+  "state": {
+    "status": "pending"
+  }
+}

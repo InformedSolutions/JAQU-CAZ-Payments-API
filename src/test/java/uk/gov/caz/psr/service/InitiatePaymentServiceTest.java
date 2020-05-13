@@ -21,19 +21,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestClientException;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
+import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
+import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
 public class InitiatePaymentServiceTest {
 
   @Mock
-  private ExternalPaymentsRepository externalPaymentsRepository;
+  private ExternalCardPaymentsRepository externalCardPaymentsRepository;
 
   @Mock
   private PaymentRepository internalPaymentsRepository;
@@ -55,14 +56,14 @@ public class InitiatePaymentServiceTest {
     // when
     Payment result = initiatePaymentService.createPayment(
         InitiatePaymentRequestToModelConverter.toPayment(request),
-        InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(request),
+        PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(request.getTransactions()),
         request.getReturnUrl()
     );
 
     // then
     assertThat(result).isEqualTo(paymentWithExternalId);
     verify(internalPaymentsRepository).insert(paymentWithoutInternalId);
-    verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
+    verify(externalCardPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository).update(paymentWithExternalId);
     verify(initiateEntrantPaymentsService).processEntrantPaymentsForPayment(
         eq(paymentWithInternalId.getId()), eq(request.getCleanAirZoneId()), anyList()
@@ -80,14 +81,14 @@ public class InitiatePaymentServiceTest {
     // when
     Throwable throwable = catchThrowable(() -> initiatePaymentService.createPayment(
         InitiatePaymentRequestToModelConverter.toPayment(request),
-        InitiatePaymentRequestToModelConverter
-            .toSingleEntrantPayments(request), request.getReturnUrl()
+        PaymentTransactionsToEntrantsConverter
+            .toSingleEntrantPayments(request.getTransactions()), request.getReturnUrl()
     ));
 
     // then
     assertThat(throwable).isInstanceOf(RestClientException.class);
     verify(internalPaymentsRepository).insert(paymentWithoutInternalId);
-    verify(externalPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
+    verify(externalCardPaymentsRepository).create(paymentWithInternalId, request.getReturnUrl());
     verify(internalPaymentsRepository, never()).update(any());
     verify(initiateEntrantPaymentsService, never()).processEntrantPaymentsForPayment(
         eq(paymentWithInternalId.getId()), eq(request.getCleanAirZoneId()), anyList()
@@ -126,14 +127,14 @@ public class InitiatePaymentServiceTest {
 
   private Payment mockSuccessPaymentCreation(Payment payment, InitiatePaymentRequest request) {
     Payment externalPayment = toPaymentWithExternalPaymentDetails(payment);
-    given(externalPaymentsRepository.create(payment, request.getReturnUrl()))
+    given(externalCardPaymentsRepository.create(payment, request.getReturnUrl()))
         .willReturn(externalPayment);
     return externalPayment;
   }
 
 
   private void mockFailedPaymentCreation(Payment payment, InitiatePaymentRequest request) {
-    given(externalPaymentsRepository.create(payment, request.getReturnUrl()))
+    given(externalCardPaymentsRepository.create(payment, request.getReturnUrl()))
         .willThrow(new RestClientException(""));
   }
 

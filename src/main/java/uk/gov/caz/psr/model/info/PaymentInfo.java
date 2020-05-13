@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.Data;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
+import uk.gov.caz.psr.model.PaymentMethod;
 
 /**
  * An entity that represents a payment made in GOV UK Pay service.
@@ -29,6 +30,10 @@ public class PaymentInfo {
   @Column(name = "total_paid")
   private Integer totalPaid;
 
+  @Column(name = "payment_method")
+  @Enumerated(EnumType.STRING)
+  private PaymentMethod paymentMethod;
+
   @Column(name = "payment_provider_status")
   @Enumerated(EnumType.STRING)
   private ExternalPaymentStatus externalPaymentStatus;
@@ -38,4 +43,7 @@ public class PaymentInfo {
 
   @Column(name = "payment_submitted_timestamp")
   private LocalDateTime submittedTimestamp;
+
+  @Column(name = "payment_provider_mandate_id")
+  private String paymentProviderMandateId;
 }

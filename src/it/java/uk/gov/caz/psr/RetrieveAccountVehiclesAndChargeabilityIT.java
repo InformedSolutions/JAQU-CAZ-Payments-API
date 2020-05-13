@@ -1,11 +1,13 @@
 package uk.gov.caz.psr;
 
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.boot.web.server.LocalServerPort;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.RestAssured;
 import uk.gov.caz.psr.journeys.RetrieveAccountVehiclesJourneyAssertion;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
@@ -27,10 +29,11 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   }
   
   @Test
-  public void shouldReturn200OkAndResponseWhenValidRequest() {
+  public void shouldReturn200OkAndResponseWhenValidRequest() throws JsonProcessingException {
     mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
     for (String zone : ZONES.split(",")) {
-      mockVccsComplianceCall("CAS300", zone, "vehicle-compliance-response.json", 200);      
+      mockVccsBulkComplianceCall(Collections.singletonList("CAS300"), zone, 
+          "vehicle-compliance-response.json", 200);      
     }
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -44,11 +47,12 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   }
 
   @Test
-  public void shouldReturn200OkAndResponseWhenZonesNotProvided() {
+  public void shouldReturn200OkAndResponseWhenZonesNotProvided() throws JsonProcessingException {
     mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
     mockVccsCleanAirZonesCall();
     for (String zone : ZONES.split(",")) {
-      mockVccsComplianceCall("CAS300", zone, "vehicle-compliance-response.json", 200);      
+      mockVccsBulkComplianceCall(Collections.singletonList("CAS300"), zone, 
+          "vehicle-compliance-response.json", 200);      
     }
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -61,9 +65,9 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   }
   
   @Test
-  public void shouldReturn200OkAndResponseWhenUnknownVehicleType() {
+  public void shouldReturn200OkAndResponseWhenUnknownVehicleType() throws JsonProcessingException {
     mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS302");
-    mockVccsUnprocessableEntityComplianceCall("CAS302");
+    mockVccsBulkComplianceCallWithUnknownVrn(Collections.singletonList("CAS302"), ZONES, "", 200);
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
       .forPageNumber("0")
@@ -87,21 +91,6 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
       .andResponseContainsEmptyData();
-  }
-  
-  @Test
-  public void shouldReturn200OkAndResponseWhenUnrecognisedVrn() {
-    mockAccountServiceOffsetCall(ACCOUNT_ID, "ABCDEF");
-    mockVccsComplianceCallError("ABCDEF", 404);
-    givenVehicleChargesRetrieval()
-      .forAccountId(ACCOUNT_ID)
-      .forPageNumber("0")
-      .forPageSize("10")
-      .forZones(ZONES)
-      .whenRequestIsMadeToRetrieveAccountVehicles()
-      .then()
-      .responseIsReturnedWithHttpOkStatusCode()
-      .andResponseContainsTypeUnknownOrUnrecognisedData("ABCDEF");    
   }
   
   @ParameterizedTest
@@ -133,7 +122,7 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   @Test
   public void shouldReturn503WhenVccsUnavailable() {
     mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
-    mockVccsComplianceCallError("CAS300", 503);
+    mockVccsBulkComplianceCallError("CAS300", 503);
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
       .forPageNumber("0")

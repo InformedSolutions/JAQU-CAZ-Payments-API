@@ -7,9 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import lombok.SneakyThrows;
-import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -27,6 +25,7 @@ import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.repository.PaymentStatusRepository;
 import uk.gov.caz.psr.util.TestObjectFactory.PaymentStatusErrorFactory;
@@ -60,7 +59,9 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private static final Long PAYMENT_REFERENCE_UNPAID = 3000L;
   private static final String PAYMENT_STATUS_GET_PATH = ChargeSettlementController.BASE_PATH +
       ChargeSettlementController.PAYMENT_STATUS_PATH;
-  
+
+  private static final PaymentMethod VALID_PAYMENT_METHOD = PaymentMethod.CREDIT_DEBIT_CARD;
+
   private static final String ERROR_RESPONSE_TITLE = "Parameter validation error";
   private static final String ERROR_RESPONSE_DETAIL = "? is mandatory and cannot be blank";
 
@@ -74,7 +75,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private PaymentRepository paymentsRepository;
 
   @Test
-  public void shouldReturn404WhenDoesNotExistInDatabase() throws Exception {
+  public void shouldReturn200NotPaidWhenDoesNotExistInDatabase() throws Exception {
     String nonExistingVrn = "CAS222";
 
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
@@ -85,7 +86,10 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", nonExistingVrn)
         .param("dateOfCazEntry", NOT_PAID_NOT_EXISTING_DATE_STRING))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            getResponseWith(InternalPaymentStatus.NOT_PAID, null,
+                null, null, null)));
   }
 
   @ParameterizedTest
@@ -95,7 +99,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
       "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
       "N D8  4v SX " // with whitespaces and changed capitalisation
   })
-  public void shouldReturn404WhenEntrantNotRecordedAndFailedWasCreated(String vrn)
+  public void shouldReturn200WhenEntrantNotRecordedAndFailedWasCreated(String vrn)
       throws Exception {
 
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
@@ -106,7 +110,10 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .header(Headers.X_API_KEY, VALID_CAZ_ID)
         .param("vrn", vrn)
         .param("dateOfCazEntry", FAILED_PAYMENT_NOT_EXISTING_DATE_STRING))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            getResponseWith(InternalPaymentStatus.NOT_PAID, null,
+                null, null, null)));
   }
 
   @ParameterizedTest
@@ -130,7 +137,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
-                null, 0L)));
+                null, 0L, null)));
   }
 
   @ParameterizedTest
@@ -153,7 +160,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
+                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE, VALID_PAYMENT_METHOD)));
   }
 
   @ParameterizedTest
@@ -177,7 +184,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.REFUNDED, VALID_CASE_REFERENCE,
-                null, 0L)));
+                null, 0L, null)));
   }
 
   @ParameterizedTest
@@ -200,7 +207,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
+                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE, VALID_PAYMENT_METHOD)));
   }
 
   @ParameterizedTest
@@ -223,7 +230,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.NOT_PAID, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_NOT_PAID, PAYMENT_REFERENCE_UNPAID)));
+                VALID_EXTERNAL_ID_FOR_NOT_PAID, PAYMENT_REFERENCE_UNPAID, VALID_PAYMENT_METHOD)));
   }
 
   @ParameterizedTest
@@ -245,7 +252,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.REFUNDED, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
+                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE, VALID_PAYMENT_METHOD)));
   }
 
   @ParameterizedTest
@@ -267,8 +274,9 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(status().isOk())
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.PAID, VALID_CASE_REFERENCE,
-                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE)));
+                VALID_EXTERNAL_ID_FOR_PAID, VALID_PAYMENT_REFERENCE, VALID_PAYMENT_METHOD)));
   }
+
   @Test
   public void shouldReturn400WithoutVrnOrDateOfCazEntry() throws Exception {
     mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
@@ -283,23 +291,27 @@ public class GetChargeSettlementPaymentStatusTestIT {
   }
 
   private String getResponseWith(InternalPaymentStatus internalPaymentStatus, String caseReference,
-      String externalId, Long paymentReference) {
+      String externalId, Long paymentReference, PaymentMethod paymentMethod) {
     PaymentStatusResponse paymentStatusResponse = PaymentStatusResponse
         .from(PaymentStatusFactory.with(
             internalPaymentStatus,
             caseReference,
             externalId,
-            paymentReference
+            paymentReference,
+            paymentMethod
         ));
 
     return toJsonString(paymentStatusResponse);
   }
-  
+
   private String getErrorResponse() {
     PaymentStatusErrorsResponse paymentStatusErrorsResponse = PaymentStatusErrorsResponse
         .from(new ArrayList<PaymentStatusErrorResponse>() {{
-          add(PaymentStatusErrorFactory.with(ERROR_RESPONSE_TITLE, ERROR_RESPONSE_DETAIL.replace("?", "\"dateOfCazEntry\""), "dateOfCazEntry"));
-          add(PaymentStatusErrorFactory.with(ERROR_RESPONSE_TITLE, ERROR_RESPONSE_DETAIL.replace("?", "\"vrn\""), "vrn"));
+          add(PaymentStatusErrorFactory
+              .with(ERROR_RESPONSE_TITLE, ERROR_RESPONSE_DETAIL.replace("?", "\"dateOfCazEntry\""),
+                  "dateOfCazEntry"));
+          add(PaymentStatusErrorFactory
+              .with(ERROR_RESPONSE_TITLE, ERROR_RESPONSE_DETAIL.replace("?", "\"vrn\""), "vrn"));
         }});
     return toJsonString(paymentStatusErrorsResponse);
   }

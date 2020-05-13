@@ -1,0 +1,28 @@
+{
+  "directDebitMandates": [
+    {
+      "directDebitMandateId": "78960f4b-09e7-437d-a59a-a0dd2d5fd057",
+      "accountId": "36354a93-4e42-483c-ae2f-74511f6ab60e",
+      "cleanAirZoneId": "53e03a28-0627-11ea-9511-ffaaee87e375",
+      "paymentProviderMandateId": "i4nuo03jginfke5c3ebrvgig6a",
+      "status": "ACTIVE",
+      "created": "2020-04-30T08:08:31"
+    },
+    {
+      "directDebitMandateId": "3c63bd23-1c4f-4e33-a55c-daad39114ee0",
+      "accountId": "36354a93-4e42-483c-ae2f-74511f6ab60e",
+      "cleanAirZoneId": "53e03a28-0627-11ea-9511-ffaaee87e375",
+      "paymentProviderMandateId": "j4nuo03jginfke5c3ebrvgig6a",
+      "status": "FAILED",
+      "created": null
+    },
+    {
+      "directDebitMandateId": "5ddb6359-d182-4188-9ebc-bb2451aa4fd1",
+      "accountId": "36354a93-4e42-483c-ae2f-74511f6ab60e",
+      "cleanAirZoneId": "53e03a28-0627-11ea-9511-ffaaee87e375",
+      "paymentProviderMandateId": "k4nuo03jginfke5c3ebrvgig6a",
+      "status": null,
+      "created": "2020-04-30T08:08:31"
+    }
+  ]
+}

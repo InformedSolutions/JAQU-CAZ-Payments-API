@@ -91,6 +91,11 @@ public class Payment {
   UUID userId;
 
   /**
+   * An Provider Mandate ID from Accounts API.
+   */
+  String paymentProviderMandateId;
+
+  /**
    * An overridden lombok's builder.
    */
   public static class PaymentBuilder {
@@ -111,7 +116,7 @@ public class Payment {
 
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
           externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl,
-          emailAddress, cleanAirZoneId, userId);
+          emailAddress, cleanAirZoneId, userId, paymentProviderMandateId);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

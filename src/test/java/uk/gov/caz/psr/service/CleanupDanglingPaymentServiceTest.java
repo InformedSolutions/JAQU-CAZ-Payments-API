@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +24,7 @@ import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.ExternalPaymentDetailsFactory;
@@ -35,7 +36,7 @@ class CleanupDanglingPaymentServiceTest {
   @Mock
   private EntrantPaymentRepository entrantPaymentRepository;
   @Mock
-  private ExternalPaymentsRepository externalPaymentsRepository;
+  private ExternalCardPaymentsRepository externalCardPaymentsRepository;
   @Mock
   private PaymentStatusUpdater paymentStatusUpdater;
   @Mock
@@ -147,14 +148,14 @@ class CleanupDanglingPaymentServiceTest {
   }
 
   private void mockFailedExternalStatusInExternalService(Payment payment, UUID cazIdentifier) {
-    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
+    given(externalCardPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
         .willReturn(Optional.of(GetPaymentResult.builder()
             .state(PaymentState.builder().status(ExternalPaymentStatus.FAILED.name()).build())
             .email("example@email.com").build()));
   }
 
   private void mockPaymentAbsenceInExternalService(Payment payment, UUID cazIdentifier) {
-    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
+    given(externalCardPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
         .willReturn(Optional.empty());
   }
 
@@ -169,7 +170,7 @@ class CleanupDanglingPaymentServiceTest {
   }
 
   private void mockSameExternalStatusInExternalService(Payment payment, UUID cazIdentifier) {
-    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
+    given(externalCardPaymentsRepository.findByIdAndCazId(payment.getExternalId(), cazIdentifier))
         .willReturn(Optional.of(GetPaymentResult.builder()
             .state(PaymentState.builder().status(payment.getExternalPaymentStatus().name()).build())
             .build()));

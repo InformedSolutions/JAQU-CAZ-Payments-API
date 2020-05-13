@@ -18,7 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <rest-assured.version>4.0.0</rest-assured.version>
-    <internal.libraries.version>2.9.5-SNAPSHOT</internal.libraries.version>
+    <internal.libraries.version>2.11.4-SNAPSHOT</internal.libraries.version>
     <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
@@ -30,6 +30,8 @@
       **/amazonaws/StreamLambdaHandler.java,
       **/amazonaws/CleanupDanglingPaymentsHandler.java,
       **/psr/repository/VccsRepository.java
+      <!-- Remove with CAZ-2168 -->
+      **/psr/repository/ExternalDirectDebitRepository.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -676,17 +678,13 @@
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
-                <exclude>**/psr/repository/VccsRepository.class</exclude>
-                <!-- TODO: remove once error handling implemented for account vehicle retrieval -->
-                <exclude>**/psr/controller/AccountsController.class</exclude>
-                <exclude>**/psr/service/VehicleComplianceRetrievalService.class</exclude>
-                <exclude>**/psr/service/exception/ExternalServiceCallException.class</exclude>
-                <exclude>**/psr/repository/AccountsRepository.class</exclude>
-                <exclude>**/psr/service/AccountService.class</exclude>
-                <exclude>**/psr/controller/util/QueryStringValidator.class</exclude>    
-                <exclude>**/psr/dto/ChargeableAccountVehiclesResult.class</exclude> 
+                <!-- exclude retrofit classes -->
+                <exclude>**/psr/repository/VccsRepository.class</exclude>             
+                <exclude>**/psr/repository/AccountsRepository.class</exclude>             
                 <!-- Permit exclusion of nested Logger class injected via DI in VCCS Repository -->
-                <exclude>**/psr/repository/VccsRepository$*.class</exclude>                
+                <exclude>**/psr/repository/VccsRepository$*.class</exclude>
+                <!-- Remove with CAZ-2168 -->
+                <exclude>**/psr/repository/ExternalDirectDebitRepository*.class</exclude>
               </excludes>
               <rules>
                 <rule>
