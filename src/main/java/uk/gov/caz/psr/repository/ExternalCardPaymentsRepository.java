@@ -30,7 +30,7 @@ import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
  */
 @Slf4j
 @Repository
-public class ExternalPaymentsRepository {
+public class ExternalCardPaymentsRepository {
 
   @VisibleForTesting
   public static final String FIND_BY_ID_URI_TEMPLATE = "/v1/payments/{paymentId}";
@@ -42,9 +42,9 @@ public class ExternalPaymentsRepository {
   private final String rootUrl;
 
   /**
-   * Constructor for {@link ExternalPaymentsRepository}.
+   * Constructor for {@link ExternalCardPaymentsRepository}.
    */
-  public ExternalPaymentsRepository(@Value("${services.gov-uk-pay.root-url}") String rootUrl,
+  public ExternalCardPaymentsRepository(@Value("${services.gov-uk-pay.root-url}") String rootUrl,
       RestTemplateBuilder restTemplateBuilder,
       CredentialRetrievalManager credentialRetrievalManager) {
     this.rootUrl = rootUrl;
@@ -71,7 +71,7 @@ public class ExternalPaymentsRepository {
    * @return the API key
    */
   private String getApiKeyFor(UUID cleanAirZoneId) {
-    String apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId)
+    String apiKey = credentialRetrievalManager.getCardApiKey(cleanAirZoneId)
         .orElseThrow(() -> new IllegalStateException(
             "The API key has not been set for Clean Air Zone " + cleanAirZoneId));
     logMaskedApiKey(apiKey, cleanAirZoneId);
@@ -82,10 +82,8 @@ public class ExternalPaymentsRepository {
    * Logs first 3 characters of the api key.
    */
   private void logMaskedApiKey(String apiKey, UUID cleanAirZoneId) {
-    int toReveal = Math.min(3, apiKey.length());
-    int toMask = apiKey.length() - toReveal;
-    log.info("GOV UK PAY api key for CAZ '{}': {}{}", cleanAirZoneId, apiKey.substring(0, toReveal),
-        Strings.repeat("*", toMask));
+    log.info("GOV UK PAY api key for CAZ '{}': {}", cleanAirZoneId,
+        uk.gov.caz.psr.util.Strings.mask(apiKey));
   }
 
   /**

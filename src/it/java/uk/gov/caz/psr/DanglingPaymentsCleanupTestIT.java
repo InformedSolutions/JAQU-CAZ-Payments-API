@@ -8,7 +8,6 @@ import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -16,7 +15,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
@@ -65,7 +66,7 @@ public class DanglingPaymentsCleanupTestIT extends ExternalCallsIT {
   @Autowired
   private CleanupDanglingPaymentsService danglingPaymentsService;
 
-  private ClientAndServer mockServer;
+  private static ClientAndServer mockServer;
 
   @Value("${aws.secret-name}")
   private String secretName;
@@ -77,19 +78,19 @@ public class DanglingPaymentsCleanupTestIT extends ExternalCallsIT {
     sqsClient.createQueue(createQueueRequest);
   }
 
-  @BeforeEach
-  public void startMockServer() {
+  @BeforeAll
+  public static void startMockServer() {
     mockServer = startClientAndServer(1080);
   }
 
-  @BeforeEach
-  public void createSecret() throws JsonProcessingException {
-    secretsManagerInitialisation.createSecret(secretName);
+  @AfterAll
+  public static void stopMockServer() {
+    mockServer.stop();
   }
 
-  @AfterEach
-  public void stopMockServer() {
-    mockServer.stop();
+  @BeforeEach
+  public void createSecret() {
+    secretsManagerInitialisation.createSecret(secretName, "53e03a28-0627-11ea-9511-ffaaee87e375");
   }
 
   @AfterEach

@@ -36,11 +36,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import uk.gov.caz.GlobalExceptionHandlerConfiguration;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.configuration.MessageBundleConfiguration;
-import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
 import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
@@ -249,13 +249,14 @@ class ChargeSettlementControllerTest {
             .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
             .andExpect(jsonPath("$.errors[0].field").value("paymentProviderId"))
             .andExpect(jsonPath("$.errors[0].vrn").doesNotExist())
-            .andExpect(jsonPath("$.errors[0].detail").value("\"paymentProviderId\" size must be between 1 and 255"));
+            .andExpect(jsonPath("$.errors[0].detail")
+                .value("\"paymentProviderId\" size must be between 1 and 255"));
       }
     }
 
     @Test
     public void shouldReturn200StatusCodeWhenParametersAreValid() throws Exception {
-      mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
+      ResultActions resultActions = mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
           .param("paymentProviderId", ANY_PAYMENT_ID)
           .param("vrn", ANY_VALID_VRN)
           .param("toDatePaidFor", ANY_VALID_DATE_STRING)

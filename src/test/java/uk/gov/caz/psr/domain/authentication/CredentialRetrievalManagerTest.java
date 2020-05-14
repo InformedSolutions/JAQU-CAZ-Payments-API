@@ -36,7 +36,7 @@ public class CredentialRetrievalManagerTest {
   @BeforeEach
   void init() {
     credentialRetrievalManager =
-        new CredentialRetrievalManager(client, objectMapper, "testSecretName");
+        new CredentialRetrievalManager(client, objectMapper, "testSecretName", "dd");
   }
 
   @ParameterizedTest
@@ -58,7 +58,7 @@ public class CredentialRetrievalManagerTest {
     Mockito.when(getSecretValueResponse.getSecretString())
         .thenReturn(objectMapper.writeValueAsString(node));
 
-    Optional<String> result = credentialRetrievalManager.getApiKey(cleanAirZoneId);
+    Optional<String> result = credentialRetrievalManager.getCardApiKey(cleanAirZoneId);
 
     assertTrue(result.isPresent());
     assertThat(result).contains("testApiKey");
@@ -72,7 +72,7 @@ public class CredentialRetrievalManagerTest {
         .thenReturn(getSecretValueResponse);
     Mockito.when(getSecretValueResponse.getSecretString()).thenReturn("{}");
 
-    Optional<String> apiKey = credentialRetrievalManager.getApiKey(UUID.randomUUID());
+    Optional<String> apiKey = credentialRetrievalManager.getCardApiKey(UUID.randomUUID());
 
     assertThat(apiKey).isEmpty();
   }
@@ -84,7 +84,7 @@ public class CredentialRetrievalManagerTest {
         .thenReturn(getSecretValueResponse);
     Mockito.when(getSecretValueResponse.getSecretString()).thenReturn("{");
 
-    Optional<String> apiKey = credentialRetrievalManager.getApiKey(UUID.randomUUID());
+    Optional<String> apiKey = credentialRetrievalManager.getCardApiKey(UUID.randomUUID());
 
     assertThat(apiKey).isEmpty();
   }
@@ -101,7 +101,7 @@ public class CredentialRetrievalManagerTest {
     node.put(cleanAirZoneId.toString().replace("-", ""), "testApiKey");
     Mockito.when(getSecretValueResponse.getSecretBinary()).thenReturn(ByteBuffer.wrap("eyIxMDVkYjlmOGNkZDA0YjBjYjkwNjI5Y2U5NzlmZGMyOSI6ICJ0ZXN0QXBpS2V5In0=".getBytes()));
 
-    Optional<String> apiKey = credentialRetrievalManager.getApiKey(cleanAirZoneId);
+    Optional<String> apiKey = credentialRetrievalManager.getCardApiKey(cleanAirZoneId);
 
     assertThat(apiKey).isPresent();
     assertThat(apiKey).contains("testApiKey");

@@ -35,19 +35,25 @@ public class QueryStringValidator {
     }
   }
   
-  private Boolean queryStringInvalid(String key, Map<String, String> map) {
-    if (!map.containsKey(key) || !StringUtils.hasText(map.get(key))) {
+  /**
+   * Given a map and a key, checks if the value associated with the key is present and valid.
+   * @param key the map key
+   * @param map the map of query strings
+   * @return true if invalid, false if valid
+   */
+  public Boolean queryStringInvalid(String key, Map<String, String> map) {
+    if (map.containsKey(key)) {
+      if (key.equals("cleanAirZoneId")) {
+        try {
+          UUID.fromString(map.get(key));
+        } catch (Exception e) {
+          return true;
+        }
+      }
+      return !StringUtils.hasText(map.get(key));
+    } else {
       return true;
     }
-    
-    if (key.equals("cleanAirZoneId")) {
-      try {
-        UUID.fromString(map.get(key));
-      } catch (Exception e) {
-        return true;
-      }
-    }
-    return false;
   }
   
   private Boolean numericalQueryStringInvalid(String key, Map<String, String> map) {

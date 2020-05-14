@@ -1,9 +1,11 @@
 package uk.gov.caz.psr;
 
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.server.LocalServerPort;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.RestAssured;
 import uk.gov.caz.psr.journeys.RetrieveSingleChargeableAccountVehicleJourneyAssertion;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
@@ -25,9 +27,10 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
   }
   
   @Test
-  public void shouldReturn200OkAndResponseWhenValidRequestAndNoDuplicatePayments() {
+  public void shouldReturn200OkAndResponseWhenValidRequestAndNoDuplicatePayments() 
+      throws JsonProcessingException {
     mockAccountServiceChargesSingleVrnCall(ACCOUNT_ID, "CAS300", 200);
-    mockVccsComplianceCall("CAS300", ZONE, "vehicle-compliance-response-single-zone.json", 200);
+    mockVccsBulkComplianceCall(Collections.singletonList("CAS300"), ZONE, "vehicle-compliance-response-single-zone.json", 200);
 
     givenSingleAccountVehicleChargeRetrieval()
       .forAccountId(ACCOUNT_ID)
@@ -50,10 +53,11 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
   }
   
   @Test
-  public void shouldReturn404NotFoundWhenVehicleCannotBeFoundOnAccount() {
+  public void shouldReturn404NotFoundWhenVehicleCannotBeFoundOnAccount() 
+      throws JsonProcessingException {
     mockAccountServiceChargesSingleVrnCallWithError(ACCOUNT_ID, "CAS300", 404);
     mockVccsCleanAirZonesCall();
-    mockVccsComplianceCall("CAS300", ZONE, "vehicle-compliance-response-single-zone.json", 200);
+    mockVccsBulkComplianceCall(Collections.singletonList("CAS300"), ZONE, "vehicle-compliance-response-single-zone.json", 200);
     givenSingleAccountVehicleChargeRetrieval()
       .forCleanAirZoneId(ZONE)
       .forVrn("CAS300")

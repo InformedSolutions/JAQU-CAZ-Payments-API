@@ -2,34 +2,49 @@ package uk.gov.caz.psr;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.matchers.Times.exactly;
-import java.nio.file.Files;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.Parameter;
 import org.springframework.util.ResourceUtils;
+import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 
 public class ExternalCallsIT {
 
-  private ClientAndServer vccsMockServer;
-  private ClientAndServer accountsMockServer;
+  private static ClientAndServer vccsMockServer;
+  private static ClientAndServer accountsMockServer;
+  private static ObjectMapper objectMapper = new ObjectMapper();
+  protected static List<String> chargeableVrns = new ArrayList<>();
   
-  @BeforeEach
-  public void startVccsMockServer() {
+  @BeforeAll
+  public static void startVccsMockServer() {
     vccsMockServer = startClientAndServer(1090);
     accountsMockServer = startClientAndServer(1091);
   }
 
-  @AfterEach
-  public void stopVccsMockServer() {
+  @AfterAll
+  public static void stopVccsMockServer() {
     vccsMockServer.stop();
     accountsMockServer.stop();
+  }
+
+  @AfterEach
+  public void resetMockServers() {
+    vccsMockServer.reset();
+    accountsMockServer.reset();
   }
 
   public void mockVccsCleanAirZonesCall() {
@@ -43,11 +58,36 @@ public class ExternalCallsIT {
             .withBody(readFile("get-clean-air-zones.json")));
   }
   
-  public void mockVccsComplianceCall(String vrn, String cleanAirZoneId, String filePath, int statusCode) {
+  public void mockVccsBulkComplianceCall(List<String> vrns, String cleanAirZoneId, String filePath, 
+      int statusCode) throws JsonProcessingException {
     vccsMockServer
-        .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),
+        .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
             exactly(1))
-        .respond(responseWithVrnAndCleanAirZoneId(filePath, vrn, cleanAirZoneId, statusCode));
+        .respond(bulkComplianceResponseWithVrnAndCleanAirZoneId(filePath, vrns, 
+            cleanAirZoneId, statusCode));
+  }
+  
+  public void mockVccsBulkComplianceCallWithMixedResults(List<String> vrns, String cleanAirZoneId, 
+        List<String> filePaths, int statusCode) throws JsonProcessingException {
+    vccsMockServer
+    .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
+        exactly(1))
+    .respond(bulkComplianceResponseWithVrnAndCleanAirZoneId(filePaths, vrns, cleanAirZoneId, statusCode));
+  }
+  
+  public void mockVccsBulkComplianceCallWithUnknownVrn(List<String> vrns,
+      String cleanAirZoneId, String filePath, int statusCode) throws JsonProcessingException {
+    vccsMockServer
+    .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
+        exactly(1))
+    .respond(fullResponseWithSingleUnknown(filePath, vrns, cleanAirZoneId, statusCode));
+  }
+  
+  public void mockVccsBulkComplianceCallWithError(int statusCode) throws JsonProcessingException {
+    vccsMockServer
+    .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
+        exactly(1))
+    .respond(emptyResponse(statusCode));
   }
 
   public void mockVccsUnknownVehicleComplianceCall(String type, String cleanAirZoneId, String filePath, int statusCode) {
@@ -56,12 +96,21 @@ public class ExternalCallsIT {
             exactly(1))
         .respond(responseWithUnrecognisedCompliance(filePath, cleanAirZoneId, statusCode));
   }
-  
+
   public void mockVccsUnprocessableEntityComplianceCall(String vrn) {
     vccsMockServer
     .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),
         exactly(1))
     .respond(responseWithVrn("vehicle-compliance-null-response.json", vrn, 422));   
+  }
+
+  
+  public void mockVccsComplianceCall(String vrn, String cleanAirZoneId, String filePath, 
+      int statusCode) throws JsonProcessingException {
+    vccsMockServer
+        .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),
+            exactly(1))
+        .respond(responseWithVrnAndCleanAirZoneId(filePath, vrn, cleanAirZoneId, statusCode));
   }
   
   public void mockVccsVehicleDetailsCall() {
@@ -75,9 +124,9 @@ public class ExternalCallsIT {
             .withBody(readFile("vehicle-details.json")));
   }
   
-  public void mockVccsComplianceCallError(String vrn, int statusCode) {
+  public void mockVccsBulkComplianceCallError(String vrn, int statusCode) {
     vccsMockServer
-    .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/compliance"),
+    .when(requestGet("/v1/compliance-checker/vehicles/bulk-compliance"),
         exactly(1))
     .respond(emptyResponse(statusCode));
   }
@@ -118,6 +167,15 @@ public class ExternalCallsIT {
       .when(requestGet("/v1/accounts/" + accountId + "/vehicles/sorted-page"), exactly(1))
       .respond(response(responseFile, 200));
   }
+  
+  public void mockAccountServiceCursorCallWithError(String accountId, String cursor, 
+      int statusCode) {
+    Parameter parameter = new Parameter("vrn", cursor);
+    accountsMockServer
+      .when(requestGetWithQueryString("/v1/accounts/" + accountId + "/vehicles/sorted-page", 
+          parameter))
+      .respond(emptyResponse(statusCode));
+  }
 
   public void mockAccountServiceChargesSingleVrnCall(String accountId, String vrn, int statusCode) {
     accountsMockServer
@@ -126,7 +184,8 @@ public class ExternalCallsIT {
         .respond(responseWithVrnAndAccountId("single-account-vehicle-response.json", vrn, accountId, statusCode));
   }
 
-  public void mockAccountServiceChargesSingleVrnCallWithError(String accountId, String vrn, int statusCode) {
+  public void mockAccountServiceChargesSingleVrnCallWithError(String accountId, String vrn, 
+      int statusCode) {
     accountsMockServer
     .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
           exactly(1))
@@ -167,6 +226,36 @@ public class ExternalCallsIT {
         .withBody(readJson(filePath).replace("TEST_VRN", vrn).replace("TEST_CAZ_ID", cleanAirZoneId));
   }
   
+  public static HttpResponse bulkComplianceResponseWithVrnAndCleanAirZoneId(List<String> filePaths, 
+      List<String> vrns, String cleanAirZoneId, int statusCode) throws JsonProcessingException {
+    List<ComplianceResultsDto> responses = new ArrayList<>();
+    int fileNum = 0;
+    for (String vrn : vrns) {
+      responses.add(getBody(filePaths.get(fileNum), vrn, cleanAirZoneId));
+      if (fileNum == 0) {
+        chargeableVrns.add(vrn);        
+      }
+      fileNum = 1 - fileNum;
+    }
+    return HttpResponse.response()
+        .withStatusCode(statusCode)
+        .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
+        .withBody(objectMapper.writeValueAsString(responses));
+  }
+  
+  public static HttpResponse bulkComplianceResponseWithVrnAndCleanAirZoneId(String filePath, 
+      List<String> vrns, String cleanAirZoneId, int statusCode) throws JsonProcessingException {
+    List<ComplianceResultsDto> responses = new ArrayList<>();
+    for (String vrn : vrns) {
+      responses.add(getBody(filePath, vrn, cleanAirZoneId));
+      chargeableVrns.add(vrn);
+    }
+    return HttpResponse.response()
+        .withStatusCode(statusCode)
+        .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
+        .withBody(objectMapper.writeValueAsString(responses));
+  }
+  
   public static HttpResponse responseWithUnrecognisedCompliance(String filePath, String cleanAirZoneId, int statusCode) {
     return HttpResponse.response()
         .withStatusCode(statusCode)
@@ -182,6 +271,20 @@ public class ExternalCallsIT {
         .withBody(readJson(responseFile).replace("TEST_VRN", vrn).replace("TEST_ACCOUNT", accountId));
   }
   
+  private HttpResponse fullResponseWithSingleUnknown(String filePath, List<String> vrns,
+      String cleanAirZoneId, int statusCode) throws JsonProcessingException {
+    List<ComplianceResultsDto> responses = new ArrayList<>();
+    for (int i = 0; i < vrns.size() - 1; i++) {
+      responses.add(getBody(filePath, vrns.get(i), cleanAirZoneId));
+    }
+    responses.add(getBody("vehicle-compliance-null-response.json", vrns.get(vrns.size() - 1), 
+        cleanAirZoneId));
+    return HttpResponse.response()
+        .withStatusCode(statusCode)
+        .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
+        .withBody(objectMapper.writeValueAsString(responses));
+  }
+  
   public static HttpResponse emptyResponse(int statusCode) {
     return HttpResponse.response()
         .withStatusCode(statusCode);
@@ -191,6 +294,16 @@ public class ExternalCallsIT {
     return prepareRequest(url, "GET");
   }
   
+  public static HttpRequest requestPost(String url) {
+    return prepareRequest(url, "POST");
+  }
+
+  public static HttpRequest prepareRequest(String url, String method) {
+    return HttpRequest.request()
+        .withPath(url)
+        .withMethod(method);
+  }
+  
   private static HttpRequest requestGetWithQueryString(String url, 
       Parameter parameter) {
     return HttpRequest.request()
@@ -198,10 +311,10 @@ public class ExternalCallsIT {
         .withQueryStringParameter(parameter)
         .withMethod("GET");
   }
-
-  public static HttpRequest prepareRequest(String url, String method) {
-    return HttpRequest.request()
-        .withPath(url)
-        .withMethod(method);
+  
+  private static ComplianceResultsDto getBody(String filePath, String vrn, String cleanAirZoneId) 
+      throws JsonProcessingException {
+    return objectMapper.readValue(readJson(filePath).replace("TEST_VRN", vrn)
+        .replace("TEST_CAZ_ID", cleanAirZoneId), ComplianceResultsDto.class);
   }
 }

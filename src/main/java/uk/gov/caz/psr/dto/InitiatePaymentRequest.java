@@ -1,18 +1,10 @@
 package uk.gov.caz.psr.dto;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.ApiModelProperty;
-import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -22,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
+import uk.gov.caz.psr.util.DuplicatedEntrantsInTransactionsValidator;
 
 @Value
 @Builder(toBuilder = true)
@@ -56,26 +49,6 @@ public class InitiatePaymentRequest {
   List<Transaction> transactions;
 
   /**
-   * An inner class that represents a vehicle entrant for a given {@code cleanAirZoneId}.
-   */
-  @Value
-  @Builder(toBuilder = true)
-  public static class Transaction {
-
-    @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.vrn}")
-    String vrn;
-
-    @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.charge}")
-    Integer charge;
-
-    @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.travel-date}")
-    LocalDate travelDate;
-
-    @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.tariff-code}")
-    String tariffCode;
-  }
-
-  /**
    * Public method that validates given object and throws exceptions if validation doesn't pass.
    */
   public void validate() {
@@ -92,27 +65,8 @@ public class InitiatePaymentRequest {
    * Verifies if {@code request} does not contain duplicated vehicle entrants.
    */
   private static Function<InitiatePaymentRequest, Boolean> containsNoDuplicatedEntrants() {
-    return request -> {
-      Map<String, List<LocalDate>> travelDatesByVrn = groupByVrn(request);
-      for (Entry<String, List<LocalDate>> travelDatesForVrn : travelDatesByVrn.entrySet()) {
-        if (travelDatesContainDuplicate(travelDatesForVrn)) {
-          String vrn = travelDatesForVrn.getKey();
-          log.warn("Duplicated travel date(s) detected for VRN '{}'", vrn);
-          return false;
-        }
-      }
-      return true;
-    };
-  }
-
-  /**
-   * Checks if {@code vrnWithTravelDates} contains at least one duplicated travel date.
-   */
-  private static boolean travelDatesContainDuplicate(
-      Entry<String, List<LocalDate>> vrnWithTravelDates) {
-    List<LocalDate> travelDatesWithPossibleDuplicates = vrnWithTravelDates.getValue();
-    Set<LocalDate> uniqueTravelDates = toSet(travelDatesWithPossibleDuplicates);
-    return travelDatesWithPossibleDuplicates.size() > uniqueTravelDates.size();
+    return request -> DuplicatedEntrantsInTransactionsValidator
+        .containsNoDuplicatedEntrants(request.getTransactions());
   }
 
   /**
@@ -212,22 +166,5 @@ public class InitiatePaymentRequest {
   private static boolean allTransactionsMatch(InitiatePaymentRequest request,
       Predicate<Transaction> transactionPredicate) {
     return request.getTransactions().stream().allMatch(transactionPredicate);
-  }
-
-  /**
-   * Converts {@code travelDates} to a set of dates.
-   */
-  private static HashSet<LocalDate> toSet(List<LocalDate> travelDates) {
-    return new HashSet<>(travelDates);
-  }
-
-  /**
-   * Groups transactions by vrn and then each transactions is mapped to its travel date.
-   */
-  private static Map<String, List<LocalDate>> groupByVrn(InitiatePaymentRequest input) {
-    return input
-        .getTransactions()
-        .stream()
-        .collect(groupingBy(Transaction::getVrn, mapping(Transaction::getTravelDate, toList())));
   }
 }

@@ -10,8 +10,8 @@ spring:
     properties:
       hibernate:
         generate_statistics: true # this is to make sure we don't have a N+1 query problem
-        show_sql: true
-        format_sql: true
+        show_sql: false
+        format_sql: false
 
 aws:
   secret-name: payments

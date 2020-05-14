@@ -39,14 +39,15 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
+import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
-import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
+import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -268,8 +269,8 @@ class PaymentsControllerTest {
 
       verify(initiatePaymentService).createPayment(
           InitiatePaymentRequestToModelConverter.toPayment(requestParams),
-          InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(
-              requestParams),
+          PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(
+              requestParams.getTransactions()),
           requestParams.getReturnUrl());
     }
 
@@ -278,8 +279,8 @@ class PaymentsControllerTest {
         Payment successfullyCreatedPayment) {
       given(initiatePaymentService.createPayment(
           InitiatePaymentRequestToModelConverter.toPayment(requestParams),
-          InitiatePaymentRequestToModelConverter.toSingleEntrantPayments(
-              requestParams),
+          PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(
+              requestParams.getTransactions()),
           requestParams.getReturnUrl())).willReturn(successfullyCreatedPayment);
     }
 
@@ -535,70 +536,6 @@ class PaymentsControllerTest {
       given(
           getPaidEntrantPaymentsService.getResults(any(), any(), any(), any()))
               .willReturn(result);
-    }
-  }
-
-  @Nested
-  class GetCleanAirZones {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenCleanAirZonesAreFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_CLEAN_AIR_ZONES_PATH)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-
-  }
-  
-  @Nested
-  class GetCompliance {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenComplianceFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_COMPLIANCE_PATH.replace("{vrn}", "TESTVRN"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-  }
-  
-  @Nested
-  class VehicleDetails {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenVehicleDetailsFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_VEHICLE_DETAILS_PATH.replace("{vrn}", "TESTVRN"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-  }
-  
-  @Nested
-  class UnknownVehicleCompliance {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenVehicleDetailsFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH.replace("{type}", "CAR"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
     }
   }
 

@@ -89,7 +89,7 @@ public class PaymentReceiptSender {
         .stream()
         .sorted(sortByTravelDate.thenComparing(sortByVrn))
         .map(entrantPayment -> entrantPayment.getTravelDate()
-            .format(DateTimeFormatter.ofPattern(DATE_FORMAT)) + " - "
+            .format(DateTimeFormatter.ofPattern(DATE_FORMAT, Locale.UK)) + " - "
             + entrantPayment.getVrn() + " - £" 
             + String.format(Locale.UK, "%.2f", 
                 currencyFormatter.parsePennies(entrantPayment.getCharge())))
@@ -103,7 +103,7 @@ public class PaymentReceiptSender {
     return payment.getEntrantPayments()
         .stream()
         .map(entrantPayment -> entrantPayment.getTravelDate()
-            .format(DateTimeFormatter.ofPattern(DATE_FORMAT)))
+            .format(DateTimeFormatter.ofPattern(DATE_FORMAT, Locale.UK)))
         .collect(Collectors.toList());
   }
 

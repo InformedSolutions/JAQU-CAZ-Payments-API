@@ -10,7 +10,6 @@ import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -30,7 +29,9 @@ import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
@@ -52,10 +53,11 @@ import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
+import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
@@ -99,7 +101,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
   @Autowired
   private SecretsManagerInitialisation secretsManagerInitialisation;
 
-  private ClientAndServer mockServer;
+  private static ClientAndServer mockServer;
 
   @Test
   public void testPaymentJourneys() {
@@ -278,8 +280,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
   }
 
   @BeforeEach
-  public void startMockServer() {
-    mockServer = startClientAndServer(1080);
+  public void setupRestAssured() {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = "/v1/payments";
@@ -293,12 +294,17 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
   }
 
   @BeforeEach
-  public void createSecret() throws JsonProcessingException {
-    secretsManagerInitialisation.createSecret(secretName);
+  public void createSecret() {
+    secretsManagerInitialisation.createSecret(secretName, "53e03a28-0627-11ea-9511-ffaaee87e375");
   }
 
-  @AfterEach
-  public void stopMockServer() {
+  @BeforeAll
+  public static void startMockServer() {
+    mockServer = startClientAndServer(1080);
+  }
+
+  @AfterAll
+  public static void stopMockServer() {
     mockServer.stop();
   }
 
@@ -613,7 +619,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .when(HttpRequest.request().withMethod("POST")
             .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
-            .withPath(ExternalPaymentsRepository.CREATE_URI))
+            .withPath(ExternalCardPaymentsRepository.CREATE_URI))
         .respond(HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
             .withHeader("Content-type", MediaType.APPLICATION_JSON.toString())
             .withBody(readFile("create-payment-response.json")));

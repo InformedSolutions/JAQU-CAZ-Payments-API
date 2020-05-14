@@ -25,6 +25,7 @@ public class CredentialRetrievalManager {
   private final AWSSecretsManager client;
   private final ObjectMapper objectMapper;
   private final String secretName;
+  private final String directDebitSecretName;
 
   /**
    * Constructor for manager class of the external secrets repository.
@@ -33,10 +34,12 @@ public class CredentialRetrievalManager {
    * @param objectMapper an instance of {@link ObjectMapper}
    */
   public CredentialRetrievalManager(AWSSecretsManager awsSecretsManager, ObjectMapper objectMapper,
-      @Value("${aws.secret-name}") String secretName) {
+      @Value("${aws.secret-name}") String cardSecretName,
+      @Value("${aws.direct-debit-secret-name}") String directDebitSecretName) {
     this.client = awsSecretsManager;
     this.objectMapper = objectMapper;
-    this.secretName = secretName;
+    this.secretName = cardSecretName;
+    this.directDebitSecretName = directDebitSecretName;
   }
 
   /**
@@ -45,9 +48,23 @@ public class CredentialRetrievalManager {
    * @param cleanAirZoneId the ID of the Clean Air Zone which gives the key of the secret
    * @return Secret value for a given key.
    */
-  public Optional<String> getApiKey(UUID cleanAirZoneId) {
+  public Optional<String> getCardApiKey(UUID cleanAirZoneId) {
+    return getApiKeyUsingSecret(cleanAirZoneId, secretName);
+  }
+
+  /**
+   * Gets the API key for a given Direct Debit GOV.UK Pay account (each CAZ has one).
+   *
+   * @param cleanAirZoneId Clean Air Zone identifier.
+   * @return API key wrapped in {@link Optional}.
+   */
+  public Optional<String> getDirectDebitApiKey(UUID cleanAirZoneId) {
+    return getApiKeyUsingSecret(cleanAirZoneId, directDebitSecretName);
+  }
+
+  private Optional<String> getApiKeyUsingSecret(UUID cleanAirZoneId, String directDebitSecretName) {
     String generatedSecretKey = generateSecretKey(cleanAirZoneId);
-    Map<String, String> secrets = getSecretsValue();
+    Map<String, String> secrets = getSecretsValue(directDebitSecretName);
 
     if (secrets.containsKey(generatedSecretKey)) {
       log.info("Successfully retrieved API key for Clean Air Zone: {}", cleanAirZoneId);
@@ -58,11 +75,10 @@ public class CredentialRetrievalManager {
     }
   }
 
-  private Map<String, String> getSecretsValue() {
-    GetSecretValueRequest getSecretValueRequest =
-        new GetSecretValueRequest().withSecretId(this.secretName);
-    GetSecretValueResult getSecretValueResult = client.getSecretValue(getSecretValueRequest);
+  private Map<String, String> getSecretsValue(String secretName) {
+    GetSecretValueResult getSecretValueResult = getGetSecretValueFor(secretName);
 
+    // this is a sample code provided by AWS in AWS Secret Manager console view
     String secretString = getSecretValueResult.getSecretString() != null
         ? getSecretValueResult.getSecretString()
         : new String(Base64.getDecoder().decode(getSecretValueResult.getSecretBinary()).array());
@@ -73,6 +89,12 @@ public class CredentialRetrievalManager {
       log.error("Error while parsing AWS secrets:", e);
       return Collections.emptyMap();
     }
+  }
+
+  private GetSecretValueResult getGetSecretValueFor(String secretName) {
+    GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
+        .withSecretId(secretName);
+    return client.getSecretValue(getSecretValueRequest);
   }
 
   private String generateSecretKey(UUID cleanAirZoneId) {
