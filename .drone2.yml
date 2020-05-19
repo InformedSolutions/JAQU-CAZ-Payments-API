@@ -132,7 +132,6 @@ steps:
     commands:
       #  TODO add src/test/java to sonar.tests once they are present
       - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST
-        -Dsonar.projectKey=${DRONE_REPO}
         -Dsonar.projectName=${DRONE_REPO}
         -Dsonar.login=$SONAR_TOKEN
         -Dsonar.coverage.jacoco.xmlReportPaths=/drone/src/target/site/jacoco-aggregate/jacoco.xml
