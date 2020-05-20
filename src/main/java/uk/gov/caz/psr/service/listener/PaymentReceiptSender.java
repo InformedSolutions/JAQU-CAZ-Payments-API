@@ -30,9 +30,9 @@ public class PaymentReceiptSender {
    */
   @EventListener(condition = "#event.payment.externalPaymentStatus.name() == 'SUCCESS'")
   public void onPaymentStatusUpdated(PaymentStatusUpdatedEvent event) {
-    checkPreconditions(event);
     Payment payment = event.getPayment();
     try {
+      checkPreconditions(payment);
       log.info("Processing email event for payment with ID: {}", payment.getId());
       SendEmailRequest request = paymentReceiptEmailCreator.createSendEmailRequest(payment);
       messagingClient.publishMessage(request);
@@ -43,8 +43,7 @@ public class PaymentReceiptSender {
     }
   }
 
-  private void checkPreconditions(PaymentStatusUpdatedEvent event) {
-    Payment payment = event.getPayment();
+  private void checkPreconditions(Payment payment) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(payment.getEmailAddress()),
         "Email address cannot be null or empty");
   }

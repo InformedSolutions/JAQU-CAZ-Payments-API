@@ -185,6 +185,54 @@ public class DirectDebitPaymentsControllerTest {
       }
     }
 
+    @Nested
+    class WhenContainsInvalidUserEmail {
+
+      @ParameterizedTest
+      @ValueSource(
+          strings = {"test", "test@"})
+      public void shouldResultIn400(String userEmail) throws Exception {
+        String payload = paymentRequestWithInvalidUserEmail(userEmail);
+
+        mockMvc
+            .perform(post(BASE_PATH).content(payload)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+            .andExpect(status().isBadRequest()).andExpect(
+            jsonPath("$.message").value("'userEmail' is not valid."));
+        verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
+      }
+
+      @Test
+      public void forEmptyShouldResultIn400() throws Exception {
+        String payload = paymentRequestWithInvalidUserEmail("");
+
+        mockMvc
+            .perform(post(BASE_PATH).content(payload)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+            .andExpect(status().isBadRequest()).andExpect(
+            jsonPath("$.message").value("'userEmail' cannot be null or empty"));
+        verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
+      }
+
+      @Test
+      public void forNullShouldResultIn400() throws Exception {
+        String payload = paymentRequestWithInvalidUserEmail(null);
+
+        mockMvc
+            .perform(post(BASE_PATH).content(payload)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+            .andExpect(status().isBadRequest()).andExpect(
+            jsonPath("$.message").value("'userEmail' cannot be null or empty"));
+        verify(createDirectDebitPaymentService, never()).createPayment(any(), anyList());
+      }
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"7caf9cb5-839a-44af-b970-4546bdc80c61", ""})
     public void shouldReturnValidResponse(String userId) throws Exception {
@@ -266,11 +314,18 @@ public class DirectDebitPaymentsControllerTest {
       return toJsonString(requestParams);
     }
 
+    private String paymentRequestWithInvalidUserEmail(String userEmail) {
+      CreateDirectDebitPaymentRequest requestParams =
+          baseRequestBuilder().userEmail(userEmail).build();
+      return toJsonString(requestParams);
+    }
+
     private CreateDirectDebitPaymentRequest.CreateDirectDebitPaymentRequestBuilder baseRequestBuilder() {
       return CreateDirectDebitPaymentRequest.builder()
           .transactions(Collections.singletonList(ANY_TRANSACTION))
           .cleanAirZoneId(UUID.randomUUID())
-          .mandateId("exampleMandateId");
+          .mandateId("exampleMandateId")
+          .userEmail("test@email.com");
     }
 
     private void mockSuccessfulInvocationOfCreateDirectDebitPaymentService(
