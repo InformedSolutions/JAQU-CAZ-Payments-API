@@ -1,11 +1,14 @@
 package uk.gov.caz.psr.service.directdebit;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.PaymentUpdateStatusBuilder;
 
@@ -18,13 +21,14 @@ public class DirectDebitPaymentStatusUpdater {
 
   private final PaymentUpdateStatusBuilder paymentUpdateStatusBuilder;
   private final PaymentRepository internalPaymentsRepository;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   /**
    * Updates {@code payment} with a new {@code status}.
    */
   public Payment updateWithDirectDebitPaymentDetails(Payment payment,
-      DirectDebitPayment directDebitPayment) {
-    checkPreconditions(payment, directDebitPayment);
+      DirectDebitPayment directDebitPayment, String email) {
+    checkPreconditions(payment, directDebitPayment, email);
 
     Payment paymentWithExternalId = buildPaymentWithExternalId(payment, directDebitPayment);
     Payment updatedPayment = paymentUpdateStatusBuilder
@@ -32,15 +36,28 @@ public class DirectDebitPaymentStatusUpdater {
             buildExternalPaymentDetails(directDebitPayment));
 
     internalPaymentsRepository.update(updatedPayment);
+
+    publishPaymentStatusUpdatedEvent(updatedPayment, email);
+
     return updatedPayment;
+  }
+
+  /**
+   * Publishes {@link PaymentStatusUpdatedEvent} with the passed {@code payment} as a payload.
+   */
+  private void publishPaymentStatusUpdatedEvent(Payment payment, String email) {
+    Payment paymentWithEmail = payment.toBuilder().emailAddress(email).build();
+    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, paymentWithEmail);
+    applicationEventPublisher.publishEvent(event);
   }
 
   /**
    * Verifies passed arguments if they are valid when invoking {@link
    * DirectDebitPaymentStatusUpdater#updateWithDirectDebitPaymentDetails(Payment,
-   * DirectDebitPayment)}.
+   * DirectDebitPayment, String)}.
    */
-  private void checkPreconditions(Payment payment, DirectDebitPayment directDebitPayment) {
+  private void checkPreconditions(Payment payment, DirectDebitPayment directDebitPayment,
+      String email) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
     Preconditions.checkNotNull(directDebitPayment, "DirectDebitPayment cannot be null");
     Preconditions.checkArgument(
@@ -49,6 +66,8 @@ public class DirectDebitPaymentStatusUpdater {
         directDebitPayment.getExternalPaymentStatus(), payment.getExternalPaymentStatus());
     Preconditions.checkArgument(!payment.getEntrantPayments().isEmpty(),
         "Entrant payments cannot be empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(email),
+        "Email address cannot be null or empty");
   }
 
   /**

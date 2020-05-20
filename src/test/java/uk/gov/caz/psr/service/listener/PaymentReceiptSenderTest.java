@@ -2,7 +2,9 @@ package uk.gov.caz.psr.service.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -68,29 +70,27 @@ public class PaymentReceiptSenderTest {
   PaymentReceiptSender paymentReceiptSender;
 
   @Test
-  public void shouldThrowIllegalArgumentExceptionWhenEmailIsNull() {
+  public void shouldNotThrowIllegalArgumentExceptionAndNotPublishSQSMessageWhenEmailIsNull() {
     // given
     PaymentStatusUpdatedEvent event = eventWithNullEmail();
 
     // when
-    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
+    paymentReceiptSender.onPaymentStatusUpdated(event);
 
     // then
-    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Email address cannot be null or empty");
+    verify(messagingClient, never()).publishMessage(any());
   }
 
   @Test
-  public void shouldThrowIllegalArgumentExceptionWhenEmailIsEmpty() {
+  public void shouldNotThrowIllegalArgumentExceptionAndNotPublishSQSMessageWhenEmailIsEmpty() {
     // given
     PaymentStatusUpdatedEvent event = eventWithEmptyEmail();
 
     // when
-    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
+    paymentReceiptSender.onPaymentStatusUpdated(event);
 
     // then
-    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Email address cannot be null or empty");
+    verify(messagingClient, never()).publishMessage(any());
   }
 
   @Test
