@@ -58,12 +58,17 @@ public class CreateDirectDebitPaymentRequest {
   String userId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.create-direct-debit-payment.user-email}")
-  @ToString.Exclude
   String userEmail;
 
   @ApiModelProperty(
       value = "${swagger.model.descriptions.create-direct-debit-payment.transactions}")
   List<Transaction> transactions;
+
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
+  @ToString.Include(name = "userEmail")
+  private String maskedUserEmail() {
+    return uk.gov.caz.psr.util.Strings.mask(userEmail);
+  }
 
   /**
    * Public method that validates given object and throws exceptions if validation doesn't pass.

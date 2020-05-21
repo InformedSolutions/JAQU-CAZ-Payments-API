@@ -53,6 +53,8 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
     }
+    log.info("Got 'get payment info' request: {}", request);
+
     List<EntrantPaymentMatchInfo> result = chargeSettlementPaymentInfoService.findPaymentInfo(
         paymentInfoRequestConverter.toPaymentInfoRequestAttributes(request),
         cleanAirZoneId
@@ -69,6 +71,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentStatusDtoValidationException(request.getVrn(),
           "getPaymentStatus.validationErrorTitle", bindingResult);
     }
+    log.info("Got 'get payment status' request: {}", request);
 
     Optional<PaymentStatus> paymentStatus = chargeSettlementService
         .findChargeSettlement(
@@ -88,6 +91,8 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentStatusDtoValidationException(request.getVrn(),
           "paymentStatusUpdate.validationErrorTitle", bindingResult);
     }
+    log.info("Got 'update payment status' request: {}", request);
+
     paymentStatusUpdateService.process(request.toEntrantPaymentStatusUpdates(cleanAirZoneId));
     return new PaymentUpdateSuccessResponse();
   }
