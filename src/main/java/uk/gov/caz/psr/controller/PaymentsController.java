@@ -43,7 +43,7 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(
       InitiatePaymentRequest request) {
     request.validate();
-    log.info("Received payment request {}", request);
+    log.info("Got 'initiate payment' request {}", request);
     Payment payment = initiatePaymentService.createPayment(
         InitiatePaymentRequestToModelConverter.toPayment(request),
         PaymentTransactionsToEntrantsConverter.toSingleEntrantPayments(request.getTransactions()),

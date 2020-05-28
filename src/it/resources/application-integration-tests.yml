@@ -40,3 +40,4 @@ services:
     new-queue-name: testqueue.fifo
     template-id: test-template-id
     account-payment-template-id: test-fleet-template-id
+    direct-debit-payment-template-id: test-direct-debit-payment-template-id

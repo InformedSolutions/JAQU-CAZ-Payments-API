@@ -64,7 +64,7 @@ public class StreamLambdaHandler implements RequestStreamHandler {
   public void handleRequest(InputStream inputStream, OutputStream outputStream,
       Context context) throws IOException {
     String input = StreamUtils.copyToString(inputStream, Charset.defaultCharset());
-    log.info("Input received: " + input);
+    log.trace("Input received: {}", input);
     if (isWarmupRequest(input)) {
       delayToAllowAnotherLambdaInstanceWarming(handler, context);
       try (Writer osw = new OutputStreamWriter(outputStream)) {

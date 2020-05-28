@@ -298,6 +298,7 @@ public class DirectDebitJourneyTestIT {
           .accountId(accountId)
           .cleanAirZoneId(UUID.fromString("53e03a28-0627-11ea-9511-ffaaee87e375"))
           .mandateId(mandateId)
+          .userEmail("test@email.com")
           .transactions(
               VRNS.stream()
                   .flatMap(vrn -> TRAVEL_DATES.stream()
