@@ -314,8 +314,10 @@ steps:
       - pip install awscli
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh .
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh .
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_audit_data_cleanup.sh .
       - bash deploy_lambda.sh
       - bash deploy_dangling_payments.sh
+      - bash deploy_audit_data_cleanup.sh
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -593,8 +595,10 @@ steps:
       - pip install awscli
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh .
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh .
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_audit_data_cleanup.sh .
       - bash deploy_lambda.sh
       - bash deploy_dangling_payments.sh
+      - bash deploy_audit_data_cleanup.sh
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -870,8 +874,10 @@ steps:
       - pip install awscli
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh .
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh .
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_audit_data_cleanup.sh .
       - bash deploy_lambda.sh
       - bash deploy_dangling_payments.sh
+      - bash deploy_audit_data_cleanup.sh
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -1148,8 +1154,10 @@ steps:
       - pip install awscli
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh .
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh .
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_audit_data_cleanup.sh .
       - bash deploy_lambda.sh
       - bash deploy_dangling_payments.sh
+      - bash deploy_audit_data_cleanup.sh
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -1341,8 +1349,10 @@ steps:
       - pip install awscli
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh .
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh .
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_audit_data_cleanup.sh .
       - bash deploy_lambda.sh
       - bash deploy_dangling_payments.sh
+      - bash deploy_audit_data_cleanup.sh
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -1555,8 +1565,10 @@ steps:
       - pip install awscli
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh .
       - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh .
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_audit_data_cleanup.sh .
       - bash deploy_lambda.sh
       - bash deploy_dangling_payments.sh
+      - bash deploy_audit_data_cleanup.sh
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
