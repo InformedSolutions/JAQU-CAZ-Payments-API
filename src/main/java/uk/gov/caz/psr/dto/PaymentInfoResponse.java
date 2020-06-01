@@ -1,10 +1,13 @@
 package uk.gov.caz.psr.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import io.swagger.annotations.ApiModelProperty;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.Builder;
 import lombok.Value;
 
@@ -40,6 +43,17 @@ public class PaymentInfoResponse {
 
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.total-paid}")
     BigDecimal totalPaid;
+
+    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-method}")
+    ChargeSettlementPaymentMethod paymentMethod;
+
+    @Nullable
+    @JsonInclude(Include.NON_NULL)
+    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.payment-mandate-id}")
+    String paymentMandateId;
+
+    @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.telephone-payment}")
+    boolean telephonePayment;
 
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.line-items}")
     List<VehicleEntrantPaymentInfo> lineItems;

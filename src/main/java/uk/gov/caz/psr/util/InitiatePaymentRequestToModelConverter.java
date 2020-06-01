@@ -3,15 +3,13 @@ package uk.gov.caz.psr.util;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.springframework.util.StringUtils;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
+import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
-import uk.gov.caz.psr.model.SingleEntrantPayment;
 
 /**
  * Converters DTO to model for {@link InitiatePaymentRequest}.
@@ -35,23 +33,6 @@ public class InitiatePaymentRequestToModelConverter {
             ? UUID.fromString(request.getUserId())
             : null)
         .build();
-  }
-
-  /**
-   * Converts a list of {@link Transaction}s to its model counterpart, a list of {@link
-   * SingleEntrantPayment}s.
-   */
-  public static List<SingleEntrantPayment> toSingleEntrantPayments(
-      InitiatePaymentRequest request) {
-    return request.getTransactions()
-        .stream()
-        .map(transaction -> SingleEntrantPayment.builder()
-            .charge(transaction.getCharge())
-            .tariffCode(transaction.getTariffCode())
-            .travelDate(transaction.getTravelDate())
-            .vrn(transaction.getVrn())
-            .build()
-        ).collect(Collectors.toList());
   }
 
   /**

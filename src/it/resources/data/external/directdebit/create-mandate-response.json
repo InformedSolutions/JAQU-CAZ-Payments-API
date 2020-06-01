@@ -1,0 +1,33 @@
+{
+  "mandate_id": "i4nuo03jginfke5c3ebrvgig6a",
+  "reference": "12345",
+  "return_url": "https://informed.com/transactions/12345",
+  "state": {
+    "status": "created"
+  },
+  "_links": {
+    "self": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/directdebit/mandates/i4nuo03jginfke5c3ebrvgig6a",
+      "method": "GET"
+    },
+    "next_url": {
+      "href": "https://directdebit.payments.service.gov.uk/secure/62819ef3-318b-404f-bb9a-756fda747e9c",
+      "method": "GET"
+    },
+    "next_url_post": {
+      "type": "application/x-www-form-urlencoded",
+      "params": {
+        "chargeTokenId": "62819ef3-318b-404f-bb9a-756fda747e9c"
+      },
+      "href": "https://directdebit.payments.service.gov.uk/secure",
+      "method": "POST"
+    },
+    "payments": {
+      "href": "https://publicapi.payments.service.gov.uk/v1/directdebit/payments?mandate_id=i4nuo03jginfke5c3ebrvgig6a",
+      "method": "GET"
+    }
+  },
+  "created_date": "2020-03-19T12:58:57.149Z",
+  "description": "Test Direct Debit API invocation",
+  "payment_provider": "sandbox"
+}

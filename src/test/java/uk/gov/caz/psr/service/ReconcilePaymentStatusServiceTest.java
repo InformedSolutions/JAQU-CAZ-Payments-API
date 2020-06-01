@@ -21,7 +21,7 @@ import uk.gov.caz.psr.dto.external.PaymentState;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.repository.ExternalPaymentsRepository;
+import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.authentication.CredentialRetrievalManager;
 import uk.gov.caz.psr.util.GetPaymentResultConverter;
@@ -35,7 +35,7 @@ class ReconcilePaymentStatusServiceTest {
   private PaymentRepository internalPaymentsRepository;
 
   @Mock
-  private ExternalPaymentsRepository externalPaymentsRepository;
+  private ExternalCardPaymentsRepository externalCardPaymentsRepository;
 
   @Mock
   private PaymentStatusUpdater paymentStatusUpdater;
@@ -93,7 +93,7 @@ class ReconcilePaymentStatusServiceTest {
 
     // then
     assertThat(result).isEmpty();
-    verify(externalPaymentsRepository, never()).findByIdAndCazId(any(), any());
+    verify(externalCardPaymentsRepository, never()).findByIdAndCazId(any(), any());
     verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
   }
 
@@ -110,7 +110,7 @@ class ReconcilePaymentStatusServiceTest {
 
     // then
     assertThat(result).isEmpty();
-    verify(externalPaymentsRepository, never()).findByIdAndCazId(any(), any());
+    verify(externalCardPaymentsRepository, never()).findByIdAndCazId(any(), any());
     verify(paymentStatusUpdater, never()).updateWithExternalPaymentDetails(any(), any());
   }
 
@@ -202,14 +202,14 @@ class ReconcilePaymentStatusServiceTest {
   }
 
   private void mockSuccessStatusFor(Payment payment, String email) {
-    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
+    given(externalCardPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
         .willReturn(Optional.of(GetPaymentResult.builder().email(email)
             .state(PaymentState.builder().status(ExternalPaymentStatus.SUCCESS.name()).build())
             .build()));
   }
 
   private void mockExternalStatusFor(Payment payment, ExternalPaymentStatus status) {
-    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
+    given(externalCardPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
         .willReturn(Optional.of(GetPaymentResult.builder()
             .state(PaymentState.builder().status(status.name()).build()).build()));
   }
@@ -226,7 +226,7 @@ class ReconcilePaymentStatusServiceTest {
   }
 
   private void mockPaymentAbsenceInExternalService(Payment payment) {
-    given(externalPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
+    given(externalCardPaymentsRepository.findByIdAndCazId(payment.getExternalId(), this.cazIdentifier))
         .willReturn(Optional.empty());
   }
 }

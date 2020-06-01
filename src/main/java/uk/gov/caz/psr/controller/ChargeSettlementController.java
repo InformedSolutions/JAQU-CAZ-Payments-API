@@ -78,7 +78,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
 
     return paymentStatus.map(PaymentStatusResponse::from)
         .map(ResponseEntity::ok)
-        .orElseGet(() -> ResponseEntity.notFound().build());
+        .orElseGet(() -> ResponseEntity.ok(PaymentStatusResponse.notFound()));
   }
 
   @Override

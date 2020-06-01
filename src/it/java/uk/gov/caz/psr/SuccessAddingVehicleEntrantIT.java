@@ -40,7 +40,8 @@ import uk.gov.caz.psr.dto.VehicleEntrantDto;
 import uk.gov.caz.psr.util.AuditTableWrapper;
 
 @FullyRunningServerIntegrationTest
-@Sql(scripts = "classpath:data/sql/add-entrant-payments.sql",
+@Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
+    "classpath:data/sql/add-entrant-payments.sql"},
     executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = {"classpath:data/sql/clear-all-payments.sql",
     "classpath:data/sql/clear-all-caz-entrant-payments.sql"},
@@ -60,7 +61,7 @@ public class SuccessAddingVehicleEntrantIT {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
     RestAssured.basePath = VehicleEntrantController.BASE_PATH + "/" +
-        VehicleEntrantController.CREATE_VEHICLE_ENTRANT_PATH_AND_GET_PAYMENT_DETAILS;
+        VehicleEntrantController.CREATE_VEHICLE_ENTRANT_AND_GET_PAYMENT_DETAILS_PATH;
   }
 
   @Test
