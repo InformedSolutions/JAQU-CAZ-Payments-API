@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0008-1.0
+      author: informed
+      changes:
+        - sql:
+            comment: Inserts inserttimestamp column to tables caz_payment_audit.t_clean_air_zone_payment_detail and caz_payment_audit.t_clean_air_zone_payment_master
+            dbms: postgresql
+            endDelimiter: ;
+            splitStatements: true
+            sql:
+              ALTER TABLE IF EXISTS caz_payment_audit.t_clean_air_zone_payment_master
+              ADD COLUMN inserttimestamp timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP;
+               
+              ALTER TABLE IF EXISTS caz_payment_audit.t_clean_air_zone_payment_detail
+              ADD COLUMN inserttimestamp timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP;

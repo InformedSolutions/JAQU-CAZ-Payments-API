@@ -29,6 +29,7 @@
       **/psr/Application.java,
       **/amazonaws/StreamLambdaHandler.java,
       **/amazonaws/CleanupDanglingPaymentsHandler.java,
+      **/amazonaws/CleanupOldAuditDataLambdaHandler.java,
       **/psr/repository/VccsRepository.java
       <!-- Remove with CAZ-2168 -->
       **/psr/repository/ExternalDirectDebitRepository.java
@@ -676,6 +677,7 @@
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler$LambdaContainerStats.class</exclude>
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
+                <exclude>**/amazonaws/CleanupOldAuditDataLambdaHandler.class</exclude>
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
                 <!-- exclude retrofit classes -->
