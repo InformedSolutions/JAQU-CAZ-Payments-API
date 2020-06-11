@@ -20,6 +20,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -43,6 +44,7 @@ public class StreamLambdaHandler implements RequestStreamHandler {
     long startTime = Instant.now().toEpochMilli();
     try {
       // For applications that take longer than 10 seconds to start, use the async builder:
+      setDefaultContentCharset();
       String listOfActiveSpringProfiles = System.getenv("SPRING_PROFILES_ACTIVE");
       LambdaContainerHandler.getContainerConfig().setInitializationTimeout(
           INITIALIZATION_TIMEOUT_IN_MS);
@@ -74,6 +76,15 @@ public class StreamLambdaHandler implements RequestStreamHandler {
       LambdaContainerStats.setLatestRequestTime(LocalDateTime.now());
       handler.proxyStream(new ByteArrayInputStream(input.getBytes()), outputStream, context);
     }
+  }
+
+  /**
+   * Sets default character set to UTF-8.
+   * https://github.com/awslabs/aws-serverless-java-container/issues/352
+   */
+  private static void setDefaultContentCharset() {
+    LambdaContainerHandler.getContainerConfig()
+        .setDefaultContentCharset(StandardCharsets.UTF_8.name());
   }
 
   /**
