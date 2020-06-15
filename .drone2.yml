@@ -882,7 +882,7 @@ steps:
       event:
         - push
 
-  - name: codedeploy api st
+  - name: codedeploy api sit
     image: alpine:3.11.6
     commands:
       - apk add --update bash python python-dev py-pip build-base jq
@@ -901,7 +901,7 @@ steps:
       AWS_DEFAULT_REGION: eu-west-2
       AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
       PROJECT: payments
-      DEPLOY_ENVIRONMENT: st
+      DEPLOY_ENVIRONMENT: sit
       LAMBDA_BUCKET: jaqu-shared-project-lambda-bucket
     when:
       event:
