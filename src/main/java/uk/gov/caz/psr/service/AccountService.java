@@ -18,6 +18,7 @@ import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
@@ -57,6 +58,9 @@ public class AccountService {
     }
     if (accountsResponse.code() == 404) {
       throw new AccountNotFoundException();
+    }
+    if (accountsResponse.code() == 400) {
+      throw new InvalidRequestPayloadException(accountsResponse.message());
     }
     throw new ExternalServiceCallException();
   }
