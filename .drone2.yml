@@ -1,4 +1,4 @@
-################################################### DEV Steps ########################################################
+image: docker:19.03.11-gitimage: docker:19.03.11-git################################################### DEV Steps ########################################################
 
 kind: pipeline
 type: docker
@@ -41,14 +41,12 @@ services:
     ports:
       - 4576
       - 4584
-  - name: redis
-    image: redis
 
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
   - name: clean agent
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker system prune -f
     volumes:
@@ -57,7 +55,7 @@ steps:
 
   # Build docker images
   - name: build docker maven base
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker build -t payments-api-base -f ci-cd-resources/Dockerfile.ci.base .
     volumes:
@@ -83,30 +81,30 @@ steps:
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
 
-  # # Integration tests
-  # - name: integration test
-  #   image: payments-api-base
-  #   pull: never
-  #   volumes:
-  #     - name: package_directory
-  #       path: /drone/src/target
-  #     - name: m2_repo
-  #       path: /root/.m2
-  #   environment:
-  #     BUILD_ID: ${DRONE_BUILD_NUMBER}
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
-  #     JAQU_NEXUS_URL:
-  #       from_secret: jaqu_lower_nexus_url
-  #     JAQU_NEXUS_USER:
-  #       from_secret: jaqu_lower_nexus_username
-  #     JAQU_NEXUS_PASSWORD:
-  #       from_secret: jaqu_lower_nexus_password
-  #     AWS_SQS_URL: localstack:4576
-  #     AWS_SECRETSMANAGER_URL: localstack:4584
-  #     REDIS_URL: redis
-  #     REDIS_CUSTOM_PORT: 6379
-  #   commands:
-  #     - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
+  # Integration tests
+  - name: integration test
+    image: payments-api-base
+    pull: never
+    volumes:
+      - name: package_directory
+        path: /drone/src/target
+      - name: m2_repo
+        path: /root/.m2
+    environment:
+      BUILD_ID: ${DRONE_BUILD_NUMBER}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
+      JAQU_NEXUS_URL:
+        from_secret: jaqu_lower_nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: jaqu_lower_nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: jaqu_lower_nexus_password
+      AWS_SQS_URL: localstack:4576
+      AWS_SECRETSMANAGER_URL: localstack:4584
+      REDIS_URL: redis
+      REDIS_CUSTOM_PORT: 6379
+    commands:
+      - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 
   # Scan with sonar
   - name: sonar scan
@@ -307,14 +305,12 @@ services:
     ports:
       - 4576
       - 4584
-  - name: redis
-    image: redis
 
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
   - name: clean agent
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker system prune -f
     volumes:
@@ -323,7 +319,7 @@ steps:
 
   # Build docker images
   - name: build docker maven base
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker build -t payments-api-base -f ci-cd-resources/Dockerfile.ci.base .
     volumes:
@@ -349,59 +345,30 @@ steps:
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
 
-  # # Integration tests
-  # - name: integration test
-  #   image: payments-api-base
-  #   pull: never
-  #   volumes:
-  #     - name: package_directory
-  #       path: /drone/src/target
-  #     - name: m2_repo
-  #       path: /root/.m2
-  #   environment:
-  #     BUILD_ID: ${DRONE_BUILD_NUMBER}
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
-  #     JAQU_NEXUS_URL:
-  #       from_secret: jaqu_lower_nexus_url
-  #     JAQU_NEXUS_USER:
-  #       from_secret: jaqu_lower_nexus_username
-  #     JAQU_NEXUS_PASSWORD:
-  #       from_secret: jaqu_lower_nexus_password
-  #     AWS_SQS_URL: localstack:4576
-  #     AWS_SECRETSMANAGER_URL: localstack:4584
-  #     REDIS_URL: redis
-  #     REDIS_CUSTOM_PORT: 6379
-  #   commands:
-  #     - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
-
-  # Scan with sonar
-  - name: sonar scan
+  # Integration tests
+  - name: integration test
     image: payments-api-base
+    pull: never
     volumes:
       - name: package_directory
         path: /drone/src/target
       - name: m2_repo
         path: /root/.m2
     environment:
+      BUILD_ID: ${DRONE_BUILD_NUMBER}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
       JAQU_NEXUS_URL:
         from_secret: jaqu_lower_nexus_url
       JAQU_NEXUS_USER:
         from_secret: jaqu_lower_nexus_username
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
-      SONAR_HOST:
-        from_secret: jaqu_lower_sonar_host
-      SONAR_TOKEN:
-        from_secret: jaqu_lower_sonar_token
-    pull: never
+      AWS_SQS_URL: localstack:4576
+      AWS_SECRETSMANAGER_URL: localstack:4584
+      REDIS_URL: redis
+      REDIS_CUSTOM_PORT: 6379
     commands:
-      #  TODO add src/test/java to sonar.tests once they are present
-      - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST
-        -Dsonar.projectName=${DRONE_REPO}
-        -Dsonar.login=$SONAR_TOKEN
-        -Dsonar.coverage.jacoco.xmlReportPaths=/drone/src/target/site/jacoco-aggregate/jacoco.xml
-        -Dsonar.tests=src/it/java
-        --no-transfer-progress
+      - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 
   # Package
   - name: package
@@ -476,7 +443,7 @@ steps:
         - push
 
   - name: provisioning warning
-    image: docker:git
+    image: docker:19.03.11-git
     commands:
       - echo "Pipeline failed. If a deployment is being made for the first time into an environment terraform backends will not yet exist which means this is to be expected. If not terraform related, please see logs for further details"
     when:
@@ -637,7 +604,7 @@ steps:
 
   # Clean agent images and containers to prevent disk space overuse
   - name: clean agent
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker system prune -f
     volumes:
@@ -646,7 +613,7 @@ steps:
 
   # Build docker images
   - name: build docker maven base
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker build -t payments-api-base -f ci-cd-resources/Dockerfile.ci.base .
     volumes:
@@ -672,59 +639,31 @@ steps:
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
 
-  # # Integration tests
-  # - name: integration test
-  #   image: payments-api-base
-  #   pull: never
-  #   volumes:
-  #     - name: package_directory
-  #       path: /drone/src/target
-  #     - name: m2_repo
-  #       path: /root/.m2
-  #   environment:
-  #     BUILD_ID: ${DRONE_BUILD_NUMBER}
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
-  #     JAQU_NEXUS_URL:
-  #       from_secret: jaqu_lower_nexus_url
-  #     JAQU_NEXUS_USER:
-  #       from_secret: jaqu_lower_nexus_username
-  #     JAQU_NEXUS_PASSWORD:
-  #       from_secret: jaqu_lower_nexus_password
-  #     AWS_SQS_URL: localstack:4576
-  #     AWS_SECRETSMANAGER_URL: localstack:4584
-  #     REDIS_URL: redis
-  #     REDIS_CUSTOM_PORT: 6379
-  #   commands:
-  #     - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
-
-  # Scan with sonar
-  - name: sonar scan
+  # Integration tests
+  - name: integration test
     image: payments-api-base
+    pull: never
     volumes:
       - name: package_directory
         path: /drone/src/target
       - name: m2_repo
         path: /root/.m2
     environment:
+      BUILD_ID: ${DRONE_BUILD_NUMBER}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
       JAQU_NEXUS_URL:
         from_secret: jaqu_lower_nexus_url
       JAQU_NEXUS_USER:
         from_secret: jaqu_lower_nexus_username
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
-      SONAR_HOST:
-        from_secret: jaqu_lower_sonar_host
-      SONAR_TOKEN:
-        from_secret: jaqu_lower_sonar_token
-    pull: never
+      AWS_SQS_URL: localstack:4576
+      AWS_SECRETSMANAGER_URL: localstack:4584
+      REDIS_URL: redis
+      REDIS_CUSTOM_PORT: 6379
     commands:
-      #  TODO add src/test/java to sonar.tests once they are present
-      - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST
-        -Dsonar.projectName=${DRONE_REPO}
-        -Dsonar.login=$SONAR_TOKEN
-        -Dsonar.coverage.jacoco.xmlReportPaths=/drone/src/target/site/jacoco-aggregate/jacoco.xml
-        -Dsonar.tests=src/it/java
-        --no-transfer-progress
+      - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
+
 
   # Package
   - name: package
@@ -799,7 +738,7 @@ steps:
         - pull_request
 
   - name: provisioning warning
-    image: docker:git
+    image: docker:19.03.11-git
     commands:
       - echo "Pipeline failed. If a deployment is being made for the first time into an environment terraform backends will not yet exist which means this is to be expected. If not terraform related, please see logs for further details"
     when:
