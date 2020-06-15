@@ -1,4 +1,4 @@
-image: docker:19.03.11-gitimage: docker:19.03.11-git################################################### DEV Steps ########################################################
+################################################### DEV Steps ########################################################
 
 kind: pipeline
 type: docker
@@ -33,6 +33,7 @@ services:
       POSTGRES_DB: vehicle_compliance
     ports:
       - 5432
+
   - name: localstack
     image: localstack/localstack:0.10.2
     environment:
@@ -41,6 +42,7 @@ services:
     ports:
       - 4576
       - 4584
+
   - name: redis
     image: redis:alpine3.12
     ports:
@@ -311,9 +313,10 @@ services:
       - 4584
 
   - name: redis
-      image: redis:alpine3.12
-      ports:
-        - 6379
+    image: redis:alpine3.12
+    ports:
+      - 6379
+
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
