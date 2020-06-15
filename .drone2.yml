@@ -33,6 +33,7 @@ services:
       POSTGRES_DB: vehicle_compliance
     ports:
       - 5432
+
   - name: localstack
     image: localstack/localstack:0.10.2
     environment:
@@ -41,14 +42,16 @@ services:
     ports:
       - 4576
       - 4584
-  - name: redis
-    image: redis
 
+  - name: redis
+    image: redis:alpine3.12
+    ports:
+      - 6379
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
   - name: clean agent
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker system prune -f
     volumes:
@@ -57,7 +60,7 @@ steps:
 
   # Build docker images
   - name: build docker maven base
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker build -t payments-api-base -f ci-cd-resources/Dockerfile.ci.base .
     volumes:
@@ -82,7 +85,7 @@ steps:
         from_secret: jaqu_lower_nexus_username
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
-
+  #
   # # Integration tests
   # - name: integration test
   #   image: payments-api-base
@@ -299,6 +302,7 @@ services:
       POSTGRES_DB: vehicle_compliance
     ports:
       - 5432
+
   - name: localstack
     image: localstack/localstack:0.10.2
     environment:
@@ -307,14 +311,17 @@ services:
     ports:
       - 4576
       - 4584
+
   - name: redis
-    image: redis
+    image: redis:alpine3.12
+    ports:
+      - 6379
 
 steps:
 
   # Clean agent images and containers to prevent disk space overuse
   - name: clean agent
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker system prune -f
     volumes:
@@ -323,7 +330,7 @@ steps:
 
   # Build docker images
   - name: build docker maven base
-    image: docker
+    image: docker:19.03.11-git
     commands:
       - docker build -t payments-api-base -f ci-cd-resources/Dockerfile.ci.base .
     volumes:
@@ -373,35 +380,6 @@ steps:
   #     REDIS_CUSTOM_PORT: 6379
   #   commands:
   #     - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
-
-  # Scan with sonar
-  - name: sonar scan
-    image: payments-api-base
-    volumes:
-      - name: package_directory
-        path: /drone/src/target
-      - name: m2_repo
-        path: /root/.m2
-    environment:
-      JAQU_NEXUS_URL:
-        from_secret: jaqu_lower_nexus_url
-      JAQU_NEXUS_USER:
-        from_secret: jaqu_lower_nexus_username
-      JAQU_NEXUS_PASSWORD:
-        from_secret: jaqu_lower_nexus_password
-      SONAR_HOST:
-        from_secret: jaqu_lower_sonar_host
-      SONAR_TOKEN:
-        from_secret: jaqu_lower_sonar_token
-    pull: never
-    commands:
-      #  TODO add src/test/java to sonar.tests once they are present
-      - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST
-        -Dsonar.projectName=${DRONE_REPO}
-        -Dsonar.login=$SONAR_TOKEN
-        -Dsonar.coverage.jacoco.xmlReportPaths=/drone/src/target/site/jacoco-aggregate/jacoco.xml
-        -Dsonar.tests=src/it/java
-        --no-transfer-progress
 
   # Package
   - name: package
@@ -473,10 +451,10 @@ steps:
         from_secret: jaqu_lower_github_private_key
     when:
       event:
-        - pull_request
+        - push
 
   - name: provisioning warning
-    image: docker:git
+    image: docker:19.03.11-git
     commands:
       - echo "Pipeline failed. If a deployment is being made for the first time into an environment terraform backends will not yet exist which means this is to be expected. If not terraform related, please see logs for further details"
     when:
@@ -497,7 +475,6 @@ steps:
       - touch ~/.ssh/known_hosts
       - chmod 600 ~/.ssh/known_hosts
       - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
-      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
       - cd JAQU-CAZ-IAC
       - git checkout iac_restructure_controlled
       - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
@@ -585,7 +562,306 @@ steps:
         - push
 
 
-  ################################################# st environment Steps #######################################################
+  ################################################# End ST Environment Steps #######################################################
+
+---
+################################################### Start SIT Environment Steps ########################################################
+
+kind: pipeline
+type: docker
+name: payments-api-sit
+
+trigger:
+  branch:
+    - iac-restructure-controlled-sit
+  event:
+    - pull_request
+    - push
+concurrency:
+  limit: 1
+
+volumes:
+  - name: docker_sock
+    host:
+      path: /var/run/docker.sock
+
+  - name: package_directory
+    temp: {}
+
+  - name: m2_repo
+    temp: {}
+
+services:
+  - name: postgres
+    image: postgres:11-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vehicle_compliance
+    ports:
+      - 5432
+
+  - name: localstack
+    image: localstack/localstack:0.10.2
+    environment:
+      SERVICES: sqs, secretsmanager
+      HOSTNAME_EXTERNAL: localstack
+    ports:
+      - 4576
+      - 4584
+
+  - name: redis
+    image: redis:alpine3.12
+    ports:
+      - 6379
+steps:
+
+  # Clean agent images and containers to prevent disk space overuse
+  - name: clean agent
+    image: docker:19.03.11-git
+    commands:
+      - docker system prune -f
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+
+  # Build docker images
+  - name: build docker maven base
+    image: docker:19.03.11-git
+    commands:
+      - docker build -t payments-api-base -f ci-cd-resources/Dockerfile.ci.base .
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+
+  # Unit test
+  - name: unit test
+    image: payments-api-base
+    pull: never
+    volumes:
+      - name: package_directory
+        path: /drone/src/target
+      - name: m2_repo
+        path: /root/.m2
+    commands:
+      - mvn test -P jacoco --no-transfer-progress
+    environment:
+      JAQU_NEXUS_URL:
+        from_secret: jaqu_lower_nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: jaqu_lower_nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: jaqu_lower_nexus_password
+  #
+  # # Integration tests
+  # - name: integration test
+  #   image: payments-api-base
+  #   pull: never
+  #   volumes:
+  #     - name: package_directory
+  #       path: /drone/src/target
+  #     - name: m2_repo
+  #       path: /root/.m2
+  #   environment:
+  #     BUILD_ID: ${DRONE_BUILD_NUMBER}
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
+  #     JAQU_NEXUS_URL:
+  #       from_secret: jaqu_lower_nexus_url
+  #     JAQU_NEXUS_USER:
+  #       from_secret: jaqu_lower_nexus_username
+  #     JAQU_NEXUS_PASSWORD:
+  #       from_secret: jaqu_lower_nexus_password
+  #     AWS_SQS_URL: localstack:4576
+  #     AWS_SECRETSMANAGER_URL: localstack:4584
+  #     REDIS_URL: redis
+  #     REDIS_CUSTOM_PORT: 6379
+  #   commands:
+  #     - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
+  #
+
+  # Package
+  - name: package
+    image: payments-api-base
+    volumes:
+      - name: package_directory
+        path: /drone/src/target
+      - name: m2_repo
+        path: /root/.m2
+    environment:
+      JAQU_NEXUS_URL:
+        from_secret: jaqu_lower_nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: jaqu_lower_nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: jaqu_lower_nexus_password
+      BUILD_ID: ${DRONE_BUILD_NUMBER}
+    pull: never
+    commands:
+      - mvn package -DskipUnitTests
+
+  - name: plan updates into sit
+    image: hashicorp/terraform:0.12.3
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk update && apk add bash
+      - mkdir ~/.ssh
+      - echo -e "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - touch ~/.ssh/known_hosts
+      - chmod 600 ~/.ssh/known_hosts
+      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
+      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
+      - cd JAQU-CAZ-IAC
+      - git checkout iac_restructure_controlled
+      - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
+      - cd terraform-iac/projects/payments/layers/01.networking
+      - PATH=$PATH:../../../../bin/
+      - chmod +x ../../../../bin/tf
+      - tf init
+      - tf workspace select sit || tf workspace new sit
+      - tf plan
+      - cd ../02.backends
+      - tf init
+      - tf workspace select sit || tf workspace new sit
+      - tf plan
+      - cd ../03.api
+      - tf init
+      - tf workspace select sit || tf workspace new sit
+      - tf plan
+    environment:
+      TF_VAR_access_key:
+        from_secret: jaqu_controlled_aws_access_key_id
+      TF_VAR_secret_key:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      TF_VAR_master_access_key:
+        from_secret: jaqu_master_aws_access_key_id
+      TF_VAR_master_secret_key:
+        from_secret: jaqu_master_aws_secret_access_key
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_NAME: jaqu-controlled
+      GIT_PRIVATE_SSH:
+        from_secret: jaqu_lower_github_private_key
+    when:
+      event:
+        - pull_request
+
+  - name: provisioning warning
+    image: docker:19.03.11-git
+    commands:
+      - echo "Pipeline failed. If a deployment is being made for the first time into an environment terraform backends will not yet exist which means this is to be expected. If not terraform related, please see logs for further details"
+    when:
+      status:
+        - failure
+
+  # Invoke terraform scripts to deploy lambda function
+  - name: deploy to sit
+    image: hashicorp/terraform:0.12.3
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk update && apk add bash
+      - mkdir ~/.ssh
+      - echo -e "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - touch ~/.ssh/known_hosts
+      - chmod 600 ~/.ssh/known_hosts
+      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
+      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
+      - cd JAQU-CAZ-IAC
+      - git checkout iac_restructure_controlled
+      - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
+      - cd terraform-iac/projects/payments/layers/01.networking
+      - PATH=$PATH:../../../../bin/
+      - chmod +x ../../../../bin/tf
+      - tf init
+      - tf workspace select sit || tf workspace new sit
+      - tf apply -auto-approve
+      - cd ../02.backends
+      - tf init
+      - tf workspace select sit || tf workspace new sit
+      - tf apply -auto-approve
+      - cd ../03.api
+      - tf init
+      - tf workspace select sit || tf workspace new sit
+      - tf apply -auto-approve
+    environment:
+      TF_VAR_access_key:
+        from_secret: jaqu_controlled_aws_access_key_id
+      TF_VAR_secret_key:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      TF_VAR_master_access_key:
+        from_secret: jaqu_master_aws_access_key_id
+      TF_VAR_master_secret_key:
+        from_secret: jaqu_master_aws_secret_access_key
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_NAME: jaqu-controlled
+      GIT_PRIVATE_SSH:
+        from_secret: jaqu_lower_github_private_key
+    when:
+      event:
+        - push
+
+  # Invokes lambda function with $LATEST alias to deploy schema migrations prior to code deploy rollover
+  - name: apply db schema migrations
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-sit --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json --profile target_acc
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+    when:
+      event:
+        - push
+
+  - name: codedeploy api sit
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh . --profile target_acc
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh . --profile target_acc
+      - bash deploy_lambda.sh
+      - bash deploy_dangling_payments.sh
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: sit
+      LAMBDA_BUCKET: jaqu-shared-project-lambda-bucket
+    when:
+      event:
+        - push
+
+
+  ################################################# End SIT Environment Steps #######################################################
 
   ################################################ Secrets #########################################################
 
