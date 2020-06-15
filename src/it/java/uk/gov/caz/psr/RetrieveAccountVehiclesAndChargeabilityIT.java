@@ -107,6 +107,19 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   }
   
   @Test
+  public void shouldReturn400BadRequestWhenPageNumberOutOfBounds() {
+    mockAccountServiceOffsetCallWithError(ACCOUNT_ID, 400);
+    givenVehicleChargesRetrieval()
+      .forAccountId(ACCOUNT_ID)
+      .forPageNumber("1")
+      .forPageSize("1")
+      .forZones(ZONES)
+      .whenRequestIsMadeToRetrieveAccountVehicles()
+      .then()
+      .responseIsReturnedWithHttpErrorStatusCode(400);
+  }
+  
+  @Test
   public void shouldReturn404NotFoundWhenAccountIdNotFound() {
     mockAccountServiceOffsetCallWithError(ACCOUNT_ID, 404);
     givenVehicleChargesRetrieval()
