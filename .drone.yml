@@ -329,6 +329,25 @@ steps:
       event:
         - push
 
+  # Invokes lambda function with dev alias to clear payment cache
+  - name: clear payment cache
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-dev --qualifier dev --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/cache-invalidations/clean-air-zones\", \"multiValueHeaders\":{\"x-correlation-id\":[\"5eb7577f-53ab-4b5c-ab9e-10388b9b869b\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "202" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+    when:
+      event:
+        - push
 
   ################################################# End DEV Steps #######################################################
 
@@ -604,6 +623,26 @@ steps:
       PROJECT: payments
       DEPLOY_ENVIRONMENT: st
       LAMBDA_BUCKET: jaqu-projects-lambda-bucket
+    when:
+      event:
+        - push
+
+  # Invokes lambda function with st alias to clear payment cache
+  - name: clear payment cache
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-st --qualifier st --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/cache-invalidations/clean-air-zones\", \"multiValueHeaders\":{\"x-correlation-id\":[\"5eb7577f-53ab-4b5c-ab9e-10388b9b869b\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "202" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
     when:
       event:
         - push
@@ -885,7 +924,25 @@ steps:
       event:
         - push
 
-
+  # Invokes lambda function with sit alias to clear payment cache
+  - name: clear payment cache
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-sit --qualifier sit --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/cache-invalidations/clean-air-zones\", \"multiValueHeaders\":{\"x-correlation-id\":[\"5eb7577f-53ab-4b5c-ab9e-10388b9b869b\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "202" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+    when:
+      event:
+        - push
   ################################################# End Sit Steps #######################################################
 ---
 
@@ -1163,6 +1220,26 @@ steps:
       event:
         - push
 
+  # Invokes lambda function with uat alias to clear payment cache
+  - name: clear payment cache
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-uat --qualifier uat --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/cache-invalidations/clean-air-zones\", \"multiValueHeaders\":{\"x-correlation-id\":[\"5eb7577f-53ab-4b5c-ab9e-10388b9b869b\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "202" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+    when:
+      event:
+        - push
+
   ################################################# End UAT steps #######################################################
 ---
 
@@ -1352,6 +1429,26 @@ steps:
       PROJECT: payments
       DEPLOY_ENVIRONMENT: preprod
       LAMBDA_BUCKET: jaqu-projects-lambda-bucket
+    when:
+      event:
+        - push
+
+  # Invokes lambda function with preprod alias to clear payment cache
+  - name: clear payment cache
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-preprod --qualifier preprod --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/cache-invalidations/clean-air-zones\", \"multiValueHeaders\":{\"x-correlation-id\":[\"5eb7577f-53ab-4b5c-ab9e-10388b9b869b\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "202" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
     when:
       event:
         - push
@@ -1566,6 +1663,26 @@ steps:
       PROJECT: payments
       DEPLOY_ENVIRONMENT: prod
       LAMBDA_BUCKET: jaqu-projects-lambda-bucket
+    when:
+      event:
+        - push
+
+  # Invokes lambda function with prod alias to clear payment cache
+  - name: clear payment cache
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip jq
+      - pip install awscli
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-prod --qualifier prod --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/cache-invalidations/clean-air-zones\", \"multiValueHeaders\":{\"x-correlation-id\":[\"5eb7577f-53ab-4b5c-ab9e-10388b9b869b\"]}}" output.json
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "202" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
     when:
       event:
         - push
