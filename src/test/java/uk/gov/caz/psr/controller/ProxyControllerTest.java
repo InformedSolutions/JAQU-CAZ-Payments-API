@@ -61,6 +61,10 @@ class ProxyControllerTest {
       ProxyController.BASE_PATH + "/"
           + ProxyController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE;
 
+  private static final String GET_REGISTER_DETAILS_PATH =
+      ProxyController.BASE_PATH + "/"
+          + ProxyController.GET_REGISTER_DETAILS;
+
   @Nested
   class GetCleanAirZones {
 
@@ -121,6 +125,21 @@ class ProxyControllerTest {
               .param("zones", ANY_CLEAN_AIR_ZONE_ID))
           .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
               .value("Missing request header 'X-Correlation-ID'"));
+    }
+  }
+
+  @Nested
+  class RegisterDetails {
+
+    @Test
+    public void shouldReturn400StatusCodeWhenRegisterDetailsFetchedWithoutCorrelationId()
+        throws Exception {
+      mockMvc
+          .perform(get(GET_REGISTER_DETAILS_PATH.replace("{vrn}", "CAS312"))
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
+          .value("Missing request header 'X-Correlation-ID'"));
     }
   }
 }
