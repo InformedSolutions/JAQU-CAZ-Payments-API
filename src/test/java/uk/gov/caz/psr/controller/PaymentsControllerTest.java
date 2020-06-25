@@ -5,13 +5,14 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
 import static uk.gov.caz.psr.controller.PaymentsController.BASE_PATH;
+
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
@@ -41,11 +42,9 @@ import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
-import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
@@ -66,12 +65,6 @@ class PaymentsControllerTest {
   @MockBean
   private GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
 
-  @MockBean
-  private CleanAirZoneService cleanAirZoneService;
-
-  @MockBean
-  private VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
-  
   @Autowired
   private MockMvc mockMvc;
 
@@ -82,8 +75,6 @@ class PaymentsControllerTest {
   public void resetMocks() {
     Mockito.reset(initiatePaymentService);
     Mockito.reset(getPaidEntrantPaymentsService);
-    Mockito.reset(cleanAirZoneService);
-    Mockito.reset(vehicleComplianceRetrievalService);
   }
 
   private static final Transaction ANY_TRANSACTION =
@@ -91,27 +82,10 @@ class PaymentsControllerTest {
           .travelDate(LocalDate.of(2019, 1, 1)).vrn("some-vrn").build();
 
   private static final String ANY_CORRELATION_ID = UUID.randomUUID().toString();
-  private static final String ANY_CLEAN_AIR_ZONE_ID = UUID.randomUUID().toString();
-  
+
   private static final String GET_PAID_PATH = PaymentsController.BASE_PATH + "/"
       + PaymentsController.GET_PAID_VEHICLE_ENTRANTS;
 
-  private static final String GET_CLEAN_AIR_ZONES_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_CLEAN_AIR_ZONES;
-
-  private static final String GET_COMPLIANCE_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_COMPLIANCE;
-  
-  private static final String GET_VEHICLE_DETAILS_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_VEHICLE_DETAILS;
-  
-  private static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE;
-  
   @Nested
   class InitiatePayment {
 
@@ -125,7 +99,7 @@ class PaymentsControllerTest {
               .contentType(MediaType.APPLICATION_JSON)
               .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
-              .value("Missing request header 'X-Correlation-ID'"));
+          .value("Missing request header 'X-Correlation-ID'"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
           any());
     }
@@ -140,7 +114,21 @@ class PaymentsControllerTest {
               .accept(MediaType.APPLICATION_JSON)
               .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
-              .value("'transactions' cannot be null or empty"));
+          .value("'transactions' cannot be null or empty"));
+      verify(initiatePaymentService, never()).createPayment(any(), anyList(),
+          any());
+    }
+
+    @Test
+    public void lackOfTelephonePaymentShouldResultIn400() throws Exception {
+      String payload = paymentRequestWithoutTelephonePayment();
+
+      mockMvc.perform(post(BASE_PATH).content(payload)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
+          .value("'telephonePayment' cannot be null"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
           any());
     }
@@ -170,7 +158,7 @@ class PaymentsControllerTest {
               .accept(MediaType.APPLICATION_JSON)
               .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
-              .value("'charge' in all transactions must be positive"));
+          .value("'charge' in all transactions must be positive"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
           any());
     }
@@ -185,7 +173,7 @@ class PaymentsControllerTest {
               .accept(MediaType.APPLICATION_JSON)
               .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
-              .value("Request cannot have duplicated travel date(s)"));
+          .value("Request cannot have duplicated travel date(s)"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
           any());
     }
@@ -200,7 +188,7 @@ class PaymentsControllerTest {
               .accept(MediaType.APPLICATION_JSON)
               .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
-              .value("'returnUrl' cannot be null or empty"));
+          .value("'returnUrl' cannot be null or empty"));
 
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
           any());
@@ -237,7 +225,7 @@ class PaymentsControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
             .andExpect(status().isBadRequest()).andExpect(
-                jsonPath("$.message").value("'userId' must be a valid UUID"));
+            jsonPath("$.message").value("'userId' must be a valid UUID"));
         verify(initiatePaymentService, never()).createPayment(any(), anyList(),
             any());
       }
@@ -246,11 +234,7 @@ class PaymentsControllerTest {
     @ParameterizedTest
     @ValueSource(strings = {"7caf9cb5-839a-44af-b970-4546bdc80c61", ""})
     public void shouldReturnValidResponse(String userId) throws Exception {
-      InitiatePaymentRequest requestParams = baseRequestBuilder().userId(userId)
-          .transactions(Collections
-              .singletonList(Transaction.builder().tariffCode("tariff")
-                  .vrn("vrn").travelDate(LocalDate.now()).charge(120).build()))
-          .build();
+      InitiatePaymentRequest requestParams = correctPaymentRequestWithUserId(userId);
       String payload = toJsonString(requestParams);
       Payment successfullyCreatedPayment = Payments.existing();
       mockSuccessfulInvocationOfInitPaymentService(requestParams,
@@ -284,6 +268,41 @@ class PaymentsControllerTest {
           requestParams.getReturnUrl())).willReturn(successfullyCreatedPayment);
     }
 
+    private InitiatePaymentRequest correctPaymentRequestWithUserId(String userId) {
+      return correctPaymentRequest()
+          .toBuilder()
+          .userId(userId)
+          .build();
+    }
+
+    private InitiatePaymentRequest correctPaymentRequest() {
+      return baseRequestBuilder()
+          .userId(UUID.randomUUID().toString())
+          .telephonePayment(Boolean.FALSE)
+          .transactions(Collections.singletonList(Transaction.builder()
+                  .tariffCode("tariff")
+                  .vrn("vrn").travelDate(LocalDate.now())
+                  .charge(120)
+                  .build()
+              )
+          )
+          .build();
+    }
+
+    @SneakyThrows
+    private String paymentRequestWithoutTelephonePayment() {
+      InitiatePaymentRequest requestParams = correctPaymentRequest()
+          .toBuilder()
+          .telephonePayment(null)
+          .build();
+      return toJsonStringIncludingNonNullValues(requestParams);
+    }
+
+    private ObjectMapper getObjectMapperThatIgnoresNullFields() {
+      ObjectMapper om = objectMapper.copy();
+      om.setSerializationInclusion(Include.NON_NULL);
+      return om;
+    }
 
     private String paymentRequestWithMalformedUserId(String userId) {
       InitiatePaymentRequest requestParams =
@@ -334,14 +353,20 @@ class PaymentsControllerTest {
 
     private InitiatePaymentRequest.InitiatePaymentRequestBuilder baseRequestBuilder() {
       return InitiatePaymentRequest.builder()
+          .telephonePayment(Boolean.FALSE)
           .transactions(Collections.singletonList(ANY_TRANSACTION))
           .cleanAirZoneId(UUID.randomUUID())
           .returnUrl("https://example.return.url");
     }
 
     @SneakyThrows
-    private String toJsonString(InitiatePaymentRequest requestParams) {
-      return objectMapper.writeValueAsString(requestParams);
+    private String toJsonString(Object o) {
+      return objectMapper.writeValueAsString(o);
+    }
+
+    @SneakyThrows
+    private String toJsonStringIncludingNonNullValues(Object o) {
+      return getObjectMapperThatIgnoresNullFields().writeValueAsString(o);
     }
   }
 
@@ -454,7 +479,7 @@ class PaymentsControllerTest {
               .contentType(MediaType.APPLICATION_JSON)
               .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
+          .value("Missing request header 'X-Correlation-ID'"));
 
       verify(getPaidEntrantPaymentsService, never()).getResults(any(), any(),
           any(), any());
@@ -535,71 +560,7 @@ class PaymentsControllerTest {
 
       given(
           getPaidEntrantPaymentsService.getResults(any(), any(), any(), any()))
-              .willReturn(result);
-    }
-  }
-
-  @Nested
-  class GetCleanAirZones {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenCleanAirZonesAreFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_CLEAN_AIR_ZONES_PATH)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-
-  }
-  
-  @Nested
-  class GetCompliance {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenComplianceFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_COMPLIANCE_PATH.replace("{vrn}", "TESTVRN"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-  }
-  
-  @Nested
-  class VehicleDetails {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenVehicleDetailsFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_VEHICLE_DETAILS_PATH.replace("{vrn}", "TESTVRN"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
-    }
-  }
-  
-  @Nested
-  class UnknownVehicleCompliance {
-
-    @Test
-    public void shouldReturn400StatusCodeWhenVehicleDetailsFetchedWithoutCorrelationId()
-        throws Exception {
-      mockMvc
-          .perform(get(GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH.replace("{type}", "CAR"))
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .param("zones", ANY_CLEAN_AIR_ZONE_ID))
-          .andExpect(status().is4xxClientError()).andExpect(jsonPath("message")
-              .value("Missing request header 'X-Correlation-ID'"));
+          .willReturn(result);
     }
   }
 

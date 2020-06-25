@@ -206,16 +206,12 @@ public class TestObjectFactory {
           .internalPaymentStatus(InternalPaymentStatus.PAID).build();
     }
 
-    public static List<EntrantPayment> forRandomDays() {
-      int daysSize = 5;
-      LocalDate today = LocalDate.now();
-      Set<LocalDate> localDates = new HashSet<>();
-      while (localDates.size() != daysSize) {
-        localDates.add(today.plusDays(random.nextInt(7)));
-      }
-
-      return EntrantPaymentsBuilder.forDays(localDates)
-          .withStatus(InternalPaymentStatus.PAID).build();
+    public static EntrantPayment forTravelDate(LocalDate travelDate, String vrn) {
+      return EntrantPaymentsBuilder.forDays(Collections.singleton(travelDate))
+          .withStatus(InternalPaymentStatus.PAID)
+          .withVrn(vrn)
+          .build()
+          .get(0);
     }
   }
 
@@ -288,16 +284,19 @@ public class TestObjectFactory {
     }
 
     public static PaymentStatus with(InternalPaymentStatus internalPaymentStatus,
-        String caseReference, String externalId, Long paymentReference, PaymentMethod paymentMethod) {
+        String caseReference, String externalId, Long paymentReference, PaymentMethod paymentMethod,
+        boolean telephonePayment) {
       return PaymentStatus.builder().caseReference(caseReference).paymentReference(paymentReference)
           .status(internalPaymentStatus)
           .externalId(externalId)
           .paymentMethod(paymentMethod)
+          .telephonePayment(telephonePayment)
           .build();
     }
   }
 
   public static class PaymentStatusErrorFactory {
+
     public static PaymentStatusErrorResponse with(String title, String detail, String field) {
       return PaymentStatusErrorResponse.builder().title(title).detail(detail)
           .field(field).build();

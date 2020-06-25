@@ -30,6 +30,8 @@ public class AccountsController implements AccountControllerApiSpec {
   private static final String PAGE_NUMBER_QUERYSTRING_KEY = "pageNumber";
   private static final String PAGE_SIZE_QUERYSTRING_KEY = "pageSize";
   private static final String CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY = "cleanAirZoneId";
+  private static final String DIRECTION_PREVIOUS = "previous";
+  private static final String DIRECTION_NEXT = "next";
 
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final AccountService accountService;
@@ -57,13 +59,13 @@ public class AccountsController implements AccountControllerApiSpec {
         accountService.retrieveAccountVehicles(accountId,
             queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
             queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
-    
+
     List<ComplianceResultsDto> results = new ArrayList<>();
     if (accountVehicleRetrievalResponse.getTotalVrnsCount() > 0) {
       results = vehicleComplianceRetrievalService
           .retrieveVehicleCompliance(
               accountVehicleRetrievalResponse.getVrns(),
-              zones);      
+              zones);
     }
 
     return ResponseEntity.ok()
@@ -89,7 +91,7 @@ public class AccountsController implements AccountControllerApiSpec {
         .retrieveChargeableAccountVehicles(accountId, direction, pageSize, vrn, cleanAirZoneId);
     List<String> chargeableVrns = trimChargeableVehicles(vrnsWithTariffAndCharge, pageSize)
         .stream()
-        .map(vrnWithTariffAndCharge -> vrnWithTariffAndCharge.getVrn())
+        .map(VrnWithTariffAndEntrancesPaid::getVrn)
         .collect(Collectors.toList());
     ChargeableAccountVehiclesResult vrnsAndEntrantDates = ChargeableAccountVehiclesResult.from(
         accountService.getPaidEntrantPayments(chargeableVrns, cleanAirZoneId),
@@ -107,13 +109,13 @@ public class AccountsController implements AccountControllerApiSpec {
   }
 
   private String checkDirectionQueryString(String direction, String vrn) {
-    if (StringUtils.hasText(direction) && !direction.equals("next")
-        && !direction.equals("previous")) {
+    if (StringUtils.hasText(direction) && !direction.equals(DIRECTION_NEXT)
+        && !direction.equals(DIRECTION_PREVIOUS)) {
       throw new InvalidRequestPayloadException(
           "Direction supplied must be one of either 'next' or 'previous'.");
     }
 
-    if (StringUtils.hasText(direction) && direction.equals("previous")
+    if (StringUtils.hasText(direction) && direction.equals(DIRECTION_PREVIOUS)
         && !StringUtils.hasText(vrn)) {
       throw new InvalidRequestPayloadException(
           "Direction cannot be set to 'previous' if no VRN has been provided.");
@@ -152,10 +154,10 @@ public class AccountsController implements AccountControllerApiSpec {
       int pageSize, boolean firstPage) {
     String firstVrn = firstPage ? null : results.getResults().get(0).getVrn();
     String lastVrn = results.getResults().get(results.getResults().size() - 1).getVrn();
-    String travelDirection = StringUtils.hasText(direction) ? direction : "next";
+    String travelDirection = StringUtils.hasText(direction) ? direction : DIRECTION_NEXT;
     if (vrnsWithTariffAndCharge.size() < pageSize + 1) {
-      firstVrn = travelDirection.equals("previous") ? null : firstVrn;
-      lastVrn = travelDirection.equals("next") ? null : lastVrn;
+      firstVrn = travelDirection.equals(DIRECTION_PREVIOUS) ? null : firstVrn;
+      lastVrn = travelDirection.equals(DIRECTION_NEXT) ? null : lastVrn;
     }
 
     return ChargeableAccountVehicleResponse
@@ -165,7 +167,7 @@ public class AccountsController implements AccountControllerApiSpec {
         .lastVrn(lastVrn)
         .build();
   }
-  
+
   private VehicleRetrievalResponseDto createResponseFromVehicleComplianceRetrievalResults(
       List<ComplianceResultsDto> results, String pageNumber, String pageSize,
       int pageCount, long totalVrnsCount) {

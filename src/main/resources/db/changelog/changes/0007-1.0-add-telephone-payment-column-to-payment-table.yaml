@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0007-1.0-add-telephone-payment-column-to-payment-table
+      author: radoslaw.morytko
+      changes:
+        - addColumn:
+            schemaName: CAZ_PAYMENT
+            tableName: T_PAYMENT
+            columns:
+              - column:
+                  name: TELEPHONE_PAYMENT
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
