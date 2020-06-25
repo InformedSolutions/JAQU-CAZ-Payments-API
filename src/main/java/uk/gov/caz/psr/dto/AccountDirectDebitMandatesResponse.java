@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.dto;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
@@ -30,6 +31,8 @@ public class AccountDirectDebitMandatesResponse {
 
     DirectDebitMandateStatus status;
 
+    Date created;
+    
     public enum DirectDebitMandateStatus {
       CREATED,
       STARTED,

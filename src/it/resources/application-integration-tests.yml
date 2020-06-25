@@ -4,8 +4,6 @@ spring:
   datasource:
     url: jdbc:postgresql://${postgres.url:localhost:9999}/vehicle_compliance
 #    url: jdbc:postgresql://${postgres.url:localhost:5432}/vehicle_compliance
-    hikari:
-      maximum-pool-size: 1
   jpa:
     properties:
       hibernate:
@@ -42,3 +40,4 @@ services:
     new-queue-name: testqueue.fifo
     template-id: test-template-id
     account-payment-template-id: test-fleet-template-id
+    direct-debit-payment-template-id: test-direct-debit-payment-template-id

@@ -48,9 +48,13 @@ public class PaymentRepository {
     private static final String PAYMENT_METHOD = "payment_method";
     private static final String TOTAL_PAID = "total_paid";
     private static final String PAYMENT_PROVIDER_STATUS = "payment_provider_status";
+    private static final String PAYMENT_PROVIDER_ID = "payment_provider_id";
     private static final String REFERENCE_NUMBER = "central_reference_number";
     private static final String USER_ID = "user_id";
     private static final String PAYMENT_MANDATE_PROVIDER_ID = "payment_provider_mandate_id";
+    private static final String TELEPHONE_PAYMENT = "telephone_payment";
+    private static final String PAYMENT_SUBMITTED_TIMESTAMP = "payment_submitted_timestamp";
+    private static final String PAYMENT_AUTHORISED_TIMESTAMP = "payment_authorised_timestamp";
   }
 
   /**
@@ -67,7 +71,7 @@ public class PaymentRepository {
         .withTableName(TABLE_NAME)
         .usingGeneratedKeyColumns(Columns.PAYMENT_ID, Columns.REFERENCE_NUMBER)
         .usingColumns(Columns.PAYMENT_METHOD, Columns.TOTAL_PAID, Columns.PAYMENT_PROVIDER_STATUS,
-            Columns.USER_ID, Columns.PAYMENT_MANDATE_PROVIDER_ID);
+            Columns.USER_ID, Columns.PAYMENT_MANDATE_PROVIDER_ID, Columns.TELEPHONE_PAYMENT);
     this.entrantPaymentRepository = entrantPaymentRepository;
   }
 
@@ -181,11 +185,12 @@ public class PaymentRepository {
    */
   private MapSqlParameterSource toSqlParametersForInsert(Payment payment) {
     return new MapSqlParameterSource()
-        .addValue("total_paid", payment.getTotalPaid())
-        .addValue("payment_provider_status", payment.getExternalPaymentStatus().name())
-        .addValue("payment_method", payment.getPaymentMethod().name())
-        .addValue("user_id", payment.getUserId())
-        .addValue("payment_provider_mandate_id", payment.getPaymentProviderMandateId());
+        .addValue(Columns.TOTAL_PAID, payment.getTotalPaid())
+        .addValue(Columns.TELEPHONE_PAYMENT, payment.isTelephonePayment())
+        .addValue(Columns.PAYMENT_PROVIDER_STATUS, payment.getExternalPaymentStatus().name())
+        .addValue(Columns.PAYMENT_METHOD, payment.getPaymentMethod().name())
+        .addValue(Columns.USER_ID, payment.getUserId())
+        .addValue(Columns.PAYMENT_MANDATE_PROVIDER_ID, payment.getPaymentProviderMandateId());
   }
 
   /**
@@ -197,6 +202,7 @@ public class PaymentRepository {
         + "payment.payment_id, "
         + "payment.payment_method, "
         + "payment.total_paid, "
+        + "payment.telephone_payment, "
         + "payment.payment_submitted_timestamp, "
         + "payment.payment_authorised_timestamp, "
         + "payment.payment_provider_status, "
@@ -224,7 +230,7 @@ public class PaymentRepository {
     private static final String ALL_PAYMENT_ATTRIBUTES =
         "payment_id, payment_method, payment_provider_id, central_reference_number, "
         + "total_paid, payment_provider_status, user_id, payment_provider_mandate_id,"
-        + " payment_submitted_timestamp, payment_authorised_timestamp ";
+        + " payment_submitted_timestamp, payment_authorised_timestamp, telephone_payment ";
 
     static final String SELECT_DANGLING_PAYMENTS =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE "
@@ -253,22 +259,23 @@ public class PaymentRepository {
 
     @Override
     public Payment mapRow(ResultSet resultSet, int i) throws SQLException {
-      String externalStatus = resultSet.getString("payment_provider_status");
-      String userId = resultSet.getString("user_id");
+      String externalStatus = resultSet.getString(Columns.PAYMENT_PROVIDER_STATUS);
+      String userId = resultSet.getString(Columns.USER_ID);
       return Payment.builder()
-          .id(UUID.fromString(resultSet.getString("payment_id")))
-          .paymentMethod(PaymentMethod.valueOf(resultSet.getString("payment_method")))
-          .externalId(resultSet.getString("payment_provider_id"))
-          .referenceNumber(resultSet.getLong("central_reference_number"))
+          .id(UUID.fromString(resultSet.getString(Columns.PAYMENT_ID)))
+          .paymentMethod(PaymentMethod.valueOf(resultSet.getString(Columns.PAYMENT_METHOD)))
+          .externalId(resultSet.getString(Columns.PAYMENT_PROVIDER_ID))
+          .referenceNumber(resultSet.getLong(Columns.REFERENCE_NUMBER))
           .externalPaymentStatus(
               externalStatus == null ? null : ExternalPaymentStatus.valueOf(externalStatus))
-          .totalPaid(resultSet.getInt("total_paid"))
+          .totalPaid(resultSet.getInt(Columns.TOTAL_PAID))
           .submittedTimestamp(
-              fromTimestampToLocalDateTime(resultSet, "payment_submitted_timestamp"))
+              fromTimestampToLocalDateTime(resultSet, Columns.PAYMENT_SUBMITTED_TIMESTAMP))
           .authorisedTimestamp(
-              fromTimestampToLocalDateTime(resultSet, "payment_authorised_timestamp"))
+              fromTimestampToLocalDateTime(resultSet, Columns.PAYMENT_AUTHORISED_TIMESTAMP))
           .userId(userId == null ? null : UUID.fromString(userId))
           .paymentProviderMandateId(resultSet.getString(Columns.PAYMENT_MANDATE_PROVIDER_ID))
+          .telephonePayment(resultSet.getBoolean(Columns.TELEPHONE_PAYMENT))
           .entrantPayments(entrantPayments)
           .build();
     }

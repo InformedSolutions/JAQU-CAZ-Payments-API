@@ -18,7 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <rest-assured.version>4.0.0</rest-assured.version>
-    <internal.libraries.version>2.9.5-SNAPSHOT</internal.libraries.version>
+    <internal.libraries.version>2.12.4-SNAPSHOT</internal.libraries.version>
     <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
@@ -29,6 +29,7 @@
       **/psr/Application.java,
       **/amazonaws/StreamLambdaHandler.java,
       **/amazonaws/CleanupDanglingPaymentsHandler.java,
+      **/amazonaws/CleanupOldAuditDataLambdaHandler.java,
       **/psr/repository/VccsRepository.java
       <!-- Remove with CAZ-2168 -->
       **/psr/repository/ExternalDirectDebitRepository.java
@@ -676,6 +677,7 @@
                 <exclude>**/amazonaws/StreamLambdaHandler.class</exclude>
                 <exclude>**/amazonaws/StreamLambdaHandler$LambdaContainerStats.class</exclude>
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
+                <exclude>**/amazonaws/CleanupOldAuditDataLambdaHandler.class</exclude>
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
                 <!-- exclude retrofit classes -->

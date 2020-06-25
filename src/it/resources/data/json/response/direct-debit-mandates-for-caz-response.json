@@ -2,15 +2,18 @@
   "mandates": [
     {
       "id": "i4nuo03jginfke5c3ebrvgig6a",
-      "status": "CREATED"
+      "status": "CREATED",
+      "created":"2020-04-30T08:08:31"
     },
     {
       "id": "k4nuo03jginfke5c3ebrvgig6a",
-      "status": "CREATED"
+      "status": "CREATED",
+      "created":"2020-04-30T08:08:31"
     },
     {
       "id": "j4nuo03jginfke5c3ebrvgig6a",
-      "status": "FAILED"
+      "status": "FAILED",
+      "created": null
     }
   ]
 }

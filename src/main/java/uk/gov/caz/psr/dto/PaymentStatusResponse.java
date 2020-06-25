@@ -58,7 +58,7 @@ public class PaymentStatusResponse {
                 ? paymentStatus.getPaymentProviderMandateId()
                 : null
         )
-        .telephonePayment(false)
+        .telephonePayment(paymentStatus.isTelephonePayment())
         .build();
   }
   
