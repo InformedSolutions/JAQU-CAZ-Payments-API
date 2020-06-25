@@ -211,6 +211,13 @@ swagger:
         user-id: Identifies the fleet's user who is making the payment
         user-email: Email address of user who is making the payment
         transactions: Collection of objects representing a single vehicle entrant against which the payment is made
+      registerDetails:
+        registerCompliant: should be set to true if vehicle features on Retrofit, or is “compliant” in GPW
+        registerExempt: should be set to true if vehicle features on MOD, or is “exempt” in GPW
+        registeredMOD: should be set to true if vehicle features in MOD
+        registeredGPW: should be set to true if vehicle features in GPW
+        registeredNTR: should be set to true if vehicle features in NTR
+        registeredRetrofit: should be set to true if vehicle features in Retrofit
 
   operations:
     accounts:
@@ -266,3 +273,6 @@ swagger:
         description: Returns vehicle registation details
       compliance:
         description: Returns vehicle compliance details
+    register:
+      details:
+        description: Return register details from vccs
