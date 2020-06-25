@@ -92,7 +92,7 @@ public class EntrantPaymentInfoConverter {
         .paymentMandateId(PaymentMethod.DIRECT_DEBIT.equals(paymentInfo.getPaymentMethod())
             ? paymentInfo.getPaymentProviderMandateId()
             : null)
-        .telephonePayment(false)
+        .telephonePayment(paymentInfo.isTelephonePayment())
         .build();
   }
 

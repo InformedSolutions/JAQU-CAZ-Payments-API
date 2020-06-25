@@ -2,14 +2,12 @@ package uk.gov.caz.psr.service.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -28,23 +26,17 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
-import uk.gov.caz.psr.repository.exception.CleanAirZoneNotFoundException;
-import uk.gov.caz.psr.service.CleanAirZoneService;
-import uk.gov.caz.psr.service.PaymentReceiptService;
-import uk.gov.caz.psr.util.CurrencyFormatter;
+import uk.gov.caz.psr.service.PaymentReceiptEmailCreator;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentReceiptSenderTest {
 
   private static final String ANY_VALID_EMAIL = "test@test.com";
   private static final int ANY_AMOUNT = 800;
-  private static final UUID ANY_CAZ_ID = UUID.randomUUID();
-  private static final String ANY_CAZ = "TEST_CAZ";
   private static final Long ANY_REFERENCE = 1001L;
   private static final String ANY_VRN = "VRN123";
   private static final String ANY_EXT_ID = "ext-id";
   private static final LocalDate ANY_TRAVEL_DATE = LocalDate.of(2019, 2, 6);
-  private static final String STRINGIFIED_TRAVEL_DATE = "06 February 2019";
   private static final Payment ANY_PAYMENT_WITHOUT_ENTRANT_PAYMENTS = Payment.builder()
       .id(UUID.randomUUID())
       .externalId(ANY_EXT_ID)
@@ -69,131 +61,65 @@ public class PaymentReceiptSenderTest {
       .build();
 
   @Mock
-  CurrencyFormatter currencyFormatter;
-
-  @Mock
   MessagingClient messagingClient;
 
   @Mock
-  PaymentReceiptService paymentReceiptService;
-
-  @Mock
-  CleanAirZoneService cleanAirZoneNameGetterService;
+  PaymentReceiptEmailCreator paymentReceiptEmailCreator;
 
   @InjectMocks
   PaymentReceiptSender paymentReceiptSender;
 
   @Test
-  public void shouldThrowIllegalArgumentExceptionWhenEmailIsNull() {
+  public void shouldNotThrowIllegalArgumentExceptionAndNotPublishSQSMessageWhenEmailIsNull() {
     // given
     PaymentStatusUpdatedEvent event = eventWithNullEmail();
-
-    // when
-    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
-
-    // then
-    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Email address cannot be null or empty");
-  }
-
-  @Test
-  public void shouldThrowIllegalArgumentExceptionWhenEmailIsEmpty() {
-    // given
-    PaymentStatusUpdatedEvent event = eventWithEmptyEmail();
-
-    // when
-    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
-
-    // then
-    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Email address cannot be null or empty");
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenPaymentDoesNotHaveAnyEntrantPayments() {
-    // given
-    SendEmailRequest sendEmailRequest = anyValidRequest();
-    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this,
-        ANY_PAYMENT_WITHOUT_ENTRANT_PAYMENTS);
-
-    // when
-    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
-
-    // then
-    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Vehicle entrant payments should not be empty");
-  }
-
-  @Test
-  void shouldHandleCorrectPaymentObject() throws JsonProcessingException {
-    // given
-    SendEmailRequest sendEmailRequest = anyValidRequest();
-    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
-    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
-    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, ANY_AMOUNT, ANY_CAZ,
-        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID,
-        Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
-        .thenReturn(sendEmailRequest);
-    when(cleanAirZoneNameGetterService.fetch(any())).thenReturn(ANY_CAZ);
 
     // when
     paymentReceiptSender.onPaymentStatusUpdated(event);
 
     // then
-    verify(messagingClient, times(1)).publishMessage(sendEmailRequest);
-  }
-
-  @Test
-  void shouldNotPropagateExceptionUponSerializationError() throws JsonProcessingException {
-    // given
-    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
-    double amount = 8.0;
-    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(amount);
-    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, amount, ANY_CAZ,
-        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID,
-        Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
-        .thenThrow(new JsonMappingException(null, "test exception"));
-
-    // when
-    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
-
-    // then
-    assertThat(throwable).isNull();
     verify(messagingClient, never()).publishMessage(any());
   }
 
   @Test
-  void shouldNotPropagateVccsCallExceptionError() throws JsonProcessingException {
+  public void shouldNotThrowIllegalArgumentExceptionAndNotPublishSQSMessageWhenEmailIsEmpty() {
     // given
-    SendEmailRequest sendEmailRequest = anyValidRequest();
-    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
-    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn((double) ANY_AMOUNT);
-    when(cleanAirZoneNameGetterService.fetch(any())).thenThrow(new CleanAirZoneNotFoundException(ANY_CAZ_ID));
+    PaymentStatusUpdatedEvent event = eventWithEmptyEmail();
 
     // when
-    Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
+    paymentReceiptSender.onPaymentStatusUpdated(event);
 
     // then
-    assertThat(throwable).isNull();
     verify(messagingClient, never()).publishMessage(any());
   }
 
   @Test
-  void shouldNotPropagateExceptionUponMessagePublicationError() throws JsonProcessingException {
+  void shouldNotPropagateExceptionUponMessagePublicationError() {
     // given
     PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
     SendEmailRequest sendEmailRequest = anyValidRequest();
-    when(currencyFormatter.parsePennies(ANY_AMOUNT)).thenReturn(8.0);
-    when(paymentReceiptService.buildSendEmailRequest(ANY_VALID_EMAIL, 8.0, ANY_CAZ,
-        ANY_REFERENCE.toString(), ANY_VRN, ANY_EXT_ID,
-        Collections.singletonList(STRINGIFIED_TRAVEL_DATE)))
-        .thenReturn(sendEmailRequest);
+    when(paymentReceiptEmailCreator.createSendEmailRequest(ANY_PAYMENT)).thenReturn(sendEmailRequest);
+    doThrow(new RuntimeException("something")).when(messagingClient).publishMessage(sendEmailRequest);
 
     // when
     Throwable throwable = catchThrowable(() -> paymentReceiptSender.onPaymentStatusUpdated(event));
 
     // then
     assertThat(throwable).isNull();
+  }
+
+  @Test
+  void shouldPublishMessage() {
+    // given
+    PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, ANY_PAYMENT);
+    SendEmailRequest sendEmailRequest = anyValidRequest();
+    when(paymentReceiptEmailCreator.createSendEmailRequest(ANY_PAYMENT)).thenReturn(sendEmailRequest);
+
+    // when
+    paymentReceiptSender.onPaymentStatusUpdated(event);
+
+    // then
+    verify(messagingClient).publishMessage(sendEmailRequest);
   }
 
   private SendEmailRequest anyValidRequest() {

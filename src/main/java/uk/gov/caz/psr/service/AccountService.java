@@ -16,12 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
+import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
@@ -54,14 +55,14 @@ public class AccountService {
         .getAccountVehicleVrnsSync(accountId, pageNumber, pageSize);
     if (accountsResponse.isSuccessful()) {
       return accountsResponse.body();
-    } else {
-      switch (accountsResponse.code()) {
-        case 404:
-          throw new AccountNotFoundException();
-        default:
-          throw new ExternalServiceCallException();
-      }
     }
+    if (accountsResponse.code() == 404) {
+      throw new AccountNotFoundException();
+    }
+    if (accountsResponse.code() == 400) {
+      throw new InvalidRequestPayloadException(accountsResponse.message());
+    }
+    throw new ExternalServiceCallException();
   }
 
   /**
@@ -100,12 +101,12 @@ public class AccountService {
         results.addAll(chargeableVrns);
       }
     }
-    
+
     orderResultsAccordingToDirection(results, direction);
     return results;
   }
 
-  private void orderResultsAccordingToDirection(List<VrnWithTariffAndEntrancesPaid> results, 
+  private void orderResultsAccordingToDirection(List<VrnWithTariffAndEntrancesPaid> results,
       String direction) {
     if (StringUtils.hasText(direction) && direction.equals("previous")) {
       results.sort(Comparator.comparing(VrnWithTariffAndEntrancesPaid::getVrn).reversed());
@@ -161,7 +162,7 @@ public class AccountService {
 
   private List<VrnWithTariffAndEntrancesPaid> getChargeableVrnsFromVcc(List<String> accountVrns,
       UUID cleanAirZoneId, int pageSize) {
-    List<VrnWithTariffAndEntrancesPaid> results = new ArrayList<VrnWithTariffAndEntrancesPaid>();
+    List<VrnWithTariffAndEntrancesPaid> results = new ArrayList<>();
     // split accountVrns into chunks
     List<List<String>> accountVrnChunks = Lists.partition(accountVrns, pageSize);
 
@@ -171,7 +172,7 @@ public class AccountService {
           .retrieveVehicleCompliance(chunk, cleanAirZoneId.toString());
       List<VrnWithTariffAndEntrancesPaid> chargeableVrns = complianceOutcomes
           .stream()
-          .filter(complianceOutcome -> vrnIsChargeable(complianceOutcome))
+          .filter(this::vrnIsChargeable)
           .map(complianceOutcome -> ChargeableAccountVehiclesResult
               .buildVrnWithTariffAndEntrancesPaidFrom(complianceOutcome, cleanAirZoneId))
           .collect(Collectors.toList());
@@ -193,12 +194,12 @@ public class AccountService {
     Response<List<String>> accountsResponse = accountsRepository
         .getAccountVehicleVrnsByCursorSync(accountId, direction, pageSize, vrnCursor);
     if (accountsResponse.isSuccessful()) {
-      return accountsResponse.body();      
+      return accountsResponse.body();
     } else {
       if (accountsResponse.code() == 404) {
         throw new AccountNotFoundException();
       } else {
-        throw new ExternalServiceCallException();        
+        throw new ExternalServiceCallException();
       }
     }
   }
@@ -217,9 +218,9 @@ public class AccountService {
    * @return a list of comma delimited clean air zones IDs.
    */
   public String getZonesQueryStringEquivalent() {
-    Response<CleanAirZonesResponse> zones = vccRepository.findCleanAirZonesSync();
+    Response<CleanAirZonesDto> zones = vccRepository.findCleanAirZonesSync();
     List<CleanAirZoneDto> cleanAirZoneDtos = zones.body().getCleanAirZones();
-    List<String> mappedZoneIds = new ArrayList<String>();
+    List<String> mappedZoneIds = new ArrayList<>();
 
     for (CleanAirZoneDto dto : cleanAirZoneDtos) {
       mappedZoneIds.add(dto.getCleanAirZoneId().toString());
@@ -227,5 +228,4 @@ public class AccountService {
 
     return String.join(",", mappedZoneIds);
   }
-
 }

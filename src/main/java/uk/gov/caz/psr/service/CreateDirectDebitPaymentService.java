@@ -40,8 +40,10 @@ public class CreateDirectDebitPaymentService {
               paymentWithInternalId.getReferenceNumber().toString(),
               payment.getCleanAirZoneId());
 
-      return directDebitPaymentStatusUpdater
-          .updateWithDirectDebitPaymentDetails(paymentWithInternalId, directDebitPayment);
+      Payment paymentWithExternalId = directDebitPaymentStatusUpdater
+          .updateWithDirectDebitPaymentDetails(paymentWithInternalId, directDebitPayment,
+              payment.getEmailAddress());
+      return paymentWithExternalId;
     } finally {
       log.info("Create DirectPayment process: finish");
     }

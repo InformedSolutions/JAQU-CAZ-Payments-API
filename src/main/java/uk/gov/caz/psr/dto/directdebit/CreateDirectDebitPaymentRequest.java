@@ -10,8 +10,10 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import lombok.Builder;
+import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.internal.constraintvalidators.hv.EmailValidator;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
@@ -23,6 +25,7 @@ import uk.gov.caz.psr.util.DuplicatedEntrantsInTransactionsValidator;
 @Slf4j
 public class CreateDirectDebitPaymentRequest {
 
+  private static final EmailValidator emailValidator = new EmailValidator();
   private static final Map<Function<CreateDirectDebitPaymentRequest, Boolean>, String> validators =
       ImmutableMap.<Function<CreateDirectDebitPaymentRequest, Boolean>, String>builder()
           .put(cleanAirZoneIdNotNull(), "'cleanAirZoneId' cannot be null")
@@ -37,6 +40,8 @@ public class CreateDirectDebitPaymentRequest {
           .put(travelDateNotNull(), "'travelDate' in all transactions cannot be null")
           .put(tariffCodeNotEmpty(), "'tariffCode' in all transactions cannot be null or empty")
           .put(containsNoDuplicatedEntrants(), "Request cannot have duplicated travel date(s)")
+          .put(emailNotNullOrEmpty(), "'userEmail' cannot be null or empty")
+          .put(emailIsValid(), "'userEmail' is not valid.")
           .build();
 
   @ApiModelProperty(
@@ -52,9 +57,18 @@ public class CreateDirectDebitPaymentRequest {
   @ApiModelProperty(value = "${swagger.model.descriptions.create-direct-debit-payment.user-id}")
   String userId;
 
+  @ApiModelProperty(value = "${swagger.model.descriptions.create-direct-debit-payment.user-email}")
+  String userEmail;
+
   @ApiModelProperty(
       value = "${swagger.model.descriptions.create-direct-debit-payment.transactions}")
   List<Transaction> transactions;
+
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
+  @ToString.Include(name = "userEmail")
+  private String maskedUserEmail() {
+    return uk.gov.caz.psr.util.Strings.mask(userEmail);
+  }
 
   /**
    * Public method that validates given object and throws exceptions if validation doesn't pass.
@@ -97,6 +111,21 @@ public class CreateDirectDebitPaymentRequest {
   private static Function<CreateDirectDebitPaymentRequest, Boolean> mandateIdNotNullOrEmpty() {
     return request -> !Strings.isNullOrEmpty(request.getMandateId());
   }
+
+  /**
+   * Returns a lambda that verifies if 'user email' is not null or empty.
+   */
+  private static Function<CreateDirectDebitPaymentRequest, Boolean> emailNotNullOrEmpty() {
+    return request -> !Strings.isNullOrEmpty(request.getUserEmail());
+  }
+
+  /**
+   * Returns a lambda that verifies if 'email' is valid Email Address.
+   */
+  private static Function<CreateDirectDebitPaymentRequest, Boolean> emailIsValid() {
+    return request -> emailValidator.isValid(request.getUserEmail(), null);
+  }
+
 
   /**
    * Returns a lambda that verifies if 'transactions' are not empty.

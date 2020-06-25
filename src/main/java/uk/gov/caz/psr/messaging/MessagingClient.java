@@ -5,6 +5,7 @@ import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,7 +43,8 @@ public class MessagingClient {
    * @param message the message to be published
    * @throws JsonProcessingException thrown if the message is unable to be processed into a string
    */
-  public void publishMessage(SendEmailRequest message) throws JsonProcessingException {
+  @SneakyThrows
+  public void publishMessage(SendEmailRequest message) {
     log.info("Publishing message with reference number: {}", message.getReference());
     SendMessageRequest sendMessageRequest = new SendMessageRequest();
     UUID messageDeduplicationId = UUID.randomUUID();

@@ -19,6 +19,7 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.correlationid.MdcCorrelationIdInjector;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
+import uk.gov.caz.psr.repository.WhitelistRepository;
 
 
 /**
@@ -40,11 +41,7 @@ public class AsyncRestConfiguration {
       @Value("${services.vehicle-compliance-checker.root-url}") String vccsApiEndpoint,
       @Value("${services.read-timeout-seconds}") Integer readTimeoutSeconds,
       @Value("${services.connection-timeout-seconds}") Integer connectTimeoutSeconds) {
-    return new Retrofit.Builder()
-        .baseUrl(requireNonNull(HttpUrl.parse(formatUrl(vccsApiEndpoint))))
-        .addConverterFactory(JacksonConverterFactory.create(objectMapper))
-        .client(buildHttpClient(readTimeoutSeconds, connectTimeoutSeconds))
-        .build()
+    return buildRetrofit(objectMapper, vccsApiEndpoint, readTimeoutSeconds, connectTimeoutSeconds)
         .create(VccsRepository.class);
   }
 
@@ -58,12 +55,33 @@ public class AsyncRestConfiguration {
       @Value("${services.accounts.root-url}") String accountsApiEndpoint,
       @Value("${services.read-timeout-seconds}") Integer readTimeoutSeconds,
       @Value("${services.connection-timeout-seconds}") Integer connectTimeoutSeconds) {
+    return buildRetrofit(objectMapper, accountsApiEndpoint, readTimeoutSeconds,
+        connectTimeoutSeconds)
+        .create(AccountsRepository.class);
+  }
+
+  /**
+   * Exposes {@link WhitelistRepository} as a spring bean.
+   */
+  @Bean
+  public WhitelistRepository whitelistRepository(ObjectMapper objectMapper,
+      @Value("${services.whitelist.root-url}") String whitelistRootUrl,
+      @Value("${services.read-timeout-seconds}") Integer readTimeoutSeconds,
+      @Value("${services.connection-timeout-seconds}") Integer connectTimeoutSeconds) {
+    return buildRetrofit(objectMapper, whitelistRootUrl, readTimeoutSeconds, connectTimeoutSeconds)
+        .create(WhitelistRepository.class);
+  }
+
+  /**
+   * Creates {@link Retrofit} based on the passed params with the Jackson converter.
+   */
+  private Retrofit buildRetrofit(ObjectMapper objectMapper, String rootUrl,
+      int readTimeoutSeconds, int connectTimeoutSeconds) {
     return new Retrofit.Builder()
-        .baseUrl(requireNonNull(HttpUrl.parse(formatUrl(accountsApiEndpoint))))
+        .baseUrl(requireNonNull(HttpUrl.parse(formatUrl(rootUrl))))
         .addConverterFactory(JacksonConverterFactory.create(objectMapper))
         .client(buildHttpClient(readTimeoutSeconds, connectTimeoutSeconds))
-        .build()
-        .create(AccountsRepository.class);
+        .build();
   }
 
   /**
