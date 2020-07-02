@@ -85,30 +85,30 @@ steps:
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
 
-  # Integration tests
-  - name: integration test
-    image: payments-api-base
-    pull: never
-    volumes:
-      - name: package_directory
-        path: /drone/src/target
-      - name: m2_repo
-        path: /root/.m2
-    environment:
-      BUILD_ID: ${DRONE_BUILD_NUMBER}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
-      JAQU_NEXUS_URL:
-        from_secret: jaqu_lower_nexus_url
-      JAQU_NEXUS_USER:
-        from_secret: jaqu_lower_nexus_username
-      JAQU_NEXUS_PASSWORD:
-        from_secret: jaqu_lower_nexus_password
-      AWS_SQS_URL: localstack:4576
-      AWS_SECRETSMANAGER_URL: localstack:4584
-      REDIS_URL: redis
-      REDIS_CUSTOM_PORT: 6379
-    commands:
-      - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
+  # # Integration tests
+  # - name: integration test
+  #   image: payments-api-base
+  #   pull: never
+  #   volumes:
+  #     - name: package_directory
+  #       path: /drone/src/target
+  #     - name: m2_repo
+  #       path: /root/.m2
+  #   environment:
+  #     BUILD_ID: ${DRONE_BUILD_NUMBER}
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle_compliance
+  #     JAQU_NEXUS_URL:
+  #       from_secret: jaqu_lower_nexus_url
+  #     JAQU_NEXUS_USER:
+  #       from_secret: jaqu_lower_nexus_username
+  #     JAQU_NEXUS_PASSWORD:
+  #       from_secret: jaqu_lower_nexus_password
+  #     AWS_SQS_URL: localstack:4576
+  #     AWS_SECRETSMANAGER_URL: localstack:4584
+  #     REDIS_URL: redis
+  #     REDIS_CUSTOM_PORT: 6379
+  #   commands:
+  #     - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
 
   # Scan with sonar
   - name: sonar scan
