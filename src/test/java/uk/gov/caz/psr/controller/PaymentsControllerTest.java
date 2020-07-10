@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -38,10 +39,12 @@ import org.springframework.test.web.servlet.ResultActions;
 import uk.gov.caz.correlationid.Configuration;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
@@ -65,6 +68,12 @@ class PaymentsControllerTest {
   @MockBean
   private GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
 
+  @MockBean
+  private CleanAirZoneService cleanAirZoneService;
+
+  @MockBean
+  private VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
+  
   @Autowired
   private MockMvc mockMvc;
 
@@ -75,6 +84,8 @@ class PaymentsControllerTest {
   public void resetMocks() {
     Mockito.reset(initiatePaymentService);
     Mockito.reset(getPaidEntrantPaymentsService);
+    Mockito.reset(cleanAirZoneService);
+    Mockito.reset(vehicleComplianceRetrievalService);
   }
 
   private static final Transaction ANY_TRANSACTION =
@@ -82,10 +93,27 @@ class PaymentsControllerTest {
           .travelDate(LocalDate.of(2019, 1, 1)).vrn("some-vrn").build();
 
   private static final String ANY_CORRELATION_ID = UUID.randomUUID().toString();
-
+  private static final String ANY_CLEAN_AIR_ZONE_ID = UUID.randomUUID().toString();
+  
   private static final String GET_PAID_PATH = PaymentsController.BASE_PATH + "/"
       + PaymentsController.GET_PAID_VEHICLE_ENTRANTS;
 
+  private static final String GET_CLEAN_AIR_ZONES_PATH =
+      PaymentsController.BASE_PATH + "/"
+          + PaymentsController.GET_CLEAN_AIR_ZONES;
+
+  private static final String GET_COMPLIANCE_PATH =
+      PaymentsController.BASE_PATH + "/"
+          + PaymentsController.GET_COMPLIANCE;
+  
+  private static final String GET_VEHICLE_DETAILS_PATH =
+      PaymentsController.BASE_PATH + "/"
+          + PaymentsController.GET_VEHICLE_DETAILS;
+  
+  private static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH =
+      PaymentsController.BASE_PATH + "/"
+          + PaymentsController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE;
+  
   @Nested
   class InitiatePayment {
 
