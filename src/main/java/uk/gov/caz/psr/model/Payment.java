@@ -96,6 +96,11 @@ public class Payment {
   String paymentProviderMandateId;
 
   /**
+   * Flag indicating whether this is an offline (true) or online payment (false).
+   */
+  boolean telephonePayment;
+
+  /**
    * An overridden lombok's builder.
    */
   public static class PaymentBuilder {
@@ -116,7 +121,7 @@ public class Payment {
 
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
           externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl,
-          emailAddress, cleanAirZoneId, userId, paymentProviderMandateId);
+          emailAddress, cleanAirZoneId, userId, paymentProviderMandateId, telephonePayment);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

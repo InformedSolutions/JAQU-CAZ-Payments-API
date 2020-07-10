@@ -12,6 +12,7 @@ public class PaymentStatusResponseTest {
 
   private final String ANY_EXTERNAL_ID = "some-external-id";
   private final String ANY_CASE_REFERENCE = "some-case-reference";
+  private final boolean ANY_TELEPHONE_PAYMENT = true;
 
   @Test
   public void shouldBuildCompletePaymentStatusFromPaymentStatus() {
@@ -22,6 +23,7 @@ public class PaymentStatusResponseTest {
         .externalId(ANY_EXTERNAL_ID)
         .caseReference(ANY_CASE_REFERENCE)
         .paymentProviderMandateId(ANY_EXTERNAL_ID)
+        .telephonePayment(ANY_TELEPHONE_PAYMENT)
         .build();
 
     // when
@@ -33,6 +35,8 @@ public class PaymentStatusResponseTest {
     assertThat(result.getPaymentStatus()).isEqualTo(ChargeSettlementPaymentStatus.PAID);
     assertThat(result.getPaymentMethod()).isEqualTo(ChargeSettlementPaymentMethod.DIRECT_DEBIT);
     assertThat(result.getPaymentMandateId()).isEqualTo(ANY_EXTERNAL_ID);
+    assertThat(result.getPaymentMandateId()).isEqualTo(ANY_EXTERNAL_ID);
+    assertThat(result.isTelephonePayment()).isEqualTo(ANY_TELEPHONE_PAYMENT);
   }
 
   @Test

@@ -11,9 +11,11 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import lombok.Builder;
+import lombok.ToString;
 import lombok.Value;
 import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.util.Strings;
 
 /**
  * A value object which is used as a request for updating payment status.
@@ -31,6 +33,12 @@ public class PaymentStatusUpdateRequest {
   @NotEmpty
   @Valid
   List<PaymentStatusUpdateDetails> statusUpdates;
+
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
+  @ToString.Include(name = "vrn")
+  private String maskedVrn() {
+    return Strings.mask(normalizeVrn(vrn));
+  }
 
   /**
    * Maps this value object to list of the models.

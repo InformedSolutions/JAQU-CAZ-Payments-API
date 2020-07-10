@@ -68,9 +68,8 @@ public class EntrantPaymentMatchRepository {
    * equal to {@code entrantPaymentId}.
    */
   public void updateLatestToFalseFor(UUID entrantPaymentId) {
-    int cnt = jdbcTemplate.update(UPDATE_LATEST_TO_FALSE_SQL, preparedStatementSetter -> {
-      preparedStatementSetter.setObject(1, entrantPaymentId);
-    });
+    int cnt = jdbcTemplate.update(UPDATE_LATEST_TO_FALSE_SQL,
+        preparedStatementSetter -> preparedStatementSetter.setObject(1, entrantPaymentId));
     log.info("For {} row(s) in T_CLEAN_AIR_ZONE_ENTRANT_PAYMENT_MATCH table 'latest' has been set "
         + "to false", cnt);
   }

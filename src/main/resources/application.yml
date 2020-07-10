@@ -19,6 +19,8 @@ spring:
     password: postgres
     hikari:
       maximum-pool-size: 2
+      connection-timeout: 5000 # in ms
+      max-lifetime: 0 # always keep the connection in the pool unless it has been closed
   profiles:
     active: dev
 
@@ -38,6 +40,8 @@ services:
     new-queue-name: notify-gateway_new_dev.fifo
     template-id: 36c3e259-e03c-415e-bf62-c7fbdb9d49a5
     account-payment-template-id: 9580a96f-ae7e-45ab-8fcc-7524e5ac9290
+    offline-payment-id: 0bc9d95a-7d57-49e4-af04-53efbfd2a518
+    direct-debit-payment-template-id: 9580a96f-ae7e-45ab-8fcc-7524e5ac9290
 
 redis:
   endpoint: localhost
@@ -163,6 +167,7 @@ swagger:
         return-url: Front end URL used as return URL after payment
         transactions: Collection of objects representing a single vehicle entrant against which the payment is made
         user-id: Identifies the fleet's account which is making the payment
+        telephone-payment: Flag indicating whether this is an offline (true) or online payment (false).
       payments-get-status:
         clean-air-zone-name: Clean Air Zone name
       paid-payments-request:
@@ -188,6 +193,7 @@ swagger:
         cleanAirZoneId: System ID of the clean air zone
         name: Name of the Clean Air Zone
         boundaryUrl: URL provided by zone operators, boundary
+        exemptionUrl: URL provided by zone operators, exemption
       vehicle:
         complianceResult:
           cleanAirZoneId: System ID of the clean air zone
@@ -202,7 +208,8 @@ swagger:
         clean-zone-id: Clean Air Zone identifier
         mandate-id: Identifies the direct debit mandate in payment provider.
         account-id: Identifies the fleet's account which is creating direct debit mandate
-        user-id: Identifies the fleet's user which is making the payment
+        user-id: Identifies the fleet's user who is making the payment
+        user-email: Email address of user who is making the payment
         transactions: Collection of objects representing a single vehicle entrant against which the payment is made
 
   operations:

@@ -31,6 +31,7 @@ public class InitiatePaymentRequest {
           .put(chargesNotNull(), "'charge' in all transactions cannot be null")
           .put(positiveCharge(), "'charge' in all transactions must be positive")
           .put(userIdShouldBeUuidIfPresent(), "'userId' must be a valid UUID")
+          .put(telephonePaymentNotNull(), "'telephonePayment' cannot be null")
           .put(travelDateNotNull(), "'travelDate' in all transactions cannot be null")
           .put(tariffCodeNotEmpty(), "'tariffCode' in all transactions cannot be null or empty")
           .put(containsNoDuplicatedEntrants(), "Request cannot have duplicated travel date(s)")
@@ -44,6 +45,9 @@ public class InitiatePaymentRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.user-id}")
   String userId;
+
+  @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.telephone-payment}")
+  Boolean telephonePayment;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.transactions}")
   List<Transaction> transactions;
@@ -98,6 +102,13 @@ public class InitiatePaymentRequest {
   private static Function<InitiatePaymentRequest, Boolean> chargesNotNull() {
     return request -> allTransactionsMatch(request,
         transaction -> Objects.nonNull(transaction.getCharge()));
+  }
+
+  /**
+   * Returns a lambda that verifies if 'telephonePayment' is not null.
+   */
+  private static Function<InitiatePaymentRequest, Boolean> telephonePaymentNotNull() {
+    return request -> Objects.nonNull(request.getTelephonePayment());
   }
 
   /**

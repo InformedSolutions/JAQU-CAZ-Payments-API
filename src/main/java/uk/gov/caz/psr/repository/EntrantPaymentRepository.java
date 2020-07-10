@@ -66,10 +66,9 @@ public class EntrantPaymentRepository {
         + "ep." + EntrantPaymentColumns.COL_CASE_REFERENCE + " "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment ep ";
   }
-  
-  private static String selectCount() {
-    return "SELECT COUNT(*) FROM caz_payment.t_clean_air_zone_entrant_payment";
-  }
+
+  private static final String SELECT_COUNT =
+      "SELECT COUNT(*) FROM caz_payment.t_clean_air_zone_entrant_payment";
 
   private static final String SELECT_BY_PAYMENT_ID_SQL =
       selectAllColumns()
@@ -93,7 +92,7 @@ public class EntrantPaymentRepository {
           + EntrantPaymentColumns.COL_TRAVEL_DATE + " = ANY (?)";
 
   private static final String SELECT_BY_VRN_CAZ_SQL =
-      selectCount() + " WHERE "
+      SELECT_COUNT + " WHERE "
           + EntrantPaymentColumns.COL_CLEAN_AIR_ZONE_ID + " = ? AND "
           + EntrantPaymentColumns.COL_VRN + " = ?";
 
@@ -144,17 +143,16 @@ public class EntrantPaymentRepository {
    *
    * @param entrantPayments A list of {@link EntrantPayment} instances.
    * @return A list of {@link EntrantPayment} with their internal identifiers set.
-   * @throws NullPointerException if {@code vehicleEntrantPayments} is null.
+   * @throws NullPointerException     if {@code vehicleEntrantPayments} is null.
    * @throws IllegalArgumentException if {@code vehicleEntrantPayments} is empty.
-   * @throws IllegalArgumentException if {@code vehicleEntrantPayments} contains at least one
-   *     object whose payment id is null.
+   * @throws IllegalArgumentException if {@code vehicleEntrantPayments} contains at least one object
+   *                                  whose payment id is null.
    */
   @Transactional
   public List<EntrantPayment> insert(List<EntrantPayment> entrantPayments) {
     Preconditions.checkNotNull(entrantPayments, "Entrant payments cannot be null");
     Preconditions.checkArgument(!entrantPayments.isEmpty(), "Entrant payments "
         + "cannot be empty");
-    // TODO check if payments assigned??
 
     List<EntrantPayment> result = new ArrayList<>(entrantPayments.size());
     for (EntrantPayment entrantPayment : entrantPayments) {
@@ -169,9 +167,8 @@ public class EntrantPaymentRepository {
    *
    * @param entrantPayment An instance of {@link EntrantPayment}.
    * @return An instance of {@link EntrantPayment} with its internal identifiers set.
-   * @throws NullPointerException if {@code entrantPayment} is null.
-   * @throws IllegalArgumentException if {@code entrantPayment} has a non-null entrant payment
-   *     id.
+   * @throws NullPointerException     if {@code entrantPayment} is null.
+   * @throws IllegalArgumentException if {@code entrantPayment} has a non-null entrant payment id.
    */
   public EntrantPayment insert(EntrantPayment entrantPayment) {
     Preconditions.checkNotNull(entrantPayment, "Entrant payment cannot be null");
@@ -266,11 +263,11 @@ public class EntrantPaymentRepository {
    * @param vrn provided VRN number
    * @param cazEntryDate Date of entry to provided CAZ
    * @return list of found {@link EntrantPayment}.
-   * @throws NullPointerException if {@code cleanZoneId} is null.
-   * @throws NullPointerException if {@code cazEntryDate} is null.
-   * @throws IllegalArgumentException if {@code vrn} is empty.
+   * @throws NullPointerException                         if {@code cleanZoneId} is null.
+   * @throws NullPointerException                         if {@code cazEntryDate} is null.
+   * @throws IllegalArgumentException                     if {@code vrn} is empty.
    * @throws NotUniqueVehicleEntrantPaymentFoundException if method found more than one
-   *     VehicleEntrantPayment.
+   *                                                      VehicleEntrantPayment.
    */
   public Optional<EntrantPayment> findOneByVrnAndCazEntryDate(UUID cleanZoneId,
       String vrn, LocalDate cazEntryDate) {
@@ -311,7 +308,7 @@ public class EntrantPaymentRepository {
 
     return jdbcTemplate.queryForObject(
         SELECT_BY_VRN_CAZ_SQL,
-        new Object[] {cleanAirZoneId, vrn},
+        new Object[]{cleanAirZoneId, vrn},
         Integer.class
     );
   }
@@ -329,7 +326,7 @@ public class EntrantPaymentRepository {
         "cazEntryDates cannot be null or empty");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
 
-    List<EntrantPayment> results = jdbcTemplate.query(connection -> {
+    return jdbcTemplate.query(connection -> {
       PreparedStatement preparedStatement = connection.prepareStatement(
           SELECT_BY_VRN_CAZ_ENTRY_DATES_SQL);
       preparedStatement.setObject(1, cleanZoneId);
@@ -338,8 +335,6 @@ public class EntrantPaymentRepository {
           connection.createArrayOf("date", cazEntryDates.toArray()));
       return preparedStatement;
     }, ROW_MAPPER);
-
-    return results;
   }
 
   /**
@@ -359,7 +354,7 @@ public class EntrantPaymentRepository {
     Preconditions.checkNotNull(endDate, "endDate cannot be null");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(vrn), "VRN cannot be empty");
 
-    List<EntrantPayment> entrantPayments = jdbcTemplate.query(
+    return jdbcTemplate.query(
         FIND_ALL_PAID_BY_VRN_DATE_RANGE_AND_CAZ_ID,
         preparedStatementSetter -> {
           preparedStatementSetter.setObject(1, cleanAirZoneId);
@@ -367,8 +362,6 @@ public class EntrantPaymentRepository {
           preparedStatementSetter.setObject(3, startDate);
           preparedStatementSetter.setObject(4, endDate);
         }, ROW_MAPPER);
-
-    return entrantPayments;
   }
 
   /**

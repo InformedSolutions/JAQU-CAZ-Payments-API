@@ -33,6 +33,7 @@ public class DirectDebitPaymentRequestToModelConverter {
             ? UUID.fromString(request.getUserId())
             : null)
         .paymentProviderMandateId(request.getMandateId())
+        .emailAddress(request.getUserEmail())
         .build();
   }
 
