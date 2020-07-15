@@ -24,6 +24,7 @@ public class CleanAirZoneServiceTest {
 
   private static final UUID ANY_VALID_CAZ_ID = UUID.randomUUID();
   private static final String ANY_VALID_CAZ_NAME = "CAZ_NAME";
+  private static final String ANY_VALID_OPERATOR_NAME = "OPERATOR_NAME";
 
   @InjectMocks
   private CleanAirZoneService cleanAirZoneService;
@@ -85,6 +86,8 @@ public class CleanAirZoneServiceTest {
     // then
     assertThat(result).isNotNull();
     assertThat(result.getBody().getCleanAirZones().get(0).getName()).isEqualTo(ANY_VALID_CAZ_NAME);
+    assertThat(result.getBody().getCleanAirZones().get(0).getOperatorName())
+        .isEqualTo(ANY_VALID_OPERATOR_NAME);
   }
 
   private void mockRepositoryResultForCleanAirZones() {
@@ -97,6 +100,7 @@ public class CleanAirZoneServiceTest {
             CleanAirZoneDto.builder()
                 .cleanAirZoneId(ANY_VALID_CAZ_ID)
                 .name(ANY_VALID_CAZ_NAME)
+                .operatorName(ANY_VALID_OPERATOR_NAME)
                 .activeChargeStartDate("2018-10-18")
                 .build()))
         .build());

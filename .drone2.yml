@@ -650,7 +650,7 @@ steps:
         from_secret: jaqu_lower_nexus_username
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
-      
+
   # Package
   - name: package
     image: payments-api-base
