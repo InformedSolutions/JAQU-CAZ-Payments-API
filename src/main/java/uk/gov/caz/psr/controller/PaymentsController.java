@@ -15,13 +15,16 @@ import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.dto.PaidPaymentsResponse;
+import uk.gov.caz.psr.dto.PaymentDetailsResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
+import uk.gov.caz.psr.service.PaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
+import uk.gov.caz.psr.util.PaymentDetailsConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 
 @RestController
@@ -35,9 +38,14 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   @VisibleForTesting
   public static final String GET_PAID_VEHICLE_ENTRANTS = "paid";
 
+  @VisibleForTesting
+  public static final String GET_PAYMENT_DETAILS = "{payment_id}";
+
   private final InitiatePaymentService initiatePaymentService;
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
+  private final PaymentService paymentService;
+  private final PaymentDetailsConverter paymentDetailsConverter;
 
   @Override
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(
@@ -67,10 +75,18 @@ public class PaymentsController implements PaymentsControllerApiSpec {
     paymentsRequest.validate();
 
     Map<String, List<EntrantPayment>> results = getPaidEntrantPaymentsService
-        .getResults(new HashSet<String>(paymentsRequest.getVrns()),
+        .getResults(new HashSet<>(paymentsRequest.getVrns()),
             paymentsRequest.getStartDate(), paymentsRequest.getEndDate(),
             paymentsRequest.getCleanAirZoneId());
 
     return ResponseEntity.ok(PaidPaymentsResponse.from(results));
+  }
+
+  @Override
+  public ResponseEntity<PaymentDetailsResponse> getPaymentDetails(UUID paymentId) {
+    return paymentService.getPayment(paymentId)
+        .map(paymentDetailsConverter::toPaymentDetailsResponse)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.notFound().build());
   }
 }

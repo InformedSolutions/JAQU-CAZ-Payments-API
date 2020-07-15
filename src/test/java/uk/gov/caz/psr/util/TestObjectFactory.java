@@ -1,6 +1,9 @@
 package uk.gov.caz.psr.util;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -172,6 +175,20 @@ public class TestObjectFactory {
           .paymentMethod(PaymentMethod.DIRECT_DEBIT)
           .paymentProviderMandateId("exampleMandateId")
           .totalPaid(request.getTransactions().stream().mapToInt(Transaction::getCharge).sum())
+          .build();
+    }
+
+    public static Payment preparePayment(UUID paymentId) {
+      return Payment.builder()
+          .id(paymentId)
+          .referenceNumber(1500L)
+          .externalId("123")
+          .externalPaymentStatus(ExternalPaymentStatus.CREATED)
+          .paymentMethod(PaymentMethod.DIRECT_DEBIT)
+          .submittedTimestamp(LocalDateTime.now())
+          .telephonePayment(false)
+          .totalPaid(40)
+          .entrantPayments(newArrayList(EntrantPayments.anyPaid()))
           .build();
     }
 

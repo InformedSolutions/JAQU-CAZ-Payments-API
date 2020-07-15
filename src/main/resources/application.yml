@@ -114,6 +114,35 @@ swagger:
         payment-method: Method of the payment
         payment-mandate-id: Direct debit mandate identifier
         telephone-payment: Indicates whether payment was done over phone
+      payment-details:
+        central-payment-reference: The central reference for the payment
+        payment-provider-id: GOV.UK Pay unique payment identifier
+        total-paid: >-
+          The total GBP value of the payment linked to the paymentProviderId.
+          If the motorist paid in advance to travel in to the CAZ on multiple dates, then the payment amount will be a multiple
+          of the daily charge due (e.g. if the daily charge for a car entering a CAZ is £8.00, but the motorist paid in advance
+          for 3 days of travel, then the chargePaid would be equal to £24.00).
+          Expressed in pounds and pence format to 2 decimal places.
+        payment-date: ISO 8601 formatted date string that specifies the date on which the payment was made via GOV.UK Pay
+        payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
+        line-items: >-
+          Array containing objects that specify the: (1) date(s) for which the vehicle has paid to journey in to the CAZ
+          (identified by the x-api-key header parameter); (2) the charge associated with the journey; (3) the payment status of
+          the charge (i.e. whether it has been paid or refunded); and, (4) any Local Authority case reference associated with the
+          charge (e.g. that may be linked to a customer query relating to the charge).
+          1 object will be returned for each date of travel associated with the payment.
+        case-reference: >-
+          A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems
+          in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
+        charge-paid: >-
+          The GBP value of the payment linked to the paymentProviderId. If the motorist paid in advance to travel in to the CAZ on multiple
+          dates, then the payment amount will be a multiple of the daily charge due (e.g. if the daily charge for a car entering a CAZ
+          is £8.00, but the motorist paid in advance for 3 days of travel, then the chargePaid would be equal to £24.00).
+          Expressed in pounds and pence format to 2 decimal places
+        travel-date: >-
+          ISO 8601 formatted date string that specifies a date(s) for which the vehicle has paid to travel in to the CAZ
+          (identified by the x-api-key header parameter)
+        telephone-payment: Indicates whether payment was done over phone
       payment-info-request:
         payment-provider-id: >-
           GOV.UK Pay unique payment identifier. Can be used to obtain data associated with a specific GOV.UK Pay payment transaction.
@@ -235,6 +264,8 @@ swagger:
           Fetches information about already paid days in specific CAZ in order to prevent
           him from paying for the same day more than one time. Upon completion of this operation the
           list of provided VRNs along with list of paid days is returned.
+      get-payment-details:
+        description: Fetches information about given paymentId.
       direct-debit-mandates:
         description: >-
           Returns a list of clean air zones with the associated direct debit mandates.
