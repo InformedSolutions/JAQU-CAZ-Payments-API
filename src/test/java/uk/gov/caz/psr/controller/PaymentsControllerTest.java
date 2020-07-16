@@ -44,8 +44,10 @@ import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
+import uk.gov.caz.psr.service.PaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
+import uk.gov.caz.psr.util.PaymentDetailsConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
@@ -55,6 +57,12 @@ import uk.gov.caz.psr.util.TestObjectFactory.Payments;
     PaymentsController.class})
 @WebMvcTest
 class PaymentsControllerTest {
+
+  @MockBean
+  private PaymentService paymentService;
+
+  @MockBean
+  private PaymentDetailsConverter paymentDetailsConverter;
 
   @MockBean
   private InitiatePaymentService initiatePaymentService;
