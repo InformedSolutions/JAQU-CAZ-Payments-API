@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
+import uk.gov.caz.psr.dto.SuccessfulPaymentsResponse;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 
 @RequestMapping(value = ACCOUNTS_PATH, produces = {MediaType.APPLICATION_JSON_VALUE})
@@ -31,31 +32,31 @@ public interface AccountControllerApiSpec {
       response = VehicleRetrievalResponseDto.class)
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
-      @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory " 
+      @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
           + "element)"),
       @ApiResponse(code = 404, message = "Account not found"),
       @ApiResponse(code = 429, message = "Too many requests")
-    })
+  })
   @ApiImplicitParams({
-      @ApiImplicitParam(name = "account_id", 
+      @ApiImplicitParam(name = "account_id",
           required = true,
-          value = "The identifier of the account to retrieve vehicles for", 
+          value = "The identifier of the account to retrieve vehicles for",
           paramType = "path"),
-      @ApiImplicitParam(name = Constants.X_CORRELATION_ID_HEADER, 
+      @ApiImplicitParam(name = Constants.X_CORRELATION_ID_HEADER,
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "pageNumber", 
+      @ApiImplicitParam(name = "pageNumber",
           required = true,
-          value = "The number of the page to retrieve", 
+          value = "The number of the page to retrieve",
           paramType = "query"),
-      @ApiImplicitParam(name = "pageSize", 
+      @ApiImplicitParam(name = "pageSize",
           required = true,
-          value = "The size of the page to retrieve", 
+          value = "The size of the page to retrieve",
           paramType = "query"),
-      @ApiImplicitParam(name = "zones", 
+      @ApiImplicitParam(name = "zones",
           required = true,
-          value = "The clean air zones for which to return charges", 
+          value = "The clean air zones for which to return charges",
           paramType = "query")})
   @GetMapping("/{accountId}/charges")
   ResponseEntity<VehicleRetrievalResponseDto> retrieveVehiclesAndCharges(
@@ -71,75 +72,110 @@ public interface AccountControllerApiSpec {
       response = ChargeableAccountVehicleResponse.class)
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
-      @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory " 
+      @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
           + "element)"),
       @ApiResponse(code = 404, message = "Account not found"),
       @ApiResponse(code = 429, message = "Too many requests"),
-    })
+  })
   @ApiImplicitParams({
-      @ApiImplicitParam(name = "account_id", 
+      @ApiImplicitParam(name = "account_id",
           required = true,
-          value = "The identifier of the account to retrieve vehicles for", 
+          value = "The identifier of the account to retrieve vehicles for",
           paramType = "path"),
-      @ApiImplicitParam(name = Constants.X_CORRELATION_ID_HEADER, 
+      @ApiImplicitParam(name = Constants.X_CORRELATION_ID_HEADER,
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "cleanAirZoneId", 
+      @ApiImplicitParam(name = "cleanAirZoneId",
           required = true,
-          value = "The clean air zones for which to return charges", 
+          value = "The clean air zones for which to return charges",
           paramType = "query"),
-      @ApiImplicitParam(name = "direction", 
+      @ApiImplicitParam(name = "direction",
           required = true,
           value = "Either 'next' or 'previous', determines the direction of the paging sort",
           paramType = "query"),
-      @ApiImplicitParam(name = "pageSize", 
+      @ApiImplicitParam(name = "pageSize",
           required = true,
-          value = "The size of the page to retrieve", 
+          value = "The size of the page to retrieve",
           paramType = "query"),
-      @ApiImplicitParam(name = "vrn", 
+      @ApiImplicitParam(name = "vrn",
           required = true,
-          value = "The vrn to use as a cursor for the pagination", 
+          value = "The vrn to use as a cursor for the pagination",
           paramType = "query")})
   @GetMapping("/{accountId}/chargeable-vehicles")
   ResponseEntity<ChargeableAccountVehicleResponse> retrieveChargeableVehicles(
       @PathVariable("accountId") UUID accountId,
       @RequestParam(required = true) Map<String, String> queryStrings);
 
-
   /**
    * An endpoint to retrieve a single chargeable vehicle registered against an account.
    *
    * @return {@link ChargeableAccountVehicleResponse} wrapped in {@link ResponseEntity}.
    */
-  @ApiOperation(value = "${swagger.operations.accounts.chargeable-vehicles.vrn.description}",
+  @ApiOperation(value = "${swagger.operations.accounts.chargeable-vehicles.description}",
       response = ChargeableAccountVehicleResponse.class)
   @ApiResponses({
       @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
-      @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory " 
+      @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
           + "element)"),
       @ApiResponse(code = 404, message = "Account vehicle not found"),
       @ApiResponse(code = 429, message = "Too many requests"),
-    })
+  })
   @ApiImplicitParams({
-      @ApiImplicitParam(name = "account_id", 
+      @ApiImplicitParam(name = "account_id",
           required = true,
-          value = "The identifier of the account to retrieve vehicles for", 
+          value = "The identifier of the account to retrieve vehicles for",
           paramType = "path"),
-      @ApiImplicitParam(name = Constants.X_CORRELATION_ID_HEADER, 
+      @ApiImplicitParam(name = Constants.X_CORRELATION_ID_HEADER,
           required = true,
           value = "UUID formatted string to track the request through the enquiries stack",
           paramType = "header"),
-      @ApiImplicitParam(name = "cleanAirZoneId", 
+      @ApiImplicitParam(name = "cleanAirZoneId",
           required = true,
-          value = "The clean air zones for which to return charges", 
+          value = "The clean air zones for which to return charges",
           paramType = "query"),
-      @ApiImplicitParam(name = "vrn", 
+      @ApiImplicitParam(name = "vrn",
           required = true,
-          value = "The vrn to query", 
+          value = "The vrn to query",
           paramType = "path")})
   @GetMapping("/{accountId}/chargeable-vehicles/{vrn}")
   ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
-      @PathVariable("accountId") UUID accountId, @PathVariable("vrn") String vrn, 
+      @PathVariable("accountId") UUID accountId, @PathVariable("vrn") String vrn,
+      @RequestParam(required = true) Map<String, String> queryStrings);
+
+  /**
+   * An endpoint to retrieve successful payments data of a user associated with a specific account.
+   *
+   * @return {@link SuccessfulPaymentsResponse} wrapped in {@link ResponseEntity}.
+   */
+  @ApiOperation(value = "${swagger.operations.accounts.successful-payments.description}",
+      response = SuccessfulPaymentsResponse.class)
+  @ApiResponses({
+      @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
+      @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
+          + "element)"),
+      @ApiResponse(code = 404, message = "Account not found")
+  })
+  @ApiImplicitParams({
+      @ApiImplicitParam(name = "accountId",
+          required = true,
+          value = "The identifier of the account to retrieve payments data",
+          paramType = "path"),
+      @ApiImplicitParam(name = "accountUserId",
+          required = true,
+          value = "The identifier of the account user",
+          paramType = "query"),
+      @ApiImplicitParam(name = "pageNumber",
+          required = true,
+          value = "The number of the page to retrieve",
+          paramType = "query"),
+      @ApiImplicitParam(name = "pageSize",
+          required = true,
+          value = "The size of the page to retrieve",
+          paramType = "query")
+  })
+  @GetMapping("/{accountId}/payments")
+  ResponseEntity<SuccessfulPaymentsResponse> retrieveSuccessfulPayments(
+      @PathVariable("accountId") UUID accountId,
       @RequestParam(required = true) Map<String, String> queryStrings);
 }
