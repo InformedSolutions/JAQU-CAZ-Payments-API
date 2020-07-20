@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.controller;
 
 import static org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME;
+import static uk.gov.caz.psr.controller.ChargeSettlementController.TIMESTAMP;
 
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -55,7 +56,7 @@ public interface ChargeSettlementControllerApiSpec {
       @ApiResponse(code = 429, message = "Too many requests"),
   })
   @ApiImplicitParams({
-      @ApiImplicitParam(name = "Timestamp",
+      @ApiImplicitParam(name = "timestamp",
           required = true,
           value = "ISO 8601 formatted datetime string indicating time that the request was "
               + "initialised",
@@ -75,7 +76,7 @@ public interface ChargeSettlementControllerApiSpec {
   @GetMapping(ChargeSettlementController.PAYMENT_INFO_PATH)
   ResponseEntity<PaymentInfoResponse> getPaymentInfo(@Valid PaymentInfoRequest paymentInfoRequest,
       BindingResult bindingResult, @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId,
-      @RequestHeader(Headers.TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp);
+      @RequestHeader(TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp);
 
   /**
    * Allows LAs to query and retrieve data that enables them to determine whether a vehicle that has
@@ -97,7 +98,7 @@ public interface ChargeSettlementControllerApiSpec {
       @ApiResponse(code = 429, message = "Too many requests"),
   })
   @ApiImplicitParams({
-      @ApiImplicitParam(name = "Timestamp",
+      @ApiImplicitParam(name = "timestamp",
           required = true,
           value = "ISO 8601 formatted datetime string indicating time that the request was "
               + "initialised",
@@ -118,7 +119,7 @@ public interface ChargeSettlementControllerApiSpec {
   ResponseEntity<PaymentStatusResponse> getPaymentStatus(
       @Valid PaymentStatusRequest request, BindingResult bindingResult,
       @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId,
-      @RequestHeader(Headers.TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp
+      @RequestHeader(TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp
   );
 
   /**
@@ -141,7 +142,7 @@ public interface ChargeSettlementControllerApiSpec {
       @ApiResponse(code = 429, message = "Too many requests"),
   })
   @ApiImplicitParams({
-      @ApiImplicitParam(name = "Timestamp",
+      @ApiImplicitParam(name = "timestamp",
           required = true,
           value = "ISO 8601 formatted datetime string indicating time that the request was "
               + "initialised",
@@ -162,5 +163,5 @@ public interface ChargeSettlementControllerApiSpec {
   PaymentUpdateSuccessResponse updatePaymentStatus(
       @Valid @RequestBody PaymentStatusUpdateRequest request, BindingResult bindingResult,
       @RequestHeader(Headers.X_API_KEY) UUID cleanAirZoneId,
-      @RequestHeader(Headers.TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp);
+      @RequestHeader(TIMESTAMP) @DateTimeFormat(iso = DATE_TIME) LocalDateTime timestamp);
 }
