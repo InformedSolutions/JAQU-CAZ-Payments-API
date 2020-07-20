@@ -109,7 +109,7 @@ class ChargeSettlementControllerTest {
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, ANY_API_KEY))
           .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.message").value("Missing request header 'Timestamp'"));
+          .andExpect(jsonPath("$.message").value("Missing request header 'timestamp'"));
     }
 
     @Test
@@ -120,7 +120,7 @@ class ChargeSettlementControllerTest {
           .header(Headers.TIMESTAMP, "this-is-not-timestamp")
           .header(Headers.X_API_KEY, ANY_API_KEY))
           .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.message").value("Wrong format of 'Timestamp'"));
+          .andExpect(jsonPath("$.message").value("Wrong format of 'timestamp'"));
     }
 
     @Test
@@ -294,7 +294,7 @@ class ChargeSettlementControllerTest {
           .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message")
-              .value("Missing request header 'Timestamp'"));
+              .value("Missing request header 'timestamp'"));
     }
 
     @Test
@@ -307,7 +307,7 @@ class ChargeSettlementControllerTest {
           .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message")
-              .value("Wrong format of 'Timestamp'"));
+              .value("Wrong format of 'timestamp'"));
     }
 
     @Test
@@ -441,7 +441,7 @@ class ChargeSettlementControllerTest {
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message")
-              .value("Missing request header 'Timestamp'"));
+              .value("Missing request header 'timestamp'"));
     }
 
     @Test
@@ -457,7 +457,7 @@ class ChargeSettlementControllerTest {
           .header(Headers.X_API_KEY, UUID.randomUUID()))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message")
-              .value("Wrong format of 'Timestamp'"));
+              .value("Wrong format of 'timestamp'"));
     }
 
     @Test
