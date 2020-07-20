@@ -531,7 +531,7 @@ steps:
         from_secret: jaqu_lower_github_private_key
     when:
       event:
-        - push
+        - pull_request
 
   - name: provisioning warning
     image: docker:19.03.11-git
@@ -1370,7 +1370,7 @@ steps:
         from_secret: jaqu_lower_github_private_key
     when:
       event:
-        - push
+        - pull_request
 
   - name: provisioning warning
     image: docker:19.03.11-git
