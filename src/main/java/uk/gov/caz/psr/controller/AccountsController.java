@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,8 +19,12 @@ import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
+import uk.gov.caz.psr.dto.SuccessfulPaymentsResponse;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
+import uk.gov.caz.psr.model.EnrichedPaymentSummary;
+import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.service.AccountService;
+import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
 import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 
 @AllArgsConstructor
@@ -36,6 +41,7 @@ public class AccountsController implements AccountControllerApiSpec {
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final AccountService accountService;
   private final QueryStringValidator queryStringValidator;
+  private final RetrieveSuccessfulPaymentsService retrieveSuccessfulPaymentsService;
 
   @Override
   public ResponseEntity<VehicleRetrievalResponseDto> retrieveVehiclesAndCharges(
@@ -141,6 +147,37 @@ public class AccountsController implements AccountControllerApiSpec {
 
     return ResponseEntity.ok()
         .body(response);
+  }
+
+  @Override
+  public ResponseEntity<SuccessfulPaymentsResponse> retrieveSuccessfulPayments(UUID accountId,
+      Map<String, String> queryStrings) {
+    validateRetrieveSuccessfulPaymentsRequest(queryStrings);
+
+    int pageNumber = Integer.parseInt(queryStrings.get("pageNumber"));
+    int pageSize = Integer.parseInt(queryStrings.get("pageSize"));
+
+    Pair<PaginationData, List<EnrichedPaymentSummary>> result;
+
+    if (queryStrings.containsKey("accountUserId")) {
+      UUID accountUserId = UUID.fromString(queryStrings.get("accountUserId"));
+      result = retrieveSuccessfulPaymentsService
+          .retrieveForSingleUser(accountId, accountUserId, pageNumber, pageSize);
+    } else {
+      result = retrieveSuccessfulPaymentsService
+          .retrieveForAccount(accountId, pageNumber, pageSize);
+    }
+
+    PaginationData paginationData = result.getFirst();
+    List<EnrichedPaymentSummary> payments = result.getSecond();
+
+    return ResponseEntity.ok(SuccessfulPaymentsResponse.from(paginationData, payments));
+  }
+
+  private void validateRetrieveSuccessfulPaymentsRequest(Map<String, String> queryStrings) {
+    queryStringValidator.validateRequest(queryStrings,
+        Collections.emptyList(),
+        Arrays.asList(PAGE_NUMBER_QUERYSTRING_KEY, PAGE_SIZE_QUERYSTRING_KEY));
   }
 
   private List<VrnWithTariffAndEntrancesPaid> trimChargeableVehicles(

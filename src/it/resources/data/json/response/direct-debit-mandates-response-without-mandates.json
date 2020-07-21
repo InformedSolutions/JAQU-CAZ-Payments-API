@@ -9,6 +9,11 @@
       "cazId" : "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3",
       "cazName": "Leeds",
       "mandates": []
+    },
+    {
+      "cazId": "b8e53786-c5ca-426a-a701-b14ee74857d4",
+      "cazName": "Bath",
+      "mandates": []
     }
   ]
 }
