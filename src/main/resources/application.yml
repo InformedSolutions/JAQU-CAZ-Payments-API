@@ -254,6 +254,8 @@ swagger:
         descriptions: retrieves a page of vehicles associated with a particular account
       chargeable-vehicles:
         descriptions: retrieves a page of chargeable vehicles
+      successful-payments:
+        description: retrieves a page of successful payments for a particular user.
     payments:
       create-vehicle-entrant:
         description: >-

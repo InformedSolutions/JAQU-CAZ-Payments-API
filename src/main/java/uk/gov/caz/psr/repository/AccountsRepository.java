@@ -15,6 +15,7 @@ import retrofit2.http.Query;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
+import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
@@ -176,6 +177,26 @@ public interface AccountsRepository {
       DirectDebitMandatesUpdateRequest body) {
     try {
       return updateDirectDebitMandates(accountId, body).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+
+  /**
+   * Method to get all users associated with the provided account.
+   */
+  @Headers({
+      "Accept: application/json"
+  })
+  @GET("v1/accounts/{accountId}/users")
+  Call<AccountUsersResponse> getAllUsers(@Path("accountId") UUID accountId);
+
+  /**
+   * A synchronous wrapper for {@code getAllUsers} call.
+   */
+  default Response<AccountUsersResponse> getAllUsersSync(UUID accountId) {
+    try {
+      return getAllUsers(accountId).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }

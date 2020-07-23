@@ -194,6 +194,13 @@ public class ExternalCallsIT {
         .respond(emptyResponse(statusCode));
   }
 
+  public void mockAccountServiceGetAllUsersCall(String accountId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/accounts/" + accountId + "/users"),
+            exactly(1))
+        .respond(response("account-users-list-response.json", statusCode));
+  }
+
   @SneakyThrows
   private String readFile(String filename) {
     return Resources.toString(Resources.getResource("data/external/" + filename),
