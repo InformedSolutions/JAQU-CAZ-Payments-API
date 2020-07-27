@@ -1,12 +1,16 @@
 package uk.gov.caz.psr.dto;
 
+import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Builder;
+import lombok.ToString;
 import lombok.Value;
+import uk.gov.caz.psr.util.Strings;
 
 @Value
 @Builder
@@ -48,5 +52,14 @@ public class PaymentDetailsResponse {
     @ApiModelProperty(value = "${swagger.model.descriptions.payment-details.travel-date}")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     LocalDate travelDate;
+
+    @ApiModelProperty(value = "${swagger.model.descriptions.payment-details.vrn}")
+    String vrn;
+
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
+    @ToString.Include(name = "vrn")
+    private String maskedVrn() {
+      return Strings.mask(normalizeVrn(vrn));
+    }
   }
 }
