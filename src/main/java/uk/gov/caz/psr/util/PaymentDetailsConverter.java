@@ -53,6 +53,7 @@ public class PaymentDetailsConverter {
         .paymentStatus(ChargeSettlementPaymentStatus
             .from(entrantPayment.getInternalPaymentStatus()))
         .travelDate(entrantPayment.getTravelDate())
+        .vrn(entrantPayment.getVrn())
         .build();
   }
 }

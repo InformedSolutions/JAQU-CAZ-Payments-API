@@ -220,7 +220,9 @@ public class TestObjectFactory {
       return EntrantPayment.builder().charge(100).travelDate(LocalDate.now())
           .cleanAirZoneId(UUID.randomUUID()).vrn("VRN123")
           .updateActor(EntrantPaymentUpdateActor.VCCS_API)
-          .internalPaymentStatus(InternalPaymentStatus.PAID).build();
+          .internalPaymentStatus(InternalPaymentStatus.PAID)
+          .vrn("CAS310")
+          .build();
     }
 
     public static EntrantPayment forTravelDate(LocalDate travelDate, String vrn) {
