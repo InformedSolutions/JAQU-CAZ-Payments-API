@@ -20,6 +20,7 @@ import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.PaymentSummaryRepository;
 import uk.gov.caz.psr.repository.PaymentToCleanAirZoneMappingRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
+import uk.gov.caz.psr.util.CurrencyFormatter;
 
 /**
  * Service responsible for fetching users information from AccountsAPI, fetching information about
@@ -34,6 +35,7 @@ public class RetrieveSuccessfulPaymentsService {
   private final VccsRepository vccsRepository;
   private final PaymentToCleanAirZoneMappingRepository paymentToCleanAirZoneMappingRepository;
   private final PaymentSummaryRepository paymentSummaryRepository;
+  private final CurrencyFormatter currencyFormatter;
 
   /**
    * Method fetches list of users associated with the provided account and selects the user with the
@@ -203,9 +205,10 @@ public class RetrieveSuccessfulPaymentsService {
         .map(paymentSummary -> EnrichedPaymentSummary.builder()
             .paymentId(paymentSummary.getPaymentId())
             .entriesCount(paymentSummary.getEntriesCount())
-            .totalPaid(paymentSummary.getTotalPaid())
+            .totalPaid(currencyFormatter.parsePenniesToBigDecimal(paymentSummary.getTotalPaid()))
             .cazName(cleanAirZonesIdToNameMap.get(paymentSummary.getCleanAirZoneId()))
             .payerName(accountIdToNameMap.get(paymentSummary.getPayerId()))
+            .paymentDate(paymentSummary.getPaymentDate())
             .build()).collect(Collectors.toList());
 
     return enrichedPaymentSummaries;

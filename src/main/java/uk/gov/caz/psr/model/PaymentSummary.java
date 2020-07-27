@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.model;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
@@ -36,4 +37,9 @@ public class PaymentSummary {
    * ID of the payer user.
    */
   UUID payerId;
+
+  /**
+   * Date of the payment creation.
+   */
+  LocalDate paymentDate;
 }
