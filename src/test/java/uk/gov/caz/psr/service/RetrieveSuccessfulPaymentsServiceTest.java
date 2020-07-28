@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +31,7 @@ import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.PaymentSummaryRepository;
 import uk.gov.caz.psr.repository.PaymentToCleanAirZoneMappingRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
+import uk.gov.caz.psr.util.CurrencyFormatter;
 
 @ExtendWith(MockitoExtension.class)
 class RetrieveSuccessfulPaymentsServiceTest {
@@ -44,6 +47,9 @@ class RetrieveSuccessfulPaymentsServiceTest {
 
   @Mock
   private PaymentSummaryRepository paymentSummaryRepository;
+
+  @Mock
+  private CurrencyFormatter currencyFormatter;
 
   @InjectMocks
   private RetrieveSuccessfulPaymentsService retrieveSuccessfulPaymentsService;
@@ -134,6 +140,7 @@ class RetrieveSuccessfulPaymentsServiceTest {
     when(vccsRepository.findCleanAirZonesSync()).thenReturn(sampleCleanAirZonesResponse());
     when(paymentSummaryRepository.getTotalPaymentsCountForUserIds(any()))
         .thenReturn(ANY_PAYMENTS_COUNT_RESULT);
+    when(currencyFormatter.parsePenniesToBigDecimal(anyInt())).thenReturn(BigDecimal.valueOf(50));
   }
 
   private List<PaymentToCleanAirZoneMapping> samplePaymentToCazMappingResult() {
@@ -156,12 +163,14 @@ class RetrieveSuccessfulPaymentsServiceTest {
             .entriesCount(10)
             .payerId(OWNER_USER_ID)
             .totalPaid(10000)
+            .paymentDate(LocalDate.now())
             .build(),
         PaymentSummary.builder()
             .paymentId(UUID.fromString("749f8a00-257b-4d06-9589-b1ba7bbc934e"))
             .entriesCount(5)
             .payerId(ANY_USER_ID)
             .totalPaid(5000)
+            .paymentDate(LocalDate.now())
             .build()
     );
   }
