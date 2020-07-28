@@ -1,4 +1,6 @@
 ### Integration tests configuration
+application:
+  emails-to-skip: emailtoskip-integrationtest@informed.com
 
 spring:
   datasource:
