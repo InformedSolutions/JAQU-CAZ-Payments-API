@@ -54,12 +54,14 @@ public class EntrantPaymentService {
    */
   private Optional<EntrantPayment> fetchEntrantPaymentFromRepository(
       VehicleEntrantDto vehicleEntrantDto) {
-    return entrantPaymentRepository
-        .findOneByVrnAndCazEntryDate(
-            vehicleEntrantDto.getCleanZoneId(),
-            vehicleEntrantDto.getVrn(),
-            vehicleEntrantDto.getCazEntryTimestamp().toLocalDate()
-        );
+    return entrantPaymentRepository.findOneByVrnAndCazEntryDate(
+        vehicleEntrantDto.getCleanZoneId(),
+        vehicleEntrantDto.getVrn(),
+        vehicleEntrantDto.getCazEntryTimestamp().toLocalDate()
+    ).map(entrantPayment -> entrantPayment.toBuilder()
+        .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
+        .build()
+    );
   }
 
   /**
@@ -118,6 +120,7 @@ public class EntrantPaymentService {
         .vrn(vehicleEntrantDto.getVrn())
         .cleanAirZoneId(vehicleEntrantDto.getCleanZoneId())
         .travelDate(vehicleEntrantDto.getCazEntryTimestamp().toLocalDate())
+        .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
         .vehicleEntrantCaptured(true)
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)

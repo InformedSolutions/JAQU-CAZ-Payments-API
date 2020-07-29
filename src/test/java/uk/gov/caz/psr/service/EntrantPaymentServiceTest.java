@@ -272,6 +272,7 @@ class EntrantPaymentServiceTest {
         .tariffCode("any-tariff-code")
         .charge(50)
         .travelDate(LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate())
+        .cazEntryTimestamp(LocalDateTime.parse(ANY_TIMESTAMP))
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .build();
   }
@@ -283,6 +284,7 @@ class EntrantPaymentServiceTest {
         .vrn(ANY_VRN)
         .vehicleEntrantCaptured(true)
         .travelDate(LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate())
+        .cazEntryTimestamp(LocalDateTime.parse(ANY_TIMESTAMP))
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .build();
   }

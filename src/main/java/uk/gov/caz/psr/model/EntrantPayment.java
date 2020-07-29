@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.NonNull;
@@ -36,6 +37,11 @@ public class EntrantPayment {
    */
   @NonNull
   LocalDate travelDate;
+
+  /**
+   * A date and time of CAZ entry. Transient, nullable field.
+   */
+  LocalDateTime cazEntryTimestamp;
 
   /**
    * An tariff code used to calculate payment. Null for entrant payments that were created before
