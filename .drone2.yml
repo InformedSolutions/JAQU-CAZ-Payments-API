@@ -754,6 +754,25 @@ steps:
       - name: docker_sock
         path: /var/run/docker.sock
 
+  # Unit test
+  - name: unit test
+    image: payments-api-base
+    pull: never
+    volumes:
+      - name: package_directory
+        path: /drone/src/target
+      - name: m2_repo
+        path: /root/.m2
+    commands:
+      - mvn test -P jacoco --no-transfer-progress
+    environment:
+      JAQU_NEXUS_URL:
+        from_secret: jaqu_lower_nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: jaqu_lower_nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: jaqu_lower_nexus_password
+
   # Integration tests
   - name: integration test
     image: payments-api-base
