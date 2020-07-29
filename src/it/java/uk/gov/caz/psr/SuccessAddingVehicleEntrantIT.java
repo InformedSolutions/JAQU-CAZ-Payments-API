@@ -16,9 +16,10 @@ import static uk.gov.caz.security.SecurityHeadersInjector.X_FRAME_OPTIONS_VALUE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
+import io.restassured.common.mapper.TypeRef;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.VehicleEntrantController;
+import uk.gov.caz.psr.dto.EntrantPaymentWithLatestPaymentDetailsDto;
 import uk.gov.caz.psr.dto.VehicleEntrantDto;
 import uk.gov.caz.psr.util.AuditTableWrapper;
 
@@ -72,6 +74,7 @@ public class SuccessAddingVehicleEntrantIT {
         .vehicleEntrantRequest(vehicleEntrantRequest(dayWithoutEntrantPayment))
         .whenSubmitted()
         .then()
+        .responseContainsDataMatchingRequest()
         .entrantPaymentMatchIsNotCreatedInDatabase()
         .entrantPaymentIsCreatedInDatabase()
 		.masterRecordCreatedInDatabase()
@@ -87,6 +90,7 @@ public class SuccessAddingVehicleEntrantIT {
         .vehicleEntrantRequest(vehicleEntrantRequest(notCapturedDay))
         .whenSubmitted()
         .then()
+        .responseContainsDataMatchingRequest()
         .entrantPaymentMatchIsNotCreatedInDatabase()
         .entrantPaymentIsFoundInDatabase()
         .andHasVehicleEntrantCapturedSetToTrue();
@@ -96,14 +100,14 @@ public class SuccessAddingVehicleEntrantIT {
     return new VehicleEntrantJourneyAssertion(objectMapper, jdbcTemplate);
   }
 
-  private List<VehicleEntrantDto> vehicleEntrantRequest(LocalDateTime cazEntry) {
+  private VehicleEntrantDto vehicleEntrantRequest(LocalDateTime cazEntry) {
     VehicleEntrantDto vehicleEntrantDto = VehicleEntrantDto.builder()
         .cleanZoneId(UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4"))
         .cazEntryTimestamp(cazEntry)
         .vrn("ND84VSX")
         .build();
 
-    return Arrays.asList(vehicleEntrantDto);
+    return vehicleEntrantDto;
   }
 
   @RequiredArgsConstructor
@@ -112,10 +116,11 @@ public class SuccessAddingVehicleEntrantIT {
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
 
-    private List<VehicleEntrantDto> vehicleEntrantDtos;
+    private VehicleEntrantDto vehicleEntrantDto;
+    private List<EntrantPaymentWithLatestPaymentDetailsDto> response;
 
-    public VehicleEntrantJourneyAssertion vehicleEntrantRequest(List<VehicleEntrantDto> request) {
-      this.vehicleEntrantDtos = request;
+    public VehicleEntrantJourneyAssertion vehicleEntrantRequest(VehicleEntrantDto request) {
+      this.vehicleEntrantDto = request;
       return this;
     }
 
@@ -125,12 +130,12 @@ public class SuccessAddingVehicleEntrantIT {
 
     public VehicleEntrantJourneyAssertion whenSubmitted() {
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
-      RestAssured
+      this.response = RestAssured
           .given()
           .accept(MediaType.APPLICATION_JSON.toString())
           .contentType(MediaType.APPLICATION_JSON.toString())
           .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
-          .body(toJsonString(vehicleEntrantDtos))
+          .body(toJsonString(Collections.singletonList(vehicleEntrantDto)))
           .when()
           .post()
           .then()
@@ -141,7 +146,9 @@ public class SuccessAddingVehicleEntrantIT {
           .header(X_FRAME_OPTIONS_HEADER, X_FRAME_OPTIONS_VALUE)
           .header(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_VALUE)
           .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
-          .statusCode(HttpStatus.OK.value());
+          .statusCode(HttpStatus.OK.value())
+          .extract().body()
+          .as(new TypeRef<List<EntrantPaymentWithLatestPaymentDetailsDto>>() {});
       return this;
     }
 
@@ -177,6 +184,14 @@ public class SuccessAddingVehicleEntrantIT {
       return this;
     }
 
+    public VehicleEntrantJourneyAssertion responseContainsDataMatchingRequest() {
+      EntrantPaymentWithLatestPaymentDetailsDto responseData = response.iterator().next();
+      assertThat(responseData.getCleanAirZoneId()).isEqualTo(vehicleEntrantDto.getCleanZoneId());
+      assertThat(responseData.getCazEntryTimestamp()).isEqualTo(vehicleEntrantDto.getCazEntryTimestamp());
+      assertThat(responseData.getVrn()).isEqualTo(vehicleEntrantDto.getVrn());
+      return this;
+    }
+
     private void verifyEntrantPaymentCaptured() {
       int capturedVehiclesCount = JdbcTestUtils
           .countRowsInTableWhere(jdbcTemplate, "caz_payment.t_clean_air_zone_entrant_payment",
@@ -191,7 +206,7 @@ public class SuccessAddingVehicleEntrantIT {
     }
 
     private void verifyThatVehicleEntrantExists() {
-      VehicleEntrantDto createdRecordData = vehicleEntrantDtos.get(0);
+      VehicleEntrantDto createdRecordData = vehicleEntrantDto;
       int cazEntrantPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment.t_clean_air_zone_entrant_payment",
           "clean_air_zone_id = '" + createdRecordData.getCleanZoneId().toString() + "' AND "
@@ -202,7 +217,7 @@ public class SuccessAddingVehicleEntrantIT {
     }
 
     private void verifyThatMasterTableUpdated() {
-      VehicleEntrantDto createdRecordData = vehicleEntrantDtos.get(0);
+      VehicleEntrantDto createdRecordData = vehicleEntrantDto;
       int masterRecordCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment_audit.t_clean_air_zone_payment_master",
           "clean_air_zone_id = '" + createdRecordData.getCleanZoneId().toString() + "' AND "
@@ -211,7 +226,7 @@ public class SuccessAddingVehicleEntrantIT {
     }
     
     private void verifyThatDetailTableUpdated(LocalDateTime travelDate, int detailRecords) {
-      VehicleEntrantDto createdRecordData = vehicleEntrantDtos.get(0);
+      VehicleEntrantDto createdRecordData = vehicleEntrantDto;
       Object[] params = new Object[] {createdRecordData.getVrn(), createdRecordData.getCleanZoneId()};
       UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, 
           params, UUID.class);

@@ -188,6 +188,9 @@ swagger:
         entrant-payment-id: Id of created or updated record
         status: Payment Status of created Vehicle Entrant
         payment-method: Payment Method of related Payment record. Can be "card" | "direct_debit" | "null"
+        vrn: Vehicle registration number
+        travel-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
+        clean-zone-id: Clean Air Zone identifier
       payments-initiate:
         vrn: Vehicle registration number
         travel-date: ISO 8601 formatted date string that specifies the date for which user wants to pay
