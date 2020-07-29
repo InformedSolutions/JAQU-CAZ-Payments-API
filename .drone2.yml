@@ -749,14 +749,14 @@ steps:
   - name: build docker maven base
     image: docker:19.03.11-git
     commands:
-      - docker build -t payments-api-base-tmp -f ci-cd-resources/Dockerfile.ci.base .
+      - docker build -t payments-api-base -f ci-cd-resources/Dockerfile.ci.base .
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
 
   # Unit test
   - name: unit test
-    image: payments-api-base-tmp
+    image: payments-api-base
     pull: never
     volumes:
       - name: package_directory
