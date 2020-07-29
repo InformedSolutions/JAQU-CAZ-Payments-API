@@ -1,5 +1,6 @@
 application:
   title: Payment Microservice
+  emails-to-skip: emailtoskip@informed.com
 
 springfox:
   documentation:
