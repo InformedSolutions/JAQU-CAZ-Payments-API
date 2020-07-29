@@ -759,8 +759,6 @@ steps:
     image: payments-api-base
     pull: never
     volumes:
-      - name: package_directory
-        path: /drone/src/target
       - name: m2_repo
         path: /root/.m2
     commands:
