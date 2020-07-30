@@ -959,7 +959,6 @@ class ChargeSettlementPaymentInfoTestIT {
   }
 
   @AfterEach
-  @BeforeEach
   public void clearDatabase() {
     executeSqlFrom("data/sql/clear-all-payments.sql");
   }
