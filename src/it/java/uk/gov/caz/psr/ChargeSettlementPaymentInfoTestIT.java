@@ -955,6 +955,7 @@ class ChargeSettlementPaymentInfoTestIT {
   public void insertTestData() {
     // we cannot use SQL annotations on this class, see:
     // https://github.com/spring-projects/spring-framework/issues/19930
+    clearDatabase();
     executeSqlFrom("data/sql/charge-settlement/payment-info/test-data.sql");
   }
 
