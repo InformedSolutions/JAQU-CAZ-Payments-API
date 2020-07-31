@@ -62,8 +62,10 @@ public class PaymentDetailsTestIT {
         .body("lineItems.size()", equalTo(2))
         .body("lineItems[0].chargePaid.", equalTo(0.7f))
         .body("lineItems[0].travelDate.", equalTo("2019-11-01"))
+        .body("lineItems[0].vrn.", equalTo("AB11CDE"))
         .body("lineItems[1].chargePaid.", equalTo(0.7f))
-        .body("lineItems[1].travelDate.", equalTo("2019-11-02"));
+        .body("lineItems[1].travelDate.", equalTo("2019-11-02"))
+        .body("lineItems[1].vrn.", equalTo("AB11CDE"));
   }
 
   @Test

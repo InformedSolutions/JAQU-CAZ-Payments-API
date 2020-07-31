@@ -6,16 +6,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.dto.SendEmailRequest;
 import uk.gov.caz.psr.messaging.MessagingClient;
@@ -60,11 +64,17 @@ public class PaymentReceiptSenderTest {
           .build()))
       .build();
 
+  public static final Set<String> EMAILS_TO_SKIP =
+      Sets.newHashSet("skip-man@informed.com", "skip-2nd.informed.com");
+
   @Mock
   MessagingClient messagingClient;
 
   @Mock
   PaymentReceiptEmailCreator paymentReceiptEmailCreator;
+
+  @Spy
+  Set<String> emailsToSkip = EMAILS_TO_SKIP;
 
   @InjectMocks
   PaymentReceiptSender paymentReceiptSender;
@@ -120,6 +130,21 @@ public class PaymentReceiptSenderTest {
 
     // then
     verify(messagingClient).publishMessage(sendEmailRequest);
+  }
+
+  @Test
+  void shouldNotPublishMessageIfEmailIsDeclaredAsToBeSkipped() {
+    for (String emailToSkip : emailsToSkip) {
+      // given
+      Payment payment = ANY_PAYMENT.toBuilder().emailAddress(emailToSkip).build();
+      PaymentStatusUpdatedEvent event = new PaymentStatusUpdatedEvent(this, payment);
+
+      // when
+      paymentReceiptSender.onPaymentStatusUpdated(event);
+
+      // then
+      verifyNoInteractions(messagingClient);
+    }
   }
 
   private SendEmailRequest anyValidRequest() {

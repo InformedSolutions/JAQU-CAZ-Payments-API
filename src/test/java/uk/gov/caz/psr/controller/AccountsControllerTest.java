@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.caz.psr.controller.AccountsController.ACCOUNTS_PATH;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -131,7 +132,7 @@ class AccountsControllerTest {
       List<EnrichedPaymentSummary> enrichedPaymentSummaries = Arrays.asList(
           EnrichedPaymentSummary.builder()
               .paymentId(UUID.randomUUID())
-              .totalPaid(1000)
+              .totalPaid(BigDecimal.valueOf(1000))
               .payerName("Jan Brzechwa")
               .entriesCount(10)
               .cazName("Birmingham")

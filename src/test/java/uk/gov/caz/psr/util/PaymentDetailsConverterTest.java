@@ -45,5 +45,7 @@ class PaymentDetailsConverterTest {
         .isEqualTo(BigDecimal.valueOf(40));
     assertThat(paymentDetailsResponse.getLineItems().get(0).getPaymentStatus())
         .isEqualTo(ChargeSettlementPaymentStatus.PAID);
+    assertThat(paymentDetailsResponse.getLineItems().get(0).getVrn())
+        .isEqualTo("CAS310");
   }
 }

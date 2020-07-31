@@ -26,6 +26,7 @@ public class PaymentSummaryRepository {
       + "t_payment.payment_id, "
       + "t_payment.total_paid, "
       + "t_payment.user_id as payer_id, "
+      + "t_payment.insert_timestamp as payment_date, "
       + "(SELECT COUNT(*) FROM caz_payment.t_clean_air_zone_entrant_payment_match "
       + "WHERE t_payment.payment_id = t_clean_air_zone_entrant_payment_match.payment_id) "
       + "AS entries_count "
@@ -95,6 +96,7 @@ public class PaymentSummaryRepository {
           .totalPaid(resultSet.getInt("total_paid"))
           .payerId(UUID.fromString(resultSet.getString("payer_id")))
           .entriesCount(resultSet.getInt("entries_count"))
+          .paymentDate(resultSet.getDate("payment_date").toLocalDate())
           .build();
     }
   }
