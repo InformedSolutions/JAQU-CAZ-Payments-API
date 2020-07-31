@@ -669,7 +669,7 @@ steps:
     pull: never
     environment:
       BASEURL_CHARGE_SETTLEMENT_OAUTH: 'https://payments-userpool-st.auth.eu-west-2.amazoncognito.com'
-      BASEURL_CHARGE_SETTLEMENT_API: ' https://g35mswr22f.execute-api.eu-west-2.amazonaws.com/st'
+      BASEURL_CHARGE_SETTLEMENT_API: 'https://g35mswr22f.execute-api.eu-west-2.amazonaws.com/st'
       CHARGE_SETTLEMENT_CLIENT_ID:
         from_secret: charge_settlement_id_St
       CHARGE_SETTLEMENT_CLIENT_SECRET:
