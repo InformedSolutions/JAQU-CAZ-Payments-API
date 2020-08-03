@@ -10,6 +10,7 @@ import uk.gov.caz.psr.dto.PaymentDetailsResponse;
 import uk.gov.caz.psr.dto.PaymentDetailsResponse.VehicleEntrantPaymentDetails;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.service.AccountService;
 
 /**
  * A utility class that converts {@link Payment} into {@link PaymentDetailsResponse}.
@@ -19,6 +20,7 @@ import uk.gov.caz.psr.model.Payment;
 public class PaymentDetailsConverter {
 
   private final CurrencyFormatter currencyFormatter;
+  private final AccountService accountService;
 
   /**
    * Converts the passed {@link Payment} into an instance of {@link PaymentDetailsResponse}.
@@ -32,6 +34,7 @@ public class PaymentDetailsConverter {
         .paymentProviderId(payment.getExternalId())
         .paymentDate(payment.getSubmittedTimestamp().toLocalDate())
         .telephonePayment(payment.isTelephonePayment())
+        .payerName(accountService.getPayerName(payment.getUserId()))
         .totalPaid(currencyFormatter.parsePenniesToBigDecimal(payment.getTotalPaid()))
         .lineItems(toVehicleEntrantPaymentsDetails(payment.getEntrantPayments()))
         .build();

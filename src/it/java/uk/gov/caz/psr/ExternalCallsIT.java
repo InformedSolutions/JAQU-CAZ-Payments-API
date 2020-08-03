@@ -201,6 +201,34 @@ public class ExternalCallsIT {
         .respond(response("account-users-list-response.json", statusCode));
   }
 
+  public void mockAccountServiceGetUserDetailsCall(String userId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/users/"+ userId),
+            exactly(1))
+        .respond(response("account-user-details.json", statusCode));
+  }
+
+  public void mockAccountServiceGetUserDetailsOwnerCall(String userId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/users/"+ userId),
+            exactly(1))
+        .respond(response("account-user-details-owner.json", statusCode));
+  }
+
+  public void mockAccountServiceGetUserDetailsRemovedCall(String userId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/users/"+ userId),
+            exactly(1))
+        .respond(response("account-user-details-removed.json", statusCode));
+  }
+
+  public void mockAccountServiceGetUserDetailsError(String userId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/users/" + userId),
+            exactly(1))
+        .respond(emptyResponse(statusCode));
+  }
+
   @SneakyThrows
   private String readFile(String filename) {
     return Resources.toString(Resources.getResource("data/external/" + filename),
