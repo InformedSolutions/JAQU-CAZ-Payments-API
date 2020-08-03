@@ -1,16 +1,15 @@
 package uk.gov.caz.psr.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CacheableResponseDto;
+import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.whitelist.WhitelistedVehicleResponseDto;
 import uk.gov.caz.psr.service.CleanAirZoneService;
 import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
@@ -34,8 +33,8 @@ public class ProxyController implements ProxyControllerApiSpec {
   private final CleanAirZoneService cleanAirZoneService;
 
   @Override
-  public ResponseEntity<CleanAirZonesResponse> getCleanAirZones() throws JsonProcessingException {
-    CacheableResponseDto<CleanAirZonesResponse> result = cleanAirZoneService.fetchAll();
+  public ResponseEntity<CleanAirZonesDto> getCleanAirZones() {
+    CacheableResponseDto<CleanAirZonesDto> result = cleanAirZoneService.fetchAll();
     return ResponseEntity
         .status(result.getCode())
         .body(result.getBody());

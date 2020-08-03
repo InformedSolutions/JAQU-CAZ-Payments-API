@@ -10,6 +10,7 @@ import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -21,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,6 +61,7 @@ import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.repository.ExternalCardPaymentsRepository;
+import uk.gov.caz.psr.service.receipt.CustomPaymentReceiptEmailCreator;
 import uk.gov.caz.psr.util.AuditTableWrapper;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
@@ -86,6 +90,10 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
   private String secretName;
   @Value("${services.sqs.account-payment-template-id}")
   private String fleetTemplateId;
+  @Value("${services.sqs.template-id}")
+  private String singleVehicleTemplateId;
+  @Value("${services.sqs.offline-payment-id}")
+  private String offlinePaymentTemplateId;
 
   @LocalServerPort
   int randomServerPort;
@@ -108,6 +116,8 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
     mockVccsCleanAirZonesCall();
 
     testPaymentJourneyWithEmptyDatabase();
+
+    testPaymentJourneyWithTelephonePaymentSetToTrue();
 
     testPaymentJourneyWithUserId();
 
@@ -173,7 +183,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .then()
         .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
         .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
+        .andPaymentReceiptIsSentWithTemplate(singleVehicleTemplateId);
   }
 
   private void testPaymentJourneyWhenFailedPaymentExistsExactlyForSameDays() {
@@ -198,7 +208,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .then()
         .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
         .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
+        .andPaymentReceiptIsSentWithTemplate(singleVehicleTemplateId);
   }
 
   private void testPaymentJourneyWhenEntrantPaymentsExist() {
@@ -223,7 +233,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
         .withNonNullPaymentAuthorisedTimestamp()
         .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
+        .andPaymentReceiptIsSentWithTemplate(singleVehicleTemplateId);
   }
 
   private void testPaymentJourneyWithEmptyDatabase() {
@@ -246,9 +256,33 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .withNonNullPaymentAuthorisedTimestamp()
         .andAuditRecordsCreated()
         .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptIsSent();
+        .andPaymentReceiptIsSentWithTemplate(singleVehicleTemplateId);
   }
 
+  private void testPaymentJourneyWithTelephonePaymentSetToTrue() {
+    clearAllPayments();
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequestWithTrueTelephonePayment())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpCreatedStatusCode()
+        .paymentEntityIsCreatedInDatabaseWithTrueTelephonePayment()
+        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
+        .withNullPaymentAuthorisedTimestamp()
+        .withMatchedEntrantPayments()
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
+
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .withNonNullPaymentAuthorisedTimestamp()
+        .andAuditRecordsCreated()
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptForFleetIsSent(offlinePaymentTemplateId);
+  }
 
   private void testPaymentJourneyWithUserId() {
     clearAllPayments();
@@ -272,7 +306,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .withNonNullPaymentAuthorisedTimestamp()
         .andAuditRecordsCreated()
         .andStatusResponseIsReturnedWithMatchinInternalId()
-        .andPaymentReceiptForFleetIsSent(this.fleetTemplateId);
+        .andPaymentReceiptForFleetIsSent(fleetTemplateId);
   }
 
   private void clearAllPayments() {
@@ -361,8 +395,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
     public PaymentJourneyAssertion whenSubmitted() {
       boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
-      this.initialPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
-          includeUserId ? "user_id = '" + initiatePaymentRequest.getUserId() + "'" : "");
+      this.initialPaymentsCount = getCurrentPaymentsCount();
 
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
       this.validatableResponse = RestAssured.given()
@@ -393,16 +426,21 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
     }
 
     public PaymentJourneyAssertion paymentEntityIsCreatedInDatabase() {
-      boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
-      int currentPaymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
-          includeUserId ? "user_id = '" + initiatePaymentRequest.getUserId() + "'" : "");
+      int currentPaymentsCount = getCurrentPaymentsCount();
       assertThat(currentPaymentsCount).isGreaterThan(initialPaymentsCount);
       verifyThatPaymentEntityExistsWithStatus(ExternalPaymentStatus.CREATED);
       return this;
     }
 
+    private int getCurrentPaymentsCount() {
+      boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
+      return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
+          "telephone_payment is " + initiatePaymentRequest.getTelephonePayment().toString()
+              + (includeUserId ? " AND user_id = '" + initiatePaymentRequest.getUserId() + "'" : ""));
+    }
+
     public PaymentJourneyAssertion andNoNewPaymentEntityIsCreatedInDatabase() {
-      int currentPaymentsCount = JdbcTestUtils.countRowsInTable(jdbcTemplate, PAYMENT_TABLE);
+      int currentPaymentsCount = getCurrentPaymentsCount();
       assertThat(currentPaymentsCount).isEqualTo(initialPaymentsCount);
       return this;
     }
@@ -555,36 +593,95 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
       assertThat(masterCount).isEqualTo(vrns.size());
     }
 
-    public void andPaymentReceiptIsSent() {
-      List<Message> messages = receiveSqsMessages();
-      assertThat(messages).isNotEmpty();
+    public void andPaymentReceiptIsSentWithTemplate(String templateId) {
+      Message message = receiveSqsMessage();
+      Map<String, Object> messageBody = extractToMap(message.getBody());
+      Map<String, Object> personalisation = extractToMap(
+          messageBody.get("personalisation").toString());
+      int chargeInPennies = initiatePaymentRequest.getTransactions()
+          .stream()
+          .map(Transaction::getCharge)
+          .reduce(0, Integer::sum);
+
+      assertThat(messageBody).containsEntry("templateId", templateId);
+      assertThat(personalisation).extracting("amount")
+          .asInstanceOf(InstanceOfAssertFactories.STRING)
+          .isEqualTo((chargeInPennies / 100) + ".00");
+      assertThat(personalisation).extracting("date")
+          .asInstanceOf(InstanceOfAssertFactories.list(String.class))
+          .containsExactlyInAnyOrderElementsOf(getTravelDatesLines());
     }
 
-    public void andPaymentReceiptForFleetIsSent(String fleetTemplateId) {
-      List<Message> messages = receiveSqsMessages();
-      assertThat(messages).isNotEmpty();
-      for (Message message : messages) {
-        String messageBody = message.getBody();
-        if (messageBody.contains(fleetTemplateId)) {
-          assertThat(messageBody.contains(TRAVEL_DATES.get(0)
-              .format(DateTimeFormatter.ofPattern("dd MMMM YYYY")) + " - " + VRNS.get(0)));          
-        }
-      }
+    public void andPaymentReceiptForFleetIsSent(String templateId) {
+      Message message = receiveSqsMessage();
+      Map<String, Object> messageBody = extractToMap(message.getBody());
+      Map<String, Object> personalisation = extractToMap(
+          messageBody.get("personalisation").toString());
+      assertThat(messageBody).containsEntry("templateId", templateId);
+      assertThat(personalisation).extracting("charges")
+          .asInstanceOf(InstanceOfAssertFactories.list(String.class))
+          .containsExactlyElementsOf(getChargesLines());
     }
 
-    private List<Message> receiveSqsMessages() {
+    private List<String> getTravelDatesLines() {
+      return initiatePaymentRequest.getTransactions()
+          .stream()
+          .map(Transaction::getTravelDate)
+          .map(travelDate -> travelDate.format(DateTimeFormatter.ofPattern(
+              CustomPaymentReceiptEmailCreator.DATE_FORMAT)))
+          .collect(Collectors.toList());
+    }
+
+    @SneakyThrows
+    private Map<String, Object> extractToMap(String json) {
+      return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+    }
+
+    private List<String> getChargesLines() {
+      return initiatePaymentRequest.getTransactions()
+          .stream()
+          .sorted(Comparator.comparing(Transaction::getTravelDate).thenComparing(Transaction::getVrn))
+          .map(this::chargeLineInFleetEmailReceipt)
+          .collect(Collectors.toList());
+    }
+
+    private String chargeLineInFleetEmailReceipt(Transaction transaction) {
+      return Joiner.on(" - ").join(
+          transaction.getTravelDate()
+              .format(DateTimeFormatter.ofPattern(CustomPaymentReceiptEmailCreator.DATE_FORMAT)),
+          transaction.getVrn(),
+          "£" + (transaction.getCharge() / 100) + ".00"
+      );
+    }
+
+    private Message receiveSqsMessage() {
       GetQueueUrlResult queueUrlResult = sqsClient.getQueueUrl(emailSqsQueueName);
       ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(
           queueUrlResult.getQueueUrl());
-      receiveMessageRequest.withMaxNumberOfMessages(10);
+      receiveMessageRequest.withMaxNumberOfMessages(1);
       ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
-      return receiveMessageResult.getMessages();
+      for (Message message : receiveMessageResult.getMessages()) {
+        sqsClient.deleteMessage(queueUrlResult.getQueueUrl(), message.getReceiptHandle());
+      }
+      return receiveMessageResult.getMessages().get(0);
     }
 
     public PaymentJourneyAssertion paymentEntityIsCreatedInDatabaseWithUserId() {
       paymentEntityIsCreatedInDatabase();
       return this;
     }
+
+    public PaymentJourneyAssertion paymentEntityIsCreatedInDatabaseWithTrueTelephonePayment() {
+      paymentEntityIsCreatedInDatabase();
+      return this;
+    }
+  }
+
+  private InitiatePaymentRequest initiatePaymentRequestWithTrueTelephonePayment() {
+    return initiatePaymentRequest()
+        .toBuilder()
+        .telephonePayment(Boolean.TRUE)
+        .build();
   }
 
   private InitiatePaymentRequest initiatePaymentRequestWithUserId() {
@@ -596,6 +693,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
   private InitiatePaymentRequest initiatePaymentRequest() {
     return InitiatePaymentRequest.builder()
+        .telephonePayment(Boolean.FALSE)
         .transactions(
             VRNS.stream()
                 .flatMap(vrn -> TRAVEL_DATES.stream()

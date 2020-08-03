@@ -17,7 +17,6 @@ import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.whitelist.WhitelistedVehicleResponseDto;
 
 /**
@@ -28,14 +27,12 @@ import uk.gov.caz.psr.dto.whitelist.WhitelistedVehicleResponseDto;
 public interface ProxyControllerApiSpec {
 
   /**
-   * Endpoint for retrieving a summary list of clean air zones and their
-   * boundary URLs. Note this endpoint acts as a proxy through to the Vehicle
-   * Checker service.
+   * Endpoint for retrieving a summary list of clean air zones and their boundary URLs. Note this
+   * endpoint acts as a proxy through to the Vehicle Checker service.
    *
-   * @return a summary listing of a clean air zone including their identifiers
-   *         and boundary urls.
-   * @throws JsonProcessingException exception encountered whilst
-   *         serializing/deserializing JSON payloads
+   * @return a summary listing of a clean air zone including their identifiers and boundary urls.
+   * @throws JsonProcessingException exception encountered whilst serializing/deserializing JSON
+   *                                 payloads
    */
   @GetMapping(ProxyController.GET_CLEAN_AIR_ZONES)
   @ApiOperation(value = "${swagger.operations.cleanAirZones.description}",
@@ -50,8 +47,7 @@ public interface ProxyControllerApiSpec {
       value = "CorrelationID to track the request from the API gateway through"
           + " the Enquiries stack",
       paramType = "header")})
-  ResponseEntity<CleanAirZonesResponse> getCleanAirZones()
-      throws JsonProcessingException;
+  ResponseEntity<CleanAirZonesDto> getCleanAirZones() throws JsonProcessingException;
 
   /**
    * Get vehicle details.
@@ -121,8 +117,8 @@ public interface ProxyControllerApiSpec {
       @RequestParam("zones") String zones) throws NotFoundException;
 
   /**
-   * Gets details of a whitelisted vehicle by its {@code vrn}. This is a proxy to the
-   * whitelist service.
+   * Gets details of a whitelisted vehicle by its {@code vrn}. This is a proxy to the whitelist
+   * service.
    */
   @ApiOperation(value = "${swagger.operations.whitelist.vehicle-details.description}",
       response = WhitelistedVehicleResponseDto.class)

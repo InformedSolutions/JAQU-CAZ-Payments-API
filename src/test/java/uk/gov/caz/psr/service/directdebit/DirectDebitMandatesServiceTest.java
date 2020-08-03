@@ -33,10 +33,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
+import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate.DirectDebitMandateStatus;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.external.Link;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateLinks;
@@ -118,7 +118,8 @@ class DirectDebitMandatesServiceTest {
 
     private void mockFailureOfCreationOFDirectDebitMandateInAccountService() {
       given(accountsRepository.createDirectDebitMandateSync(any(), any()))
-          .willReturn(Response.error(400, ResponseBody.create(MediaType.get("application/json"), "")));
+          .willReturn(
+              Response.error(400, ResponseBody.create(MediaType.get("application/json"), "")));
     }
 
     private void mockSuccessCreateDirectDebitMandateInAccountService() {
@@ -269,7 +270,7 @@ class DirectDebitMandatesServiceTest {
     @SneakyThrows
     private void mockCleanAirZonesInVccs() {
       when(vccsRepository.findCleanAirZonesSync()).thenReturn(
-          Response.success(CleanAirZonesResponse.builder()
+          Response.success(CleanAirZonesDto.builder()
               .cleanAirZones(Collections.singletonList(CleanAirZoneDto.builder()
                   .cleanAirZoneId(ANY_CLEAN_AIR_ZONE_ID)
                   .name("clean air zone name")
