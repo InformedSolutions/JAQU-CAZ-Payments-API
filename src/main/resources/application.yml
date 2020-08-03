@@ -145,6 +145,8 @@ swagger:
           (identified by the x-api-key header parameter)
         telephone-payment: Indicates whether payment was done over phone
         vrn: Vehicle registration number
+        payer-name: >-
+          When a given user is an account owner, payerName should be “Administrator”. If a user has been deleted it should be set to “Deleted user” otherwise name.
       payment-info-request:
         payment-provider-id: >-
           GOV.UK Pay unique payment identifier. Can be used to obtain data associated with a specific GOV.UK Pay payment transaction.
@@ -220,7 +222,7 @@ swagger:
         vrn: the registration number of the vehicles
         tariff-code: the identifier for the tariff on the travel date in question
         charge: the charge to be paid in association with that tariff code
-        paid-dates: A list of days which are already paid      
+        paid-dates: A list of days which are already paid
       cleanAirZones:
         cleanAirZoneDetails: List of Clean Air Zones
       cleanAirZone:
@@ -300,12 +302,12 @@ swagger:
           Gets details of a whitelisted vehicle. It is a proxy to the whitelist service
     db:
       migration:
-        description: Evolve DB schema 
+        description: Evolve DB schema
     cacheInvalidation:
       cleanAirZones:
         description: Evicting a cached clean-air-zones from redis
     cleanAirZones:
-      description: Returns list of available CAZs         
+      description: Returns list of available CAZs
     vehicle:
       details:
         description: Returns vehicle registation details
