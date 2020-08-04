@@ -33,6 +33,9 @@ public class PaymentDetailsResponse {
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-details.telephone-payment}")
   boolean telephonePayment;
 
+  @ApiModelProperty(value = "${swagger.model.descriptions.payment-details.payer-name}")
+  String payerName;
+
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-details.line-items}")
   List<VehicleEntrantPaymentDetails> lineItems;
 

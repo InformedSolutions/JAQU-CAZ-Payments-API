@@ -531,7 +531,7 @@ steps:
         from_secret: jaqu_lower_github_private_key
     when:
       event:
-        - pull_request
+        - push
 
   - name: provisioning warning
     image: docker:19.03.11-git
@@ -662,6 +662,9 @@ steps:
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
+    when:
+      event:
+        - push
 
   # Run end to end tests
   - name: run api end to end tests
@@ -681,6 +684,9 @@ steps:
       - sleep 5m
       - cd JAQU-CAZ-QA-selenium
       - cucumber -t @CHARGESETTLEMENT --retry 2
+    when:
+      event:
+        - push
 
   ################################################# End of ST Environment Steps #######################################################
 
@@ -1530,7 +1536,7 @@ steps:
       - export TF_VAR_lambda_file=/opt/package/$LAMBDA_FUNCTION-$VERSION.zip
       - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
       - cd JAQU-CAZ-IAC
-      - git checkout live_prod
+      - git checkout prod_live
       - cd terraform-iac/projects/payments/layers/01.networking
       - PATH=$PATH:../../../../bin/
       - chmod +x ../../../../bin/tf
@@ -1600,7 +1606,7 @@ steps:
       - export TF_VAR_lambda_file=/opt/package/$LAMBDA_FUNCTION-$VERSION.zip
       - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
       - cd JAQU-CAZ-IAC
-      - git checkout live_prod
+      - git checkout prod_live
       - cd terraform-iac/projects/payments/layers/01.networking
       - PATH=$PATH:../../../../bin/
       - chmod +x ../../../../bin/tf

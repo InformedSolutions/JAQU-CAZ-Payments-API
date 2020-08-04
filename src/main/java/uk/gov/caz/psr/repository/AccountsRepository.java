@@ -19,6 +19,7 @@ import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
+import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
@@ -197,6 +198,26 @@ public interface AccountsRepository {
   default Response<AccountUsersResponse> getAllUsersSync(UUID accountId) {
     try {
       return getAllUsers(accountId).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+
+  /**
+   * Method to get information about user.
+   */
+  @Headers({
+      "Accept: application/json"
+  })
+  @GET("v1/users/{userId}")
+  Call<UserDetailsResponse> getUserDetails(@Path("userId") UUID userId);
+
+  /**
+   * A synchronous wrapper for {@code getUser} call.
+   */
+  default Response<UserDetailsResponse> getUserDetailsSync(UUID userId) {
+    try {
+      return getUserDetails(userId).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }
