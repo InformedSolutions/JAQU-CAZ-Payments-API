@@ -531,7 +531,7 @@ steps:
         from_secret: jaqu_lower_github_private_key
     when:
       event:
-        - pull_request
+        - push
 
   - name: provisioning warning
     image: docker:19.03.11-git
@@ -662,6 +662,9 @@ steps:
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
+    when:
+      event:
+        - push
 
   # Run end to end tests
   - name: run api end to end tests
@@ -681,6 +684,9 @@ steps:
       - sleep 5m
       - cd JAQU-CAZ-QA-selenium
       - cucumber -t @CHARGESETTLEMENT --retry 2
+    when:
+      event:
+        - push
 
   ################################################# End of ST Environment Steps #######################################################
 
