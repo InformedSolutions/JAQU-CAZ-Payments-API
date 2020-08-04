@@ -663,8 +663,8 @@ steps:
       - name: docker_sock
         path: /var/run/docker.sock
     when:
-        event:
-          - push
+      event:
+        - push
 
   # Run end to end tests
   - name: run api end to end tests
