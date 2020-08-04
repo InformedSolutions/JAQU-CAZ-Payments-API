@@ -482,58 +482,6 @@ steps:
     pull: never
     commands:
       - mvn package -DskipUnitTests
-  
-  - name: plan updates into st	
-    image: hashicorp/terraform:0.12.3	
-    volumes:	
-      - name: package_directory	
-        path: /opt/package	
-    commands:	
-      - apk update && apk add bash	
-      - mkdir ~/.ssh	
-      - echo -e "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa	
-      - chmod 600 ~/.ssh/id_rsa	
-      - touch ~/.ssh/known_hosts	
-      - chmod 600 ~/.ssh/known_hosts	
-      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null	
-      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git	
-      - cd JAQU-CAZ-IAC	
-      - git checkout controlled_st	
-      - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)	
-      - cd terraform-iac/projects/payments/layers/01.networking	
-      - PATH=$PATH:../../../../bin/	
-      - chmod +x ../../../../bin/tf	
-      - tf init	
-      - tf workspace select st || tf workspace new st	
-      - tf plan	
-      - cd ../02.backends	
-      - tf init	
-      - tf workspace select st || tf workspace new st	
-      - tf plan	
-      - cd ../03.api	
-      - tf init	
-      - tf workspace select st || tf workspace new st	
-      - tf plan	
-    environment:	
-      TF_VAR_access_key:	
-        from_secret: jaqu_controlled_aws_access_key_id	
-      TF_VAR_secret_key:	
-        from_secret: jaqu_controlled_aws_secret_access_key	
-      TF_VAR_master_access_key:	
-        from_secret: jaqu_master_aws_access_key_id	
-      TF_VAR_master_secret_key:	
-        from_secret: jaqu_master_aws_secret_access_key	
-      AWS_ACCESS_KEY_ID:	
-        from_secret: jaqu_controlled_aws_access_key_id	
-      AWS_SECRET_ACCESS_KEY:	
-        from_secret: jaqu_controlled_aws_secret_access_key	
-      AWS_DEFAULT_REGION: eu-west-2	
-      AWS_ACCOUNT_NAME: jaqu-controlled	
-      GIT_PRIVATE_SSH:	
-        from_secret: jaqu_lower_github_private_key	
-    when:	
-      event:	
-        - push	
 
   - name: provisioning warning
     image: docker:19.03.11-git
@@ -550,6 +498,14 @@ steps:
       - name: package_directory
         path: /opt/package
     commands:
+      - apk update && apk add bash
+      - mkdir ~/.ssh
+      - echo -e "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - touch ~/.ssh/known_hosts
+      - chmod 600 ~/.ssh/known_hosts
+      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
+      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
       - cd JAQU-CAZ-IAC
       - git checkout controlled_st
       - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
