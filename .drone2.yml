@@ -461,7 +461,29 @@ steps:
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
       
-   - name: plan updates into st	
+
+
+  # Package
+  - name: package
+    image: payments-api-base
+    volumes:
+      - name: package_directory
+        path: /drone/src/target
+      - name: m2_repo
+        path: /root/.m2
+    environment:
+      JAQU_NEXUS_URL:
+        from_secret: jaqu_lower_nexus_url
+      JAQU_NEXUS_USER:
+        from_secret: jaqu_lower_nexus_username
+      JAQU_NEXUS_PASSWORD:
+        from_secret: jaqu_lower_nexus_password
+      BUILD_ID: ${DRONE_BUILD_NUMBER}
+    pull: never
+    commands:
+      - mvn package -DskipUnitTests
+  
+  - name: plan updates into st	
     image: hashicorp/terraform:0.12.3	
     volumes:	
       - name: package_directory	
@@ -512,27 +534,6 @@ steps:
     when:	
       event:	
         - push	
-
-
-  # Package
-  - name: package
-    image: payments-api-base
-    volumes:
-      - name: package_directory
-        path: /drone/src/target
-      - name: m2_repo
-        path: /root/.m2
-    environment:
-      JAQU_NEXUS_URL:
-        from_secret: jaqu_lower_nexus_url
-      JAQU_NEXUS_USER:
-        from_secret: jaqu_lower_nexus_username
-      JAQU_NEXUS_PASSWORD:
-        from_secret: jaqu_lower_nexus_password
-      BUILD_ID: ${DRONE_BUILD_NUMBER}
-    pull: never
-    commands:
-      - mvn package -DskipUnitTests
 
   - name: provisioning warning
     image: docker:19.03.11-git
