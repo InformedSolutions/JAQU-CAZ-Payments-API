@@ -125,26 +125,6 @@ public class PaymentDetailsTestIT extends ExternalCallsIT{
   }
 
   @Test
-  void shouldReturnPaymentDateAsNullWhenPaymentSubmittedTimestampIsNullInDb() {
-    mockAccountServiceGetUserDetailsCall(ANY_USER_ID, 200);
-    String paymentId = "d80deb4e-0f8a-11ea-8dc9-93fa5be4476f";
-
-    RestAssured.given()
-        .accept(MediaType.APPLICATION_JSON.toString())
-        .header(Constants.X_CORRELATION_ID_HEADER, CORRELATION_ID)
-        .pathParam("payment_id", paymentId)
-
-        .when()
-        .get(PaymentsController.GET_PAYMENT_DETAILS)
-
-        .then()
-        .contentType(MediaType.APPLICATION_JSON.toString())
-        .header(Constants.X_CORRELATION_ID_HEADER, CORRELATION_ID)
-        .statusCode(HttpStatus.OK.value())
-        .body("paymentDate", equalTo(null));
-  }
-
-  @Test
   void shouldReturnNotFound() {
     String paymentId = "eb3f1a6a-102c-11ea-be9e-2b1c2964eba7";
 

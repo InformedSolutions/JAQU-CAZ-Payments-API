@@ -2,8 +2,6 @@ package uk.gov.caz.psr.util;
 
 import static java.util.stream.Collectors.toList;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -34,7 +32,7 @@ public class PaymentDetailsConverter {
     return PaymentDetailsResponse.builder()
         .centralPaymentReference(payment.getReferenceNumber())
         .paymentProviderId(payment.getExternalId())
-        .paymentDate(toLocalDate(payment.getSubmittedTimestamp()))
+        .paymentDate(payment.getSubmittedTimestamp().toLocalDate())
         .telephonePayment(payment.isTelephonePayment())
         .payerName(accountService.getPayerName(payment.getUserId()))
         .totalPaid(currencyFormatter.parsePenniesToBigDecimal(payment.getTotalPaid()))
@@ -60,12 +58,5 @@ public class PaymentDetailsConverter {
         .travelDate(entrantPayment.getTravelDate())
         .vrn(entrantPayment.getVrn())
         .build();
-  }
-
-  /**
-   * Maps the provided {@code timestamp} to a date provided it is non null. Returns null otherwise.
-   */
-  private LocalDate toLocalDate(LocalDateTime timestamp) {
-    return timestamp == null ? null : timestamp.toLocalDate();
   }
 }
