@@ -32,7 +32,9 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.DirectDebitMandatesController;
@@ -53,6 +55,8 @@ public class DirectDebitJourneyTestIT {
   private DataSource dataSource;
   @Autowired
   private ObjectMapper objectMapper;
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
   @Value("${aws.direct-debit-secret-name}")
   private String apiKeySecretName;
   @LocalServerPort
@@ -243,12 +247,14 @@ public class DirectDebitJourneyTestIT {
       response.statusCode(HttpStatus.CREATED.value());
       response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
       response.contentType(ContentType.JSON);
+      String externalPaymentId = "u6dogn2lb0nedi1pl5i61hl41a";
       assertThat(response.extract().body().asString()
-          .contains("\"externalPaymentId\":\"u6dogn2lb0nedi1pl5i61hl41a\""))
+          .contains("\"externalPaymentId\":\"" + externalPaymentId + "\""))
           .isTrue();
       assertThat(response.extract().body().asString()
           .contains("\"paymentStatus\":\"SUCCESS\""))
           .isTrue();
+      verifyThatPaymentSubmittedTimestampIsNotNullFor(externalPaymentId);
     }
 
     @Test
@@ -268,12 +274,20 @@ public class DirectDebitJourneyTestIT {
       response.statusCode(HttpStatus.CREATED.value());
       response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
       response.contentType(ContentType.JSON);
+      String externalPaymentId = "u6dogn2lb0nedi1pl5i61hl41a";
       assertThat(response.extract().body().asString()
-          .contains("\"externalPaymentId\":\"u6dogn2lb0nedi1pl5i61hl41a\""))
+          .contains("\"externalPaymentId\":\"" + externalPaymentId + "\""))
           .isTrue();
       assertThat(response.extract().body().asString()
           .contains("\"paymentStatus\":\"ERROR\""))
           .isTrue();
+      verifyThatPaymentSubmittedTimestampIsNotNullFor(externalPaymentId);
+    }
+
+    private void verifyThatPaymentSubmittedTimestampIsNotNullFor(String externalPaymentId) {
+      JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "caz_payment.t_payment",
+          "payment_submitted_timestamp is not null "
+              + "AND payment_provider_id = '" + externalPaymentId + "'");
     }
 
     private void clearAllPayments() {

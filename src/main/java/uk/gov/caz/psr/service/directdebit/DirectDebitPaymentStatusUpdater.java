@@ -2,6 +2,7 @@ package uk.gov.caz.psr.service.directdebit;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,8 @@ public class DirectDebitPaymentStatusUpdater {
       DirectDebitPayment directDebitPayment, String email) {
     checkPreconditions(payment, directDebitPayment, email);
 
-    Payment paymentWithExternalId = buildPaymentWithExternalId(payment, directDebitPayment);
+    Payment paymentWithExternalId = buildPaymentWithExternalIdAndSubmittedTimestamp(payment,
+        directDebitPayment);
     Payment updatedPayment = paymentUpdateStatusBuilder
         .buildWithExternalPaymentDetails(paymentWithExternalId,
             buildExternalPaymentDetails(directDebitPayment));
@@ -73,9 +75,11 @@ public class DirectDebitPaymentStatusUpdater {
   /**
    * Builds {@link Payment} with {@code externalId} based on {@link DirectDebitPayment}.
    */
-  private Payment buildPaymentWithExternalId(Payment payment,
+  private Payment buildPaymentWithExternalIdAndSubmittedTimestamp(Payment payment,
       DirectDebitPayment directDebitPayment) {
-    return payment.toBuilder().externalId(directDebitPayment.getPaymentId()).build();
+    return payment.toBuilder()
+        .submittedTimestamp(LocalDateTime.now())
+        .externalId(directDebitPayment.getPaymentId()).build();
   }
 
   /**
