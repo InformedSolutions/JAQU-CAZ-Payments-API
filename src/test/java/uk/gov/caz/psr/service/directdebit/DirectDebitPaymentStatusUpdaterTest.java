@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service.directdebit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
@@ -165,14 +165,14 @@ class DirectDebitPaymentStatusUpdaterTest {
   }
 
   private Payment mockCallsToServices(Payment payment, DirectDebitPayment directDebitPayment) {
-    Payment paymentWithExternalId = buildPaymentWithExternalId(payment, directDebitPayment);
-    Payment newPayment = anyPaymentWithStatus(directDebitPayment.getExternalPaymentStatus(),
-        LocalDateTime.now());
+    Payment newPayment = anyPaymentWithStatus(directDebitPayment.getExternalPaymentStatus(), LocalDateTime.now())
+        .toBuilder()
+        .submittedTimestamp(LocalDateTime.now())
+        .build();
     ExternalPaymentDetails externalPaymentDetails = externalPaymentDetailsForDirectDebitPayment(
         directDebitPayment);
-    given(paymentUpdateStatusBuilder
-        .buildWithExternalPaymentDetails(paymentWithExternalId, externalPaymentDetails))
-        .willReturn(newPayment);
+    given(paymentUpdateStatusBuilder.buildWithExternalPaymentDetails(any(),
+        eq(externalPaymentDetails))).willReturn(newPayment);
     return newPayment;
   }
 
