@@ -57,6 +57,10 @@ insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_metho
 values
 ('eb3f1a6a-102c-11ea-be9e-2b1c2964eba8', 'ext-payment-id-3', 'CREDIT_DEBIT_CARD', 'SUCCESS', 140, '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', 'b08d221f-5387-4b61-8732-9adcd3e9bb67');
 
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, payment_submitted_timestamp, payment_authorised_timestamp, user_id)
+values
+('d80deb4e-0f8a-11ea-8dc9-93fa5be4476f', 'ext-payment-id-3', 'CREDIT_DEBIT_CARD', 'SUCCESS', 140, null, '2019-11-23T20:39:08.272Z', 'b08d221f-5387-4b61-8732-9adcd3e9bb67');
+
 insert into caz_payment.t_clean_air_zone_entrant_payment (clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
 values
 ('e218c724-102c-11ea-be9e-973e776167e1', 'AB11CDE', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-01', 'tariff-1', 70, 'PAID', 'USER'),
