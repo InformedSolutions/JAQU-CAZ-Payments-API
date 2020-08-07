@@ -29,11 +29,17 @@ public class InitiatePaymentRequestToModelConverter {
         .totalPaid(calculateTotal(request.getTransactions()))
         .entrantPayments(Collections.emptyList())
         .cleanAirZoneId(request.getCleanAirZoneId())
-        .userId(StringUtils.hasText(request.getUserId())
-            ? UUID.fromString(request.getUserId())
-            : null)
+        .userId(toUuidIfPresent(request.getUserId()))
+        .operatorId(toUuidIfPresent(request.getOperatorId()))
         .telephonePayment(request.getTelephonePayment())
         .build();
+  }
+
+  /**
+   * Converts the passed identifier to {@link UUID} provided it contains a non-empty text.
+   */
+  private static UUID toUuidIfPresent(String identifier) {
+    return StringUtils.hasText(identifier) ? UUID.fromString(identifier) : null;
   }
 
   /**

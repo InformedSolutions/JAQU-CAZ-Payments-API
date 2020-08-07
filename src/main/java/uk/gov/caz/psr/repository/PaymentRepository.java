@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
@@ -55,11 +56,11 @@ public class PaymentRepository {
     private static final String PAYMENT_PROVIDER_ID = "payment_provider_id";
     private static final String REFERENCE_NUMBER = "central_reference_number";
     private static final String USER_ID = "user_id";
+    private static final String OPERATOR_ID = "operator_id";
     private static final String PAYMENT_MANDATE_PROVIDER_ID = "payment_provider_mandate_id";
     private static final String TELEPHONE_PAYMENT = "telephone_payment";
     private static final String PAYMENT_SUBMITTED_TIMESTAMP = "payment_submitted_timestamp";
     private static final String PAYMENT_AUTHORISED_TIMESTAMP = "payment_authorised_timestamp";
-    private static final String OPERATOR_ID = "operator_id";
   }
 
   /**
@@ -76,7 +77,8 @@ public class PaymentRepository {
         .withTableName(TABLE_NAME)
         .usingGeneratedKeyColumns(Columns.PAYMENT_ID, Columns.REFERENCE_NUMBER)
         .usingColumns(Columns.PAYMENT_METHOD, Columns.TOTAL_PAID, Columns.PAYMENT_PROVIDER_STATUS,
-            Columns.USER_ID, Columns.PAYMENT_MANDATE_PROVIDER_ID, Columns.TELEPHONE_PAYMENT);
+            Columns.USER_ID, Columns.PAYMENT_MANDATE_PROVIDER_ID, Columns.TELEPHONE_PAYMENT,
+            Columns.OPERATOR_ID);
     this.entrantPaymentRepository = entrantPaymentRepository;
   }
 
@@ -91,12 +93,7 @@ public class PaymentRepository {
    * @throws IllegalArgumentException if {@link Payment#getEntrantPayments()} ()} is NOT empty
    */
   public Payment insert(Payment payment) {
-    Preconditions.checkNotNull(payment, "Payment cannot be null");
-    Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
-    Preconditions.checkNotNull(payment.getExternalPaymentStatus(),
-        "External payment status cannot be null");
-    Preconditions.checkArgument(payment.getEntrantPayments().isEmpty(),
-        "Vehicle entrant payments must be empty");
+    checkInsertPreconditions(payment);
 
     KeyHolder keyHolder = simpleJdbcInsert.executeAndReturnKeyHolder(
         toSqlParametersForInsert(payment));
@@ -106,6 +103,21 @@ public class PaymentRepository {
         .id(paymentId)
         .referenceNumber(referenceNumber)
         .build();
+  }
+
+  /**
+   * Checks preconditions for an insert operation.
+   */
+  private void checkInsertPreconditions(Payment payment) {
+    Preconditions.checkNotNull(payment, "Payment cannot be null");
+    Preconditions.checkArgument(payment.getId() == null, "Payment cannot have ID");
+    Preconditions.checkNotNull(payment.getExternalPaymentStatus(),
+        "External payment status cannot be null");
+    Preconditions.checkArgument(payment.getEntrantPayments().isEmpty(),
+        "Vehicle entrant payments must be empty");
+    Preconditions.checkArgument(payment.isTelephonePayment()
+        || Objects.isNull(payment.getOperatorId()), "Operator ID must be null if "
+        + "telephonePayment is false");
   }
 
   /**
@@ -217,6 +229,7 @@ public class PaymentRepository {
         .addValue(Columns.PAYMENT_PROVIDER_STATUS, payment.getExternalPaymentStatus().name())
         .addValue(Columns.PAYMENT_METHOD, payment.getPaymentMethod().name())
         .addValue(Columns.USER_ID, payment.getUserId())
+        .addValue(Columns.OPERATOR_ID, payment.getOperatorId())
         .addValue(Columns.PAYMENT_MANDATE_PROVIDER_ID, payment.getPaymentProviderMandateId());
   }
 
@@ -235,9 +248,9 @@ public class PaymentRepository {
         + "payment.payment_provider_status, "
         + "payment.central_reference_number, "
         + "payment.user_id, "
+        + "payment.operator_id, "
         + "payment.payment_provider_mandate_id, "
-        + "payment.payment_provider_id, "
-        + "payment.operator_id "
+        + "payment.payment_provider_id "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
         + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
         + "ON entrant_payment.clean_air_zone_entrant_payment_id = "
@@ -257,9 +270,8 @@ public class PaymentRepository {
 
     private static final String ALL_PAYMENT_ATTRIBUTES =
         "payment_id, payment_method, payment_provider_id, central_reference_number, "
-            + "total_paid, payment_provider_status, user_id, payment_provider_mandate_id,"
-            + " payment_submitted_timestamp, payment_authorised_timestamp, telephone_payment,"
-            + " operator_id ";
+        + "total_paid, payment_provider_status, user_id, operator_id, payment_provider_mandate_id,"
+        + " payment_submitted_timestamp, payment_authorised_timestamp, telephone_payment ";
 
     static final String SELECT_DANGLING_PAYMENTS =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE "
@@ -292,8 +304,6 @@ public class PaymentRepository {
     @Override
     public Payment mapRow(ResultSet resultSet, int i) throws SQLException {
       String externalStatus = resultSet.getString(Columns.PAYMENT_PROVIDER_STATUS);
-      String userId = resultSet.getString(Columns.USER_ID);
-      String operatorId = resultSet.getString(Columns.OPERATOR_ID);
       return Payment.builder()
           .id(UUID.fromString(resultSet.getString(Columns.PAYMENT_ID)))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString(Columns.PAYMENT_METHOD)))
@@ -306,12 +316,16 @@ public class PaymentRepository {
               fromTimestampToLocalDateTime(resultSet, Columns.PAYMENT_SUBMITTED_TIMESTAMP))
           .authorisedTimestamp(
               fromTimestampToLocalDateTime(resultSet, Columns.PAYMENT_AUTHORISED_TIMESTAMP))
-          .userId(userId == null ? null : UUID.fromString(userId))
+          .userId(nullIfAbsentOrUuidFrom(resultSet.getString(Columns.USER_ID)))
+          .operatorId(nullIfAbsentOrUuidFrom(resultSet.getString(Columns.OPERATOR_ID)))
           .paymentProviderMandateId(resultSet.getString(Columns.PAYMENT_MANDATE_PROVIDER_ID))
           .telephonePayment(resultSet.getBoolean(Columns.TELEPHONE_PAYMENT))
           .entrantPayments(entrantPayments)
-          .operatorId(operatorId == null ? null : UUID.fromString(operatorId))
           .build();
+    }
+
+    private UUID nullIfAbsentOrUuidFrom(String identifier) {
+      return identifier == null ? null : UUID.fromString(identifier);
     }
 
     private LocalDateTime fromTimestampToLocalDateTime(ResultSet resultSet, String columnLabel)

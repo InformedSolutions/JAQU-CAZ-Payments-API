@@ -233,6 +233,7 @@ swagger:
         transactions: Collection of objects representing a single vehicle entrant against which the payment is made
         user-id: Identifies the fleet's account which is making the payment
         telephone-payment: Flag indicating whether this is an offline (true) or online payment (false).
+        operator-id: An optional field storing the identifier of the operator who makes the payment. Can be non-null only when telephonePayment is true.
       payments-get-status:
         clean-air-zone-name: Clean Air Zone name
       paid-payments-request:
