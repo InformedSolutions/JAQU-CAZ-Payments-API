@@ -8,8 +8,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
-import uk.gov.caz.definitions.dto.CleanAirZoneDto;
-import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.psr.dto.accounts.AccountUserResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
@@ -36,6 +34,7 @@ public class RetrieveSuccessfulPaymentsService {
   private final PaymentToCleanAirZoneMappingRepository paymentToCleanAirZoneMappingRepository;
   private final PaymentSummaryRepository paymentSummaryRepository;
   private final CurrencyFormatter currencyFormatter;
+  private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
 
   /**
    * Method fetches list of users associated with the provided account and selects the user with the
@@ -199,7 +198,8 @@ public class RetrieveSuccessfulPaymentsService {
    */
   private List<EnrichedPaymentSummary> enrichPaymentSummaries(
       List<PaymentSummary> paymentSummaries, Map<UUID, String> accountIdToNameMap) {
-    Map<UUID, String> cleanAirZonesIdToNameMap = getCleanAirZoneIdToCleanAirZoneNameMap();
+    Map<UUID, String> cleanAirZonesIdToNameMap = vehicleComplianceRetrievalService
+        .getCleanAirZoneIdToCleanAirZoneNameMap();
 
     List<EnrichedPaymentSummary> enrichedPaymentSummaries = paymentSummaries.stream()
         .map(paymentSummary -> EnrichedPaymentSummary.builder()
@@ -214,16 +214,7 @@ public class RetrieveSuccessfulPaymentsService {
     return enrichedPaymentSummaries;
   }
 
-  /**
-   * Method performs a call to {@link VccsRepository} to fetch cleanAirZones data and returns helper
-   * collection which maps cleanAirZone ID to cleanAirZone name (e.g.
-   * '1b33865b-1fcb-4d28-ac7d-d4586327de7d' => 'Birmingham').
-   */
-  private Map<UUID, String> getCleanAirZoneIdToCleanAirZoneNameMap() {
-    Response<CleanAirZonesDto> cleanAirZonesResponse = vccsRepository.findCleanAirZonesSync();
-    return cleanAirZonesResponse.body().getCleanAirZones().stream()
-        .collect(Collectors.toMap(CleanAirZoneDto::getCleanAirZoneId, CleanAirZoneDto::getName));
-  }
+
 
   /**
    * Helper method which returns proper payerName based on the provided {@link
