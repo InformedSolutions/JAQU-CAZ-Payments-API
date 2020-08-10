@@ -14,5 +14,6 @@ public class CleanAirZoneWithMandates {
 
   UUID cleanAirZoneId;
   String cazName;
+  boolean directDebitEnabled;
   List<Mandate> mandates;
 }
