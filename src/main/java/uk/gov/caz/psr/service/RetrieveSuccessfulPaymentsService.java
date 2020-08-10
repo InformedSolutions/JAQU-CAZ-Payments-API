@@ -17,7 +17,6 @@ import uk.gov.caz.psr.model.PaymentToCleanAirZoneMapping;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.PaymentSummaryRepository;
 import uk.gov.caz.psr.repository.PaymentToCleanAirZoneMappingRepository;
-import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.util.CurrencyFormatter;
 
 /**
@@ -30,7 +29,6 @@ import uk.gov.caz.psr.util.CurrencyFormatter;
 public class RetrieveSuccessfulPaymentsService {
 
   private final AccountsRepository accountsRepository;
-  private final VccsRepository vccsRepository;
   private final PaymentToCleanAirZoneMappingRepository paymentToCleanAirZoneMappingRepository;
   private final PaymentSummaryRepository paymentSummaryRepository;
   private final CurrencyFormatter currencyFormatter;
