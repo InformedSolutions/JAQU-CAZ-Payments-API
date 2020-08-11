@@ -101,6 +101,11 @@ public class Payment {
   boolean telephonePayment;
 
   /**
+   * An identifier of operator_id.
+   */
+  UUID operatorId;
+
+  /**
    * An overridden lombok's builder.
    */
   public static class PaymentBuilder {
@@ -121,7 +126,8 @@ public class Payment {
 
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
           externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl,
-          emailAddress, cleanAirZoneId, userId, paymentProviderMandateId, telephonePayment);
+          emailAddress, cleanAirZoneId, userId, paymentProviderMandateId, telephonePayment,
+          operatorId);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

@@ -24,6 +24,7 @@ import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
+import uk.gov.caz.psr.service.exception.ReferenceNumberNotFound;
 
 /**
  * A class which handles managing data in {@code PAYMENT} table.
@@ -34,6 +35,9 @@ public class PaymentRepository {
 
   private static final PaymentFindByIdMapper PAYMENT_ROW_MAPPER =
       new PaymentFindByIdMapper(Collections.emptyList());
+
+  private static final RowMapper<UUID> PAYMENT_ID_MAPPER = (rs, i) -> UUID
+      .fromString(rs.getString(1));
 
   private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcInsert simpleJdbcInsert;
@@ -55,6 +59,7 @@ public class PaymentRepository {
     private static final String TELEPHONE_PAYMENT = "telephone_payment";
     private static final String PAYMENT_SUBMITTED_TIMESTAMP = "payment_submitted_timestamp";
     private static final String PAYMENT_AUTHORISED_TIMESTAMP = "payment_authorised_timestamp";
+    private static final String OPERATOR_ID = "operator_id";
   }
 
   /**
@@ -149,6 +154,28 @@ public class PaymentRepository {
   }
 
   /**
+   * Finds a given payment by central reference number passed as {@code referenceNumber}.
+   *
+   * @param referenceNumber central reference number.
+   * @return An instance of {@link Payment} class wrapped in {@link Optional} if the payment is
+   *     found, {@link Optional#empty()} otherwise.
+   * @throws NullPointerException if {@code referenceNumber} is null
+   */
+  public Optional<Payment> findByReferenceNumber(Long referenceNumber) {
+    Preconditions.checkNotNull(referenceNumber, "referenceNumber cannot be null");
+
+    UUID paymentId = jdbcTemplate.query(Sql.SELECT_PAYMENT_ID_BY_REFERENCE_NUMBER,
+        rs -> rs.next() ? PAYMENT_ID_MAPPER.mapRow(rs, 1) : null,
+        referenceNumber);
+
+    if (paymentId == null) {
+      throw new ReferenceNumberNotFound();
+    }
+
+    return findById(paymentId);
+  }
+
+  /**
    * Finds the latest {@link Payment} associated with the {@link EntrantPayment} by the entrant
    * payment's id.
    *
@@ -209,7 +236,8 @@ public class PaymentRepository {
         + "payment.central_reference_number, "
         + "payment.user_id, "
         + "payment.payment_provider_mandate_id, "
-        + "payment.payment_provider_id "
+        + "payment.payment_provider_id, "
+        + "payment.operator_id "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
         + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
         + "ON entrant_payment.clean_air_zone_entrant_payment_id = "
@@ -229,8 +257,9 @@ public class PaymentRepository {
 
     private static final String ALL_PAYMENT_ATTRIBUTES =
         "payment_id, payment_method, payment_provider_id, central_reference_number, "
-        + "total_paid, payment_provider_status, user_id, payment_provider_mandate_id,"
-        + " payment_submitted_timestamp, payment_authorised_timestamp, telephone_payment ";
+            + "total_paid, payment_provider_status, user_id, payment_provider_mandate_id,"
+            + " payment_submitted_timestamp, payment_authorised_timestamp, telephone_payment,"
+            + " operator_id ";
 
     static final String SELECT_DANGLING_PAYMENTS =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE "
@@ -245,6 +274,9 @@ public class PaymentRepository {
 
     static final String SELECT_BY_ID =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE payment_id = ?";
+
+    static final String SELECT_PAYMENT_ID_BY_REFERENCE_NUMBER =
+        "SELECT payment_id FROM caz_payment.t_payment WHERE central_reference_number = ?";
   }
 
   /**
@@ -261,6 +293,7 @@ public class PaymentRepository {
     public Payment mapRow(ResultSet resultSet, int i) throws SQLException {
       String externalStatus = resultSet.getString(Columns.PAYMENT_PROVIDER_STATUS);
       String userId = resultSet.getString(Columns.USER_ID);
+      String operatorId = resultSet.getString(Columns.OPERATOR_ID);
       return Payment.builder()
           .id(UUID.fromString(resultSet.getString(Columns.PAYMENT_ID)))
           .paymentMethod(PaymentMethod.valueOf(resultSet.getString(Columns.PAYMENT_METHOD)))
@@ -277,6 +310,7 @@ public class PaymentRepository {
           .paymentProviderMandateId(resultSet.getString(Columns.PAYMENT_MANDATE_PROVIDER_ID))
           .telephonePayment(resultSet.getBoolean(Columns.TELEPHONE_PAYMENT))
           .entrantPayments(entrantPayments)
+          .operatorId(operatorId == null ? null : UUID.fromString(operatorId))
           .build();
     }
 

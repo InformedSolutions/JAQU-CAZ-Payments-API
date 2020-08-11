@@ -45,7 +45,7 @@ public class ExceptionController extends GlobalExceptionHandler {
 
 
   /**
-   * Method to handle Exception when a unique VehicleEntrantPayment was not found and failed with 
+   * Method to handle Exception when a unique VehicleEntrantPayment was not found and failed with
    * {@link NotUniqueVehicleEntrantPaymentFoundException}.
    *
    * @param e Exception object.
@@ -59,9 +59,10 @@ public class ExceptionController extends GlobalExceptionHandler {
         .body(PaymentStatusErrorsResponse.singleValidationErrorResponse(e.getVrn(),
             e.getMessage()));
   }
-  
+
   /**
    * Method to handle {@link PaymentDoesNotExistException} when no VehicleEntrantPayment was found.
+   *
    * @param e Exception object
    */
   @ExceptionHandler(PaymentDoesNotExistException.class)
@@ -105,10 +106,10 @@ public class ExceptionController extends GlobalExceptionHandler {
     log.info("PaymentInfoDtoValidationException occurred: {}", errorsList);
     return ResponseEntity.badRequest().body(PaymentInfoErrorsResponse.from(errorsList));
   }
-  
+
   /**
    * Method to handle Exception when no VRN exists.
-   * 
+   *
    * @param ex Exception object.
    */
   @ExceptionHandler(PaymentInfoVrnValidationException.class)
