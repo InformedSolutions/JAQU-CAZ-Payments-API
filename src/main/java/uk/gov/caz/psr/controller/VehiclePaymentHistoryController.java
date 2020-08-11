@@ -1,5 +1,8 @@
 package uk.gov.caz.psr.controller;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import java.util.Optional;
 import javax.ws.rs.QueryParam;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,14 +24,32 @@ public class VehiclePaymentHistoryController implements VehiclePaymentHistoryCon
 
   public static final String BASE_PATH = "/v1/payments/vehicles-history";
 
+  private static final int DEFAULT_PAGE_NUMBER = 1;
+
+  private static final int DEFAULT_PAGE_SIZE = 10;
+
+  @VisibleForTesting
+  public static final String GET_VEHICLE_HISTORY = "{vrn}";
+
   @Override
   public ResponseEntity<VehiclePaymentHistoryResponse> historyForVehicle(
-      @PathVariable("vrn") String vrn, @QueryParam("pageNumber") int pageNumber,
-      @QueryParam("pageSize") int pageSize) {
+      @PathVariable("vrn") String vrn, @QueryParam("pageNumber") Integer pageNumber,
+      @QueryParam("pageSize") Integer pageSize) {
+
+
+    int nonNullPageNumber = Optional.ofNullable(pageNumber).orElse(DEFAULT_PAGE_NUMBER);
+    int nonNullPageSize = Optional.ofNullable(pageSize).orElse(DEFAULT_PAGE_SIZE);
+
+    Preconditions.checkArgument(nonNullPageNumber >= 1, "Page number should "
+        + "be equal or greater than one");
+    Preconditions.checkArgument(nonNullPageSize >= 0, "Page size should be "
+        + "equal or greater than zero");
+
     Page<EntrantPaymentEnriched> entrantPaymentEnrichedPage = service.paymentHistoryForVehicle(vrn,
-        pageNumber, pageSize);
+        nonNullPageNumber - 1, nonNullPageSize);
     VehiclePaymentHistoryResponse response = VehiclePaymentHistoryResponse
         .fromPage(entrantPaymentEnrichedPage);
+
     return ResponseEntity.ok(response);
   }
 }

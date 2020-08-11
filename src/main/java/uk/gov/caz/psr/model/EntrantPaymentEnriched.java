@@ -20,26 +20,26 @@ public class EntrantPaymentEnriched {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.travelDate}")
   @JsonFormat(pattern = "yyyy-MM-dd")
-  private LocalDate travelDate;
+  LocalDate travelDate;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.paymentTimestamp}")
-  @JsonFormat(pattern = "yyyy-MM-dd'T'hh:mm:ss")
-  private LocalDateTime paymentTimestamp;
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  LocalDateTime paymentTimestamp;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.operatorId}")
-  private Long operatorId;
+  UUID operatorId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.cazName}")
-  private String cazName;
+  String cazName;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.paymentId}")
-  private UUID paymentId;
+  UUID paymentId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.paymentReference}")
-  private Long paymentReference;
+  Long paymentReference;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.paymentStatus}")
-  private ExternalPaymentStatus paymentProviderStatus;
+  ExternalPaymentStatus paymentProviderStatus;
 
   /**
    * Function constructing entity based on database entities.
@@ -54,7 +54,7 @@ public class EntrantPaymentEnriched {
     return EntrantPaymentEnriched.builder()
         .travelDate(matchInfo.getEntrantPaymentInfo().getTravelDate())
         .paymentTimestamp(matchInfo.getPaymentInfo().getSubmittedTimestamp())
-        //.operatorId(matchInfo.getPaymentInfo().operatorid)
+        .operatorId(matchInfo.getPaymentInfo().getOperatorId())
         .cazName(cazIdMap.get(matchInfo.getEntrantPaymentInfo().getCleanAirZoneId()))
         .paymentId(matchInfo.getPaymentInfo().getId())
         .paymentReference(matchInfo.getPaymentInfo().getReferenceNumber())

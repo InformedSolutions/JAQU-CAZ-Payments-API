@@ -15,7 +15,8 @@ import uk.gov.caz.psr.dto.VehiclePaymentHistoryResponse;
  * API specification (swagger) for a controller which returns payment history for VRN.
  */
 @RequestMapping(
-    produces = MediaType.APPLICATION_JSON_VALUE
+    produces = MediaType.APPLICATION_JSON_VALUE,
+    value = VehiclePaymentHistoryController.BASE_PATH
 )
 @Validated
 public interface VehiclePaymentHistoryControllerApiSpec {
@@ -27,9 +28,9 @@ public interface VehiclePaymentHistoryControllerApiSpec {
    * @param pageSize size of page
    * @return historical entries
    */
-  @GetMapping(VehiclePaymentHistoryController.BASE_PATH + "/{vrn}")
+  @GetMapping(VehiclePaymentHistoryController.GET_VEHICLE_HISTORY)
   @ResponseStatus(HttpStatus.OK)
   ResponseEntity<VehiclePaymentHistoryResponse> historyForVehicle(
-      @PathVariable("vrn") String vrn, @QueryParam("pageNumber") int pageNumber,
-      @QueryParam("pageSize") int pageSize);
+      @PathVariable("vrn") String vrn, @QueryParam("pageNumber") Integer pageNumber,
+      @QueryParam("pageSize") Integer pageSize);
 }

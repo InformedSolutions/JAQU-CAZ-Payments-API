@@ -33,11 +33,11 @@ public class VehiclePaymentHistoryResponse {
   /**
    * Creates response object from a page returned from repository.
    * @param entrantsPage page of items
-   * @return
+   * @return response object
    */
   public static VehiclePaymentHistoryResponse fromPage(Page<EntrantPaymentEnriched> entrantsPage) {
     return VehiclePaymentHistoryResponse.builder()
-        .page(entrantsPage.getNumber())
+        .page(entrantsPage.getNumber() + 1)
         .pageCount(entrantsPage.getTotalPages())
         .perPage(entrantsPage.getSize())
         .totalPaymentsCount(entrantsPage.getTotalElements())
