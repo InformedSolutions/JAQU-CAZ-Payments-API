@@ -155,6 +155,7 @@ public class DirectDebitMandatesService {
     return CleanAirZoneWithMandates.builder()
         .cleanAirZoneId(caz.getCleanAirZoneId())
         .cazName(caz.getName())
+        .directDebitEnabled(caz.isDirectDebitEnabled())
         .mandates(toMandates(mandatesByCazId.getOrDefault(caz.getCleanAirZoneId(),
             Collections.emptyList()), accountId))
         .build();
