@@ -297,6 +297,8 @@ swagger:
           Returns a list of account's direct debit mandates assigned to selected Clean air zone.
       create-direct-debit:
         description: Create Payment via DirectDebit payment method.
+      get-payment-history-for-vehicle:
+        description: Fetches history of payments per vehicle
     charge-settlement:
       payment-status-update:
         description: >-
