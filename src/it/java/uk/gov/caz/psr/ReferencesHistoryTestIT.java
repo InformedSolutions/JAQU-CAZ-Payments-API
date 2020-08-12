@@ -55,7 +55,7 @@ public class ReferencesHistoryTestIT extends ExternalCallsIT{
         .statusCode(HttpStatus.OK.value())
         .body("paymentReference", equalTo(2000))
         .body("paymentProviderId", equalTo("ext-payment-id-3"))
-        .body("paymentTimestamp", equalTo("2020-05-01T11:43:41.56"))
+        .body("paymentTimestamp", equalTo("2020-05-01T11:43:41"))
         .body("totalPaid", equalTo(1.4f))
         .body("telephonePayment", equalTo(false))
         .body("operatorId", equalTo("e9a92b87-057a-4578-afb1-61d8b9af1569"))

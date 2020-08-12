@@ -27,7 +27,7 @@ public class ReferencesHistoryResponse {
   String paymentProviderId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.references-history.payment-timestamp}")
-  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SS")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
   LocalDateTime paymentTimestamp;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.references-history.total-paid}")
