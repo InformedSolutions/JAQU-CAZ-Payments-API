@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -148,7 +147,16 @@ public class ExceptionController extends GlobalExceptionHandler {
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity handleException(ConstraintViolationException exception) {
     log.warn("ConstraintViolationException occurred: ", exception);
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    return ResponseEntity.badRequest().build();
+  }
+
+  /**
+   * Exception handler that returns 400 error on invalid argument exception.
+   */
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity handleException(IllegalArgumentException exception) {
+    log.warn("IllegalArgumentException occurred: ", exception);
+    return ResponseEntity.badRequest().body(exception.getMessage());
   }
 
   /**

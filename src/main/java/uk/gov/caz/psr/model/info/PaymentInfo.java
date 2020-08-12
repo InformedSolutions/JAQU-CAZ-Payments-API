@@ -49,4 +49,8 @@ public class PaymentInfo {
 
   @Column(name = "telephone_payment")
   private boolean telephonePayment;
+
+  @Column(name = "operator_id")
+  private UUID operatorId;
+
 }

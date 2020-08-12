@@ -283,6 +283,20 @@ swagger:
         registeredGPW: should be set to true if vehicle features in GPW
         registeredNTR: should be set to true if vehicle features in NTR
         registeredRetrofit: should be set to true if vehicle features in Retrofit
+      historical-payments-response:
+        page: page number
+        pageCount: number of total pages that can be returned
+        perPage: number of items per page
+        totalPaymentsCount: total number of payments for this vehicle
+        payments: list of historical payments for a specific vehicle
+      historical-payment:
+        travelDate: date of travel
+        paymentTimestamp: when payment was done
+        operatorId: id of operator
+        cazName: name of clean air zone
+        paymentId: id of payment
+        paymentReference: reference number for payment
+        paymentStatus: external status of payment (f.e. FAILED, SUCCESS)
 
   operations:
     accounts:
@@ -314,6 +328,8 @@ swagger:
           Returns a list of account's direct debit mandates assigned to selected Clean air zone.
       create-direct-debit:
         description: Create Payment via DirectDebit payment method.
+      get-payment-history-for-vehicle:
+        description: Fetches history of payments per vehicle
     charge-settlement:
       payment-status-update:
         description: >-
