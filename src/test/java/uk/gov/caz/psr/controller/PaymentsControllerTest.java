@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,7 @@ import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.PaymentDetailsConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
+import uk.gov.caz.psr.util.ReferencesHistoryConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -63,6 +66,9 @@ class PaymentsControllerTest {
 
   @MockBean
   private PaymentDetailsConverter paymentDetailsConverter;
+
+  @MockBean
+  private ReferencesHistoryConverter referencesHistoryConverter;
 
   @MockBean
   private InitiatePaymentService initiatePaymentService;
@@ -93,6 +99,9 @@ class PaymentsControllerTest {
 
   private static final String GET_PAID_PATH = PaymentsController.BASE_PATH + "/"
       + PaymentsController.GET_PAID_VEHICLE_ENTRANTS;
+
+  private static final String GET_REFERENCES_HISTORY = PaymentsController.BASE_PATH + "/"
+      + PaymentsController.GET_REFERENCES_HISTORY;
 
   @Nested
   class InitiatePayment {
@@ -132,9 +141,9 @@ class PaymentsControllerTest {
       String payload = paymentRequestWithoutTelephonePayment();
 
       mockMvc.perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("'telephonePayment' cannot be null"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
@@ -569,6 +578,23 @@ class PaymentsControllerTest {
       given(
           getPaidEntrantPaymentsService.getResults(any(), any(), any(), any()))
           .willReturn(result);
+    }
+  }
+
+  @Nested
+  class GetReferencesHistory {
+
+    @Test
+    public void shouldReturn404WhenThereIsNoPaymentForGivenReferenceNumber()
+        throws Exception {
+      given(paymentService.getPaymentByReferenceNumber(any())).willReturn(Optional.empty());
+
+      mockMvc
+          .perform(get(GET_REFERENCES_HISTORY, 1200)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isNotFound());
     }
   }
 

@@ -26,6 +26,7 @@ import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.dto.PaymentDetailsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
+import uk.gov.caz.psr.dto.ReferencesHistoryResponse;
 
 @RequestMapping(value = PaymentsController.BASE_PATH,
     produces = MediaType.APPLICATION_JSON_VALUE)
@@ -104,4 +105,25 @@ public interface PaymentsControllerApiSpec {
   @ResponseStatus(HttpStatus.OK)
   ResponseEntity<PaymentDetailsResponse> getPaymentDetails(
       @PathVariable("payment_id") UUID paymentId);
+
+  /**
+   * Allows User to fetch information about given paymentReference.
+   */
+  @ApiOperation(
+      value = "${swagger.operations.payments.get-references-history.description}",
+      response = ReferencesHistoryResponse.class)
+  @ApiResponses({
+      @ApiResponse(code = 500,
+          message = "Internal Server Error / No message available"),
+      @ApiResponse(code = 405,
+          message = "Method Not Allowed / Request method 'XXX' not supported"),
+      @ApiResponse(code = 400, message = "Missing Correlation Id header")})
+  @ApiImplicitParams({@ApiImplicitParam(name = X_CORRELATION_ID_HEADER,
+      required = true,
+      value = "UUID formatted string to track the request through the enquiries stack",
+      paramType = "header")})
+  @GetMapping(PaymentsController.GET_REFERENCES_HISTORY)
+  @ResponseStatus(HttpStatus.OK)
+  ResponseEntity<ReferencesHistoryResponse> getReferencesHistory(
+      @PathVariable("paymentReference") Long paymentReference);
 }

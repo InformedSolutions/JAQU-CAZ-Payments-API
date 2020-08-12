@@ -25,4 +25,16 @@ public class PaymentService {
   public Optional<Payment> getPayment(UUID paymentId) {
     return paymentRepository.findById(paymentId);
   }
+
+  /**
+   * Finds a given payment by central reference number passed as {@code referenceNumber}.
+   *
+   * @param referenceNumber central reference number.
+   * @return An instance of {@link Payment} class wrapped in {@link Optional} if the payment is
+   *     found, {@link Optional#empty()} otherwise.
+   * @throws NullPointerException if {@code referenceNumber} is null
+   */
+  public Optional<Payment> getPaymentByReferenceNumber(Long referenceNumber) {
+    return paymentRepository.findByReferenceNumber(referenceNumber);
+  }
 }
