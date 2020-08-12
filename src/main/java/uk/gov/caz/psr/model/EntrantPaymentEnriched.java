@@ -23,7 +23,7 @@ public class EntrantPaymentEnriched {
   LocalDate travelDate;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.paymentTimestamp}")
-  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
   LocalDateTime paymentTimestamp;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.operatorId}")

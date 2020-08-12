@@ -63,6 +63,10 @@ public class VehiclePaymentHistoryJourneyAssertion {
     return this;
   }
 
+  public ValidatableResponse getResponse() {
+    return this.response;
+  }
+
   public void badRequest400responseIsReturned() {
     this.response.statusCode(400);
 

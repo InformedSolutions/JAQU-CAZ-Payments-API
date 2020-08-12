@@ -255,7 +255,7 @@ swagger:
         registeredNTR: should be set to true if vehicle features in NTR
         registeredRetrofit: should be set to true if vehicle features in Retrofit
       historical-payments-response:
-        page: page number returned (1. is the first item)
+        page: page number
         pageCount: number of total pages that can be returned
         perPage: number of items per page
         totalPaymentsCount: total number of payments for this vehicle

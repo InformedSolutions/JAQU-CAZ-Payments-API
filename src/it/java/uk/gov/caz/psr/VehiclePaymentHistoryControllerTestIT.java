@@ -1,8 +1,10 @@
 package uk.gov.caz.psr;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 import io.restassured.RestAssured;
+import io.restassured.response.ValidatableResponse;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -128,6 +130,29 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   }
 
   @Test
+  public void shouldReturnValidJson() {
+    VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
+        VRN)
+        .forPageNumber(1)
+        .forPageSize(1)
+        .whenRequestForHistoryIsMade();
+    ValidatableResponse response = assertion.getResponse();
+    response
+      .body("page", equalTo(1))
+      .body("pageCount", equalTo(5))
+      .body("perPage", equalTo(1))
+      .body("totalPaymentsCount", equalTo(5))
+      .body("payments[0].travelDate", equalTo("2019-11-01"))
+      .body("payments[0].paymentTimestamp", equalTo("2020-07-01T10:00:00Z"))
+      .body("payments[0].operatorId", equalTo("d47bcc60-dafc-11ea-87d0-0242ac130002"))
+      .body("payments[0].cazName", equalTo("Bath"))
+      .body("payments[0].paymentId", equalTo("b71b72a5-902f-4a16-a91d-1a4463b801db"))
+      .body("payments[0].paymentReference", equalTo(1))
+      .body("payments[0].paymentProviderStatus", equalTo("SUCCESS"));
+  }
+
+
+  @Test
   public void shouldNotThrowNpeWhenCazIdIsWrong() {
     givenRequestForVrn(
         "ND84VSY")
@@ -138,11 +163,5 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   private VehiclePaymentHistoryJourneyAssertion givenRequestForVrn(String vrn) {
     return new VehiclePaymentHistoryJourneyAssertion().forVrn(vrn);
   }
-
-
-
-
-
-
 
 }
