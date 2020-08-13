@@ -344,6 +344,24 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in api dev
+  - name: subscribe to operational monitoring alert in api dev
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i dev -i payments JAQU-CAZ-OPERATIONALMONITORING@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: dev
+    when:
+      event:
+        - push
 
   ################################################# End of Dev Environment Steps #######################################################
 
@@ -688,6 +706,24 @@ steps:
     when:
       event:
         - push
+  # subscribe to operational monitoring alert in api ST
+  - name: subscribe to operational monitoring alert in api ST
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i ST -i payments JAQU-CAZ-OPERATIONALMONITORING@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: ST
+    when:
+      event:
+        - push
 
   ################################################# End of ST Environment Steps #######################################################
 
@@ -986,6 +1022,24 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in api SIT
+  - name: subscribe to operational monitoring alert in api SIT
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i SIT -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: SIT
+    when:
+      event:
+        - push
 
   ################################################# End of SIT Environment Steps #######################################################
 
@@ -1186,6 +1240,25 @@ steps:
       PROJECT: payments
       DEPLOY_ENVIRONMENT: preprod
       LAMBDA_BUCKET: jaqu-shared-project-lambda-bucket
+    when:
+      event:
+        - push
+
+  # subscribe to operational monitoring alert in api preprod
+  - name: subscribe to operational monitoring alert in api preprod
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i preprod -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: preprod
     when:
       event:
         - push
@@ -1489,6 +1562,24 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in api UAT
+  - name: subscribe to operational monitoring alert in api UAT
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i UAT -i payments JAQU-CAZ-OPERATIONALMONITORING@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: UAT
+    when:
+      event:
+        - push
 
   ################################################# End of UAT Environment Steps #######################################################
 
@@ -1693,6 +1784,24 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in api prod
+  - name: subscribe to operational monitoring alert in api prod
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i prod -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: prod
+    when:
+      event:
+        - push
 
   ################################################# End of Prod Environment Steps #######################################################
 
