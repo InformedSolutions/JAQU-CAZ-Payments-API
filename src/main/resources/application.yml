@@ -290,6 +290,18 @@ swagger:
         perPage: number of items per page
         totalPaymentsCount: total number of payments for this vehicle
         payments: list of historical payments for a specific vehicle
+      payments-info-by-operator-id-response:
+        page: Current page number
+        page-count: Total pages count
+        total-payments-count: Total paginated items count
+        payments: List of items on this page
+        payment-timestamp: Datetime that tells when the payment was inserted into the database
+        caz-name: Clean Air Zone name
+        total-paid: The amount of money paid to enter the CAZ
+        payment-id: Internal identifier of this payment
+        payment-reference: Customer-friendly payment reference number
+        vrns: Collection of VRNs against which the payment was made
+        status: External status of this payment
       historical-payment:
         travelDate: date of travel
         paymentTimestamp: when payment was done
@@ -344,6 +356,8 @@ swagger:
         description: >-
           Allows LAs to query and retrieve data about a payment that has been made via GOV.UK Pay in relation
           to a vehicle that has entered their CAZ (a 'vehicle entrant')
+    payments-info-by-operator-id:
+      description: Gets information about payments made by the given operator represented by their identifier
     whitelist:
       vehicle-details:
         description: >-
