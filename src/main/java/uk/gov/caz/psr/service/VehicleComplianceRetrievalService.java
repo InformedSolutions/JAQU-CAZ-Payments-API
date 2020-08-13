@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
@@ -26,9 +25,6 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 @RequiredArgsConstructor
 @Slf4j
 public class VehicleComplianceRetrievalService {
-
-  @Value("${services.connection-timeout-seconds:10}")
-  private int serviceCallTimeout;
 
   private final VccsRepository vccsRepository;
 
