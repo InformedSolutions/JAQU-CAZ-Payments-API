@@ -8,12 +8,12 @@ updates:
   - package-ecosystem: "maven" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: "monthly"
 
   - package-ecosystem: "npm" # See documentation for possible values
     directory: "/developer-resources/scripts/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     # Increase the version requirements for npm
     # only when required
     versioning-strategy: increase-if-necessary
