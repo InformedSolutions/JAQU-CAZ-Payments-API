@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.EntrantPaymentEnriched;
@@ -42,7 +43,8 @@ public class VehiclePaymentHistoryService {
     Map<UUID, String> cleanAirZoneNameMap = vehicleComplianceRetrievalService
         .getCleanAirZoneIdToCleanAirZoneNameMap();
 
-    Sort sort = Sort.by("entrantPaymentInfo.travelDate", "paymentInfo.submittedTimestamp");
+    Sort sort = Sort.by(Direction.DESC,
+        "entrantPaymentInfo.travelDate", "paymentInfo.submittedTimestamp");
 
     Page<EntrantPaymentMatchInfo> pageWithOrderedIds = entrantPaymentMatchInfoRepository.findAll(
         createByVrnSpec(vrn),

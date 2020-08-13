@@ -99,22 +99,22 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   }
 
   @Test
-  public void shouldReturnPaymentsSortedByTravelDate() {
+  public void shouldReturnPaymentsSortedByTravelDateDescending() {
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
         VRN)
         .whenRequestForHistoryIsMade();
     List<EntrantPaymentEnriched> payments = assertion.getPayments();
-    assertThat(payments.get(1).getTravelDate()).isBefore(payments.get(2).getTravelDate());
+    assertThat(payments.get(1).getTravelDate()).isAfter(payments.get(2).getTravelDate());
   }
 
   @Test
-  public void shouldReturnPaymentsSortedByPaymentInsertTimestamp() {
+  public void shouldReturnPaymentsSortedByPaymentInsertTimestampDescending() {
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
         VRN)
         .whenRequestForHistoryIsMade();
     List<EntrantPaymentEnriched> payments = assertion.getPayments();
-    assertThat(payments.get(3).getTravelDate()).isEqualTo(payments.get(4).getTravelDate());
-    assertThat(payments.get(3).getPaymentTimestamp()).isBefore(payments.get(4).getPaymentTimestamp());
+    assertThat(payments.get(0).getTravelDate()).isEqualTo(payments.get(1).getTravelDate());
+    assertThat(payments.get(0).getPaymentTimestamp()).isAfter(payments.get(1).getPaymentTimestamp());
   }
 
   @Test
@@ -123,10 +123,10 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
         VRN)
         .whenRequestForHistoryIsMade();
     List<EntrantPaymentEnriched> payments = assertion.getPayments();
-    assertThat(payments.get(0).getPaymentTimestamp())
-        .isEqualTo(payments.get(1).getPaymentTimestamp());
-    assertThat(payments.get(1).getPaymentTimestamp())
-        .isEqualTo(payments.get(2).getPaymentTimestamp());
+    assertThat(payments.get(2).getPaymentTimestamp())
+        .isEqualTo(payments.get(3).getPaymentTimestamp());
+    assertThat(payments.get(3).getPaymentTimestamp())
+        .isEqualTo(payments.get(4).getPaymentTimestamp());
   }
 
   @Test
@@ -134,21 +134,21 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
         VRN)
         .forPageNumber(1)
-        .forPageSize(1)
+        .forPageSize(5)
         .whenRequestForHistoryIsMade();
     ValidatableResponse response = assertion.getResponse();
     response
       .body("page", equalTo(1))
-      .body("pageCount", equalTo(5))
-      .body("perPage", equalTo(1))
+      .body("pageCount", equalTo(1))
+      .body("perPage", equalTo(5))
       .body("totalPaymentsCount", equalTo(5))
-      .body("payments[0].travelDate", equalTo("2019-11-01"))
-      .body("payments[0].paymentTimestamp", equalTo("2020-07-01T10:00:00Z"))
-      .body("payments[0].operatorId", equalTo("d47bcc60-dafc-11ea-87d0-0242ac130002"))
-      .body("payments[0].cazName", equalTo("Bath"))
-      .body("payments[0].paymentId", equalTo("b71b72a5-902f-4a16-a91d-1a4463b801db"))
-      .body("payments[0].paymentReference", equalTo(1))
-      .body("payments[0].paymentProviderStatus", equalTo("SUCCESS"));
+      .body("payments[4].travelDate", equalTo("2019-11-01"))
+      .body("payments[4].paymentTimestamp", equalTo("2020-07-01T10:00:00Z"))
+      .body("payments[4].operatorId", equalTo("d47bcc60-dafc-11ea-87d0-0242ac130002"))
+      .body("payments[4].cazName", equalTo("Bath"))
+      .body("payments[4].paymentId", equalTo("b71b72a5-902f-4a16-a91d-1a4463b801db"))
+      .body("payments[4].paymentReference", equalTo(1))
+      .body("payments[4].paymentProviderStatus", equalTo("SUCCESS"));
   }
 
 
