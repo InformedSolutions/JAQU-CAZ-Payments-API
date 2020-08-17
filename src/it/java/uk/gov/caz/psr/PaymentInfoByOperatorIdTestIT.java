@@ -131,6 +131,9 @@ public class PaymentInfoByOperatorIdTestIT {
             .withPageNumberEqualTo(pageNumber)
             .then()
             .headerContainsCorrelationId()
+            .andPerPageIsEqualTo(5)
+            .andPageIsEqualTo(pageNumber)
+            .andPageCountIsEqualTo(0)
             .responseHasOkStatus()
             .isEmpty();
       }
@@ -149,6 +152,9 @@ public class PaymentInfoByOperatorIdTestIT {
             .then()
             .headerContainsCorrelationId()
             .responseHasOkStatus()
+            .andPerPageIsEqualTo(pageSize)
+            .andPageIsEqualTo(0)
+            .andPageCountIsEqualTo(0)
             .isEmpty();
       }
     }
@@ -172,6 +178,7 @@ public class PaymentInfoByOperatorIdTestIT {
             .responseHasOkStatus()
             .andPageIsEqualTo(0)
             .andPageCountIsEqualTo(1)
+            .andPerPageIsEqualTo(10)
             .andTotalPaymentsCountIsEqualTo(4)
             .andPaymentsSizeIsEqualTo(4)
             .andPaymentsEqualTo(expectedPayments)
@@ -195,6 +202,7 @@ public class PaymentInfoByOperatorIdTestIT {
           .andPageIsEqualTo(0)
           .andPageCountIsEqualTo(4)
           .andTotalPaymentsCountIsEqualTo(4)
+          .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(0)))
           .andResultsWereFetchedByThreeDatabaseQueries();
@@ -210,6 +218,7 @@ public class PaymentInfoByOperatorIdTestIT {
           .andPageIsEqualTo(1)
           .andPageCountIsEqualTo(4)
           .andTotalPaymentsCountIsEqualTo(4)
+          .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(1)));
 
@@ -224,6 +233,7 @@ public class PaymentInfoByOperatorIdTestIT {
           .andPageIsEqualTo(2)
           .andPageCountIsEqualTo(4)
           .andTotalPaymentsCountIsEqualTo(4)
+          .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(2)));
 
@@ -238,6 +248,7 @@ public class PaymentInfoByOperatorIdTestIT {
           .andPageIsEqualTo(3)
           .andPageCountIsEqualTo(4)
           .andTotalPaymentsCountIsEqualTo(4)
+          .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(3)));
     }
@@ -395,6 +406,11 @@ public class PaymentInfoByOperatorIdTestIT {
 
     public PaymentInfoByOperatorIdAssertion andContainsErrorMessageEqualTo(String message) {
       validatableResponse.body("message", equalTo(message));
+      return this;
+    }
+
+    public PaymentInfoByOperatorIdAssertion andPerPageIsEqualTo(int expectedPerPageCount) {
+      validatableResponse.body("perPage", equalTo(expectedPerPageCount));
       return this;
     }
 

@@ -18,10 +18,12 @@ public class PaymentInfoByOperatorIdConverter {
   /**
    * Converts {@link Page} to {@link PaymentsInfoByOperatorResponse}.
    */
-  public static PaymentsInfoByOperatorResponse from(Page<PaymentInfoByOperator> page) {
+  public static PaymentsInfoByOperatorResponse from(Page<PaymentInfoByOperator> page,
+      int pageSize) {
     return PaymentsInfoByOperatorResponse.builder()
         .page(page.getNumber())
         .pageCount(page.getTotalPages())
+        .perPage(pageSize)
         .totalPaymentsCount(page.getTotalElements())
         .payments(PaymentInfoByOperatorIdConverter.from(page.getContent()))
         .build();

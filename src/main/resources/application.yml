@@ -293,6 +293,7 @@ swagger:
       payments-info-by-operator-id-response:
         page: Current page number
         page-count: Total pages count
+        per-page: Requested page size or 10 if not provided
         total-payments-count: Total paginated items count
         payments: List of items on this page
         payment-timestamp: Datetime that tells when the payment was inserted into the database

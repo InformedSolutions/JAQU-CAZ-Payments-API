@@ -32,6 +32,13 @@ public class PaymentsInfoByOperatorResponse {
   int pageCount;
 
   /**
+   * Requested page size or 10 if not provided.
+   */
+  @ApiModelProperty(value =
+      "${swagger.model.descriptions.payments-info-by-operator-id-response.per-page}")
+  int perPage;
+
+  /**
    * Total paginated items count.
    */
   @ApiModelProperty(value =
