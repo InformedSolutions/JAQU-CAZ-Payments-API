@@ -151,11 +151,10 @@ swagger:
         central-payment-reference: The central reference for the payment
         payment-provider-id: GOV.UK Pay unique payment identifier
         total-paid: >-
-          The total GBP value of the payment linked to the paymentProviderId.
+          The total value of the payment linked to the paymentProviderId expressed in pennies.
           If the motorist paid in advance to travel in to the CAZ on multiple dates, then the payment amount will be a multiple
           of the daily charge due (e.g. if the daily charge for a car entering a CAZ is £8.00, but the motorist paid in advance
-          for 3 days of travel, then the chargePaid would be equal to £24.00).
-          Expressed in pounds and pence format to 2 decimal places.
+          for 3 days of travel, then the chargePaid would be equal to 2400).
         payment-timestamp: ISO 8601 formatted date string that specifies the date on which the payment was made via GOV.UK Pay
         payment-provider-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
         telephone-payment: Indicates whether payment was done over phone
@@ -168,10 +167,7 @@ swagger:
           charge (e.g. that may be linked to a customer query relating to the charge).
           1 object will be returned for each date of travel associated with the payment.
         charge-paid: >-
-          The GBP value of the payment linked to the paymentProviderId. If the motorist paid in advance to travel in to the CAZ on multiple
-          dates, then the payment amount will be a multiple of the daily charge due (e.g. if the daily charge for a car entering a CAZ
-          is £8.00, but the motorist paid in advance for 3 days of travel, then the chargePaid would be equal to £24.00).
-          Expressed in pounds and pence format to 2 decimal places
+          The value of a single entrant payment linked to the paymentProviderId expressed in pennies.
         travel-date: >-
           ISO 8601 formatted date string that specifies a date(s) for which the vehicle has paid to travel in to the CAZ
           (identified by the x-api-key header parameter)
