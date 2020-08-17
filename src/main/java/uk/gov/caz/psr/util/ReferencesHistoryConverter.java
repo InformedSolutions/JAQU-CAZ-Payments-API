@@ -23,7 +23,6 @@ import uk.gov.caz.psr.util.exception.CleanAirZoneIsNotUniqueException;
 @AllArgsConstructor
 public class ReferencesHistoryConverter {
 
-  private final CurrencyFormatter currencyFormatter;
   private final VccsRepository vccsRepository;
 
   /**
@@ -42,7 +41,7 @@ public class ReferencesHistoryConverter {
         .paymentReference(payment.getReferenceNumber())
         .paymentProviderId(payment.getExternalId())
         .paymentTimestamp(payment.getSubmittedTimestamp())
-        .totalPaid(currencyFormatter.parsePenniesToBigDecimal(payment.getTotalPaid()))
+        .totalPaid(payment.getTotalPaid())
         .telephonePayment(payment.isTelephonePayment())
         .operatorId(payment.getOperatorId())
         .cazName(getCleanAirZoneName(cleanAirZoneId))
@@ -76,8 +75,7 @@ public class ReferencesHistoryConverter {
   private ReferencesHistoryResponse.VehicleEntrantPaymentDetails toVehicleEntrantPaymentDetails(
       EntrantPayment entrantPayment) {
     return ReferencesHistoryResponse.VehicleEntrantPaymentDetails.builder()
-        .chargePaid(currencyFormatter.parsePenniesToBigDecimal(
-            entrantPayment.getCharge()))
+        .chargePaid(entrantPayment.getCharge())
         .travelDate(entrantPayment.getTravelDate())
         .vrn(entrantPayment.getVrn())
         .build();

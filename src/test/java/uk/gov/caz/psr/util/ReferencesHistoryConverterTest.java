@@ -2,12 +2,10 @@ package uk.gov.caz.psr.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static uk.gov.caz.psr.util.TestObjectFactory.Payments.preparePayment;
 import static uk.gov.caz.psr.util.TestObjectFactory.Payments.preparePaymentWithTwoEntrantPayments;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -27,9 +25,6 @@ import uk.gov.caz.psr.repository.VccsRepository;
 class ReferencesHistoryConverterTest {
 
   @Mock
-  private CurrencyFormatter currencyFormatter;
-
-  @Mock
   private VccsRepository vccsRepository;
 
   @InjectMocks
@@ -38,8 +33,6 @@ class ReferencesHistoryConverterTest {
   @Test
   public void shouldConvertPaymentToPaymentDetailsResponse() {
     // given
-    given(currencyFormatter.parsePenniesToBigDecimal(anyInt()))
-        .willAnswer(answer -> BigDecimal.valueOf(40));
     given(vccsRepository.findCleanAirZonesSync()).willReturn(sampleCleanAirZonesResponse());
 
     // when
@@ -51,13 +44,13 @@ class ReferencesHistoryConverterTest {
     assertThat(referencesHistoryResponse.getPaymentReference()).isEqualTo(1500L);
     assertThat(referencesHistoryResponse.getPaymentProviderId()).isEqualTo("123");
     assertThat(referencesHistoryResponse.isTelephonePayment()).isFalse();
-    assertThat(referencesHistoryResponse.getTotalPaid()).isEqualTo(BigDecimal.valueOf(40));
+    assertThat(referencesHistoryResponse.getTotalPaid()).isEqualTo(40);
     assertThat(referencesHistoryResponse.getOperatorId()).isNotNull();
     assertThat(referencesHistoryResponse.getPaymentProviderStatus())
         .isEqualTo(ExternalPaymentStatus.CREATED);
     assertThat(referencesHistoryResponse.getLineItems()).hasSize(1);
     assertThat(referencesHistoryResponse.getLineItems().get(0).getChargePaid())
-        .isEqualTo(BigDecimal.valueOf(40));
+        .isEqualTo(100);
     assertThat(referencesHistoryResponse.getLineItems().get(0).getVrn())
         .isEqualTo("CAS310");
   }

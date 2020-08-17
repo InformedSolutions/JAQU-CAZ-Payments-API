@@ -4,7 +4,6 @@ import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,7 +30,7 @@ public class ReferencesHistoryResponse {
   LocalDateTime paymentTimestamp;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.references-history.total-paid}")
-  BigDecimal totalPaid;
+  int totalPaid;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.references-history.telephone-payment}")
   boolean telephonePayment;
@@ -54,7 +53,7 @@ public class ReferencesHistoryResponse {
   public static class VehicleEntrantPaymentDetails {
 
     @ApiModelProperty(value = "${swagger.model.descriptions.references-history.charge-paid}")
-    BigDecimal chargePaid;
+    int chargePaid;
 
     @ApiModelProperty(value = "${swagger.model.descriptions.references-history.travel-date}")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
