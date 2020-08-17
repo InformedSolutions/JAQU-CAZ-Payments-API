@@ -34,7 +34,8 @@ public class PaymentsInfoByOperatorController implements PaymentsInfoByOperatorC
 
     logPageInformation(operatorId, paymentsByOperatorId);
 
-    return ResponseEntity.ok(PaymentInfoByOperatorIdConverter.from(paymentsByOperatorId));
+    return ResponseEntity.ok(PaymentInfoByOperatorIdConverter.from(paymentsByOperatorId,
+        request.getPageSize()));
   }
 
   /**
