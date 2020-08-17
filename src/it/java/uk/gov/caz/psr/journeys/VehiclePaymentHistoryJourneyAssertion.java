@@ -16,7 +16,7 @@ public class VehiclePaymentHistoryJourneyAssertion {
 
   private String vrn;
   private int pageSize = 10;
-  private int pageNumber = 1;
+  private int pageNumber = 0;
 
   private ValidatableResponse response;
 
