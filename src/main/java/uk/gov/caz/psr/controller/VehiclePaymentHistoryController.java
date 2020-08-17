@@ -24,7 +24,7 @@ public class VehiclePaymentHistoryController implements VehiclePaymentHistoryCon
 
   public static final String BASE_PATH = "/v1/payments/vehicles-history";
 
-  private static final int DEFAULT_PAGE_NUMBER = 1;
+  private static final int DEFAULT_PAGE_NUMBER = 0;
 
   private static final int DEFAULT_PAGE_SIZE = 10;
 
@@ -40,13 +40,13 @@ public class VehiclePaymentHistoryController implements VehiclePaymentHistoryCon
     int nonNullPageNumber = Optional.ofNullable(pageNumber).orElse(DEFAULT_PAGE_NUMBER);
     int nonNullPageSize = Optional.ofNullable(pageSize).orElse(DEFAULT_PAGE_SIZE);
 
-    Preconditions.checkArgument(nonNullPageNumber >= 1, "Page number should "
-        + "be equal or greater than one");
+    Preconditions.checkArgument(nonNullPageNumber >= 0, "Page number should "
+        + "be equal or greater than zero");
     Preconditions.checkArgument(nonNullPageSize >= 0, "Page size should be "
         + "equal or greater than zero");
 
     Page<EntrantPaymentEnriched> entrantPaymentEnrichedPage = service.paymentHistoryForVehicle(vrn,
-        nonNullPageNumber - 1, nonNullPageSize);
+        nonNullPageNumber, nonNullPageSize);
     VehiclePaymentHistoryResponse response = VehiclePaymentHistoryResponse
         .fromPage(entrantPaymentEnrichedPage);
 

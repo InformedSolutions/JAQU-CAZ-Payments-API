@@ -49,7 +49,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   @Test
   public void shouldReturn400BadRequestAndResponseWhenPageNumberIsWrong() {
     givenRequestForVrn(VRN)
-        .forPageNumber(0)
+        .forPageNumber(-1)
         .whenRequestForHistoryIsMade()
         .badRequest400responseIsReturned();
   }
@@ -65,7 +65,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   @Test
   public void shouldReturnFirstPageOfResults() {
     givenRequestForVrn(VRN)
-        .forPageNumber(1)
+        .forPageNumber(0)
         .forPageSize(2)
         .whenRequestForHistoryIsMade()
         .pageContainsHistoryItems(2);
@@ -74,7 +74,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   @Test
   public void shouldReturnNoElementsWhenPageNumberTooHigh() {
     givenRequestForVrn(VRN)
-        .forPageNumber(4)
+        .forPageNumber(3)
         .forPageSize(2)
         .whenRequestForHistoryIsMade()
         .pageContainsHistoryItems(0);
@@ -83,7 +83,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   @Test
   public void shouldReturnAllElementsWhenPageSizeIsBigEnough() {
     givenRequestForVrn(VRN)
-        .forPageNumber(1)
+        .forPageNumber(0)
         .forPageSize(10)
         .whenRequestForHistoryIsMade()
         .pageContainsHistoryItems(5);
@@ -133,7 +133,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   public void shouldReturnValidJson() {
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
         VRN)
-        .forPageNumber(1)
+        .forPageNumber(0)
         .forPageSize(5)
         .whenRequestForHistoryIsMade();
     ValidatableResponse response = assertion.getResponse();
