@@ -37,14 +37,11 @@ public class VehiclePaymentHistoryResponse {
    */
   public static VehiclePaymentHistoryResponse fromPage(Page<EntrantPaymentEnriched> entrantsPage) {
     return VehiclePaymentHistoryResponse.builder()
-        .page(entrantsPage.getNumber() + 1)
+        .page(entrantsPage.getNumber())
         .pageCount(entrantsPage.getTotalPages())
         .perPage(entrantsPage.getSize())
         .totalPaymentsCount(entrantsPage.getTotalElements())
         .payments(entrantsPage.getContent())
         .build();
   }
-
-
-
 }
