@@ -75,4 +75,9 @@ public class VehiclePaymentHistoryJourneyAssertion {
   public void pageContainsHistoryItems(int count) {
     assertThat(this.parsedResponse.getPayments()).hasSize(count);
   }
+
+  public VehiclePaymentHistoryJourneyAssertion thenPageNumberIsEqualTo(int expectedPageNumber) {
+    assertThat(this.parsedResponse.getPage()).isEqualTo(expectedPageNumber);
+    return this;
+  }
 }
