@@ -117,7 +117,9 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
     testPaymentJourneyWithEmptyDatabase();
 
-    testPaymentJourneyWithTelephonePaymentSetToTrue();
+    testPaymentJourneyWithTelephonePaymentSetToTrueAndNonNullOperatorId();
+
+    testPaymentJourneyWithTelephonePaymentSetToTrueAndNullOperatorId();
 
     testPaymentJourneyWithUserId();
 
@@ -259,11 +261,11 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .andPaymentReceiptIsSentWithTemplate(singleVehicleTemplateId);
   }
 
-  private void testPaymentJourneyWithTelephonePaymentSetToTrue() {
+  private void testPaymentJourneyWithTelephonePaymentSetToTrueAndNonNullOperatorId() {
     clearAllPayments();
 
     given()
-        .initiatePaymentRequest(initiatePaymentRequestWithTrueTelephonePayment())
+        .initiatePaymentRequest(initiatePaymentRequestWithTrueTelephonePaymentAndNonNullOperatorId())
         .whenSubmitted()
 
         .then()
@@ -272,6 +274,33 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
         .withNullPaymentAuthorisedTimestamp()
         .withMatchedEntrantPayments()
+        .withMatchedOperatorId()
+        .andResponseIsReturnedWithMatchingInternalId()
+        .and()
+        .whenRequestedToGetAndUpdateStatus()
+
+        .then()
+        .paymentEntityStatusIsUpdatedTo(ExternalPaymentStatus.SUCCESS)
+        .withNonNullPaymentAuthorisedTimestamp()
+        .andAuditRecordsCreated()
+        .andStatusResponseIsReturnedWithMatchinInternalId()
+        .andPaymentReceiptForFleetIsSent(offlinePaymentTemplateId);
+  }
+
+  private void testPaymentJourneyWithTelephonePaymentSetToTrueAndNullOperatorId() {
+    clearAllPayments();
+
+    given()
+        .initiatePaymentRequest(initiatePaymentRequestWithTrueTelephonePaymentAndNullOperatorId())
+        .whenSubmitted()
+
+        .then()
+        .expectHttpCreatedStatusCode()
+        .paymentEntityIsCreatedInDatabaseWithTrueTelephonePayment()
+        .withExternalIdEqualTo(EXTERNAL_PAYMENT_ID)
+        .withNullPaymentAuthorisedTimestamp()
+        .withMatchedEntrantPayments()
+        .withNullOperatorId()
         .andResponseIsReturnedWithMatchingInternalId()
         .and()
         .whenRequestedToGetAndUpdateStatus()
@@ -394,7 +423,6 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
     }
 
     public PaymentJourneyAssertion whenSubmitted() {
-      boolean includeUserId = StringUtils.hasText(initiatePaymentRequest.getUserId());
       this.initialPaymentsCount = getCurrentPaymentsCount();
 
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
@@ -675,6 +703,42 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
       paymentEntityIsCreatedInDatabase();
       return this;
     }
+
+    public PaymentJourneyAssertion andNullOperatorId() {
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
+          "payment_id = '" + initPaymentResponse.getPaymentId().toString() + "' AND "
+              + "operator_id is null");
+      assertThat(paymentsCount).isEqualTo(1);
+      return this;
+    }
+
+    public PaymentJourneyAssertion withMatchedOperatorId() {
+      int paymentsCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, PAYMENT_TABLE,
+          "payment_id = '" + initPaymentResponse.getPaymentId().toString() + "' AND "
+              + "operator_id = '" + initiatePaymentRequest.getOperatorId() + "'");
+      assertThat(paymentsCount).isEqualTo(1);
+      return this;
+    }
+
+    public PaymentJourneyAssertion withNullOperatorId() {
+      return andNullOperatorId();
+    }
+  }
+
+  private InitiatePaymentRequest initiatePaymentRequestWithTrueTelephonePaymentAndNonNullOperatorId() {
+    return initiatePaymentRequest()
+        .toBuilder()
+        .telephonePayment(Boolean.TRUE)
+        .operatorId(UUID.randomUUID().toString())
+        .build();
+  }
+
+  private InitiatePaymentRequest initiatePaymentRequestWithTrueTelephonePaymentAndNullOperatorId() {
+    return initiatePaymentRequest()
+        .toBuilder()
+        .telephonePayment(Boolean.TRUE)
+        .operatorId(null)
+        .build();
   }
 
   private InitiatePaymentRequest initiatePaymentRequestWithTrueTelephonePayment() {

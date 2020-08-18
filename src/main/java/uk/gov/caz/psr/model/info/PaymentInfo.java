@@ -27,6 +27,9 @@ public class PaymentInfo {
   @Column(name = "payment_provider_id")
   private String externalId;
 
+  @Column(name = "operator_id")
+  private UUID operatorId;
+
   @Column(name = "total_paid")
   private Integer totalPaid;
 
@@ -43,6 +46,9 @@ public class PaymentInfo {
 
   @Column(name = "payment_submitted_timestamp")
   private LocalDateTime submittedTimestamp;
+
+  @Column(name = "insert_timestamp")
+  private LocalDateTime insertTimestamp;
 
   @Column(name = "payment_provider_mandate_id")
   private String paymentProviderMandateId;

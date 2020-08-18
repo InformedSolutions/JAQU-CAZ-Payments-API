@@ -91,6 +91,12 @@ public class Payment {
   UUID userId;
 
   /**
+   * An identifier of the operator who is making the payment. Can be non-null when
+   * {@code telephonePayment} is true, otherwise is {@code null}.
+   */
+  UUID operatorId;
+
+  /**
    * An Provider Mandate ID from Accounts API.
    */
   String paymentProviderMandateId;
@@ -121,7 +127,8 @@ public class Payment {
 
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
           externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl,
-          emailAddress, cleanAirZoneId, userId, paymentProviderMandateId, telephonePayment);
+          emailAddress, cleanAirZoneId, userId, operatorId, paymentProviderMandateId,
+          telephonePayment);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {

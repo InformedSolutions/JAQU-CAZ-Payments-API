@@ -147,6 +147,31 @@ swagger:
         vrn: Vehicle registration number
         payer-name: >-
           When a given user is an account owner, payerName should be “Administrator”. If a user has been deleted it should be set to “Deleted user” otherwise name.
+      references-history:
+        central-payment-reference: The central reference for the payment
+        payment-provider-id: GOV.UK Pay unique payment identifier
+        total-paid: >-
+          The total value of the payment linked to the paymentProviderId expressed in pennies.
+          If the motorist paid in advance to travel in to the CAZ on multiple dates, then the payment amount will be a multiple
+          of the daily charge due (e.g. if the daily charge for a car entering a CAZ is £8.00, but the motorist paid in advance
+          for 3 days of travel, then the chargePaid would be equal to 2400).
+        payment-timestamp: ISO 8601 formatted date string that specifies the date on which the payment was made via GOV.UK Pay
+        payment-provider-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
+        telephone-payment: Indicates whether payment was done over phone
+        operator-id: UUID of the operator_id
+        caz-name: Name of the CAZ
+        line-items: >-
+          Array containing objects that specify the: (1) date(s) for which the vehicle has paid to journey in to the CAZ
+          (identified by the x-api-key header parameter); (2) the charge associated with the journey; (3) the payment status of
+          the charge (i.e. whether it has been paid or refunded); and, (4) any Local Authority case reference associated with the
+          charge (e.g. that may be linked to a customer query relating to the charge).
+          1 object will be returned for each date of travel associated with the payment.
+        charge-paid: >-
+          The value of a single entrant payment linked to the paymentProviderId expressed in pennies.
+        travel-date: >-
+          ISO 8601 formatted date string that specifies a date(s) for which the vehicle has paid to travel in to the CAZ
+          (identified by the x-api-key header parameter)
+        vrn: Vehicle registration number
       payment-info-request:
         payment-provider-id: >-
           GOV.UK Pay unique payment identifier. Can be used to obtain data associated with a specific GOV.UK Pay payment transaction.
@@ -204,6 +229,7 @@ swagger:
         transactions: Collection of objects representing a single vehicle entrant against which the payment is made
         user-id: Identifies the fleet's account which is making the payment
         telephone-payment: Flag indicating whether this is an offline (true) or online payment (false).
+        operator-id: An optional field storing the identifier of the operator who makes the payment. Can be non-null only when telephonePayment is true.
       payments-get-status:
         clean-air-zone-name: Clean Air Zone name
       paid-payments-request:
@@ -254,6 +280,33 @@ swagger:
         registeredGPW: should be set to true if vehicle features in GPW
         registeredNTR: should be set to true if vehicle features in NTR
         registeredRetrofit: should be set to true if vehicle features in Retrofit
+      historical-payments-response:
+        page: page number
+        pageCount: number of total pages that can be returned
+        perPage: number of items per page
+        totalPaymentsCount: total number of payments for this vehicle
+        payments: list of historical payments for a specific vehicle
+      payments-info-by-operator-id-response:
+        page: Current page number
+        page-count: Total pages count
+        per-page: Requested page size or 10 if not provided
+        total-payments-count: Total paginated items count
+        payments: List of items on this page
+        payment-timestamp: Datetime that tells when the payment was inserted into the database
+        caz-name: Clean Air Zone name
+        total-paid: The amount of money paid to enter the CAZ
+        payment-id: Internal identifier of this payment
+        payment-reference: Customer-friendly payment reference number
+        vrns: Collection of VRNs against which the payment was made
+        status: External status of this payment
+      historical-payment:
+        travelDate: date of travel
+        paymentTimestamp: when payment was done
+        operatorId: id of operator
+        cazName: name of clean air zone
+        paymentId: id of payment
+        paymentReference: reference number for payment
+        paymentStatus: external status of payment (f.e. FAILED, SUCCESS)
 
   operations:
     accounts:
@@ -275,6 +328,8 @@ swagger:
           list of provided VRNs along with list of paid days is returned.
       get-payment-details:
         description: Fetches information about given paymentId.
+      get-references-history:
+        description: Fetches information about given reference number.
       direct-debit-mandates:
         description: >-
           Returns a list of clean air zones with the associated direct debit mandates.
@@ -283,6 +338,8 @@ swagger:
           Returns a list of account's direct debit mandates assigned to selected Clean air zone.
       create-direct-debit:
         description: Create Payment via DirectDebit payment method.
+      get-payment-history-for-vehicle:
+        description: Fetches history of payments per vehicle
     charge-settlement:
       payment-status-update:
         description: >-
@@ -296,6 +353,8 @@ swagger:
         description: >-
           Allows LAs to query and retrieve data about a payment that has been made via GOV.UK Pay in relation
           to a vehicle that has entered their CAZ (a 'vehicle entrant')
+    payments-info-by-operator-id:
+      description: Gets information about payments made by the given operator represented by their identifier
     whitelist:
       vehicle-details:
         description: >-
