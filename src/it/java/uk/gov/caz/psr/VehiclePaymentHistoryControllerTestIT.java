@@ -43,6 +43,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   public void shouldReturnNoElementsWhenVehicleDoesNotExist() {
     givenRequestForVrn(NON_EXISTING_VRN)
         .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(0)
         .pageContainsHistoryItems(0);
   }
 
@@ -68,6 +69,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
         .forPageNumber(0)
         .forPageSize(2)
         .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(0)
         .pageContainsHistoryItems(2);
   }
 
@@ -77,6 +79,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
         .forPageNumber(3)
         .forPageSize(2)
         .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(3)
         .pageContainsHistoryItems(0);
   }
 
@@ -86,6 +89,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
         .forPageNumber(0)
         .forPageSize(10)
         .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(0)
         .pageContainsHistoryItems(5);
   }
 
@@ -93,7 +97,8 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   public void shouldReturnElementWithAllElementsCorrectlyFilled() {
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
         VRN)
-        .whenRequestForHistoryIsMade();
+        .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(0);
     EntrantPaymentEnriched firstPayment = assertion.getPayments().get(0);
     assertThat(firstPayment.getCazName()).isEqualTo("Bath");
   }
@@ -102,7 +107,8 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   public void shouldReturnPaymentsSortedByTravelDateDescending() {
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
         VRN)
-        .whenRequestForHistoryIsMade();
+        .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(0);
     List<EntrantPaymentEnriched> payments = assertion.getPayments();
     assertThat(payments.get(1).getTravelDate()).isAfter(payments.get(2).getTravelDate());
   }
@@ -111,7 +117,8 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   public void shouldReturnPaymentsSortedByPaymentInsertTimestampDescending() {
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
         VRN)
-        .whenRequestForHistoryIsMade();
+        .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(0);
     List<EntrantPaymentEnriched> payments = assertion.getPayments();
     assertThat(payments.get(0).getTravelDate()).isEqualTo(payments.get(1).getTravelDate());
     assertThat(payments.get(0).getPaymentTimestamp()).isAfter(payments.get(1).getPaymentTimestamp());
@@ -121,7 +128,8 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
   public void shouldReturnMultipleItemsIfOnePaymentWasDoneForManyTravelDates() {
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(
         VRN)
-        .whenRequestForHistoryIsMade();
+        .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(0);
     List<EntrantPaymentEnriched> payments = assertion.getPayments();
     assertThat(payments.get(2).getPaymentTimestamp())
         .isEqualTo(payments.get(3).getPaymentTimestamp());
@@ -138,7 +146,7 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
         .whenRequestForHistoryIsMade();
     ValidatableResponse response = assertion.getResponse();
     response
-      .body("page", equalTo(1))
+      .body("page", equalTo(0))
       .body("pageCount", equalTo(1))
       .body("perPage", equalTo(5))
       .body("totalPaymentsCount", equalTo(5))
@@ -154,9 +162,9 @@ public class VehiclePaymentHistoryControllerTestIT  extends ExternalCallsIT  {
 
   @Test
   public void shouldNotThrowNpeWhenCazIdIsWrong() {
-    givenRequestForVrn(
-        "ND84VSY")
+    givenRequestForVrn("ND84VSY")
         .whenRequestForHistoryIsMade()
+        .thenPageNumberIsEqualTo(0)
         .pageContainsHistoryItems(1);
   }
 
