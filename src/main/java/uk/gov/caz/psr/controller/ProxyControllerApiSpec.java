@@ -6,11 +6,14 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.List;
 import javassist.NotFoundException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import uk.gov.caz.definitions.dto.CleanAirZonesDto;
@@ -97,6 +100,27 @@ public interface ProxyControllerApiSpec {
   @GetMapping(ProxyController.GET_COMPLIANCE)
   ResponseEntity<ComplianceResultsDto> getCompliance(@PathVariable String vrn,
       @RequestParam("zones") String zones);
+
+  /**
+   * Get compliance details in bulk.
+   */
+  @ApiOperation(value = "${swagger.operations.vehicle.bulk-compliance.description}",
+      response = List.class)
+  @ApiResponses({
+      @ApiResponse(code = 500, message = "Internal Server Err/ No message available"),
+      @ApiResponse(code = 400, message = "vrns missing or empty"),
+      @ApiResponse(code = 200, message = "Compliance details for multiple vehicles")
+  })
+  @ApiImplicitParams({
+      @ApiImplicitParam(name = "X-Correlation-ID", required = true,
+          value = "CorrelationID to track the request from the API gateway through"
+              + " the Enquiries stack",
+          paramType = "header")
+  })
+  @PostMapping(ProxyController.POST_BULK_COMPLIANCE)
+  ResponseEntity<List<ComplianceResultsDto>> bulkCompliance(
+      @RequestParam(value = "zones", required = false) String zones,
+      @RequestBody List<String> vrns);
 
   /**
    * Get charges for given type.

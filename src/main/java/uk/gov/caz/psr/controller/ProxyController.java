@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.controller;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ public class ProxyController implements ProxyControllerApiSpec {
   public static final String GET_WHITELIST_VEHICLE_DETAILS = "whitelisted-vehicles/{vrn}";
   public static final String GET_CLEAN_AIR_ZONES = "clean-air-zones";
   public static final String GET_COMPLIANCE = "vehicles/{vrn}/compliance";
+  public static final String POST_BULK_COMPLIANCE = "vehicles/bulk-compliance";
   public static final String GET_VEHICLE_DETAILS = "vehicles/{vrn}/details";
   public static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE =
       "vehicles/unrecognised/{type}/compliance";
@@ -49,6 +51,14 @@ public class ProxyController implements ProxyControllerApiSpec {
         vehicleComplianceRetrievalService.retrieveVehicleCompliance(vrn, zones);
 
     return ResponseEntity.status(result.code()).body(result.body());
+  }
+
+  @Override
+  public ResponseEntity<List<ComplianceResultsDto>> bulkCompliance(String zones,
+      List<String> vrns) {
+    List<ComplianceResultsDto> result = vehicleComplianceRetrievalService
+        .retrieveVehicleCompliance(vrns, zones);
+    return ResponseEntity.ok(result);
   }
 
   @Override

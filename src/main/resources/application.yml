@@ -372,6 +372,8 @@ swagger:
         description: Returns vehicle registation details
       compliance:
         description: Returns vehicle compliance details
+      bulk-compliance:
+        description: Returns vehicle compliance details in bulk
     register:
       details:
         description: Return register details from vccs
