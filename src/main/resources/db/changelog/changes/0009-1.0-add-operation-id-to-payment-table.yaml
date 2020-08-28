@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0009-1.0
+      author: jaroslaw.piotrowski
+      changes:
+        - addColumn:
+            schemaName: CAZ_PAYMENT
+            tableName: T_PAYMENT
+            columns:
+              - column:
+                  name: OPERATOR_ID
+                  type: uuid
+                  constraints:
+                    nullable: true
+        - createIndex:
+            columns:
+              - column:
+                  name:  OPERATOR_ID
+            indexName:  operator_id_idx
+            schemaName:  CAZ_PAYMENT
+            tableName:  T_PAYMENT

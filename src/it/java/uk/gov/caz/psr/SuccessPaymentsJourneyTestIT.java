@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -628,7 +629,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
           .stream()
           .map(Transaction::getTravelDate)
           .map(travelDate -> travelDate.format(DateTimeFormatter.ofPattern(
-              CustomPaymentReceiptEmailCreator.DATE_FORMAT)))
+              CustomPaymentReceiptEmailCreator.DATE_FORMAT, Locale.ENGLISH)))
           .collect(Collectors.toList());
     }
 
@@ -648,7 +649,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
     private String chargeLineInFleetEmailReceipt(Transaction transaction) {
       return Joiner.on(" - ").join(
           transaction.getTravelDate()
-              .format(DateTimeFormatter.ofPattern(CustomPaymentReceiptEmailCreator.DATE_FORMAT)),
+              .format(DateTimeFormatter.ofPattern(CustomPaymentReceiptEmailCreator.DATE_FORMAT, Locale.ENGLISH)),
           transaction.getVrn(),
           "£" + (transaction.getCharge() / 100) + ".00"
       );

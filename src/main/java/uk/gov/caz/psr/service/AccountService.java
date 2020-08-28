@@ -23,12 +23,14 @@ import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
+import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
 import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
+import uk.gov.caz.psr.service.exception.UserNotFoundException;
 
 /**
  * Service to interact with the Accounts Service.
@@ -37,6 +39,8 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 @Service
 public class AccountService {
 
+  private static final String ADMINISTRATOR = "Administrator";
+  private static final String DELETED_USER = "Deleted user";
   private final AccountsRepository accountsRepository;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
@@ -227,5 +231,38 @@ public class AccountService {
     }
 
     return String.join(",", mappedZoneIds);
+  }
+
+  /**
+   * Method for retrieving a payer name.
+   *
+   * @param userId {@link UUID}
+   * @return {@link String} When a given user is an account owner, payerName should be
+   *     “Administrator”. If a user has been deleted it should be set to “Deleted user” otherwise
+   *     should return name.
+   */
+  public String getPayerName(UUID userId) {
+    UserDetailsResponse userDetails = getUserDetails(userId);
+    if (userDetails.isOwner()) {
+      return ADMINISTRATOR;
+    }
+    if (userDetails.isRemoved()) {
+      return DELETED_USER;
+    }
+    return userDetails.getName();
+  }
+
+  private UserDetailsResponse getUserDetails(UUID userId) {
+    Response<UserDetailsResponse> userDetailsResponse = accountsRepository
+        .getUserDetailsSync(userId);
+    if (userDetailsResponse.isSuccessful()) {
+      return userDetailsResponse.body();
+    } else {
+      if (userDetailsResponse.code() == 404) {
+        throw new UserNotFoundException();
+      } else {
+        throw new ExternalServiceCallException();
+      }
+    }
   }
 }

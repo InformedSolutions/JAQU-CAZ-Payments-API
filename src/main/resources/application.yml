@@ -1,5 +1,6 @@
 application:
   title: Payment Microservice
+  emails-to-skip: emailtoskip@informed.com
 
 springfox:
   documentation:
@@ -114,6 +115,38 @@ swagger:
         payment-method: Method of the payment
         payment-mandate-id: Direct debit mandate identifier
         telephone-payment: Indicates whether payment was done over phone
+      payment-details:
+        central-payment-reference: The central reference for the payment
+        payment-provider-id: GOV.UK Pay unique payment identifier
+        total-paid: >-
+          The total GBP value of the payment linked to the paymentProviderId.
+          If the motorist paid in advance to travel in to the CAZ on multiple dates, then the payment amount will be a multiple
+          of the daily charge due (e.g. if the daily charge for a car entering a CAZ is £8.00, but the motorist paid in advance
+          for 3 days of travel, then the chargePaid would be equal to £24.00).
+          Expressed in pounds and pence format to 2 decimal places.
+        payment-date: ISO 8601 formatted date string that specifies the date on which the payment was made via GOV.UK Pay
+        payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
+        line-items: >-
+          Array containing objects that specify the: (1) date(s) for which the vehicle has paid to journey in to the CAZ
+          (identified by the x-api-key header parameter); (2) the charge associated with the journey; (3) the payment status of
+          the charge (i.e. whether it has been paid or refunded); and, (4) any Local Authority case reference associated with the
+          charge (e.g. that may be linked to a customer query relating to the charge).
+          1 object will be returned for each date of travel associated with the payment.
+        case-reference: >-
+          A unique identifier that provides traceability between the central CAZ Service and Local Authority case management systems
+          in the event that a payment is subject to some form of customer support query (e.g. a refund or chargeback)
+        charge-paid: >-
+          The GBP value of the payment linked to the paymentProviderId. If the motorist paid in advance to travel in to the CAZ on multiple
+          dates, then the payment amount will be a multiple of the daily charge due (e.g. if the daily charge for a car entering a CAZ
+          is £8.00, but the motorist paid in advance for 3 days of travel, then the chargePaid would be equal to £24.00).
+          Expressed in pounds and pence format to 2 decimal places
+        travel-date: >-
+          ISO 8601 formatted date string that specifies a date(s) for which the vehicle has paid to travel in to the CAZ
+          (identified by the x-api-key header parameter)
+        telephone-payment: Indicates whether payment was done over phone
+        vrn: Vehicle registration number
+        payer-name: >-
+          When a given user is an account owner, payerName should be “Administrator”. If a user has been deleted it should be set to “Deleted user” otherwise name.
       payment-info-request:
         payment-provider-id: >-
           GOV.UK Pay unique payment identifier. Can be used to obtain data associated with a specific GOV.UK Pay payment transaction.
@@ -158,6 +191,9 @@ swagger:
         entrant-payment-id: Id of created or updated record
         status: Payment Status of created Vehicle Entrant
         payment-method: Payment Method of related Payment record. Can be "card" | "direct_debit" | "null"
+        vrn: Vehicle registration number
+        travel-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
+        clean-zone-id: Clean Air Zone identifier
       payments-initiate:
         vrn: Vehicle registration number
         travel-date: ISO 8601 formatted date string that specifies the date for which user wants to pay
@@ -186,7 +222,7 @@ swagger:
         vrn: the registration number of the vehicles
         tariff-code: the identifier for the tariff on the travel date in question
         charge: the charge to be paid in association with that tariff code
-        paid-dates: A list of days which are already paid      
+        paid-dates: A list of days which are already paid
       cleanAirZones:
         cleanAirZoneDetails: List of Clean Air Zones
       cleanAirZone:
@@ -211,6 +247,13 @@ swagger:
         user-id: Identifies the fleet's user who is making the payment
         user-email: Email address of user who is making the payment
         transactions: Collection of objects representing a single vehicle entrant against which the payment is made
+      registerDetails:
+        registerCompliant: should be set to true if vehicle features on Retrofit, or is “compliant” in GPW
+        registerExempt: should be set to true if vehicle features on MOD, or is “exempt” in GPW
+        registeredMOD: should be set to true if vehicle features in MOD
+        registeredGPW: should be set to true if vehicle features in GPW
+        registeredNTR: should be set to true if vehicle features in NTR
+        registeredRetrofit: should be set to true if vehicle features in Retrofit
 
   operations:
     accounts:
@@ -218,6 +261,8 @@ swagger:
         descriptions: retrieves a page of vehicles associated with a particular account
       chargeable-vehicles:
         descriptions: retrieves a page of chargeable vehicles
+      successful-payments:
+        description: retrieves a page of successful payments for a particular user.
     payments:
       create-vehicle-entrant:
         description: >-
@@ -228,6 +273,8 @@ swagger:
           Fetches information about already paid days in specific CAZ in order to prevent
           him from paying for the same day more than one time. Upon completion of this operation the
           list of provided VRNs along with list of paid days is returned.
+      get-payment-details:
+        description: Fetches information about given paymentId.
       direct-debit-mandates:
         description: >-
           Returns a list of clean air zones with the associated direct debit mandates.
@@ -255,14 +302,17 @@ swagger:
           Gets details of a whitelisted vehicle. It is a proxy to the whitelist service
     db:
       migration:
-        description: Evolve DB schema 
+        description: Evolve DB schema
     cacheInvalidation:
       cleanAirZones:
         description: Evicting a cached clean-air-zones from redis
     cleanAirZones:
-      description: Returns list of available CAZs         
+      description: Returns list of available CAZs
     vehicle:
       details:
         description: Returns vehicle registation details
       compliance:
         description: Returns vehicle compliance details
+    register:
+      details:
+        description: Return register details from vccs

@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0010-1.0
+      author: informed
+      changes:
+        - sql:
+            comment: Updates submitted timestamp for direct debit payments.
+            dbms: postgresql
+            endDelimiter: ;
+            splitStatements: true
+            sql:
+              UPDATE caz_payment.t_payment
+              SET payment_submitted_timestamp = payment_authorised_timestamp
+              WHERE payment_method = 'DIRECT_DEBIT';
