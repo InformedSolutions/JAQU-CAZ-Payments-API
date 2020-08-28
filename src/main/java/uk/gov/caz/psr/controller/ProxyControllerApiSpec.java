@@ -17,6 +17,7 @@ import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
+import uk.gov.caz.psr.dto.vccs.RegisterDetailsDto;
 import uk.gov.caz.psr.dto.whitelist.WhitelistedVehicleResponseDto;
 
 /**
@@ -132,4 +133,22 @@ public interface ProxyControllerApiSpec {
   @GetMapping(ProxyController.GET_WHITELIST_VEHICLE_DETAILS)
   ResponseEntity<WhitelistedVehicleResponseDto> getWhitelistVehicleDetails(
       @PathVariable("vrn") String vrn);
+
+  /**
+   * Get register details for vehicle.
+   *
+   * @param vrn string
+   * @return Registered details about car
+   */
+  @ApiOperation(value = "${swagger.operations.register.details.description}",
+      response = RegisterDetailsDto.class)
+  @ApiResponses({@ApiResponse(code = 500, message = "Internal Server Error / No message available"),
+      @ApiResponse(code = 400, message = "Correlation Id missing"),
+      @ApiResponse(code = 200, message = "Vehicle registered details"),})
+  @ApiImplicitParams({@ApiImplicitParam(name = "X-Correlation-ID", required = true,
+      value = "CorrelationID to track the request from the API gateway through"
+          + " the Enquiries stack",
+      paramType = "header")})
+  @GetMapping(ProxyController.GET_REGISTER_DETAILS)
+  ResponseEntity<RegisterDetailsDto> getRegisterDetails(@PathVariable String vrn);
 }

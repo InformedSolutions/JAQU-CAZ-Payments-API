@@ -36,6 +36,7 @@ import uk.gov.caz.psr.util.PaymentInfoRequestConverter;
 @Slf4j
 public class ChargeSettlementController implements ChargeSettlementControllerApiSpec {
 
+  public static final String TIMESTAMP = "timestamp";
   public static final String BASE_PATH = "/v1/charge-settlement";
   public static final String PAYMENT_INFO_PATH = "/payment-info";
   public static final String PAYMENT_STATUS_PATH = "/payment-status";

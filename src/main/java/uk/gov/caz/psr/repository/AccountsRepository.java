@@ -15,9 +15,11 @@ import retrofit2.http.Query;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
+import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
+import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
@@ -176,6 +178,46 @@ public interface AccountsRepository {
       DirectDebitMandatesUpdateRequest body) {
     try {
       return updateDirectDebitMandates(accountId, body).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+
+  /**
+   * Method to get all users associated with the provided account.
+   */
+  @Headers({
+      "Accept: application/json"
+  })
+  @GET("v1/accounts/{accountId}/users")
+  Call<AccountUsersResponse> getAllUsers(@Path("accountId") UUID accountId);
+
+  /**
+   * A synchronous wrapper for {@code getAllUsers} call.
+   */
+  default Response<AccountUsersResponse> getAllUsersSync(UUID accountId) {
+    try {
+      return getAllUsers(accountId).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+
+  /**
+   * Method to get information about user.
+   */
+  @Headers({
+      "Accept: application/json"
+  })
+  @GET("v1/users/{userId}")
+  Call<UserDetailsResponse> getUserDetails(@Path("userId") UUID userId);
+
+  /**
+   * A synchronous wrapper for {@code getUser} call.
+   */
+  default Response<UserDetailsResponse> getUserDetailsSync(UUID userId) {
+    try {
+      return getUserDetails(userId).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }

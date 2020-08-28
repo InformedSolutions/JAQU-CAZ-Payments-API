@@ -10,6 +10,7 @@ import retrofit2.Response;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
+import uk.gov.caz.psr.dto.vccs.RegisterDetailsDto;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
@@ -98,6 +99,21 @@ public class VehicleComplianceRetrievalService {
       return vccsRepository.findUnknownVehicleComplianceSync(type, zones);
     } finally {
       log.debug("Fetching unknown compliance details from VCCS: finish");
+    }
+  }
+
+  /**
+   * Coordinate asynchronous requests to the vehicle checker to get register details.
+   *
+   * @param vrn vehicle registration number of a vehicle
+   * @return register details outcome wrapped in a response object.
+   */
+  public Response<RegisterDetailsDto> getRegisterDetails(String vrn) {
+    try {
+      log.debug("Fetching register details from VCCS: start");
+      return vccsRepository.getRegisterDetailsSync(vrn);
+    } finally {
+      log.debug("Fetching register details from VCCS: finish");
     }
   }
 }

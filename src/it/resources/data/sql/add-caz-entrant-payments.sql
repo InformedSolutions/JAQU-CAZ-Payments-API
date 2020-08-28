@@ -1,9 +1,9 @@
 INSERT INTO caz_payment.t_payment(
-	payment_id, payment_method, payment_provider_id, total_paid, payment_provider_status, payment_submitted_timestamp, payment_authorised_timestamp)
+	payment_id, user_id, payment_method, payment_provider_id, total_paid, payment_provider_status, payment_submitted_timestamp, payment_authorised_timestamp)
 	VALUES
-	  ('b71b72a5-902f-4a16-a91d-1a4463b801db', 'CREDIT_DEBIT_CARD', '12345test', 100, 'SUCCESS', now(), now()),
-	  ('dabc1391-ff31-427a-8000-69037deb2d3a', 'CREDIT_DEBIT_CARD', '98765test', 100, 'SUCCESS', now(), now()),
-	  ('1d378f50-3326-412a-b663-cd080744f1f1', 'CREDIT_DEBIT_CARD', null, 100, null, null, null);
+	  ('b71b72a5-902f-4a16-a91d-1a4463b801db', 'ab3e9f4b-4076-4154-b6dd-97c5d4800b47', 'CREDIT_DEBIT_CARD', '12345test', 100, 'SUCCESS', now(), now()),
+	  ('dabc1391-ff31-427a-8000-69037deb2d3a', '88732cca-a5c7-4ad6-a60d-7edede935915', 'CREDIT_DEBIT_CARD', '98765test', 100, 'SUCCESS', now(), now()),
+	  ('1d378f50-3326-412a-b663-cd080744f1f1', '3f319922-71d2-432c-9757-8e5f060c2447', 'CREDIT_DEBIT_CARD', null, 100, null, null, null);
 
 INSERT INTO caz_payment.t_clean_air_zone_entrant_payment(
 	clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
