@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.controller;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +11,6 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
@@ -25,7 +23,7 @@ import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.service.AccountService;
 import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
-import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
+import uk.gov.caz.psr.util.AccountVehicleRetrievalConverter;
 
 @AllArgsConstructor
 @RestController
@@ -38,10 +36,10 @@ public class AccountsController implements AccountControllerApiSpec {
   private static final String DIRECTION_PREVIOUS = "previous";
   private static final String DIRECTION_NEXT = "next";
 
-  private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
   private final AccountService accountService;
   private final QueryStringValidator queryStringValidator;
   private final RetrieveSuccessfulPaymentsService retrieveSuccessfulPaymentsService;
+  private final AccountVehicleRetrievalConverter accountVehicleRetrievalConverter;
 
   @Override
   public ResponseEntity<VehicleRetrievalResponseDto> retrieveVehiclesAndCharges(
@@ -51,35 +49,16 @@ public class AccountsController implements AccountControllerApiSpec {
         Collections.emptyList(),
         Arrays.asList(PAGE_NUMBER_QUERYSTRING_KEY, PAGE_SIZE_QUERYSTRING_KEY));
 
-    String zones = "";
-
-    // If no collection of zones has been passed via querystring, 
-    // retrieve all zones from service layer.
-    if (queryStringValidator.queryStringInvalid("zones", queryStrings)) {
-      zones = accountService.getZonesQueryStringEquivalent();
-    } else {
-      zones = queryStrings.get("zones");
-    }
-
     AccountVehicleRetrievalResponse accountVehicleRetrievalResponse =
         accountService.retrieveAccountVehicles(accountId,
             queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
             queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
 
-    List<ComplianceResultsDto> results = new ArrayList<>();
-    if (accountVehicleRetrievalResponse.getTotalVrnsCount() > 0) {
-      results = vehicleComplianceRetrievalService
-          .retrieveVehicleCompliance(
-              accountVehicleRetrievalResponse.getVrns(),
-              zones);
-    }
-
     return ResponseEntity.ok()
-        .body(createResponseFromVehicleComplianceRetrievalResults(results,
-            queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
-            queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY),
-            accountVehicleRetrievalResponse.getPageCount(),
-            accountVehicleRetrievalResponse.getTotalVrnsCount()));
+        .body(accountVehicleRetrievalConverter
+            .toVehicleRetrievalResponseDto(accountVehicleRetrievalResponse,
+                queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
+                queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY)));
   }
 
   @Override
@@ -202,18 +181,6 @@ public class AccountsController implements AccountControllerApiSpec {
         .chargeableAccountVehicles(results)
         .firstVrn(firstVrn)
         .lastVrn(lastVrn)
-        .build();
-  }
-
-  private VehicleRetrievalResponseDto createResponseFromVehicleComplianceRetrievalResults(
-      List<ComplianceResultsDto> results, String pageNumber, String pageSize,
-      int pageCount, long totalVrnsCount) {
-    return VehicleRetrievalResponseDto.builder()
-        .vehicles(results)
-        .page(Integer.parseInt(pageNumber))
-        .pageCount(pageCount)
-        .perPage(Integer.parseInt(pageSize))
-        .totalVrnsCount(totalVrnsCount)
         .build();
   }
 }

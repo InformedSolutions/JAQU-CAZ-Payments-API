@@ -1,3 +1,19 @@
-{"vrns": ["TEST_VRN"],
-"pageCount": 1,
-"totalVrnsCount": 1}
+{
+  "vehicles": [
+    {
+      "vrn": "TEST_VRN",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "53e03a28-0627-11ea-9511-ffaaee87e375",
+          "charge": 100,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    }
+  ],
+  "pageCount": 1,
+  "totalVehiclesCount": 1
+}

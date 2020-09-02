@@ -34,7 +34,7 @@ public interface AccountsRepository {
    */
   @Headers("Accept: application/json")
   @GET("v1/accounts/{accountId}/vehicles")
-  Call<AccountVehicleRetrievalResponse> getAccountVehicleVrns(
+  Call<AccountVehicleRetrievalResponse> getAccountVehicles(
       @Path("accountId") UUID accountId,
       @Query("pageNumber") String pageNumber,
       @Query("pageSize") String pageSize
@@ -47,10 +47,10 @@ public interface AccountsRepository {
    * @param pageSize the size of the page
    * @return
    */
-  default Response<AccountVehicleRetrievalResponse> getAccountVehicleVrnsSync(
+  default Response<AccountVehicleRetrievalResponse> getAccountVehiclesSync(
       UUID accountId, String pageNumber, String pageSize) {
     try {
-      return getAccountVehicleVrns(accountId, pageNumber, pageSize).execute();
+      return getAccountVehicles(accountId, pageNumber, pageSize).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }

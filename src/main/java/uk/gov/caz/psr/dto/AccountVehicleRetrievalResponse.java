@@ -13,14 +13,14 @@ import lombok.Value;
 public class AccountVehicleRetrievalResponse {
 
   /**
-   * The list of VRNs associated with the account ID provided in the request.
+   * The list of vehicles associated with the account ID provided in the request.
    */
-  List<String> vrns;
+  List<VehicleDetails> vehicles;
   
   /**
-   * The total number of VRNs that are associated with the account.
+   * The total number of vehicles that are associated with the account.
    */
-  long totalVrnsCount;
+  long totalVehiclesCount;
   
   /**
    * The total number of pages that can be queried.

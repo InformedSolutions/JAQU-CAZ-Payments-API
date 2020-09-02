@@ -31,10 +31,6 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
   @Test
   public void shouldReturn200OkAndResponseWhenValidRequest() throws JsonProcessingException {
     mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
-    for (String zone : ZONES.split(",")) {
-      mockVccsBulkComplianceCall(Collections.singletonList("CAS300"), zone, 
-          "vehicle-compliance-response.json", 200);      
-    }
     givenVehicleChargesRetrieval()
       .forAccountId(ACCOUNT_ID)
       .forPageNumber("0")
@@ -62,21 +58,6 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
       .then()
       .responseIsReturnedWithHttpOkStatusCode()
       .andResponseContainsExpectedData();
-  }
-  
-  @Test
-  public void shouldReturn200OkAndResponseWhenUnknownVehicleType() throws JsonProcessingException {
-    mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS302");
-    mockVccsBulkComplianceCallWithUnknownVrn(Collections.singletonList("CAS302"), ZONES, "", 200);
-    givenVehicleChargesRetrieval()
-      .forAccountId(ACCOUNT_ID)
-      .forPageNumber("0")
-      .forPageSize("10")
-      .forZones(ZONES)
-      .whenRequestIsMadeToRetrieveAccountVehicles()
-      .then()
-      .responseIsReturnedWithHttpOkStatusCode()
-      .andResponseContainsTypeUnknownOrUnrecognisedData("CAS302");
   }
 
   @Test
@@ -132,20 +113,6 @@ public class RetrieveAccountVehiclesAndChargeabilityIT extends ExternalCallsIT {
       .responseIsReturnedWithHttpErrorStatusCode(404);
   }
  
-  @Test
-  public void shouldReturn503WhenVccsUnavailable() {
-    mockAccountServiceOffsetCall(ACCOUNT_ID, "CAS300");
-    mockVccsBulkComplianceCallError("CAS300", 503);
-    givenVehicleChargesRetrieval()
-      .forAccountId(ACCOUNT_ID)
-      .forPageNumber("0")
-      .forPageSize("10")
-      .forZones(ZONES)
-      .whenRequestIsMadeToRetrieveAccountVehicles()
-      .then()
-      .responseIsReturnedWithHttpErrorStatusCode(503);
-  }
-  
   @Test
   public void shouldReturn503WhenAccountServiceUnavailable() {
     mockAccountServiceOffsetCallWithError(ACCOUNT_ID, 503);

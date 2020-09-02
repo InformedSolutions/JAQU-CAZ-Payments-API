@@ -15,8 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import retrofit2.Response;
-import uk.gov.caz.definitions.dto.CleanAirZoneDto;
-import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
@@ -26,7 +24,6 @@ import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntran
 import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
-import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
 import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
@@ -44,7 +41,6 @@ public class AccountService {
   private final AccountsRepository accountsRepository;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
-  private final VccsRepository vccRepository;
 
   /**
    * Retrieve a page of VRNs of vehicles associated with a given account ID.
@@ -56,7 +52,7 @@ public class AccountService {
   public AccountVehicleRetrievalResponse retrieveAccountVehicles(UUID accountId,
       String pageNumber, String pageSize) {
     Response<AccountVehicleRetrievalResponse> accountsResponse = accountsRepository
-        .getAccountVehicleVrnsSync(accountId, pageNumber, pageSize);
+        .getAccountVehiclesSync(accountId, pageNumber, pageSize);
     if (accountsResponse.isSuccessful()) {
       return accountsResponse.body();
     }
@@ -214,23 +210,6 @@ public class AccountService {
     } else {
       return complianceOutcome.getComplianceOutcomes().get(0).getCharge() > 0;
     }
-  }
-
-  /**
-   * Helper method for retrieving a list of comma delimited clean air zones IDs.
-   *
-   * @return a list of comma delimited clean air zones IDs.
-   */
-  public String getZonesQueryStringEquivalent() {
-    Response<CleanAirZonesDto> zones = vccRepository.findCleanAirZonesSync();
-    List<CleanAirZoneDto> cleanAirZoneDtos = zones.body().getCleanAirZones();
-    List<String> mappedZoneIds = new ArrayList<>();
-
-    for (CleanAirZoneDto dto : cleanAirZoneDtos) {
-      mappedZoneIds.add(dto.getCleanAirZoneId().toString());
-    }
-
-    return String.join(",", mappedZoneIds);
   }
 
   /**
