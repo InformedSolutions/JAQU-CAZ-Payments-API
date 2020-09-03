@@ -6,34 +6,34 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import uk.gov.caz.definitions.dto.ComplianceOutcomeDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
-import uk.gov.caz.psr.dto.CachedCharge;
-import uk.gov.caz.psr.dto.VehicleDetails;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges.VehicleCharge;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 
 /**
  * {@code AccountVehicleRetrievalResponse} to {@code VehicleRetrievalResponseDto} converter.
  */
 @Component
-public class AccountVehicleRetrievalConverter {
+public class VehiclesResponseDtoConverter {
 
   /**
    * Converts the passed {@code AccountVehicleRetrievalResponse} to an instance of {@link
    * VehicleRetrievalResponseDto}.
    */
   public VehicleRetrievalResponseDto toVehicleRetrievalResponseDto(
-      AccountVehicleRetrievalResponse accountVehicleRetrievalResponse, String pageNumber,
+      VehiclesResponseDto vehiclesResponse, String pageNumber,
       String perPage) {
-    Preconditions.checkNotNull(accountVehicleRetrievalResponse,
-        "accountVehicleRetrievalResponse cannot be null");
+    Preconditions.checkNotNull(vehiclesResponse,
+        "vehiclesResponse cannot be null");
 
     return VehicleRetrievalResponseDto.builder()
         .vehicles(
-            complianceResultsFromVehicleDetails(accountVehicleRetrievalResponse.getVehicles()))
+            complianceResultsFromVehicleDetails(vehiclesResponse.getVehicles()))
         .page(Integer.parseInt(pageNumber))
-        .pageCount(accountVehicleRetrievalResponse.getPageCount())
+        .pageCount(vehiclesResponse.getPageCount())
         .perPage(Integer.parseInt(perPage))
-        .totalVrnsCount(accountVehicleRetrievalResponse.getTotalVehiclesCount())
+        .totalVrnsCount(vehiclesResponse.getTotalVehiclesCount())
         .build();
   }
 
@@ -45,12 +45,12 @@ public class AccountVehicleRetrievalConverter {
    * @return list of {@code ComplianceResultsDto}
    */
   private List<ComplianceResultsDto> complianceResultsFromVehicleDetails(
-      List<VehicleDetails> vehicles) {
+      List<VehicleWithCharges> vehicles) {
     return vehicles.stream()
         .map(vehicle -> ComplianceResultsDto.builder()
             .registrationNumber(vehicle.getVrn())
-            .isRetrofitted(vehicle.getIsRetrofitted())
-            .isExempt(vehicle.getIsExempt())
+            .isRetrofitted(vehicle.isRetrofitted())
+            .isExempt(vehicle.isExempt())
             .vehicleType(vehicle.getVehicleType())
             .complianceOutcomes(complianceOutcomesFromCachedCharges(vehicle.getCachedCharges()))
             .build())
@@ -61,11 +61,11 @@ public class AccountVehicleRetrievalConverter {
    * Converts cachedCharges from the Accounts API to {@code ComplianceOutcomeDto}.
    */
   private List<ComplianceOutcomeDto> complianceOutcomesFromCachedCharges(
-      List<CachedCharge> cachedCharges) {
+      List<VehicleCharge> cachedCharges) {
     return cachedCharges.stream()
         .map(cachedCharge -> ComplianceOutcomeDto.builder()
             .cleanAirZoneId(cachedCharge.getCazId())
-            .charge(cachedCharge.getCharge())
+            .charge(cachedCharge.getCharge().floatValue())
             .tariffCode(cachedCharge.getTariffCode())
             .build())
         .collect(Collectors.toList());

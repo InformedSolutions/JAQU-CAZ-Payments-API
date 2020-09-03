@@ -12,9 +12,9 @@ import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
-import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
@@ -34,7 +34,7 @@ public interface AccountsRepository {
    */
   @Headers("Accept: application/json")
   @GET("v1/accounts/{accountId}/vehicles")
-  Call<AccountVehicleRetrievalResponse> getAccountVehicles(
+  Call<VehiclesResponseDto> getAccountVehicles(
       @Path("accountId") UUID accountId,
       @Query("pageNumber") String pageNumber,
       @Query("pageSize") String pageSize
@@ -47,7 +47,7 @@ public interface AccountsRepository {
    * @param pageSize the size of the page
    * @return
    */
-  default Response<AccountVehicleRetrievalResponse> getAccountVehiclesSync(
+  default Response<VehiclesResponseDto> getAccountVehiclesSync(
       UUID accountId, String pageNumber, String pageSize) {
     try {
       return getAccountVehicles(accountId, pageNumber, pageSize).execute();

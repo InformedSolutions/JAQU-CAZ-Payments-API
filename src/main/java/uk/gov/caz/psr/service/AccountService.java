@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto;
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
-import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
 import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
@@ -49,9 +49,9 @@ public class AccountService {
    * @param pageNumber the number of the page
    * @param pageSize the size of the page
    */
-  public AccountVehicleRetrievalResponse retrieveAccountVehicles(UUID accountId,
+  public VehiclesResponseDto retrieveAccountVehicles(UUID accountId,
       String pageNumber, String pageSize) {
-    Response<AccountVehicleRetrievalResponse> accountsResponse = accountsRepository
+    Response<VehiclesResponseDto> accountsResponse = accountsRepository
         .getAccountVehiclesSync(accountId, pageNumber, pageSize);
     if (accountsResponse.isSuccessful()) {
       return accountsResponse.body();

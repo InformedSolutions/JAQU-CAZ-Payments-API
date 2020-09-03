@@ -32,8 +32,7 @@ import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.service.AccountService;
 import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
-import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
-import uk.gov.caz.psr.util.AccountVehicleRetrievalConverter;
+import uk.gov.caz.psr.util.VehiclesResponseDtoConverter;
 
 @ContextConfiguration(classes = {ExceptionController.class, Configuration.class,
     AccountsController.class})
@@ -50,7 +49,7 @@ class AccountsControllerTest {
   private RetrieveSuccessfulPaymentsService retrieveSuccessfulPaymentsService;
 
   @MockBean
-  private AccountVehicleRetrievalConverter accountVehicleRetrievalConverter;
+  private VehiclesResponseDtoConverter vehiclesResponseDtoConverter;
 
   @Autowired
   private MockMvc mockMvc;

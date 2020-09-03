@@ -3,6 +3,7 @@ package uk.gov.caz.psr.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -11,45 +12,45 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.definitions.dto.ComplianceOutcomeDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
-import uk.gov.caz.psr.dto.CachedCharge;
-import uk.gov.caz.psr.dto.VehicleDetails;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges.VehicleCharge;
 import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 
 @ExtendWith(MockitoExtension.class)
-class AccountVehicleRetrievalConverterTest {
+class VehiclesResponseDtoConverterTest {
 
   private static final UUID ANY_CAZ_ID = UUID.randomUUID();
 
   @InjectMocks
-  private AccountVehicleRetrievalConverter accountVehicleRetrievalConverter;
+  private VehiclesResponseDtoConverter vehiclesResponseDtoConverter;
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPassedValueIsNull() {
     // given
-    AccountVehicleRetrievalResponse response = null;
+    VehiclesResponseDto response = null;
     String pageNumber = "1";
     String perPage = "10";
 
     // when
     Throwable throwable = catchThrowable(
-        () -> accountVehicleRetrievalConverter
+        () -> vehiclesResponseDtoConverter
             .toVehicleRetrievalResponseDto(response, pageNumber, perPage));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
-        .hasMessage("accountVehicleRetrievalResponse cannot be null");
+        .hasMessage("vehiclesResponse cannot be null");
   }
 
   @Test
   public void shouldConvertPassedResponse() {
     // given
-    AccountVehicleRetrievalResponse response = buildAccountVehicleRetrievalResponse();
+    VehiclesResponseDto response = buildVehiclesResponse();
     String pageNumber = "1";
     String perPage = "10";
 
     // when
-    VehicleRetrievalResponseDto vehicleRetrievalResponseDto = accountVehicleRetrievalConverter
+    VehicleRetrievalResponseDto vehicleRetrievalResponseDto = vehiclesResponseDtoConverter
         .toVehicleRetrievalResponseDto(response, pageNumber, perPage);
 
     // then
@@ -72,19 +73,19 @@ class AccountVehicleRetrievalConverterTest {
     assertThat(complianceOutcome.getCleanAirZoneId()).isEqualTo(ANY_CAZ_ID);
   }
 
-  private AccountVehicleRetrievalResponse buildAccountVehicleRetrievalResponse() {
-    return AccountVehicleRetrievalResponse.builder()
+  private VehiclesResponseDto buildVehiclesResponse() {
+    return VehiclesResponseDto.builder()
         .pageCount(1)
         .totalVehiclesCount(2)
         .vehicles(Arrays.asList(
-            VehicleDetails.builder()
-                .isExempt(Boolean.TRUE)
-                .isRetrofitted(Boolean.FALSE)
+            VehicleWithCharges.builder()
+                .exempt(Boolean.TRUE)
+                .retrofitted(Boolean.FALSE)
                 .vehicleType("Car")
                 .vrn("TEST_VRN")
                 .cachedCharges(Arrays.asList(
-                    CachedCharge.builder()
-                        .charge(100)
+                    VehicleCharge.builder()
+                        .charge(BigDecimal.valueOf(100))
                         .tariffCode("tariffCode")
                         .cazId(ANY_CAZ_ID)
                         .build()))
