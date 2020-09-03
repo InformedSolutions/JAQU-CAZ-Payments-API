@@ -11,19 +11,16 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto;
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
 import uk.gov.caz.psr.dto.SuccessfulPaymentsResponse;
-import uk.gov.caz.psr.dto.VehicleRetrievalResponseDto;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.service.AccountService;
 import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
-import uk.gov.caz.psr.util.VehiclesResponseDtoConverter;
 
 @AllArgsConstructor
 @RestController
@@ -39,27 +36,6 @@ public class AccountsController implements AccountControllerApiSpec {
   private final AccountService accountService;
   private final QueryStringValidator queryStringValidator;
   private final RetrieveSuccessfulPaymentsService retrieveSuccessfulPaymentsService;
-  private final VehiclesResponseDtoConverter vehiclesResponseDtoConverter;
-
-  @Override
-  public ResponseEntity<VehicleRetrievalResponseDto> retrieveVehiclesAndCharges(
-      UUID accountId, Map<String, String> queryStrings) {
-
-    queryStringValidator.validateRequest(queryStrings,
-        Collections.emptyList(),
-        Arrays.asList(PAGE_NUMBER_QUERYSTRING_KEY, PAGE_SIZE_QUERYSTRING_KEY));
-
-    VehiclesResponseDto vehiclesResponse = accountService
-        .retrieveAccountVehicles(accountId,
-            queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
-            queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
-
-    return ResponseEntity.ok()
-        .body(vehiclesResponseDtoConverter
-            .toVehicleRetrievalResponseDto(vehiclesResponse,
-                queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY),
-                queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY)));
-  }
 
   @Override
   public ResponseEntity<ChargeableAccountVehicleResponse> retrieveChargeableVehicles(UUID accountId,
