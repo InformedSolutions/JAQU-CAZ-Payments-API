@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.greaterThan;
 import static uk.gov.caz.psr.controller.ChargeSettlementController.BASE_PATH;
+import static uk.gov.caz.psr.controller.ChargeSettlementController.TIMESTAMP;
 
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
@@ -793,10 +794,10 @@ class ChargeSettlementPaymentInfoTestIT {
       }
     }
   }
-  
+
   @Nested
   class WhenInvalidRequest {
-    
+
     @Test
     public void shouldReturn400ResponseWhenNoParametersGiven() {
       PaymentInfoAssertion.whenRequested()
@@ -804,37 +805,37 @@ class ChargeSettlementPaymentInfoTestIT {
           .headerContainsCorrelationId()
           .responseHasBadRequestStatus();
     }
-    
+
     @Test
     public void shouldReturn400ResponseWhenVrnIsLongerThan15Characters() {
       PaymentInfoAssertion.whenRequested()
-      .withParam("vrn", "AB12CD34EF56GH78")
-      .then()
-      .headerContainsCorrelationId()
-      .responseHasBadRequestStatus()
-      .responseHasErrorField("vrn");
+          .withParam("vrn", "AB12CD34EF56GH78")
+          .then()
+          .headerContainsCorrelationId()
+          .responseHasBadRequestStatus()
+          .responseHasErrorField("vrn");
     }
-    
+
     @ParameterizedTest
     @ValueSource(strings = {"2020-01-20-", "20/01/2020"})
     public void shouldReturn400ResponseWhenFromDatePaidForIsInvalid(String fromDatePaidFor) {
       PaymentInfoAssertion.whenRequested()
-      .withParam("fromDatePaidFor", fromDatePaidFor)
-      .then()
-      .headerContainsCorrelationId()
-      .responseHasBadRequestStatus()
-      .responseHasErrorField("fromDatePaidFor");
+          .withParam("fromDatePaidFor", fromDatePaidFor)
+          .then()
+          .headerContainsCorrelationId()
+          .responseHasBadRequestStatus()
+          .responseHasErrorField("fromDatePaidFor");
     }
-    
+
     @ParameterizedTest
     @ValueSource(strings = {"2020-01-20-", "20/01/2020"})
     public void shouldReturn400ResponseWhenToDatePaidForIsInvalid(String toDatePaidFor) {
       PaymentInfoAssertion.whenRequested()
-      .withParam("toDatePaidFor", toDatePaidFor)
-      .then()
-      .headerContainsCorrelationId()
-      .responseHasBadRequestStatus()
-      .responseHasErrorField("toDatePaidFor");
+          .withParam("toDatePaidFor", toDatePaidFor)
+          .then()
+          .headerContainsCorrelationId()
+          .responseHasBadRequestStatus()
+          .responseHasErrorField("toDatePaidFor");
     }
   }
 
@@ -872,7 +873,7 @@ class ChargeSettlementPaymentInfoTestIT {
       validatableResponse = validatableResponse.statusCode(HttpStatus.OK.value());
       return this;
     }
-    
+
     public PaymentInfoAssertion responseHasBadRequestStatus() {
       validatableResponse = validatableResponse.statusCode(HttpStatus.BAD_REQUEST.value());
       return this;
@@ -913,7 +914,7 @@ class ChargeSettlementPaymentInfoTestIT {
           .accept(MediaType.APPLICATION_JSON.toString())
           .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
           .header(Headers.X_API_KEY, API_KEY_FOR_EXISTING_RECORDS)
-          .header(Headers.TIMESTAMP, LocalDateTime.now().toString());
+          .header(TIMESTAMP, LocalDateTime.now().toString());
     }
 
     public PaymentInfoAssertion doesNotContainNotPaidEntries() {

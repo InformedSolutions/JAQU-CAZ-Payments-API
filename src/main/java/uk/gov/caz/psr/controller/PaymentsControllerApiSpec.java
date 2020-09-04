@@ -2,15 +2,12 @@ package uk.gov.caz.psr.controller;
 
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.UUID;
-import javassist.NotFoundException;
 import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,17 +18,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import uk.gov.caz.definitions.dto.CleanAirZonesDto;
-import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.definitions.dto.VehicleDto;
-import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
-import uk.gov.caz.psr.dto.CleanAirZonesResponse;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.dto.PaidPaymentsResponse;
+import uk.gov.caz.psr.dto.PaymentDetailsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 
@@ -40,9 +32,8 @@ import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 public interface PaymentsControllerApiSpec {
 
   /**
-   * Allows Payments Front-end to create a new payment based on requested
-   * details It creates the payment in GOV.UK PAY and returns next steps which
-   * needs to be completed.
+   * Allows Payments Front-end to create a new payment based on requested details It creates the
+   * payment in GOV.UK PAY and returns next steps which needs to be completed.
    *
    * @return {@link PaymentStatusResponse} wrapped in {@link ResponseEntity}.
    */
@@ -68,10 +59,9 @@ public interface PaymentsControllerApiSpec {
       @PathVariable UUID id);
 
   /**
-   * Allows User to fetch information about already paid days in specific CAZ in
-   * order to prevent him from paying for the same day more than one time. Upon
-   * completion of this operation the list of provided VRNs along with list of
-   * paid days is returned.
+   * Allows User to fetch information about already paid days in specific CAZ in order to prevent
+   * him from paying for the same day more than one time. Upon completion of this operation the list
+   * of provided VRNs along with list of paid days is returned.
    */
   @ApiOperation(
       value = "${swagger.operations.payments.get-paid-entrants.description}",
@@ -95,94 +85,23 @@ public interface PaymentsControllerApiSpec {
       @RequestBody PaidPaymentsRequest paymentsRequest);
 
   /**
-   * Endpoint for retrieving a summary list of clean air zones and their
-   * boundary URLs. Note this endpoint acts as a proxy through to the Vehicle
-   * Checker service.
-   * 
-   * @return a summary listing of a clean air zone including their identifiers
-   *         and boundary urls.
-   * @throws JsonProcessingException exception encountered whilst
-   *         serializing/deserializing JSON payloads
+   * Allows User to fetch information about given paymentId.
    */
-  @GetMapping(PaymentsController.GET_CLEAN_AIR_ZONES)
-  @ApiOperation(value = "${swagger.operations.cleanAirZones.description}",
-      response = CleanAirZonesDto.class)
+  @ApiOperation(
+      value = "${swagger.operations.payments.get-payment-details.description}",
+      response = PaymentDetailsResponse.class)
   @ApiResponses({
       @ApiResponse(code = 500,
           message = "Internal Server Error / No message available"),
-      @ApiResponse(code = 400, message = "Correlation Id missing"),
-      @ApiResponse(code = 200, message = "Clean air zone listing details"),})
-  @ApiImplicitParams({@ApiImplicitParam(name = "X-Correlation-ID",
+      @ApiResponse(code = 405,
+          message = "Method Not Allowed / Request method 'XXX' not supported"),
+      @ApiResponse(code = 400, message = "Missing Correlation Id header")})
+  @ApiImplicitParams({@ApiImplicitParam(name = X_CORRELATION_ID_HEADER,
       required = true,
-      value = "CorrelationID to track the request from the API gateway through"
-          + " the Enquiries stack",
+      value = "UUID formatted string to track the request through the enquiries stack",
       paramType = "header")})
-  ResponseEntity<CleanAirZonesResponse> getCleanAirZones()
-      throws JsonProcessingException;
-
-  /**
-   * Get vehicle details.
-   *
-   * @param vrn validated string
-   * @return Vehicle details about car
-   */
-  @ApiOperation(value = "${swagger.operations.vehicle.details.description}",
-      response = VehicleDto.class)
-  @ApiResponses({
-      @ApiResponse(code = 500,
-          message = "Internal Server Error / No message available"),
-      @ApiResponse(code = 422, message = "Invalid vrn"),
-      @ApiResponse(code = 404, message = "Vehicle not found"),
-      @ApiResponse(code = 400, message = "Correlation Id missing"),
-      @ApiResponse(code = 200, message = "Vehicle details"),})
-  @ApiImplicitParams({@ApiImplicitParam(name = "X-Correlation-ID",
-      required = true,
-      value = "CorrelationID to track the request from the API gateway through"
-          + " the Enquiries stack",
-      paramType = "header")})
-  @GetMapping(PaymentsController.GET_VEHICLE_DETAILS)
-  ResponseEntity<VehicleDto> getVehicleDetails(@PathVariable String vrn);
-
-  /**
-   * Get vehicle compliance details.
-   *
-   * @param vrn validated string
-   * @return Vehicle compliance details
-   */
-  @ApiOperation(value = "${swagger.operations.vehicle.compliance.description}",
-      response = ComplianceResultsDto.class)
-  @ApiResponses({
-      @ApiResponse(code = 500,
-          message = "Internal Server Error / No message available"),
-      @ApiResponse(code = 422, message = "Invalid vrn"),
-      @ApiResponse(code = 404, message = "Vehicle not found"),
-      @ApiResponse(code = 400, message = "Correlation Id missing"),
-      @ApiResponse(code = 200, message = "Vehicle compliance details"),})
-  @ApiImplicitParams({@ApiImplicitParam(name = "X-Correlation-ID",
-      required = true,
-      value = "CorrelationID to track the request from the API gateway through"
-          + " the Enquiries stack",
-      paramType = "header")})
-  @GetMapping(PaymentsController.GET_COMPLIANCE)
-  ResponseEntity<ComplianceResultsDto> getCompliance(@PathVariable String vrn,
-      @RequestParam("zones") String zones);
-  
-  /**
-   * Get charges for given type.
-   *
-   * @param type non-null string
-   */
-  @ApiOperation(value = "${swagger.operations.vehicle.unrecognised.description}",
-      response = VehicleTypeCazChargesDto.class)
-  @ApiResponses({@ApiResponse(code = 500, message = "Internal Server Error / No message available"),
-      @ApiResponse(code = 400, message = "type param missing"),
-      @ApiResponse(code = 400, message = "zones parameter malformed"),
-      @ApiResponse(code = 200, message = "Vehicle compliance details")})
-  @ApiImplicitParams({@ApiImplicitParam(name = "X-Correlation-ID", required = true,
-      value = "CorrelationID to track the request from the API gateway through"
-          + " the Enquiries stack",
-      paramType = "header")})
-  @GetMapping(PaymentsController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE)
-  ResponseEntity<VehicleTypeCazChargesDto> getUnrecognisedVehicle(@PathVariable("type") String type,
-      @RequestParam("zones") String zones) throws NotFoundException;
+  @GetMapping(PaymentsController.GET_PAYMENT_DETAILS)
+  @ResponseStatus(HttpStatus.OK)
+  ResponseEntity<PaymentDetailsResponse> getPaymentDetails(
+      @PathVariable("payment_id") UUID paymentId);
 }

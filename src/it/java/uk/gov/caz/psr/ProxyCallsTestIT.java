@@ -137,6 +137,25 @@ class ProxyCallsTestIT extends ExternalCallsIT {
         .statusCode(HttpStatus.OK.value());
   }
 
+  @Test
+  void canFetchRegisterDetails() {
+    String vrn = "CAS312";
+    String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
+    mockVccsRegisterDetailsCall(vrn, "register-details-response.json", 200);
+
+    RestAssured.given()
+        .accept(MediaType.APPLICATION_JSON.toString())
+        .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+        .contentType(MediaType.APPLICATION_JSON.toString())
+
+        .when()
+        .get(ProxyController.GET_REGISTER_DETAILS, vrn)
+
+        .then()
+        .header(Constants.X_CORRELATION_ID_HEADER, correlationId)
+        .statusCode(HttpStatus.OK.value());
+  }
+
   @Nested
   class Whitelisting {
 

@@ -1,6 +1,8 @@
 package uk.gov.caz.psr.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -37,6 +39,19 @@ public class EntrantPaymentWithLatestPaymentDetailsDto {
   @NotNull
   String paymentMethod;
 
+  @ApiModelProperty(value = "${swagger.model.descriptions.caz-entrant-payment.vrn}")
+  @NotNull
+  String vrn;
+
+  @ApiModelProperty(value = "${swagger.model.descriptions.caz-entrant-payment.travel-timestamp}")
+  @NotNull
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  LocalDateTime cazEntryTimestamp;
+
+  @ApiModelProperty(value = "${swagger.model.descriptions.caz-entrant-payment.clean-zone-id}")
+  @NotNull
+  UUID cleanAirZoneId;
+
   /**
    * Maps {@link EntrantPayment} and possibly from {@link Payment} to {@link
    * EntrantPaymentWithLatestPaymentDetailsDto}.
@@ -48,10 +63,12 @@ public class EntrantPaymentWithLatestPaymentDetailsDto {
    */
   public static EntrantPaymentWithLatestPaymentDetailsDto from(EntrantPayment entrantPayment,
       @Nullable Payment payment) {
-    return EntrantPaymentWithLatestPaymentDetailsDto
-        .builder()
+    return EntrantPaymentWithLatestPaymentDetailsDto.builder()
         .entrantPaymentId(entrantPayment.getCleanAirZoneEntrantPaymentId())
         .paymentStatus(entrantPayment.getInternalPaymentStatus().toString())
+        .vrn(entrantPayment.getVrn())
+        .cazEntryTimestamp(entrantPayment.getCazEntryTimestamp())
+        .cleanAirZoneId(entrantPayment.getCleanAirZoneId())
         .paymentMethod(
             payment != null ? payment.getPaymentMethod().accept(paymentMethodToDtoString) : "null")
         .build();

@@ -99,6 +99,13 @@ public class ExternalCallsIT {
         .respond(responseWithUnrecognisedCompliance(filePath, cleanAirZoneId, statusCode));
   }
 
+  public void mockVccsRegisterDetailsCall(String vrn, String filePath, int statusCode) {
+    vccsMockServer
+        .when(requestGet("/v1/compliance-checker/vehicles/" + vrn + "/register-details"),
+            exactly(1))
+        .respond(responseWithRegisterDetails(filePath, statusCode));
+  }
+
   public void mockVccsComplianceCall(String vrn, String cleanAirZoneId, String filePath,
       int statusCode) throws JsonProcessingException {
     vccsMockServer
@@ -187,6 +194,41 @@ public class ExternalCallsIT {
         .respond(emptyResponse(statusCode));
   }
 
+  public void mockAccountServiceGetAllUsersCall(String accountId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/accounts/" + accountId + "/users"),
+            exactly(1))
+        .respond(response("account-users-list-response.json", statusCode));
+  }
+
+  public void mockAccountServiceGetUserDetailsCall(String userId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/users/"+ userId),
+            exactly(1))
+        .respond(response("account-user-details.json", statusCode));
+  }
+
+  public void mockAccountServiceGetUserDetailsOwnerCall(String userId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/users/"+ userId),
+            exactly(1))
+        .respond(response("account-user-details-owner.json", statusCode));
+  }
+
+  public void mockAccountServiceGetUserDetailsRemovedCall(String userId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/users/"+ userId),
+            exactly(1))
+        .respond(response("account-user-details-removed.json", statusCode));
+  }
+
+  public void mockAccountServiceGetUserDetailsError(String userId, int statusCode) {
+    accountsMockServer
+        .when(requestGet("/v1/users/" + userId),
+            exactly(1))
+        .respond(emptyResponse(statusCode));
+  }
+
   @SneakyThrows
   private String readFile(String filename) {
     return Resources.toString(Resources.getResource("data/external/" + filename),
@@ -259,6 +301,13 @@ public class ExternalCallsIT {
         .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
         .withBody(readJson(filePath)
             .replace("TEST_CAZ_ID", cleanAirZoneId));
+  }
+
+  public static HttpResponse responseWithRegisterDetails(String filePath, int statusCode) {
+    return HttpResponse.response()
+        .withStatusCode(statusCode)
+        .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
+        .withBody(readJson(filePath));
   }
 
   public static HttpResponse responseWithVrnAndAccountId(String responseFile, String vrn,

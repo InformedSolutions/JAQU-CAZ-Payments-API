@@ -1,6 +1,9 @@
 package uk.gov.caz.psr.util;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -176,6 +179,20 @@ public class TestObjectFactory {
           .build();
     }
 
+    public static Payment preparePayment(UUID paymentId) {
+      return Payment.builder()
+          .id(paymentId)
+          .referenceNumber(1500L)
+          .externalId("123")
+          .externalPaymentStatus(ExternalPaymentStatus.CREATED)
+          .paymentMethod(PaymentMethod.DIRECT_DEBIT)
+          .submittedTimestamp(LocalDateTime.now())
+          .telephonePayment(false)
+          .totalPaid(40)
+          .entrantPayments(newArrayList(EntrantPayments.anyPaid()))
+          .build();
+    }
+
     private static Payment createPaymentWith(List<EntrantPayment> entrantPayments,
         UUID paymentId, String externalId, UUID cazIdentifier) {
       return Payment.builder()
@@ -204,7 +221,9 @@ public class TestObjectFactory {
       return EntrantPayment.builder().charge(100).travelDate(LocalDate.now())
           .cleanAirZoneId(UUID.randomUUID()).vrn("VRN123")
           .updateActor(EntrantPaymentUpdateActor.VCCS_API)
-          .internalPaymentStatus(InternalPaymentStatus.PAID).build();
+          .internalPaymentStatus(InternalPaymentStatus.PAID)
+          .vrn("CAS310")
+          .build();
     }
 
     public static EntrantPayment forTravelDate(LocalDate travelDate, String vrn) {

@@ -16,6 +16,7 @@ import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
+import uk.gov.caz.psr.dto.vccs.RegisterDetailsDto;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
@@ -56,6 +57,10 @@ public interface VccsRepository {
   @GET("v1/compliance-checker/vehicles/unrecognised/{type}/compliance")
   Call<VehicleTypeCazChargesDto> findUnknownVehicleCompliance(
       @Path("type") String type, @Query("zones") String zones);
+
+  @Headers("Accept: application/json")
+  @GET("v1/compliance-checker/vehicles/{vrn}/register-details")
+  Call<RegisterDetailsDto> getRegisterDetails(@Path("vrn") String vrn);
 
   /**
    * Wraps REST API call in {@link Response} making synchronous request.
@@ -138,6 +143,22 @@ public interface VccsRepository {
       throw new ExternalServiceCallException(e.getMessage());
     } finally {
       Logger.log.info("End: Fetching unknown vehicle compliance result from VCCS");
+    }
+  }
+
+  /**
+   * Wraps REST API call in {@link Response} making synchronous request.
+   *
+   * @return {@link Response} with REST response.
+   */
+  default Response<RegisterDetailsDto> getRegisterDetailsSync(String vrn) {
+    try {
+      Logger.log.info("Begin: Fetching register details from VCCS");
+      return getRegisterDetails(vrn).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    } finally {
+      Logger.log.info("End: Fetching register details from VCCS");
     }
   }
 }
