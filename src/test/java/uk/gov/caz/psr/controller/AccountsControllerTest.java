@@ -32,15 +32,11 @@ import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.service.AccountService;
 import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
-import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 
 @ContextConfiguration(classes = {ExceptionController.class, Configuration.class,
     AccountsController.class})
 @WebMvcTest
 class AccountsControllerTest {
-
-  @MockBean
-  private VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
 
   @MockBean
   private AccountService accountService;

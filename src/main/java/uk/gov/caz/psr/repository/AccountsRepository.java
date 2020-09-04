@@ -14,7 +14,6 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
-import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
@@ -27,35 +26,6 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
  */
 public interface AccountsRepository {
 
-  /**
-   * Method to create retrofit2 account service for getAccountVehicleVrns call.
-   *
-   * @return {@link Call}
-   */
-  @Headers("Accept: application/json")
-  @GET("v1/accounts/{accountId}/vehicles")
-  Call<AccountVehicleRetrievalResponse> getAccountVehicleVrns(
-      @Path("accountId") UUID accountId,
-      @Query("pageNumber") String pageNumber,
-      @Query("pageSize") String pageSize
-    );
-  
-  /**
-   * Synchronous wrapper for getAccountVehicleVrns call.
-   * @param accountId the identifier of the account
-   * @param pageNumber the number of the page
-   * @param pageSize the size of the page
-   * @return
-   */
-  default Response<AccountVehicleRetrievalResponse> getAccountVehicleVrnsSync(
-      UUID accountId, String pageNumber, String pageSize) {
-    try {
-      return getAccountVehicleVrns(accountId, pageNumber, pageSize).execute();
-    } catch (IOException e) {
-      throw new ExternalServiceCallException(e.getMessage());
-    }
-  }
-  
   /**
    * Method to create retrofit2 account service for getAccountVehicleVrnsByCursor call.
    *

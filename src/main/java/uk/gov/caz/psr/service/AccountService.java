@@ -15,18 +15,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import retrofit2.Response;
-import uk.gov.caz.definitions.dto.CleanAirZoneDto;
-import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
-import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
-import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
 import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
-import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
 import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
@@ -44,30 +39,6 @@ public class AccountService {
   private final AccountsRepository accountsRepository;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
-  private final VccsRepository vccRepository;
-
-  /**
-   * Retrieve a page of VRNs of vehicles associated with a given account ID.
-   *
-   * @param accountId the id of the account
-   * @param pageNumber the number of the page
-   * @param pageSize the size of the page
-   */
-  public AccountVehicleRetrievalResponse retrieveAccountVehicles(UUID accountId,
-      String pageNumber, String pageSize) {
-    Response<AccountVehicleRetrievalResponse> accountsResponse = accountsRepository
-        .getAccountVehicleVrnsSync(accountId, pageNumber, pageSize);
-    if (accountsResponse.isSuccessful()) {
-      return accountsResponse.body();
-    }
-    if (accountsResponse.code() == 404) {
-      throw new AccountNotFoundException();
-    }
-    if (accountsResponse.code() == 400) {
-      throw new InvalidRequestPayloadException(accountsResponse.message());
-    }
-    throw new ExternalServiceCallException();
-  }
 
   /**
    * Fetches a list of vehicles from the Accounts Service and lazily checks their chargeability
@@ -214,23 +185,6 @@ public class AccountService {
     } else {
       return complianceOutcome.getComplianceOutcomes().get(0).getCharge() > 0;
     }
-  }
-
-  /**
-   * Helper method for retrieving a list of comma delimited clean air zones IDs.
-   *
-   * @return a list of comma delimited clean air zones IDs.
-   */
-  public String getZonesQueryStringEquivalent() {
-    Response<CleanAirZonesDto> zones = vccRepository.findCleanAirZonesSync();
-    List<CleanAirZoneDto> cleanAirZoneDtos = zones.body().getCleanAirZones();
-    List<String> mappedZoneIds = new ArrayList<>();
-
-    for (CleanAirZoneDto dto : cleanAirZoneDtos) {
-      mappedZoneIds.add(dto.getCleanAirZoneId().toString());
-    }
-
-    return String.join(",", mappedZoneIds);
   }
 
   /**

@@ -132,27 +132,6 @@ public class ExternalCallsIT {
         .respond(emptyResponse(statusCode));
   }
 
-  public void mockAccountServiceOffsetCall(String accountId, String vrn) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
-            exactly(1))
-        .respond(responseWithVrn("account-vehicles-response.json", vrn, 200));
-  }
-
-  public void mockAccountServiceOffsetCallWithEmptyResponse(String accountId) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
-            exactly(1))
-        .respond(response("account-vehicles-empty-response.json", 200));
-  }
-
-  public void mockAccountServiceOffsetCallWithError(String accountId, int statusCode) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
-            exactly(1))
-        .respond(emptyResponse(statusCode));
-  }
-
   public void mockAccountServiceCursorCall(String accountId, String cursor,
       String responseFile) {
     Parameter parameter = new Parameter("vrn", cursor);
