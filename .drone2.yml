@@ -344,7 +344,25 @@ steps:
       event:
         - push
 
-
+  # subscribe to operational monitoring alert in api dev
+  - name: subscribe to operational monitoring alert in api dev
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i sit -i payments AQU-CAZ-OPERATIONALMONITORING@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: dev
+    when:
+      event:
+        - push
   ################################################# End of Dev Environment Steps #######################################################
 
 ---
@@ -689,6 +707,26 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in api st
+  - name: subscribe to operational monitoring alert in api st
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i st -i payments AQU-CAZ-OPERATIONALMONITORING@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: st
+    when:
+      event:
+        - push
+
   ################################################# End of ST Environment Steps #######################################################
 
 ---
@@ -986,7 +1024,25 @@ steps:
       event:
         - push
 
-
+  # subscribe to operational monitoring alert in api sit
+  - name: subscribe to operational monitoring alert in api sit
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i sit -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: sit
+    when:
+      event:
+        - push
   ################################################# End of SIT Environment Steps #######################################################
 
 ---
@@ -1190,6 +1246,25 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in api preprod
+  - name: subscribe to operational monitoring alert in api preprod
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i preprod -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: preprod
+    when:
+      event:
+        - push
   ################################################# End of Preprod Environment Steps #######################################################
 
 
@@ -1693,7 +1768,25 @@ steps:
       event:
         - push
 
-
+  # subscribe to operational monitoring alert in api prod
+  - name: subscribe to operational monitoring alert in api prod
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i prod -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: prod
+    when:
+      event:
+        - push
   ################################################# End of Prod Environment Steps #######################################################
 
   ################################################ Secrets #########################################################
