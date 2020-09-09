@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,9 +12,9 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
+import uk.gov.caz.definitions.dto.accounts.ChargeableVehiclesResponseDto;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
@@ -39,56 +38,6 @@ public class AccountService {
   private final AccountsRepository accountsRepository;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
-
-  /**
-   * Fetches a list of vehicles from the Accounts Service and lazily checks their chargeability
-   * until it generates a full list of results.
-   *
-   * @param accountId the account whose vehicles should be returned
-   * @param direction 'next' or 'previous' in terms of pages
-   * @param pageSize the size of the list to be returned
-   * @param vrn the "cursor" on which to search the account vehicles
-   * @param cleanAirZoneId the Clean Air Zone to check compliance for
-   * @return a list of chargeable VRNs
-   */
-  public List<VrnWithTariffAndEntrancesPaid> retrieveChargeableAccountVehicles(UUID accountId,
-      String direction, int pageSize, String vrn, UUID cleanAirZoneId) {
-    List<VrnWithTariffAndEntrancesPaid> results = new ArrayList<VrnWithTariffAndEntrancesPaid>();
-    Boolean lastPage = false;
-    // initialise cursor at first VRN
-    String vrnCursor = vrn;
-
-    while (results.size() < (pageSize + 1) && !lastPage) {
-      // get triple the number of vrns as will be on page to reduce overall request numbers
-      List<String> accountVrns = getAccountVrns(accountId, direction, pageSize * 3, vrnCursor);
-
-      // check if the end of pages has been reached, if not set new cursor
-      if (accountVrns.size() < pageSize * 3) {
-        lastPage = true;
-      } else {
-        vrnCursor = accountVrns.get(accountVrns.size() - 1);
-      }
-
-      List<VrnWithTariffAndEntrancesPaid> chargeableVrns =
-          getChargeableVrnsFromVcc(accountVrns, cleanAirZoneId, pageSize);
-
-      if (!chargeableVrns.isEmpty()) {
-        results.addAll(chargeableVrns);
-      }
-    }
-
-    orderResultsAccordingToDirection(results, direction);
-    return results;
-  }
-
-  private void orderResultsAccordingToDirection(List<VrnWithTariffAndEntrancesPaid> results,
-      String direction) {
-    if (StringUtils.hasText(direction) && direction.equals("previous")) {
-      results.sort(Comparator.comparing(VrnWithTariffAndEntrancesPaid::getVrn).reversed());
-    } else {
-      results.sort(Comparator.comparing(VrnWithTariffAndEntrancesPaid::getVrn));
-    }
-  }
 
   /**
    * Method for retrieving a single chargeable vehicle linked to an account by a quoted vrn.
@@ -135,39 +84,20 @@ public class AccountService {
         cleanAirZoneId);
   }
 
-  private List<VrnWithTariffAndEntrancesPaid> getChargeableVrnsFromVcc(List<String> accountVrns,
-      UUID cleanAirZoneId, int pageSize) {
-    List<VrnWithTariffAndEntrancesPaid> results = new ArrayList<>();
-    // split accountVrns into chunks
-    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, pageSize);
-
-    // while results is less than page size do another batch
-    for (List<String> chunk : accountVrnChunks) {
-      List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
-          .retrieveVehicleCompliance(chunk, cleanAirZoneId.toString());
-      List<VrnWithTariffAndEntrancesPaid> chargeableVrns = complianceOutcomes
-          .stream()
-          .filter(this::vrnIsChargeable)
-          .map(complianceOutcome -> ChargeableAccountVehiclesResult
-              .buildVrnWithTariffAndEntrancesPaidFrom(complianceOutcome, cleanAirZoneId))
-          .collect(Collectors.toList());
-
-      if (!chargeableVrns.isEmpty()) {
-        results.addAll(chargeableVrns);
-      }
-
-      if (results.size() >= pageSize + 1) {
-        break;
-      }
-    }
-
-    return results;
-  }
-
-  private List<String> getAccountVrns(UUID accountId, String direction, int pageSize,
-      String vrnCursor) {
-    Response<List<String>> accountsResponse = accountsRepository
-        .getAccountVehicleVrnsByCursorSync(accountId, direction, pageSize, vrnCursor);
+  /**
+   * Fetches a list of vehicles from the Accounts Service.
+   *
+   * @param accountId the account whose vehicles should be returned
+   * @param direction 'next' or 'previous' in terms of pages
+   * @param pageSize the size of the list to be returned
+   * @param vrnCursor the "cursor" on which to search the account vehicles
+   * @return a response from the Accounts API
+   * @throws AccountNotFoundException if API returns status 404
+   */
+  public ChargeableVehiclesResponseDto getAccountVehiclesByCursor(UUID accountId,
+      String direction, int pageSize, String vrnCursor) {
+    Response<ChargeableVehiclesResponseDto> accountsResponse = accountsRepository
+        .getAccountChargeableVehiclesByCursorSync(accountId, direction, pageSize, vrnCursor);
     if (accountsResponse.isSuccessful()) {
       return accountsResponse.body();
     } else {
@@ -176,14 +106,6 @@ public class AccountService {
       } else {
         throw new ExternalServiceCallException();
       }
-    }
-  }
-
-  private Boolean vrnIsChargeable(ComplianceResultsDto complianceOutcome) {
-    if (complianceOutcome.getComplianceOutcomes().isEmpty()) {
-      return false;
-    } else {
-      return complianceOutcome.getComplianceOutcomes().get(0).getCharge() > 0;
     }
   }
 
@@ -218,5 +140,42 @@ public class AccountService {
         throw new ExternalServiceCallException();
       }
     }
+  }
+
+  private Boolean vrnIsChargeable(ComplianceResultsDto complianceOutcome) {
+    if (complianceOutcome.getComplianceOutcomes().isEmpty()) {
+      return false;
+    } else {
+      return complianceOutcome.getComplianceOutcomes().get(0).getCharge() > 0;
+    }
+  }
+
+  private List<VrnWithTariffAndEntrancesPaid> getChargeableVrnsFromVcc(List<String> accountVrns,
+      UUID cleanAirZoneId, int pageSize) {
+    List<VrnWithTariffAndEntrancesPaid> results = new ArrayList<>();
+    // split accountVrns into chunks
+    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, pageSize);
+
+    // while results is less than page size do another batch
+    for (List<String> chunk : accountVrnChunks) {
+      List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
+          .retrieveVehicleCompliance(chunk, cleanAirZoneId.toString());
+      List<VrnWithTariffAndEntrancesPaid> chargeableVrns = complianceOutcomes
+          .stream()
+          .filter(this::vrnIsChargeable)
+          .map(complianceOutcome -> ChargeableAccountVehiclesResult
+              .buildVrnWithTariffAndEntrancesPaidFrom(complianceOutcome, cleanAirZoneId))
+          .collect(Collectors.toList());
+
+      if (!chargeableVrns.isEmpty()) {
+        results.addAll(chargeableVrns);
+      }
+
+      if (results.size() >= pageSize + 1) {
+        break;
+      }
+    }
+
+    return results;
   }
 }
