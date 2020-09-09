@@ -1,3 +1,11 @@
+CREATE SCHEMA IF NOT EXISTS CAZ_REPORTING;
+REVOKE CREATE ON schema CAZ_REPORTING FROM public;
+
+CREATE TABLE IF NOT EXISTS caz_reporting.t_clean_air_zone
+	(clean_air_zone_id UUID NOT NULL,
+	caz_name varchar(50) NOT NULL,
+	CONSTRAINT t_clean_air_zone_pkey PRIMARY KEY (clean_air_zone_id));
+
 -- Add views for reporting on accounts payments
 
 -- Number of successful accounts payments by day and caz
