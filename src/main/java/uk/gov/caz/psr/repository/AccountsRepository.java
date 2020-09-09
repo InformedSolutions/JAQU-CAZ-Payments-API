@@ -1,7 +1,6 @@
 package uk.gov.caz.psr.repository;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -12,6 +11,7 @@ import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import uk.gov.caz.definitions.dto.accounts.ChargeableVehiclesResponseDto;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
@@ -33,7 +33,7 @@ public interface AccountsRepository {
    */
   @Headers("Accept: application/json")
   @GET("v1/accounts/{accountId}/vehicles/sorted-page")
-  Call<List<String>> getAccountVehicleVrnsByCursor(
+  Call<ChargeableVehiclesResponseDto> getAccountChargeableVehiclesByCursor(
       @Path("accountId") String accountId,
       @Query("direction") String direction,
       @Query("pageSize") String pageSize,
@@ -46,10 +46,10 @@ public interface AccountsRepository {
    * @param pageSize the size of the page
    * @return
    */
-  default Response<List<String>> getAccountVehicleVrnsByCursorSync(
+  default Response<ChargeableVehiclesResponseDto> getAccountChargeableVehiclesByCursorSync(
       UUID accountId, String direction, int pageSize, String vrn) {
     try {
-      return getAccountVehicleVrnsByCursor(accountId.toString(), direction, 
+      return getAccountChargeableVehiclesByCursor(accountId.toString(), direction,
           Integer.toString(pageSize), vrn).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
