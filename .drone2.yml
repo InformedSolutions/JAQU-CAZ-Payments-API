@@ -62,7 +62,7 @@ steps:
     pull: never
     environment:
       BASEURL_CHARGE_SETTLEMENT_OAUTH: 'https://payments-userpool-dev.auth.eu-west-2.amazoncognito.com'
-      BASEURL_CHARGE_SETTLEMENT_API: ' https://52mi2e0xx4.execute-api.eu-west-2.amazonaws.com/dev'
+      BASEURL_CHARGE_SETTLEMENT_API: 'https://dev-api.paycleanairzonecharge.co.uk'
       CHARGE_SETTLEMENT_CLIENT_ID:
         from_secret: charge_settlement_id
       CHARGE_SETTLEMENT_CLIENT_SECRET:
