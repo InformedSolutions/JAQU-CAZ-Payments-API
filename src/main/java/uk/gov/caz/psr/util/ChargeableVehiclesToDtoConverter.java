@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.util;
 
 import com.google.common.collect.Iterables;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,9 @@ public class ChargeableVehiclesToDtoConverter {
   public ChargeableAccountVehicleResponse toChargeableAccountVehicleResponse(
       List<ChargeableVehicle> chargeableVehicles, String direction, int pageSize,
       boolean firstPage) {
+    if (chargeableVehicles.isEmpty()) {
+      return emptyResponse();
+    }
 
     String firstVrn = initFirstPageVrn(chargeableVehicles, firstPage);
     String lastVrn = initLastPageVrn(chargeableVehicles, pageSize);
@@ -64,7 +68,7 @@ public class ChargeableVehiclesToDtoConverter {
   }
 
   /**
-   * Checks if found vehicles are on the last page.
+   * Checks if found results from the last page based on the found vehicles numbers.
    */
   private boolean isLastPage(int chargeableVehiclesCount, int pageSize) {
     return chargeableVehiclesCount < pageSize + 1;
@@ -77,6 +81,17 @@ public class ChargeableVehiclesToDtoConverter {
       int pageSize) {
     return chargeableVehicles.size() > pageSize ? chargeableVehicles.subList(0, pageSize)
         : chargeableVehicles;
+  }
+
+  /**
+   * Checks if found vehicles are on the last page.
+   * Returns empty response object.
+   */
+  private ChargeableAccountVehicleResponse emptyResponse() {
+    return ChargeableAccountVehicleResponse.builder().firstVrn(null).lastVrn(null)
+        .chargeableAccountVehicles(
+            ChargeableAccountVehiclesResult.builder().results(Collections.emptyList()).build())
+        .build();
   }
 
   /**
@@ -95,5 +110,4 @@ public class ChargeableVehiclesToDtoConverter {
             .collect(Collectors.toList()))
         .build();
   }
-
 }

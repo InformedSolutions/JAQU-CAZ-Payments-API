@@ -1,23 +1,16 @@
 package uk.gov.caz.psr.service;
 
-import com.google.common.collect.Lists;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
-import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.accounts.ChargeableVehiclesResponseDto;
-import uk.gov.caz.psr.dto.AccountVehicleResponse;
-import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
-import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
 import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
@@ -37,51 +30,26 @@ public class AccountService {
   private static final String DELETED_USER = "Deleted user";
   private final AccountsRepository accountsRepository;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
-  private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
 
   /**
    * Method for retrieving a single chargeable vehicle linked to an account by a quoted vrn.
    *
    * @param accountId the unique id of the user account
    * @param vrn the vrn to query for chargeability
-   * @param cleanAirZoneId the clean air zone to check chargeability against
    * @return a list of chargeable VRNs
    */
-  public ChargeableAccountVehiclesResult retrieveSingleChargeableAccountVehicle(
-      UUID accountId, String vrn, UUID cleanAirZoneId) {
+  public VehicleWithCharges retrieveSingleAccountVehicle(
+      UUID accountId, String vrn) {
 
-    Response<AccountVehicleResponse> accountVehicle =
+    Response<VehicleWithCharges> accountVehicleResponse =
         accountsRepository.getAccountSingleVehicleVrnSync(accountId, vrn);
 
-    // If vehicle could not be found, yield early 404.
-    if (accountVehicle.code() == HttpStatus.NOT_FOUND.value()) {
+    // If vehicle could not be found or is not chargeable yield early 404.
+    if (accountVehicleResponse.code() == HttpStatus.NOT_FOUND.value()) {
       throw new ChargeableAccountVehicleNotFoundException();
     }
 
-    List<String> wrappedVrn = Arrays.asList(vrn);
-    List<VrnWithTariffAndEntrancesPaid> vrnsWithTariff =
-        getChargeableVrnsFromVcc(wrappedVrn, cleanAirZoneId, 1);
-    List<String> chargeableVrns = vrnsWithTariff.stream()
-        .map(vrnWithTariff -> vrnWithTariff.getVrn())
-        .collect(Collectors.toList());
-
-    return ChargeableAccountVehiclesResult
-        .from(getPaidEntrantPayments(chargeableVrns, cleanAirZoneId), vrnsWithTariff);
-  }
-
-  /**
-   * Gets entrant payments for a list of VRNs in a 13 day payment window.
-   *
-   * @param results map of VRNs against entrant payments
-   * @param cleanAirZoneId an identitier for the clean air zone
-   */
-  public Map<String, List<EntrantPayment>> getPaidEntrantPayments(
-      List<String> results, UUID cleanAirZoneId) {
-    return getPaidEntrantPaymentsService.getResults(
-        new HashSet<>(results),
-        LocalDate.now().minusDays(6),
-        LocalDate.now().plusDays(6),
-        cleanAirZoneId);
+    return accountVehicleResponse.body();
   }
 
   /**
@@ -107,6 +75,21 @@ public class AccountService {
         throw new ExternalServiceCallException();
       }
     }
+  }
+
+  /**
+   * Gets entrant payments for a list of VRNs in a 13 day payment window.
+   *
+   * @param vrns map of VRNs against entrant payments
+   * @param cleanAirZoneId an identitier for the clean air zone
+   */
+  public Map<String, List<EntrantPayment>> getPaidEntrantPayments(
+      List<String> vrns, UUID cleanAirZoneId) {
+    return getPaidEntrantPaymentsService.getResults(
+        new HashSet<>(vrns),
+        LocalDate.now().minusDays(6),
+        LocalDate.now().plusDays(6),
+        cleanAirZoneId);
   }
 
   /**
@@ -140,42 +123,5 @@ public class AccountService {
         throw new ExternalServiceCallException();
       }
     }
-  }
-
-  private Boolean vrnIsChargeable(ComplianceResultsDto complianceOutcome) {
-    if (complianceOutcome.getComplianceOutcomes().isEmpty()) {
-      return false;
-    } else {
-      return complianceOutcome.getComplianceOutcomes().get(0).getCharge() > 0;
-    }
-  }
-
-  private List<VrnWithTariffAndEntrancesPaid> getChargeableVrnsFromVcc(List<String> accountVrns,
-      UUID cleanAirZoneId, int pageSize) {
-    List<VrnWithTariffAndEntrancesPaid> results = new ArrayList<>();
-    // split accountVrns into chunks
-    List<List<String>> accountVrnChunks = Lists.partition(accountVrns, pageSize);
-
-    // while results is less than page size do another batch
-    for (List<String> chunk : accountVrnChunks) {
-      List<ComplianceResultsDto> complianceOutcomes = vehicleComplianceRetrievalService
-          .retrieveVehicleCompliance(chunk, cleanAirZoneId.toString());
-      List<VrnWithTariffAndEntrancesPaid> chargeableVrns = complianceOutcomes
-          .stream()
-          .filter(this::vrnIsChargeable)
-          .map(complianceOutcome -> ChargeableAccountVehiclesResult
-              .buildVrnWithTariffAndEntrancesPaidFrom(complianceOutcome, cleanAirZoneId))
-          .collect(Collectors.toList());
-
-      if (!chargeableVrns.isEmpty()) {
-        results.addAll(chargeableVrns);
-      }
-
-      if (results.size() >= pageSize + 1) {
-        break;
-      }
-    }
-
-    return results;
   }
 }

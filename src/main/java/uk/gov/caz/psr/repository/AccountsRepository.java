@@ -12,8 +12,8 @@ import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 import uk.gov.caz.definitions.dto.accounts.ChargeableVehiclesResponseDto;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
-import uk.gov.caz.psr.dto.AccountVehicleResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
@@ -63,7 +63,7 @@ public interface AccountsRepository {
    */
   @Headers("Accept: application/json")
   @GET("v1/accounts/{accountId}/vehicles/{vrn}")
-  Call<AccountVehicleResponse> getAccountSingleVehicleVrn(
+  Call<VehicleWithCharges> getAccountSingleVehicleVrn(
       @Path("accountId") UUID accountId, @Path("vrn") String vrn
     );
 
@@ -93,7 +93,7 @@ public interface AccountsRepository {
    * @param vrn the VRN to query.
    * @return details of a single vehicle vrn.
    */
-  default Response<AccountVehicleResponse> getAccountSingleVehicleVrnSync(
+  default Response<VehicleWithCharges> getAccountSingleVehicleVrnSync(
       UUID accountId, String vrn) {
     try {
       return getAccountSingleVehicleVrn(accountId, vrn).execute();

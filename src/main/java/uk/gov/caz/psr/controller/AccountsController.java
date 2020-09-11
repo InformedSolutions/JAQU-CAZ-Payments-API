@@ -12,14 +12,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
-import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult;
 import uk.gov.caz.psr.dto.SuccessfulPaymentsResponse;
 import uk.gov.caz.psr.model.ChargeableVehicle;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
-import uk.gov.caz.psr.service.AccountService;
 import uk.gov.caz.psr.service.ChargeableVehiclesService;
 import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
+import uk.gov.caz.psr.util.ChargeableVehicleToDtoConverter;
 import uk.gov.caz.psr.util.ChargeableVehiclesToDtoConverter;
 
 @AllArgsConstructor
@@ -32,10 +31,10 @@ public class AccountsController implements AccountControllerApiSpec {
   private static final String CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY = "cleanAirZoneId";
 
   private final ChargeableVehiclesService chargeableVehiclesService;
-  private final AccountService accountService;
   private final QueryStringValidator queryStringValidator;
   private final RetrieveSuccessfulPaymentsService retrieveSuccessfulPaymentsService;
   private final ChargeableVehiclesToDtoConverter chargeableVehiclesToDtoConverter;
+  private final ChargeableVehicleToDtoConverter chargeableVehicleToDtoConverter;
 
   @Override
   public ResponseEntity<ChargeableAccountVehicleResponse> retrieveChargeableVehicles(UUID accountId,
@@ -52,15 +51,6 @@ public class AccountsController implements AccountControllerApiSpec {
     List<ChargeableVehicle> chargeableVehicles = chargeableVehiclesService
         .retrieve(accountId, vrn, cleanAirZoneId, direction, pageSize);
 
-    if (chargeableVehicles.isEmpty()) {
-      return ResponseEntity.ok().body(
-          ChargeableAccountVehicleResponse.builder().firstVrn(null).lastVrn(null)
-              .chargeableAccountVehicles(
-                  ChargeableAccountVehiclesResult.builder().results(Collections.emptyList())
-                      .build())
-              .build());
-    }
-
     return ResponseEntity.ok()
         .body(chargeableVehiclesToDtoConverter
             .toChargeableAccountVehicleResponse(chargeableVehicles, direction, pageSize,
@@ -75,16 +65,11 @@ public class AccountsController implements AccountControllerApiSpec {
         Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY), null);
     UUID cleanAirZoneId = UUID.fromString(queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY));
 
-    ChargeableAccountVehiclesResult vrnsAndEntryDates = accountService
-        .retrieveSingleChargeableAccountVehicle(accountId, vrn, cleanAirZoneId);
+    ChargeableVehicle chargeableVehicle = chargeableVehiclesService
+        .retrieveOne(accountId, vrn, cleanAirZoneId);
 
-    ChargeableAccountVehicleResponse response = ChargeableAccountVehicleResponse
-        .builder()
-        .chargeableAccountVehicles(vrnsAndEntryDates)
-        .build();
-
-    return ResponseEntity.ok()
-        .body(response);
+    return ResponseEntity
+        .ok(chargeableVehicleToDtoConverter.toChargeableAccountVehicleResponse(chargeableVehicle));
   }
 
   @Override

@@ -68,7 +68,7 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
   }
 
   @Test
-  public void shouldReturnHttpOkWhenValidRequestWithoutVrnOrDirection()
+  public void shouldReturnHttpOkWhenValidRequestWithoutVrnAndDirection()
       throws JsonProcessingException {
     List<String> vrns = mockChargeableVehiclesWithoutCursor();
 
@@ -80,6 +80,23 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
         .then()
         .responseIsReturnedWithHttpOkStatusCode()
         .responseContainsExpectedData(vrns, null, null);
+  }
+
+  @Test
+  public void shouldReturnHttpOkWhenValidRequestWithVrnAndDirection()
+      throws JsonProcessingException {
+    List<String> vrns = mockChargeableVehiclesWithoutCursor();
+
+    givenAssertion()
+        .forAccountId(ACCOUNT_ID)
+        .forPageSize("10")
+        .forVrn("ABC123")
+        .forDirection("previous")
+        .forCleanAirZoneId(CLEAN_AIR_ZONE_ID)
+        .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
+        .then()
+        .responseIsReturnedWithHttpOkStatusCode()
+        .responseContainsExpectedData(vrns, null, vrns.get(9));
   }
 
   @Test

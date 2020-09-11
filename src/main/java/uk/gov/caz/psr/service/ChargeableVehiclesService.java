@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharge
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.model.ChargeableVehicle;
 import uk.gov.caz.psr.model.EntrantPayment;
+import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
 
 /**
  * Service responsible for getting and processing chargeable vehicles from the Accounts API.
@@ -57,6 +59,33 @@ public class ChargeableVehiclesService {
             .paidDates(collectPaidDatesForVrn(chargeableVehicle.getVrn(), entrantPaymentsForVrns))
             .build())
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Method which retrieve Chargeable Vehicles with its paid dates with cursor pagination.
+   *
+   * @param accountId selected account identifier
+   * @param vrn Vehicle Registration Number for cursor pagination
+   * @param cazId selected Clean Air Zone ID
+   * @return {@link ChargeableVehicle} build based on details from accounts API
+   * @throws ChargeableAccountVehicleNotFoundException if found vehicle is not chargeable in CAZ
+   */
+  public ChargeableVehicle retrieveOne(UUID accountId, String vrn, UUID cazId) {
+    VehicleWithCharges vehicleWithCharges = accountService
+        .retrieveSingleAccountVehicle(accountId, vrn);
+
+    if (!isVehicleChargeableInCaz(vehicleWithCharges, cazId)) {
+      throw new ChargeableAccountVehicleNotFoundException();
+    }
+
+    Map<String, List<EntrantPayment>> entrantPaymentsForVrn = accountService
+        .getPaidEntrantPayments(Collections.singletonList(vrn), cazId);
+
+    return ChargeableVehicle.from(
+        vehicleWithCharges.getVrn(),
+        getCachedChargeForCaz(vehicleWithCharges, cazId),
+        collectPaidDatesForVrn(vehicleWithCharges.getVrn(), entrantPaymentsForVrn)
+    );
   }
 
   /**
