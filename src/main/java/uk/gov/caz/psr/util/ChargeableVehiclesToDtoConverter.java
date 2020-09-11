@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.util;
 
+import com.google.common.collect.Iterables;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -25,10 +26,11 @@ public class ChargeableVehiclesToDtoConverter {
       List<ChargeableVehicle> chargeableVehicles, String direction, int pageSize,
       boolean firstPage) {
 
-    String firstVrn = firstPage ? null : chargeableVehicles.get(0).getVrn();
-    String lastVrn = chargeableVehicles.get(pageSize - 1).getVrn();
+    String firstVrn = initFirstPageVrn(chargeableVehicles, firstPage);
+    String lastVrn = initLastPageVrn(chargeableVehicles, pageSize);
     String travelDirection = StringUtils.hasText(direction) ? direction : DIRECTION_NEXT;
     if (isLastPage(chargeableVehicles.size(), pageSize)) {
+      // Clear First and Last VRN if the last page
       firstVrn = travelDirection.equals(DIRECTION_PREVIOUS) ? null : firstVrn;
       lastVrn = travelDirection.equals(DIRECTION_NEXT) ? null : lastVrn;
     }
@@ -42,6 +44,28 @@ public class ChargeableVehiclesToDtoConverter {
         .build();
   }
 
+  /**
+   * Initialize First Page VRN.
+   */
+  private String initFirstPageVrn(List<ChargeableVehicle> chargeableVehicles, boolean firstPage) {
+    if (firstPage) {
+      return null;
+    }
+
+    return Iterables.getFirst(chargeableVehicles, ChargeableVehicle.builder().build()).getVrn();
+  }
+
+  /**
+   * Initialize Last Page VRN.
+   */
+  private String initLastPageVrn(List<ChargeableVehicle> chargeableVehicles, int pageSize) {
+    return Iterables.getLast(trimChargeableVehicles(chargeableVehicles, pageSize),
+        ChargeableVehicle.builder().build()).getVrn();
+  }
+
+  /**
+   * Checks if found vehicles are on the last page.
+   */
   private boolean isLastPage(int chargeableVehiclesCount, int pageSize) {
     return chargeableVehiclesCount < pageSize + 1;
   }
