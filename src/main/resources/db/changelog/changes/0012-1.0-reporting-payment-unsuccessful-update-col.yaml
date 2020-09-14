@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0012-1.0-reporting-payment-unsuccessful-update-col
+      author: Informed
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0012-1.0-reporting-payment-unsuccessful-update-col.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true 
