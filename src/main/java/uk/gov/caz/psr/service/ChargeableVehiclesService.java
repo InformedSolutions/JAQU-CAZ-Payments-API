@@ -78,13 +78,10 @@ public class ChargeableVehiclesService {
       throw new ChargeableAccountVehicleNotFoundException();
     }
 
-    Map<String, List<EntrantPayment>> entrantPaymentsForVrn = accountService
-        .getPaidEntrantPayments(Collections.singletonList(vrn), cazId);
-
     return ChargeableVehicle.from(
         vehicleWithCharges.getVrn(),
         getCachedChargeForCaz(vehicleWithCharges, cazId),
-        collectPaidDatesForVrn(vehicleWithCharges.getVrn(), entrantPaymentsForVrn)
+        getPaidDatesForSingleVrn(vrn, cazId)
     );
   }
 
@@ -170,12 +167,32 @@ public class ChargeableVehiclesService {
   }
 
   /**
-   * Maps list of {@link EntrantPayment} to list of its travel date.
+   * Gets paid Dates for provided vrn.
    */
-  private static List<LocalDate> collectPaidDatesForVrn(String vrn,
-      Map<String, List<EntrantPayment>> entrantPaymentsForVrns) {
-    return entrantPaymentsForVrns.get(vrn).stream()
+  private List<LocalDate> getPaidDatesForSingleVrn(String vrn, UUID cazId) {
+    return collectPaidDates(
+        accountService.getPaidEntrantPayments(Collections.singletonList(vrn), cazId)
+            .entrySet()
+            .iterator()
+            .next()
+            .getValue()
+    );
+  }
+
+  /**
+   * Collect paid travel dates for provided list of {@link EntrantPayment}.
+   */
+  private List<LocalDate> collectPaidDates(List<EntrantPayment> entrantPayments) {
+    return entrantPayments.stream()
         .map(EntrantPayment::getTravelDate)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Maps list of {@link EntrantPayment} to list of its travel date.
+   */
+  private List<LocalDate> collectPaidDatesForVrn(String vrn,
+      Map<String, List<EntrantPayment>> entrantPaymentsForVrns) {
+    return collectPaidDates(entrantPaymentsForVrns.get(vrn));
   }
 }
