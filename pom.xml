@@ -33,13 +33,7 @@
       **/psr/repository/VccsRepository.java
       <!-- Remove with CAZ-2168 -->
       **/psr/repository/ExternalDirectDebitRepository.java,
-      **/psr/dto/ReferencesHistoryResponse.java,
-      <!-- Remove with CAZB-3050 -->
-      **/psr/service/AccountService.java,
-      **/psr/service/VehicleComplianceRetrievalService.java,
-      **/psr/dto/ChargeableAccountVehiclesResult.java,
-      **/psr/util/ChargeableVehiclesToDtoConverter.java,
-      **/psr/controller/util/QueryStringValidator.java,
+      **/psr/dto/ReferencesHistoryResponse.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
       ./target/site/jacoco-aggregate/jacoco.xml
@@ -700,12 +694,6 @@
                 <!-- Remove with CAZ-2168 -->
                 <exclude>**/psr/repository/ExternalDirectDebitRepository*.class</exclude>
                 <exclude>**/psr/dto/ReferencesHistoryResponse*.class</exclude>
-                <!-- Remove with CAZB-3050 -->
-                <exclude>**/psr/service/AccountService.class</exclude>
-                <exclude>**/psr/service/VehicleComplianceRetrievalService.class</exclude>
-                <exclude>**/psr/dto/ChargeableAccountVehiclesResult.class</exclude>
-                <exclude>**/psr/util/ChargeableVehiclesToDtoConverter.class</exclude>
-                <exclude>**/psr/controller/util/QueryStringValidator.class</exclude>
               </excludes>
               <rules>
                 <rule>

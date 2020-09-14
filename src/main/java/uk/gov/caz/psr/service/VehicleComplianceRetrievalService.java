@@ -1,7 +1,5 @@
 package uk.gov.caz.psr.service;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -16,7 +14,6 @@ import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
 import uk.gov.caz.psr.dto.vccs.RegisterDetailsDto;
 import uk.gov.caz.psr.repository.VccsRepository;
-import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
  * Class responsible to call vccs for compliance.
@@ -27,30 +24,6 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 public class VehicleComplianceRetrievalService {
 
   private final VccsRepository vccsRepository;
-
-  /**
-   * Coordinate asynchronous requests to the vehicle checker to retrieve
-   * compliance information on a list of VRNs.
-   * 
-   * @param vrns a list of vrns
-   * @param zones a list of zones to check compliance for
-   * @return a list of compliance results sorted by vrn
-   */
-  public List<ComplianceResultsDto> retrieveVehicleCompliance(List<String> vrns,
-      String zones) {
-    Response<List<ComplianceResultsDto>> response = vccsRepository
-        .findComplianceInBulkSync(vrns, zones);
-    
-    if (response.isSuccessful()) {
-      List<ComplianceResultsDto> results = response.body();
-      results.sort(
-          Comparator.comparing(ComplianceResultsDto::getRegistrationNumber));
-      return results; 
-    } else {
-      throw new ExternalServiceCallException(
-          "Vehicle Checker returned response code " + response.code());
-    }
-  }
 
   /**
    * Coordinate asynchronous requests to the vehicle checker to retrieve

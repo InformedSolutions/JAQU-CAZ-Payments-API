@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharge
 import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.model.ChargeableVehicle;
 import uk.gov.caz.psr.model.EntrantPayment;
+import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
 
 /**
  * Service responsible for getting and processing chargeable vehicles from the Accounts API.
@@ -57,6 +59,30 @@ public class ChargeableVehiclesService {
             .paidDates(collectPaidDatesForVrn(chargeableVehicle.getVrn(), entrantPaymentsForVrns))
             .build())
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Method which retrieve Chargeable Vehicles with its paid dates with cursor pagination.
+   *
+   * @param accountId selected account identifier
+   * @param vrn Vehicle Registration Number for cursor pagination
+   * @param cazId selected Clean Air Zone ID
+   * @return {@link ChargeableVehicle} build based on details from accounts API
+   * @throws ChargeableAccountVehicleNotFoundException if found vehicle is not chargeable in CAZ
+   */
+  public ChargeableVehicle retrieveOne(UUID accountId, String vrn, UUID cazId) {
+    VehicleWithCharges vehicleWithCharges = accountService
+        .retrieveSingleAccountVehicle(accountId, vrn);
+
+    if (!isVehicleChargeableInCaz(vehicleWithCharges, cazId)) {
+      throw new ChargeableAccountVehicleNotFoundException();
+    }
+
+    return ChargeableVehicle.from(
+        vehicleWithCharges.getVrn(),
+        getCachedChargeForCaz(vehicleWithCharges, cazId),
+        getPaidDatesForSingleVrn(vrn, cazId)
+    );
   }
 
   /**
@@ -141,12 +167,32 @@ public class ChargeableVehiclesService {
   }
 
   /**
-   * Maps list of {@link EntrantPayment} to list of its travel date.
+   * Gets paid Dates for provided vrn.
    */
-  private static List<LocalDate> collectPaidDatesForVrn(String vrn,
-      Map<String, List<EntrantPayment>> entrantPaymentsForVrns) {
-    return entrantPaymentsForVrns.get(vrn).stream()
+  private List<LocalDate> getPaidDatesForSingleVrn(String vrn, UUID cazId) {
+    return collectPaidDates(
+        accountService.getPaidEntrantPayments(Collections.singletonList(vrn), cazId)
+            .entrySet()
+            .iterator()
+            .next()
+            .getValue()
+    );
+  }
+
+  /**
+   * Collect paid travel dates for provided list of {@link EntrantPayment}.
+   */
+  private List<LocalDate> collectPaidDates(List<EntrantPayment> entrantPayments) {
+    return entrantPayments.stream()
         .map(EntrantPayment::getTravelDate)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Maps list of {@link EntrantPayment} to list of its travel date.
+   */
+  private List<LocalDate> collectPaidDatesForVrn(String vrn,
+      Map<String, List<EntrantPayment>> entrantPaymentsForVrns) {
+    return collectPaidDates(entrantPaymentsForVrns.get(vrn));
   }
 }

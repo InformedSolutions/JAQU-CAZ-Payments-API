@@ -44,4 +44,17 @@ public class ChargeableVehicle {
         .tariffCode(cachedCharge.getTariffCode())
         .build();
   }
+
+  /**
+   * Method to build {@link ChargeableVehicle} object based on cached charge and paid dates.
+   */
+  public static ChargeableVehicle from(String vrn, VehicleCharge cachedCharge,
+      List<LocalDate> paidDates) {
+    return ChargeableVehicle.builder()
+        .vrn(vrn)
+        .charge(cachedCharge.getCharge())
+        .tariffCode(cachedCharge.getTariffCode())
+        .paidDates(paidDates)
+        .build();
+  }
 }
