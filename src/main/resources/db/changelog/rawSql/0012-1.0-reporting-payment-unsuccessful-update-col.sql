@@ -1,0 +1,8 @@
+ALTER TABLE caz_reporting.unsuccessful_accounts_payments_daily_by_caz 
+RENAME COLUMN no_successful_payments TO no_unsuccessful_payments;
+
+ALTER TABLE caz_reporting.unsuccessful_accounts_payments_weekly_by_caz 
+RENAME COLUMN no_successful_payments TO no_unsuccessful_payments;
+
+ALTER TABLE caz_reporting.unsuccessful_accounts_payments_monthly_by_caz 
+RENAME COLUMN no_successful_payments TO no_unsuccessful_payments;

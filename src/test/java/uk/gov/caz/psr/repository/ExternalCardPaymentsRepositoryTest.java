@@ -24,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.caz.psr.dto.external.CreatePaymentResult;
@@ -156,6 +157,23 @@ class ExternalCardPaymentsRepositoryTest {
       // then
       assertThat(throwable).isInstanceOf(RestClientException.class);
     }
+
+    @Test
+    public void shouldRethrowIOExceptionWhenCallFails() {
+      // given
+      Payment payment = createPayment(UUID.fromString("ef1aad78-fba7-11e9-9334-4b9678d9f25f"));
+      given(restTemplate.exchange(any(), eq(CreatePaymentResult.class)))
+          .willThrow(ResourceAccessException.class);
+      when(credentialRetrievalManager.getCardApiKey(Mockito.any(UUID.class))).thenReturn(Optional.of("test-api-key"));
+
+      // when
+      Throwable throwable =
+          catchThrowable(() -> paymentsRepository.create(payment, ANY_RETURN_URL));
+
+      // then
+      assertThat(throwable).isInstanceOf(RestClientException.class);
+    }
+
 
     private Payment createPayment(UUID paymentId) {
       return Payments.forDays(Arrays.asList(LocalDate.now(), LocalDate.now().plusDays(1)),

@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.HttpClientErrorException.NotFound;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import uk.gov.caz.psr.dto.external.CreateCardPaymentRequest;
@@ -116,6 +117,10 @@ public class ExternalCardPaymentsRepository {
           .externalPaymentStatus(externalPaymentStatus)
           .nextUrl(responseBody.getLinks().getNextUrl().getHref())
           .build();
+    } catch (RestClientResponseException e) {
+      log.error("Error while creating the payment for '{}': {}. Response body: {}", payment.getId(),
+          e.getMessage(), e.getResponseBodyAsString());
+      throw e;
     } catch (RestClientException e) {
       log.error("Error while creating the payment for '{}': {}", payment.getId(), e.getMessage());
       throw e;

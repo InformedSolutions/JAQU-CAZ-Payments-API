@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: vehicle_compliance
 
   localstack-it:
-    image: localstack/localstack:0.10.2
+    image: localstack/localstack:0.11.4
     ports:
       - "4576:4576"
       - "4584:4584"

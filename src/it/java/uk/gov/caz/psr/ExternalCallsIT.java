@@ -58,39 +58,6 @@ public class ExternalCallsIT {
             .withBody(readFile("get-clean-air-zones.json")));
   }
 
-  public void mockVccsBulkComplianceCall(List<String> vrns, String cleanAirZoneId, String filePath,
-      int statusCode) throws JsonProcessingException {
-    vccsMockServer
-        .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
-            exactly(1))
-        .respond(bulkComplianceResponseWithVrnAndCleanAirZoneId(filePath, vrns,
-            cleanAirZoneId, statusCode));
-  }
-
-  public void mockVccsBulkComplianceCallWithMixedResults(List<String> vrns, String cleanAirZoneId,
-      List<String> filePaths, int statusCode) throws JsonProcessingException {
-    vccsMockServer
-        .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
-            exactly(1))
-        .respond(bulkComplianceResponseWithVrnAndCleanAirZoneId(filePaths, vrns, cleanAirZoneId,
-            statusCode));
-  }
-
-  public void mockVccsBulkComplianceCallWithUnknownVrn(List<String> vrns,
-      String cleanAirZoneId, String filePath, int statusCode) throws JsonProcessingException {
-    vccsMockServer
-        .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
-            exactly(1))
-        .respond(fullResponseWithSingleUnknown(filePath, vrns, cleanAirZoneId, statusCode));
-  }
-
-  public void mockVccsBulkComplianceCallWithError(int statusCode) throws JsonProcessingException {
-    vccsMockServer
-        .when(requestPost("/v1/compliance-checker/vehicles/bulk-compliance"),
-            exactly(1))
-        .respond(emptyResponse(statusCode));
-  }
-
   public void mockVccsUnknownVehicleComplianceCall(String type, String cleanAirZoneId,
       String filePath, int statusCode) {
     vccsMockServer
@@ -132,27 +99,6 @@ public class ExternalCallsIT {
         .respond(emptyResponse(statusCode));
   }
 
-  public void mockAccountServiceOffsetCall(String accountId, String vrn) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
-            exactly(1))
-        .respond(responseWithVrn("account-vehicles-response.json", vrn, 200));
-  }
-
-  public void mockAccountServiceOffsetCallWithEmptyResponse(String accountId) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
-            exactly(1))
-        .respond(response("account-vehicles-empty-response.json", 200));
-  }
-
-  public void mockAccountServiceOffsetCallWithError(String accountId, int statusCode) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles"),
-            exactly(1))
-        .respond(emptyResponse(statusCode));
-  }
-
   public void mockAccountServiceCursorCall(String accountId, String cursor,
       String responseFile) {
     Parameter parameter = new Parameter("vrn", cursor);
@@ -182,8 +128,14 @@ public class ExternalCallsIT {
     accountsMockServer
         .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
             exactly(1))
-        .respond(responseWithVrnAndAccountId("single-account-vehicle-response.json", vrn, accountId,
-            statusCode));
+        .respond(responseWithRegisterDetails("single-account-vehicle-response.json", statusCode));
+  }
+
+  public void mockAccountServiceChargesSingleNoChargeVrnCall(String accountId, String vrn) {
+    accountsMockServer
+        .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
+            exactly(1))
+        .respond(responseWithRegisterDetails("single-account-vehicle-no-charge-response.json", 200));
   }
 
   public void mockAccountServiceChargesSingleVrnCallWithError(String accountId, String vrn,
@@ -203,21 +155,21 @@ public class ExternalCallsIT {
 
   public void mockAccountServiceGetUserDetailsCall(String userId, int statusCode) {
     accountsMockServer
-        .when(requestGet("/v1/users/"+ userId),
+        .when(requestGet("/v1/users/" + userId),
             exactly(1))
         .respond(response("account-user-details.json", statusCode));
   }
 
   public void mockAccountServiceGetUserDetailsOwnerCall(String userId, int statusCode) {
     accountsMockServer
-        .when(requestGet("/v1/users/"+ userId),
+        .when(requestGet("/v1/users/" + userId),
             exactly(1))
         .respond(response("account-user-details-owner.json", statusCode));
   }
 
   public void mockAccountServiceGetUserDetailsRemovedCall(String userId, int statusCode) {
     accountsMockServer
-        .when(requestGet("/v1/users/"+ userId),
+        .when(requestGet("/v1/users/" + userId),
             exactly(1))
         .respond(response("account-user-details-removed.json", statusCode));
   }
@@ -317,20 +269,6 @@ public class ExternalCallsIT {
         .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
         .withBody(
             readJson(responseFile).replace("TEST_VRN", vrn).replace("TEST_ACCOUNT", accountId));
-  }
-
-  private HttpResponse fullResponseWithSingleUnknown(String filePath, List<String> vrns,
-      String cleanAirZoneId, int statusCode) throws JsonProcessingException {
-    List<ComplianceResultsDto> responses = new ArrayList<>();
-    for (int i = 0; i < vrns.size() - 1; i++) {
-      responses.add(getBody(filePath, vrns.get(i), cleanAirZoneId));
-    }
-    responses.add(getBody("vehicle-compliance-null-response.json", vrns.get(vrns.size() - 1),
-        cleanAirZoneId));
-    return HttpResponse.response()
-        .withStatusCode(statusCode)
-        .withHeaders(new Header("Content-Type", "application/json; charset=utf-8"))
-        .withBody(objectMapper.writeValueAsString(responses));
   }
 
   public static HttpResponse emptyResponse(int statusCode) {
