@@ -62,6 +62,16 @@ public class CredentialRetrievalManager {
     return getApiKeyUsingSecret(cleanAirZoneId, directDebitSecretName);
   }
 
+  /**
+   * Gets the access token for a given GoCardless account (each CAZ has one).
+   *
+   * @param cleanAirZoneId Clean Air Zone identifier.
+   * @return Access token wrapped in {@link Optional}.
+   */
+  public Optional<String> getDirectDebitAccessToken(UUID cleanAirZoneId) {
+    return getApiKeyUsingSecret(cleanAirZoneId, directDebitSecretName);
+  }
+
   private Optional<String> getApiKeyUsingSecret(UUID cleanAirZoneId, String directDebitSecretName) {
     String generatedSecretKey = generateSecretKey(cleanAirZoneId);
     Map<String, String> secrets = getSecretsValue(directDebitSecretName);
