@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,7 +59,6 @@ public class ChargeableVehiclesService {
         .map(chargeableVehicle -> chargeableVehicle.toBuilder()
             .paidDates(collectPaidDatesForVrn(chargeableVehicle.getVrn(), entrantPaymentsForVrns))
             .build())
-        .sorted(Comparator.comparing(ChargeableVehicle::getVrn))
         .collect(Collectors.toList());
   }
 
@@ -132,23 +130,11 @@ public class ChargeableVehiclesService {
       if (accountVehicles.getVehicles().size() < pageSize * 3) {
         lastPage = true;
       } else {
-        cursorVrn = getCursorVrn(accountVehicles.getVehicles(), direction);
+        cursorVrn = Iterables.getLast(accountVehicles.getVehicles()).getVrn();
       }
     }
 
     return results;
-  }
-
-  /**
-   * Deduct and returns cursor vrn based on provided vehicles and search direction.
-   */
-  private String getCursorVrn(List<VehicleWithCharges> vehicles, String direction) {
-    if (StringUtils.hasText(direction) && direction.equals(DIRECTION_PREVIOUS)) {
-      return Iterables.getFirst(vehicles, VehicleWithCharges.builder().build())
-          .getVrn();
-    } else {
-      return Iterables.getLast(vehicles).getVrn();
-    }
   }
 
   /**

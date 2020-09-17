@@ -2,6 +2,7 @@ package uk.gov.caz.psr.util;
 
 import com.google.common.collect.Iterables;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -29,9 +30,9 @@ public class ChargeableVehiclesToDtoConverter {
     if (chargeableVehicles.isEmpty()) {
       return emptyResponse();
     }
-
-    String firstVrn = initFirstPageVrn(chargeableVehicles, firstPage);
-    String lastVrn = initLastPageVrn(chargeableVehicles, pageSize);
+    List<ChargeableVehicle> selectedVehicles = trimAndSortVehicles(chargeableVehicles, pageSize);
+    String firstVrn = initFirstPageVrn(selectedVehicles, firstPage);
+    String lastVrn = initLastPageVrn(selectedVehicles);
     String travelDirection = StringUtils.hasText(direction) ? direction : DIRECTION_NEXT;
     if (isLastPage(chargeableVehicles.size(), pageSize)) {
       // Clear First and Last VRN if the last page
@@ -41,8 +42,7 @@ public class ChargeableVehiclesToDtoConverter {
 
     return ChargeableAccountVehicleResponse
         .builder()
-        .chargeableAccountVehicles(chargeableAccountVehiclesResultFrom(
-            trimChargeableVehicles(chargeableVehicles, pageSize)))
+        .chargeableAccountVehicles(chargeableAccountVehiclesResultFrom(selectedVehicles))
         .firstVrn(firstVrn)
         .lastVrn(lastVrn)
         .build();
@@ -62,9 +62,8 @@ public class ChargeableVehiclesToDtoConverter {
   /**
    * Initialize Last Page VRN.
    */
-  private String initLastPageVrn(List<ChargeableVehicle> chargeableVehicles, int pageSize) {
-    return Iterables.getLast(trimChargeableVehicles(chargeableVehicles, pageSize),
-        ChargeableVehicle.builder().build()).getVrn();
+  private String initLastPageVrn(List<ChargeableVehicle> chargeableVehicles) {
+    return Iterables.getLast(chargeableVehicles, ChargeableVehicle.builder().build()).getVrn();
   }
 
   /**
@@ -75,17 +74,18 @@ public class ChargeableVehiclesToDtoConverter {
   }
 
   /**
-   * Trim found list of ChargeableVehicles to be in a size of provided pageSize.
+   * Trim and sort found list of ChargeableVehicles to be in a size of provided pageSize.
    */
-  private List<ChargeableVehicle> trimChargeableVehicles(List<ChargeableVehicle> chargeableVehicles,
+  private List<ChargeableVehicle> trimAndSortVehicles(List<ChargeableVehicle> chargeableVehicles,
       int pageSize) {
-    return chargeableVehicles.size() > pageSize ? chargeableVehicles.subList(0, pageSize)
-        : chargeableVehicles;
+    return chargeableVehicles.stream()
+        .limit(pageSize)
+        .sorted(Comparator.comparing(ChargeableVehicle::getVrn))
+        .collect(Collectors.toList());
   }
 
   /**
-   * Checks if found vehicles are on the last page.
-   * Returns empty response object.
+   * Checks if found vehicles are on the last page. Returns empty response object.
    */
   private ChargeableAccountVehicleResponse emptyResponse() {
     return ChargeableAccountVehicleResponse.builder().firstVrn(null).lastVrn(null)
@@ -100,8 +100,8 @@ public class ChargeableVehiclesToDtoConverter {
   private ChargeableAccountVehiclesResult chargeableAccountVehiclesResultFrom(
       List<ChargeableVehicle> chargeableVehicles) {
     return ChargeableAccountVehiclesResult.builder()
-        .results(chargeableVehicles.stream().map(
-            chargeableVehicle -> VrnWithTariffAndEntrancesPaid.builder()
+        .results(chargeableVehicles.stream()
+            .map(chargeableVehicle -> VrnWithTariffAndEntrancesPaid.builder()
                 .vrn(chargeableVehicle.getVrn())
                 .charge(chargeableVehicle.getCharge())
                 .tariffCode(chargeableVehicle.getTariffCode())
