@@ -1,0 +1,185 @@
+{
+  "vehicles": [
+    {
+      "vrn": "BCD234",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 100,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 100,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "CDE345",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 200,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 200,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "DEF456",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 300,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 300,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "EFG567",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 400,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 400,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "FGH678",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 500,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 500,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "HIJ890",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 400,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 400,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "IJK901",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 300,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 300,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "JKL012",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 200,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 200,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "KLM123",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 100,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 100,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    },
+    {
+      "vrn": "LMN234",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 200,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 200,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    }
+  ],
+  "totalVehiclesCount": 20
+}

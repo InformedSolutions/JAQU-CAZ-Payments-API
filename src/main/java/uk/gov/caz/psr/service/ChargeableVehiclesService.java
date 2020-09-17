@@ -1,9 +1,11 @@
 package uk.gov.caz.psr.service;
 
+import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +60,7 @@ public class ChargeableVehiclesService {
         .map(chargeableVehicle -> chargeableVehicle.toBuilder()
             .paidDates(collectPaidDatesForVrn(chargeableVehicle.getVrn(), entrantPaymentsForVrns))
             .build())
+        .sorted(Comparator.comparing(ChargeableVehicle::getVrn))
         .collect(Collectors.toList());
   }
 
@@ -68,7 +71,8 @@ public class ChargeableVehiclesService {
    * @param vrn Vehicle Registration Number for cursor pagination
    * @param cazId selected Clean Air Zone ID
    * @return {@link ChargeableVehicle} build based on details from accounts API
-   * @throws ChargeableAccountVehicleNotFoundException if found vehicle is not chargeable in CAZ
+   * @throws ChargeableAccountVehicleNotFoundException if found vehicle is not chargeable in
+   *     CAZ
    */
   public ChargeableVehicle retrieveOne(UUID accountId, String vrn, UUID cazId) {
     VehicleWithCharges vehicleWithCharges = accountService
@@ -128,12 +132,23 @@ public class ChargeableVehiclesService {
       if (accountVehicles.getVehicles().size() < pageSize * 3) {
         lastPage = true;
       } else {
-        cursorVrn = accountVehicles.getVehicles().get(accountVehicles.getVehicles().size() - 1)
-            .getVrn();
+        cursorVrn = getCursorVrn(accountVehicles.getVehicles(), direction);
       }
     }
 
     return results;
+  }
+
+  /**
+   * Deduct and returns cursor vrn based on provided vehicles and search direction.
+   */
+  private String getCursorVrn(List<VehicleWithCharges> vehicles, String direction) {
+    if (StringUtils.hasText(direction) && direction.equals(DIRECTION_PREVIOUS)) {
+      return Iterables.getFirst(vehicles, VehicleWithCharges.builder().build())
+          .getVrn();
+    } else {
+      return Iterables.getLast(vehicles).getVrn();
+    }
   }
 
   /**
