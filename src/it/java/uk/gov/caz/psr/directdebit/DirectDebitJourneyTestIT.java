@@ -533,7 +533,7 @@ public class DirectDebitJourneyTestIT {
   public void setApiKeyInSecretsManagerForBirminghamAndLeeds() {
     String leedsCazId = "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3";
     String birminghamCazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
-    secretsManagerInitialisation.createSecret(apiKeySecretName, leedsCazId,
+    secretsManagerInitialisation.createSecret(apiKeySecretName, "testApiKey", leedsCazId,
         birminghamCazId);
   }
 

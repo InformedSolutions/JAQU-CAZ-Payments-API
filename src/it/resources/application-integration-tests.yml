@@ -33,6 +33,9 @@ services:
   gov-uk-pay:
     root-url: http://localhost:1080
     api-key: dummy
+  go-cardless:
+    root-url: http://localhost:1080
+#    root-url: https://api-sandbox.gocardless.com
   vehicle-compliance-checker:
     root-url: http://localhost:1090
   accounts:

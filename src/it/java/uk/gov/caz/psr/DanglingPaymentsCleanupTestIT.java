@@ -90,7 +90,7 @@ public class DanglingPaymentsCleanupTestIT extends ExternalCallsIT {
 
   @BeforeEach
   public void createSecret() {
-    secretsManagerInitialisation.createSecret(secretName, "53e03a28-0627-11ea-9511-ffaaee87e375");
+    secretsManagerInitialisation.createSecret(secretName, "testApiKey", "53e03a28-0627-11ea-9511-ffaaee87e375");
   }
 
   @AfterEach
