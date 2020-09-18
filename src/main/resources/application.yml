@@ -76,6 +76,9 @@ aws:
 swagger:
   model:
     descriptions:
+      complete-direct-debit-mandate-creation:
+        session-token: A unique identifier of a browser session of a person who is creating the mandate
+        caz-id: Clean Air Zone identifier
       payment-status:
         payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
         caz-payment-reference: The central reference for the payment
@@ -347,6 +350,8 @@ swagger:
         description: Create Payment via DirectDebit payment method.
       get-payment-history-for-vehicle:
         description: Fetches history of payments per vehicle
+      direct-debit-mandate-complete-creation:
+        description: Completes the process of the mandate creation.
     charge-settlement:
       payment-status-update:
         description: >-

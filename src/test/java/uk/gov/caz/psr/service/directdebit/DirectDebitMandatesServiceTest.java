@@ -6,12 +6,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.gocardless.GoCardlessClient;
+import com.gocardless.resources.RedirectFlow;
+import com.gocardless.resources.RedirectFlow.Links;
+import com.gocardless.services.RedirectFlowService;
+import com.gocardless.services.RedirectFlowService.RedirectFlowCompleteRequest;
 import java.net.URI;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -30,6 +36,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
@@ -59,6 +66,12 @@ class DirectDebitMandatesServiceTest {
 
   @Mock
   private AccountsRepository accountsRepository;
+
+  @Mock
+  private AbstractGoCardlessClientFactory goCardlessClientFactory;
+
+  @Mock
+  private GoCardlessClient goCardlessClient;
 
   @InjectMocks
   private DirectDebitMandatesService directDebitMandatesService;
@@ -132,6 +145,49 @@ class DirectDebitMandatesServiceTest {
           .success(CreateDirectDebitMandateResponse.builder()
               .cleanAirZoneId(UUID.randomUUID())
               .build());
+    }
+  }
+
+  @Nested
+  class CompleteDirectDebitMandateCreation {
+
+    @Nested
+    class WhenCallToCreateMandateInAccountsFails {
+
+      @Test
+      public void shouldThrowExternalServiceCallException() {
+        // given
+        String flowId = "my-flow";
+        String sessionToken = "my-session-token";
+        mockAbsenceOfAccountIdMetadata();
+
+        // when
+        Throwable throwable = catchThrowable(() -> directDebitMandatesService
+            .completeMandateCreation(ANY_CLEAN_AIR_ZONE_ID, flowId, sessionToken));
+
+        // then
+        assertThat(throwable)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("'accountId' is absent in the metadata! Please set it when the redirect "
+                + "flow is initiated");
+      }
+
+      private void mockAbsenceOfAccountIdMetadata() {
+        when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
+            .thenReturn(goCardlessClient);
+        RedirectFlowService redirectFlowService = Mockito.mock(RedirectFlowService.class);
+        RedirectFlowCompleteRequest completeRequest = Mockito.mock(RedirectFlowCompleteRequest.class);
+        RedirectFlow response = Mockito.mock(RedirectFlow.class);
+        Links links = mock(Links.class);
+
+        when(goCardlessClient.redirectFlows()).thenReturn(redirectFlowService);
+        when(redirectFlowService.complete(anyString())).thenReturn(completeRequest);
+        when(completeRequest.withSessionToken(anyString())).thenReturn(completeRequest);
+        when(completeRequest.execute()).thenReturn(response);
+        when(response.getMetadata()).thenReturn(Collections.emptyMap());
+        when(response.getLinks()).thenReturn(links);
+        when(links.getMandate()).thenReturn("any-mandate-id");
+      }
     }
   }
 

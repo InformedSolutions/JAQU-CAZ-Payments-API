@@ -2,6 +2,9 @@ package uk.gov.caz.psr.service.directdebit;
 
 import static java.util.stream.Collectors.groupingBy;
 
+import com.gocardless.GoCardlessClient;
+import com.gocardless.errors.GoCardlessApiException;
+import com.gocardless.resources.RedirectFlow;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -19,9 +22,11 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.definitions.dto.CleanAirZonesDto;
+import uk.gov.caz.psr.controller.exception.directdebit.GoCardlessException;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate.DirectDebitMandateStatus;
@@ -60,6 +65,7 @@ public class DirectDebitMandatesService {
   private final VccsRepository vccsRepository;
   private final AccountsRepository accountsRepository;
   private final ExternalDirectDebitRepository externalDirectDebitRepository;
+  private final AbstractGoCardlessClientFactory goCardlessClientFactory;
 
   /**
    * Obtains the registered direct debit mandates for the given account by its identifier {@code
@@ -104,19 +110,75 @@ public class DirectDebitMandatesService {
       log.info("Creating direct debit mandate for account '{}' : start", accountId);
       MandateResponse externalDirectDebitMandate = externalDirectDebitRepository
           .createMandate(returnUrl, UUID.randomUUID().toString(), cleanAirZoneId);
-      Response<CreateDirectDebitMandateResponse> response = accountsRepository
-          .createDirectDebitMandateSync(accountId,
-              CreateDirectDebitMandateRequest.builder()
-                  .cleanAirZoneId(cleanAirZoneId)
-                  .mandateId(externalDirectDebitMandate.getMandateId())
-                  .build());
-      if (!response.isSuccessful()) {
-        throw new ExternalServiceCallException("Accounts service call failed, status code: "
-            + response.code() + ERROR_BODY + getErrorBody(response) + "'");
-      }
+      createMandateInAccountsService(cleanAirZoneId, externalDirectDebitMandate.getMandateId(),
+          accountId);
       return externalDirectDebitMandate.getLinks().getNextUrl().getHref();
     } finally {
       log.info("Creating direct debit mandate for account '{}' : finish", accountId);
+    }
+  }
+
+  /**
+   * Completes the mandate's creation for the passed {@code flowId}.
+   */
+  public void completeMandateCreation(UUID cleanAirZoneId, String flowId, String sessionToken) {
+    GoCardlessClient client = goCardlessClientFactory.createClientFor(cleanAirZoneId);
+
+    try {
+      RedirectFlow redirectFlow = client.redirectFlows()
+          .complete(flowId)
+          .withSessionToken(sessionToken)
+          .execute();
+
+      createMandateInAccountsService(
+          cleanAirZoneId,
+          extractMandateId(redirectFlow),
+          extractAccountIdFromMetadata(redirectFlow)
+      );
+
+      log.info("Successfully created mandate for caz {}", cleanAirZoneId);
+    } catch (GoCardlessApiException e) {
+      log.error("GoCardless exception while trying to complete the redirect flow {} for "
+          + "creating a mandate: {}", flowId, e.getErrorMessage());
+      throw new GoCardlessException(e.getErrorMessage());
+    }
+  }
+
+  /**
+   * Extracts mandate's ID from the passed redirect flow object.
+   */
+  private String extractMandateId(RedirectFlow redirectFlow) {
+    return redirectFlow.getLinks().getMandate();
+  }
+
+  /**
+   * Extracts account's ID from the passed redirect flow object's metadata or throw {@link
+   * IllegalStateException} if absent.
+   */
+  private UUID extractAccountIdFromMetadata(RedirectFlow redirectFlow) {
+    String accountId = redirectFlow.getMetadata().get("accountId");
+    if (!StringUtils.hasText(accountId)) {
+      throw new IllegalStateException("'accountId' is absent in the metadata! Please set it when "
+          + "the redirect flow is initiated");
+    }
+    return UUID.fromString(accountId);
+  }
+
+  /**
+   * Creates the newly obtained mandate in Accounts service.
+   */
+  private void createMandateInAccountsService(UUID cleanAirZoneId, String mandateId,
+      UUID accountId) {
+    CreateDirectDebitMandateRequest request = CreateDirectDebitMandateRequest.builder()
+        .cleanAirZoneId(cleanAirZoneId)
+        .mandateId(mandateId)
+        .build();
+    Response<CreateDirectDebitMandateResponse> response = accountsRepository
+        .createDirectDebitMandateSync(accountId, request);
+
+    if (!response.isSuccessful()) {
+      throw new ExternalServiceCallException("Accounts service call failed, status code: "
+          + response.code() + ERROR_BODY + getErrorBody(response) + "'");
     }
   }
 
@@ -366,9 +428,9 @@ public class DirectDebitMandatesService {
 
     @NonNull
     String paymentProviderMandateId;
-    
+
     Date created;
-    
+
     @NonNull
     DirectDebitMandateStatus actualStatus;
     DirectDebitMandateStatus cachedStatus;
