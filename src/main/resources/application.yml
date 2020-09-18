@@ -8,6 +8,13 @@ springfox:
       v2:
         path: /v1/swagger-docs
 
+logging:
+  level:
+    uk:
+      gov:
+        caz:
+          correlationid: INFO
+
 spring:
   jpa:
     open-in-view: false
