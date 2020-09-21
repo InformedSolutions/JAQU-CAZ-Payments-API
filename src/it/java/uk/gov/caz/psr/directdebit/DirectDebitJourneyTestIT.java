@@ -62,7 +62,7 @@ public class DirectDebitJourneyTestIT {
   @LocalServerPort
   int randomServerPort;
 
-  private static ClientAndServer govUkPayMockServer;
+  private static ClientAndServer goCardlessMockServer;
   private static ClientAndServer accountsServiceMockServer;
   private static ClientAndServer vccsServiceMockServer;
 
@@ -85,7 +85,7 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockSuccessVccsCleanAirZonesResponse();
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
       mockSuccessMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -106,7 +106,7 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockFailVccsCleanAirZonesCall();
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
       mockSuccessMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -118,12 +118,12 @@ public class DirectDebitJourneyTestIT {
     }
 
     @Test
-    public void testWhenRequestToGovUkFails() {
+    public void testWhenRequestToGoCardlessFails() {
       // given
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockSuccessVccsCleanAirZonesResponse();
-      mockFailMandateQueryResponseInGovUkPay();
+      mockFailMandateQueryResponseInGoCardless();
       mockSuccessMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -140,7 +140,7 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockSuccessVccsCleanAirZonesResponse();
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
       mockFailMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -157,7 +157,7 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockSuccessVccsCleanAirZonesResponse();
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
       mockEmptyMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -184,7 +184,8 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
       String birminghamCazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
 
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
+
       mockSuccessMandateQueryResponseInAccounts(accountId);
 
       // when
@@ -198,7 +199,6 @@ public class DirectDebitJourneyTestIT {
           .isEqualToIgnoringWhitespace(
               readInternalResponse("direct-debit-mandates-for-caz-response.json"));
     }
-
   }
 
   @Nested
@@ -316,7 +316,7 @@ public class DirectDebitJourneyTestIT {
     }
 
     private ForwardChainExpectation whenCreatePaymentRequestToGovUkPayIsMade() {
-      return govUkPayMockServer
+      return goCardlessMockServer
           .when(HttpRequest.request().withMethod("POST")
               .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
               .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
@@ -371,17 +371,19 @@ public class DirectDebitJourneyTestIT {
             .withBody(readExternalFile("get-clean-air-zones.json")));
   }
 
-  private void mockSuccessMandateQueryResponseInGovUkPay() {
-    whenRequestToGovUkPayIsMade()
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
+  private void mockSuccessMandateQueryResponseInGoCardless() {
+    whenRequestToGoCardlessIsMade()
+        .respond(HttpResponse.response()
+            .withStatusCode(HttpStatus.OK.value())
             .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readDirectDebitFile("get-mandate-response.json")));
+            .withBody(readGoCardlessFile("get-mandate-response.json")));
   }
 
-  private void mockFailMandateQueryResponseInGovUkPay() {
-    whenRequestToGovUkPayIsMade()
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.SERVICE_UNAVAILABLE.value())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString()));
+  private void mockFailMandateQueryResponseInGoCardless() {
+    whenRequestToGoCardlessIsMade()
+        .respond(HttpResponse.response()
+            .withStatusCode(HttpStatus.SERVICE_UNAVAILABLE.value())
+            .withBody(readGoCardlessFile("invalid-api-usage-response.json")));
   }
 
   private void mockSuccessMandateQueryResponseInAccounts(String accountId) {
@@ -420,14 +422,6 @@ public class DirectDebitJourneyTestIT {
             .withPath("/v1/compliance-checker/clean-air-zones"));
   }
 
-  private ForwardChainExpectation whenRequestToAccountsIsMadeToCreateMandate(String accountId) {
-    return accountsServiceMockServer
-        .when(HttpRequest.request().withMethod("POST")
-            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withPath(String.format("/v1/accounts/%s/direct-debit-mandates", accountId)));
-  }
-
   private ForwardChainExpectation whenRequestToAccountsIsMade(String accountId) {
     return accountsServiceMockServer
         .when(HttpRequest.request().withMethod("GET")
@@ -435,11 +429,11 @@ public class DirectDebitJourneyTestIT {
             .withPath(String.format("/v1/accounts/%s/direct-debit-mandates", accountId)));
   }
 
-  private ForwardChainExpectation whenRequestToGovUkPayIsMade() {
-    return govUkPayMockServer
-        .when(HttpRequest.request().withMethod("GET")
-            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-            .withPath("/v1/directdebit/mandates/.*"));
+  private ForwardChainExpectation whenRequestToGoCardlessIsMade() {
+    return goCardlessMockServer
+        .when(HttpRequest.request()
+            .withMethod("GET")
+            .withPath("/mandates/.*"));
   }
 
   @BeforeEach
@@ -460,21 +454,21 @@ public class DirectDebitJourneyTestIT {
   @BeforeAll
   public static void startMockServers() {
     accountsServiceMockServer = startClientAndServer(1091);
-    govUkPayMockServer = startClientAndServer(1080);
+    goCardlessMockServer = startClientAndServer(1080);
     vccsServiceMockServer = startClientAndServer(1090);
   }
 
   @AfterAll
   public static void stopMockServers() {
     vccsServiceMockServer.stop();
-    govUkPayMockServer.stop();
+    goCardlessMockServer.stop();
     accountsServiceMockServer.stop();
   }
 
   @AfterEach
   public void resetMockServers() {
     vccsServiceMockServer.reset();
-    govUkPayMockServer.reset();
+    goCardlessMockServer.reset();
     accountsServiceMockServer.reset();
   }
 
@@ -484,6 +478,10 @@ public class DirectDebitJourneyTestIT {
     String birminghamCazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
     secretsManagerInitialisation.createSecret(apiKeySecretName, "testApiKey", leedsCazId,
         birminghamCazId);
+  }
+
+  private String readGoCardlessFile(String filename) {
+    return readExternalFile("/directdebit/gocardless/" + filename);
   }
 
   private String readDirectDebitFile(String filename) {

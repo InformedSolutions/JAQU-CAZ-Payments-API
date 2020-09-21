@@ -52,11 +52,9 @@ public class DirectDebitMandatesService {
 
   @VisibleForTesting
   static final EnumSet<DirectDebitMandateStatus> CACHEABLE_STATUSES = EnumSet.of(
-      DirectDebitMandateStatus.ABANDONED,
       DirectDebitMandateStatus.FAILED,
       DirectDebitMandateStatus.CANCELLED,
-      DirectDebitMandateStatus.INACTIVE,
-      DirectDebitMandateStatus.ERROR
+      DirectDebitMandateStatus.EXPIRED
   );
 
   private static final String ERROR_BODY = ", error body: '";
@@ -396,14 +394,22 @@ public class DirectDebitMandatesService {
    * Fetches the current status of a mandate from the external service.
    */
   private DirectDebitMandateStatus fetchExternalStatusOf(DirectDebitMandate mandate) {
-    DirectDebitMandateStatus newStatus = DirectDebitMandateStatus.valueOf(
-        externalDirectDebitRepository
-            .getMandate(mandate.getPaymentProviderMandateId(), mandate.getCleanAirZoneId())
-            .getState()
-            .getStatus()
-            .toUpperCase()
-    );
-    return newStatus;
+    GoCardlessClient client = goCardlessClientFactory.createClientFor(mandate.getCleanAirZoneId());
+
+    try {
+      com.gocardless.resources.Mandate goCardlessMandate = client
+          .mandates()
+          .get(mandate.getDirectDebitMandateId().toString())
+          .execute();
+
+      log.info("Successfully get mandate for id {}", mandate.getDirectDebitMandateId());
+
+      return DirectDebitMandateStatus.valueOf(goCardlessMandate.getStatus().name());
+    } catch (GoCardlessApiException e) {
+      log.error("GoCardless exception while trying to get the mandate for id {} "
+          + "with exception: {}", mandate.getDirectDebitMandateId(), e.getErrorMessage());
+      throw new ExternalServiceCallException(e.getErrorMessage());
+    }
   }
 
   /**

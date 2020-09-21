@@ -1,0 +1,15 @@
+{
+  "error": {
+    "code": 400,
+    "type": "invalid_api_usage",
+    "errors": [
+      {
+        "message": "The access token you provided has been revoked",
+        "reason": "access_token_revoked"
+      }
+    ],
+    "documentation_url": "https://developer.gocardless.com/api-reference/#access_token_revoked",
+    "message": "The access token you provided has been revoked",
+    "request_id": "dd50eaaf-8213-48fe-90d6-5466872efbc4"
+  }
+}
