@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -58,6 +59,7 @@ class DirectDebitMandatesControllerTest {
   private static final String VALID_CORRELATION_HEADER = "79b7a48f-27c7-4947-bd1c-670f981843ef";
   private static final UUID ANY_ACCOUNT_ID = UUID.randomUUID();
   private static final UUID ANY_CLEAN_AIR_ZONE_ID = UUID.randomUUID();
+  private static final String ANY_SESSION_ID = "SESS_wSs0uGYMISxzqOBq";
 
   @Nested
   class Create {
@@ -75,7 +77,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("Missing request header 'X-Correlation-ID'"));
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any());
+          .createDirectDebitMandate(any(), any(), any(), anyString());
     }
 
     @Test
@@ -91,7 +93,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'cleanAirZoneId' cannot be null"));
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any());
+          .createDirectDebitMandate(any(), any(), any(), anyString());
     }
 
     @Test
@@ -107,7 +109,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'returnUrl' cannot be null or empty"));
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any());
+          .createDirectDebitMandate(any(), any(), any(), anyString());
     }
 
     @Test
@@ -123,7 +125,24 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'returnUrl' cannot be null or empty"));
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any());
+          .createDirectDebitMandate(any(), any(), any(), anyString());
+    }
+
+    @Test
+    public void nullSessionIdShouldResultIn400() throws Exception {
+      String payload = directDebitMandateRequestWithSessionId(null);
+
+      mockMvc
+          .perform(post(BASE_PATH, ANY_ACCOUNT_ID).content(payload)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .header(X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message")
+              .value("'sessionId' cannot be null or empty"));
+
+      verify(directDebitMandatesService, never())
+          .createDirectDebitMandate(any(), any(), any(), anyString());
     }
 
     @Test
@@ -137,13 +156,14 @@ class DirectDebitMandatesControllerTest {
               .header(X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER))
           .andExpect(status().isCreated());
       verify(directDebitMandatesService)
-          .createDirectDebitMandate(any(), any(), any());
+          .createDirectDebitMandate(any(), any(), any(), anyString());
     }
 
     private CreateDirectDebitMandateRequest.CreateDirectDebitMandateRequestBuilder baseRequestBuilder() {
       return CreateDirectDebitMandateRequest.builder()
           .cleanAirZoneId(UUID.randomUUID())
-          .returnUrl("https://example.return.url");
+          .returnUrl("https://example.return.url")
+          .sessionId(ANY_SESSION_ID);
     }
 
     private String directDebitMandateRequestWithEmptyCaz() {
@@ -156,6 +176,13 @@ class DirectDebitMandatesControllerTest {
     private String directDebitMandateRequestWithReturnUrl(String returnUrl) {
       CreateDirectDebitMandateRequest requestParams = baseRequestBuilder()
           .returnUrl(returnUrl)
+          .build();
+      return toJsonString(requestParams);
+    }
+
+    private String directDebitMandateRequestWithSessionId(String sessionId) {
+      CreateDirectDebitMandateRequest requestParams = baseRequestBuilder()
+          .sessionId(sessionId)
           .build();
       return toJsonString(requestParams);
     }

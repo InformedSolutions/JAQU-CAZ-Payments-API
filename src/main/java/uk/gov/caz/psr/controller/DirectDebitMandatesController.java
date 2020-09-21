@@ -51,7 +51,8 @@ public class DirectDebitMandatesController implements DirectDebitMandatesControl
     request.validate();
 
     String nextUrl = directDebitMandatesService
-        .createDirectDebitMandate(request.getCleanAirZoneId(), accountId, request.getReturnUrl());
+        .createDirectDebitMandate(request.getCleanAirZoneId(), accountId, request.getReturnUrl(),
+            request.getSessionId());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(CreateDirectDebitMandateResponse.builder().nextUrl(nextUrl).build());
   }

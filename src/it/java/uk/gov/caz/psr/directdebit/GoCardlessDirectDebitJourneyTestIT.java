@@ -170,7 +170,7 @@ public class GoCardlessDirectDebitJourneyTestIT {
   public void setupRestAssuredForBasePath() {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
-    RestAssured.basePath = DirectDebitRedirectFlowsController.BASE_PATH;;
+    RestAssured.basePath = DirectDebitRedirectFlowsController.BASE_PATH;
   }
 
   @BeforeAll
