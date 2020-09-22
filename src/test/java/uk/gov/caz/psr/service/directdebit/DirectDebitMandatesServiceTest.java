@@ -331,19 +331,6 @@ class DirectDebitMandatesServiceTest {
           .orElseThrow(IllegalStateException::new);
     }
 
-    private void mockExternalDirectDebitRepositoryWithStatus(String status) {
-      when(externalDirectDebitRepository.getMandate(anyString(), any())).thenReturn(
-          MandateResponse.builder()
-              .mandateId("some-id-1")
-              .returnUrl("return-url")
-              .providerId("some-id-2")
-              .state(MandateStatus.builder()
-                  .status(status)
-                  .build())
-              .build()
-      );
-    }
-
     private void mockDirectDebitMandatesInAccountsWithStatuses(
         DirectDebitMandateStatus... statuses) {
       List<DirectDebitMandate> mandates = Stream.of(statuses)
