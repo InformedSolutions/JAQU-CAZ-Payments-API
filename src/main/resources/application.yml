@@ -22,7 +22,7 @@ spring:
     enabled: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/vehicle_compliance
+    url: jdbc:postgresql://localhost:5433/vehicle_compliance
     username: postgres
     password: postgres
     hikari:

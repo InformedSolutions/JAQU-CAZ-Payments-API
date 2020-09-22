@@ -104,8 +104,8 @@ public class DirectDebitMandatesService {
    * Creates DirectDebitMandate in External Payment provider and returns nextUrl to confirm mandate
    * creation on the frontend.
    */
-  public String createDirectDebitMandate(UUID cleanAirZoneId, UUID accountId, String returnUrl,
-      String sessionId) {
+  public String initiateDirectDebitMandateCreation(UUID cleanAirZoneId, UUID accountId,
+      String returnUrl, String sessionId) {
     GoCardlessClient client = goCardlessClientFactory.createClientFor(cleanAirZoneId);
     try {
       log.info("Creating direct debit mandate for account '{}' : start", accountId);

@@ -77,7 +77,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("Missing request header 'X-Correlation-ID'"));
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
     }
 
     @Test
@@ -93,7 +93,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'cleanAirZoneId' cannot be null"));
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
     }
 
     @Test
@@ -109,7 +109,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'returnUrl' cannot be null or empty"));
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
     }
 
     @Test
@@ -125,7 +125,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'returnUrl' cannot be null or empty"));
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
     }
 
     @Test
@@ -142,7 +142,7 @@ class DirectDebitMandatesControllerTest {
               .value("'sessionId' cannot be null or empty"));
 
       verify(directDebitMandatesService, never())
-          .createDirectDebitMandate(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
     }
 
     @Test
@@ -156,7 +156,7 @@ class DirectDebitMandatesControllerTest {
               .header(X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER))
           .andExpect(status().isCreated());
       verify(directDebitMandatesService)
-          .createDirectDebitMandate(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
     }
 
     private CreateDirectDebitMandateRequest.CreateDirectDebitMandateRequestBuilder baseRequestBuilder() {

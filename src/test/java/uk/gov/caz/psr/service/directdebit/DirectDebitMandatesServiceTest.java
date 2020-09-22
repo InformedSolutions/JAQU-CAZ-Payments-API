@@ -91,7 +91,7 @@ class DirectDebitMandatesServiceTest {
 
       // when
       String redirectUrl = directDebitMandatesService
-          .createDirectDebitMandate(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL,
+          .initiateDirectDebitMandateCreation(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL,
               ANY_SESSION_ID);
 
       // then
@@ -105,7 +105,7 @@ class DirectDebitMandatesServiceTest {
 
       // when
       Throwable throwable = catchThrowable(() -> directDebitMandatesService
-          .createDirectDebitMandate(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL,
+          .initiateDirectDebitMandateCreation(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL,
               ANY_SESSION_ID));
 
       // then
