@@ -402,7 +402,7 @@ public class DirectDebitMandatesService {
           .get(mandate.getDirectDebitMandateId().toString())
           .execute();
 
-      log.info("Successfully get mandate for id {}", mandate.getDirectDebitMandateId());
+      log.info("Successfully got mandate for id {}", mandate.getDirectDebitMandateId());
 
       return DirectDebitMandateStatus.valueOf(goCardlessMandate.getStatus().name());
     } catch (GoCardlessApiException e) {
