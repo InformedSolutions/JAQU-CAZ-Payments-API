@@ -34,6 +34,9 @@ public class AccountDirectDebitMandatesResponse {
 
     Date created;
 
+    /**
+     * These statuses come from https://developer.gocardless.com/api-reference/#core-endpoints-mandates.
+     */
     public enum DirectDebitMandateStatus {
       PENDING_CUSTOMER_APPROVAL,
       PENDING_SUBMISSION,
