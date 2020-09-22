@@ -77,32 +77,6 @@ public class DirectDebitJourneyTestIT {
   );
 
   @Nested
-  class CreateMandate {
-
-    @Test
-    public void successfullyCreatedDirectDebitMandate() {
-      // given
-      String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
-
-      mockSuccessCreateMandateQueryResponseInGovUkPay();
-      mockSuccessCreateMandateQueryResponseInAccounts(accountId);
-      mockMandateCreationResponse();
-
-      // when
-      ValidatableResponse response = makeRequestToCreateMandate(accountId);
-
-      // then
-      response.statusCode(HttpStatus.CREATED.value());
-      response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
-      response.contentType(ContentType.JSON);
-      assertThat(response.extract().body().asString())
-          .isEqualToIgnoringWhitespace(
-              readInternalResponse("create-direct-debit-mandate-response.json"));
-    }
-
-  }
-
-  @Nested
   class GetCleanAirZonesWithMandates {
 
     @Test
@@ -360,31 +334,6 @@ public class DirectDebitJourneyTestIT {
         .when()
         .post()
         .then();
-  }
-
-  private void mockMandateCreationResponse() {
-    govUkPayMockServer
-        .when(HttpRequest.request().withMethod("POST")
-            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withPath(ExternalDirectDebitRepository.CREATE_MANDATE_URI))
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readDirectDebitFile("create-mandate-response.json")));
-  }
-
-  private void mockSuccessCreateMandateQueryResponseInGovUkPay() {
-    whenRequestToGovUkPayIsMade()
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readDirectDebitFile("create-mandate-response.json")));
-  }
-
-  private void mockSuccessCreateMandateQueryResponseInAccounts(String accountId) {
-    whenRequestToAccountsIsMadeToCreateMandate(accountId)
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readInternalResponse("account-create-direct-debit-mandate-response.json")));
   }
 
   private ValidatableResponse makeRequestToGetMandatesByCaz(String accountId,

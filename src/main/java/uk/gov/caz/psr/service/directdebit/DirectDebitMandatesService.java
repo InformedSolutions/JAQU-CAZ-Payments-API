@@ -34,7 +34,6 @@ import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest.SingleDirectDebitMandateUpdate;
-import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
 import uk.gov.caz.psr.model.directdebit.CleanAirZoneWithMandates;
 import uk.gov.caz.psr.model.directdebit.Mandate;
 import uk.gov.caz.psr.repository.AccountsRepository;
@@ -102,17 +101,29 @@ public class DirectDebitMandatesService {
   }
 
   /**
-   * Creates DirectDebitMandate in External Payment provider, store details in AccountsAPI and
-   * returns nextUrl to confirm Mandate creation on the frontend.
+   * Creates DirectDebitMandate in External Payment provider and returns nextUrl to confirm mandate
+   * creation on the frontend.
    */
-  public String createDirectDebitMandate(UUID cleanAirZoneId, UUID accountId, String returnUrl) {
+  public String initiateDirectDebitMandateCreation(UUID cleanAirZoneId, UUID accountId,
+      String returnUrl, String sessionId) {
+    GoCardlessClient client = goCardlessClientFactory.createClientFor(cleanAirZoneId);
     try {
       log.info("Creating direct debit mandate for account '{}' : start", accountId);
-      MandateResponse externalDirectDebitMandate = externalDirectDebitRepository
-          .createMandate(returnUrl, UUID.randomUUID().toString(), cleanAirZoneId);
-      createMandateInAccountsService(cleanAirZoneId, externalDirectDebitMandate.getMandateId(),
-          accountId);
-      return externalDirectDebitMandate.getLinks().getNextUrl().getHref();
+      RedirectFlow redirectFlow = client.redirectFlows()
+          .create()
+          .withDescription("Drive in a Clean Air Zone charge")
+          .withSessionToken(sessionId)
+          .withSuccessRedirectUrl(returnUrl)
+          .withMetadata("accountId", accountId.toString())
+          .withMetadata("cleanAirZoneId", cleanAirZoneId.toString())
+          .execute();
+
+      return redirectFlow.getRedirectUrl();
+    } catch (GoCardlessApiException exception) {
+      log.error(
+          "GoCardless exception while trying to initiate RedirectFlow creation: {}" + exception
+              .getMessage());
+      throw new GoCardlessException(exception.getErrorMessage());
     } finally {
       log.info("Creating direct debit mandate for account '{}' : finish", accountId);
     }

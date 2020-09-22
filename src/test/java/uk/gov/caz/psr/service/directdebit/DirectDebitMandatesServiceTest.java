@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -14,10 +13,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.gocardless.GoCardlessClient;
+import com.gocardless.errors.GoCardlessApiException;
 import com.gocardless.resources.RedirectFlow;
 import com.gocardless.resources.RedirectFlow.Links;
 import com.gocardless.services.RedirectFlowService;
 import com.gocardless.services.RedirectFlowService.RedirectFlowCompleteRequest;
+import com.gocardless.services.RedirectFlowService.RedirectFlowCreateRequest;
 import java.net.URI;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -41,12 +42,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.definitions.dto.CleanAirZonesDto;
+import uk.gov.caz.psr.controller.exception.directdebit.GoCardlessException;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate.DirectDebitMandateStatus;
-import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
-import uk.gov.caz.psr.dto.external.Link;
-import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateLinks;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
 import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateStatus;
 import uk.gov.caz.psr.model.directdebit.CleanAirZoneWithMandates;
@@ -76,75 +75,73 @@ class DirectDebitMandatesServiceTest {
   @InjectMocks
   private DirectDebitMandatesService directDebitMandatesService;
 
-  private final static String VALID_MANDATE_ID = "mandateID";
   private final static UUID ANY_ACCOUNT_ID = UUID.randomUUID();
   private final static UUID ANY_CLEAN_AIR_ZONE_ID = UUID.randomUUID();
   private final static String ANY_RETURN_URL = "http://return-url.com";
   private final static String NEXT_URL = "http://some-address.com";
+  private static final String ANY_SESSION_ID = "SESS_wSs0uGYMISxzqOBq";
 
   @Nested
-  class CreateDirectDebitMandate {
+  class CreateDirectDebitMandateRedirectFlow {
 
     @Test
-    public void shouldReturnNextUrlIfValidParamsProvided() {
+    public void shouldReturnRedirectUrlOnSuccessfulCreation() {
       // given
-      mockValidCreateDirectDebitMandateInExternalProvider();
-      mockSuccessCreateDirectDebitMandateInAccountService();
+      mockSuccessfulRedirectFlowCreation();
 
       // when
-      String response = directDebitMandatesService
-          .createDirectDebitMandate(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL);
+      String redirectUrl = directDebitMandatesService
+          .initiateDirectDebitMandateCreation(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL,
+              ANY_SESSION_ID);
 
       // then
-      assertThat(response).isEqualTo(NEXT_URL);
+      assertThat(redirectUrl).isEqualTo(NEXT_URL);
     }
 
-    @Nested
-    class UponExceptionFromAccountsServiceCall {
+    @Test
+    public void shouldThrowGoCardlessExceptionOnUnsuccessfulCreation() {
+      // given
+      mockUnsuccessfulRedirectFlowCreation();
 
-      @Test
-      public void shouldThrowExternalServiceCallException() {
-        // given
-        mockValidCreateDirectDebitMandateInExternalProvider();
-        mockFailureOfCreationOFDirectDebitMandateInAccountService();
+      // when
+      Throwable throwable = catchThrowable(() -> directDebitMandatesService
+          .initiateDirectDebitMandateCreation(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL,
+              ANY_SESSION_ID));
 
-        // when
-        Throwable throwable = catchThrowable(() -> directDebitMandatesService
-            .createDirectDebitMandate(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL));
-
-        // then
-        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class)
-            .hasMessageStartingWith("Accounts service call failed");
-      }
+      // then
+      assertThat(throwable).isInstanceOf(GoCardlessException.class);
     }
 
-    private void mockValidCreateDirectDebitMandateInExternalProvider() {
-      when(externalDirectDebitRepository.createMandate(any(), any(), any()))
-          .thenReturn(MandateResponse.builder()
-              .mandateId(VALID_MANDATE_ID)
-              .returnUrl(ANY_RETURN_URL)
-              .links(MandateLinks.builder()
-                  .nextUrl(new Link(NEXT_URL, "GET"))
-                  .build())
-              .build());
+    private void mockUnsuccessfulRedirectFlowCreation() {
+      RedirectFlowCreateRequest createRequest = mockRedirectFlowCreateRequest();
+      GoCardlessApiException exception = Mockito.mock(GoCardlessApiException.class);
+      when(exception.getErrorMessage()).thenReturn("API exception");
+      when(createRequest.execute()).thenThrow(exception);
     }
 
-    private void mockFailureOfCreationOFDirectDebitMandateInAccountService() {
-      given(accountsRepository.createDirectDebitMandateSync(any(), any()))
-          .willReturn(
-              Response.error(400, ResponseBody.create(MediaType.get("application/json"), "")));
+    private void mockSuccessfulRedirectFlowCreation() {
+      RedirectFlowCreateRequest createRequest = mockRedirectFlowCreateRequest();
+      RedirectFlow response = Mockito.mock(RedirectFlow.class);
+
+      when(createRequest.execute()).thenReturn(response);
+      when(response.getRedirectUrl()).thenReturn(NEXT_URL);
     }
 
-    private void mockSuccessCreateDirectDebitMandateInAccountService() {
-      given(accountsRepository.createDirectDebitMandateSync(any(), any()))
-          .willReturn(accountsCreateDirectDebitMandateResponse());
-    }
+    private RedirectFlowCreateRequest mockRedirectFlowCreateRequest() {
+      when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
+          .thenReturn(goCardlessClient);
+      RedirectFlowService redirectFlowService = Mockito.mock(RedirectFlowService.class);
+      RedirectFlowCreateRequest createRequest = Mockito
+          .mock(RedirectFlowCreateRequest.class);
 
-    private Response<CreateDirectDebitMandateResponse> accountsCreateDirectDebitMandateResponse() {
-      return Response
-          .success(CreateDirectDebitMandateResponse.builder()
-              .cleanAirZoneId(UUID.randomUUID())
-              .build());
+      when(goCardlessClient.redirectFlows()).thenReturn(redirectFlowService);
+      when(redirectFlowService.create()).thenReturn(createRequest);
+      when(createRequest.withDescription(anyString())).thenReturn(createRequest);
+      when(createRequest.withSessionToken(anyString())).thenReturn(createRequest);
+      when(createRequest.withSuccessRedirectUrl(anyString())).thenReturn(createRequest);
+      when(createRequest.withMetadata(anyString(), anyString())).thenReturn(createRequest);
+
+      return createRequest;
     }
   }
 
@@ -155,7 +152,7 @@ class DirectDebitMandatesServiceTest {
     class WhenCallToCreateMandateInAccountsFails {
 
       @Test
-      public void shouldThrowExternalServiceCallException() {
+      public void shouldThrowExceptionOnMissingMetadata() {
         // given
         String flowId = "my-flow";
         String sessionToken = "my-session-token";
@@ -172,11 +169,53 @@ class DirectDebitMandatesServiceTest {
                 + "flow is initiated");
       }
 
+      @Test
+      public void shouldThrowExternalServiceCallExceptionOnUnsuccessfulResponse() {
+        // given
+        String flowId = "my-flow";
+        String sessionToken = "my-session-token";
+        mockSuccessfulGoCardlessCreation();
+        mockUnsuccessfulAccountsResponse();
+
+        // when
+        Throwable throwable = catchThrowable(() -> directDebitMandatesService
+            .completeMandateCreation(ANY_CLEAN_AIR_ZONE_ID, flowId, sessionToken));
+
+        // then
+        assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
+      }
+
+      private void mockSuccessfulGoCardlessCreation() {
+        when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
+            .thenReturn(goCardlessClient);
+        RedirectFlowService redirectFlowService = Mockito.mock(RedirectFlowService.class);
+        RedirectFlowCompleteRequest completeRequest = Mockito
+            .mock(RedirectFlowCompleteRequest.class);
+        RedirectFlow response = Mockito.mock(RedirectFlow.class);
+        Links links = mock(Links.class);
+
+        when(goCardlessClient.redirectFlows()).thenReturn(redirectFlowService);
+        when(redirectFlowService.complete(anyString())).thenReturn(completeRequest);
+        when(completeRequest.withSessionToken(anyString())).thenReturn(completeRequest);
+        when(completeRequest.execute()).thenReturn(response);
+        when(response.getMetadata())
+            .thenReturn(Collections.singletonMap("accountId", UUID.randomUUID().toString()));
+        when(response.getLinks()).thenReturn(links);
+        when(links.getMandate()).thenReturn("any-mandate-id");
+      }
+
+      private void mockUnsuccessfulAccountsResponse() {
+        when(accountsRepository.createDirectDebitMandateSync(any(), any()))
+            .thenReturn(
+                Response.error(400, ResponseBody.create(MediaType.get("application/json"), "")));
+      }
+
       private void mockAbsenceOfAccountIdMetadata() {
         when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
             .thenReturn(goCardlessClient);
         RedirectFlowService redirectFlowService = Mockito.mock(RedirectFlowService.class);
-        RedirectFlowCompleteRequest completeRequest = Mockito.mock(RedirectFlowCompleteRequest.class);
+        RedirectFlowCompleteRequest completeRequest = Mockito
+            .mock(RedirectFlowCompleteRequest.class);
         RedirectFlow response = Mockito.mock(RedirectFlow.class);
         Links links = mock(Links.class);
 

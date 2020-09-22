@@ -1,0 +1,21 @@
+{
+  "redirect_flows": {
+    "id": "RE0002WAJPF1A2H24REAEM01CAVHMB86",
+    "description": "Drive in a Clean Air Zone charge",
+    "session_token": "SESSION_TOKEN",
+    "scheme": "bacs",
+    "success_redirect_url": "SUCCESS_REDIRECT_URL",
+    "created_at": "2020-09-17T13:13:34.748Z",
+    "links": {
+      "creditor": "CR000065PHEDKA",
+      "mandate": "MD000BPQ6R5F7W",
+      "customer": "CU000C27WJ0RXG",
+      "customer_bank_account": "BA000BMZTYAFWD"
+    },
+    "metadata": {
+      "cazId": "CAZ_ID",
+      "accountId": "ACCOUNT_ID"
+    },
+    "redirect_url": "https://pay-sandbox.gocardless.com/flow/RE0002WAJPF1A2H24REAEM01CAVHMB86"
+  }
+}
