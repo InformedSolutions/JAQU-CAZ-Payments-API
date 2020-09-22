@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0014-1.0-update-payments-reporting-view
+      author: Informed
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0014-1.0-update-payments-reporting-view.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true 
