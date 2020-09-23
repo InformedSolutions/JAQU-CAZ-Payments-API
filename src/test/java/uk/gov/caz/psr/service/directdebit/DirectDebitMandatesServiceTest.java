@@ -7,15 +7,17 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.gocardless.GoCardlessClient;
 import com.gocardless.errors.GoCardlessApiException;
+import com.gocardless.resources.Mandate;
+import com.gocardless.resources.Mandate.Status;
 import com.gocardless.resources.RedirectFlow;
 import com.gocardless.resources.RedirectFlow.Links;
+import com.gocardless.services.MandateService;
+import com.gocardless.services.MandateService.MandateGetRequest;
 import com.gocardless.services.RedirectFlowService;
 import com.gocardless.services.RedirectFlowService.RedirectFlowCompleteRequest;
 import com.gocardless.services.RedirectFlowService.RedirectFlowCreateRequest;
@@ -214,8 +216,7 @@ class DirectDebitMandatesServiceTest {
         when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
             .thenReturn(goCardlessClient);
         RedirectFlowService redirectFlowService = Mockito.mock(RedirectFlowService.class);
-        RedirectFlowCompleteRequest completeRequest = Mockito
-            .mock(RedirectFlowCompleteRequest.class);
+        RedirectFlowCompleteRequest completeRequest = Mockito.mock(RedirectFlowCompleteRequest.class);
         RedirectFlow response = Mockito.mock(RedirectFlow.class);
         Links links = mock(Links.class);
 
@@ -236,12 +237,13 @@ class DirectDebitMandatesServiceTest {
     @Test
     public void shouldReturnMandatesWithBothCachedAndNotCachedStatuses() {
       // given
+      mockGoCardlessGetMandate(Status.ACTIVE.toString());
+
       mockCleanAirZonesInVccs();
       mockDirectDebitMandatesInAccountsWithStatuses(
           cacheableStatuses().iterator().next(),
           notCacheableStatuses().iterator().next()
       );
-      mockExternalDirectDebitRepositoryWithStatus(DirectDebitMandateStatus.ACTIVE.toString());
       mockAccountsMandateUpdateCall();
 
       // when
@@ -251,7 +253,6 @@ class DirectDebitMandatesServiceTest {
       // then
       assertThat(directDebitMandates).hasSize(1);
       assertThat(directDebitMandates.iterator().next().getMandates()).hasSize(2);
-      verify(externalDirectDebitRepository, times(1)).getMandate(any(), any());
     }
 
     @Nested
@@ -270,7 +271,6 @@ class DirectDebitMandatesServiceTest {
 
         // then
         assertThat(directDebitMandates).isNotEmpty();
-        verifyNoInteractions(externalDirectDebitRepository);
         verify(accountsRepository, never())
             .updateDirectDebitMandatesSync(any(), any());
       }
@@ -285,8 +285,8 @@ class DirectDebitMandatesServiceTest {
         // given
         mockCleanAirZonesInVccs();
         mockDirectDebitMandatesInAccountsWithStatuses(status);
-        mockExternalDirectDebitRepositoryWithStatus(randomNotCacheableStatusNotEqualTo(status));
         mockAccountsMandateUpdateCall();
+        mockGoCardlessGetMandate(randomNotCacheableStatusNotEqualTo(status));
 
         // when
         List<CleanAirZoneWithMandates> directDebitMandates = directDebitMandatesService
@@ -294,7 +294,6 @@ class DirectDebitMandatesServiceTest {
 
         // then
         assertThat(directDebitMandates).hasSize(1);
-        verify(externalDirectDebitRepository).getMandate(any(), any());
         verify(accountsRepository).updateDirectDebitMandatesSync(eq(ANY_ACCOUNT_ID), any());
       }
 
@@ -307,7 +306,7 @@ class DirectDebitMandatesServiceTest {
           // given
           mockCleanAirZonesInVccs();
           mockDirectDebitMandatesInAccountsWithStatuses(status);
-          mockExternalDirectDebitRepositoryWithStatus(status.toString());
+          mockGoCardlessGetMandate(status.toString());
 
           // when
           directDebitMandatesService.getDirectDebitMandates(ANY_ACCOUNT_ID);
@@ -330,19 +329,6 @@ class DirectDebitMandatesServiceTest {
           .map(Enum::name)
           .findFirst()
           .orElseThrow(IllegalStateException::new);
-    }
-
-    private void mockExternalDirectDebitRepositoryWithStatus(String status) {
-      when(externalDirectDebitRepository.getMandate(anyString(), any())).thenReturn(
-          MandateResponse.builder()
-              .mandateId("some-id-1")
-              .returnUrl("return-url")
-              .providerId("some-id-2")
-              .state(MandateStatus.builder()
-                  .status(status)
-                  .build())
-              .build()
-      );
     }
 
     private void mockDirectDebitMandatesInAccountsWithStatuses(
@@ -372,6 +358,21 @@ class DirectDebitMandatesServiceTest {
                   .boundaryUrl(new URI("http://localhost"))
                   .build()))
               .build()));
+    }
+
+    private void mockGoCardlessGetMandate(String mandateStatus) {
+      MandateService mandateService = Mockito.mock(MandateService.class);
+      MandateGetRequest mandateGetRequest = Mockito.mock(MandateGetRequest.class);
+      Mandate mandate = Mockito.mock(Mandate.class);
+      Status status = Mockito.mock(Status.class);
+      when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
+          .thenReturn(goCardlessClient);
+      when(goCardlessClient.mandates()).thenReturn(mandateService);
+      when(goCardlessClient.mandates().get(any())).thenReturn(mandateGetRequest);
+      when(goCardlessClient.mandates().get(any()).execute()).thenReturn(mandate);
+      when(goCardlessClient.mandates().get(any()).execute().getStatus()).thenReturn(status);
+      when(goCardlessClient.mandates().get(any()).execute().getStatus().name())
+          .thenReturn(mandateStatus);
     }
   }
 

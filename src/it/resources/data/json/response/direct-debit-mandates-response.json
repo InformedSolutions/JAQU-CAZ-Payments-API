@@ -7,13 +7,13 @@
       "mandates": [
         {
           "id": "i4nuo03jginfke5c3ebrvgig6a",
-          "status": "CREATED",
-          "created": "2020-04-30T08:08:31"
+          "status": "ACTIVE",
+          "created": "2020-04-30T08:08: 31"
         },
         {
           "id": "k4nuo03jginfke5c3ebrvgig6a",
-          "status": "CREATED",
-          "created": "2020-04-30T08:08:31"
+          "status": "ACTIVE",
+          "created": "2020-04-30T08: 08: 31"
         },
         {
           "id": "j4nuo03jginfke5c3ebrvgig6a",
@@ -23,7 +23,7 @@
       ]
     },
     {
-      "cazId" : "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3",
+      "cazId": "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3",
       "cazName": "Leeds",
       "directDebitEnabled": false,
       "mandates": []
