@@ -21,6 +21,7 @@ import com.gocardless.services.MandateService.MandateGetRequest;
 import com.gocardless.services.RedirectFlowService;
 import com.gocardless.services.RedirectFlowService.RedirectFlowCompleteRequest;
 import com.gocardless.services.RedirectFlowService.RedirectFlowCreateRequest;
+import com.gocardless.services.RedirectFlowService.RedirectFlowCreateRequest.Scheme;
 import java.net.URI;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -48,8 +49,6 @@ import uk.gov.caz.psr.controller.exception.directdebit.GoCardlessException;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate.DirectDebitMandateStatus;
-import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
-import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateStatus;
 import uk.gov.caz.psr.model.directdebit.CleanAirZoneWithMandates;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.ExternalDirectDebitRepository;
@@ -142,6 +141,7 @@ class DirectDebitMandatesServiceTest {
       when(createRequest.withSessionToken(anyString())).thenReturn(createRequest);
       when(createRequest.withSuccessRedirectUrl(anyString())).thenReturn(createRequest);
       when(createRequest.withMetadata(anyString(), anyString())).thenReturn(createRequest);
+      when(createRequest.withScheme(Scheme.BACS)).thenReturn(createRequest);
 
       return createRequest;
     }

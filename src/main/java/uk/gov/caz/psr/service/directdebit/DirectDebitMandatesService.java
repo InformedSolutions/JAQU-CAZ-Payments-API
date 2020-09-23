@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.groupingBy;
 import com.gocardless.GoCardlessClient;
 import com.gocardless.errors.GoCardlessApiException;
 import com.gocardless.resources.RedirectFlow;
+import com.gocardless.services.RedirectFlowService.RedirectFlowCreateRequest.Scheme;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -112,6 +113,7 @@ public class DirectDebitMandatesService {
           .withDescription("Drive in a Clean Air Zone charge")
           .withSessionToken(sessionId)
           .withSuccessRedirectUrl(returnUrl)
+          .withScheme(Scheme.BACS)
           .withMetadata("accountId", accountId.toString())
           .withMetadata("cleanAirZoneId", cleanAirZoneId.toString())
           .execute();
