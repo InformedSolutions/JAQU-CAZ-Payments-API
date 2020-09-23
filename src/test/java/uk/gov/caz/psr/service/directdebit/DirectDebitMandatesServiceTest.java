@@ -216,7 +216,8 @@ class DirectDebitMandatesServiceTest {
         when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
             .thenReturn(goCardlessClient);
         RedirectFlowService redirectFlowService = Mockito.mock(RedirectFlowService.class);
-        RedirectFlowCompleteRequest completeRequest = Mockito.mock(RedirectFlowCompleteRequest.class);
+        RedirectFlowCompleteRequest completeRequest = Mockito
+            .mock(RedirectFlowCompleteRequest.class);
         RedirectFlow response = Mockito.mock(RedirectFlow.class);
         Links links = mock(Links.class);
 
@@ -253,6 +254,59 @@ class DirectDebitMandatesServiceTest {
       // then
       assertThat(directDebitMandates).hasSize(1);
       assertThat(directDebitMandates.iterator().next().getMandates()).hasSize(2);
+    }
+
+    @Test
+    public void shouldReturnSpecificMandateStatus() {
+      // given
+      String paymentProviderMandateId = UUID.randomUUID().toString();
+      mockGoCardlessSpecificMandate(paymentProviderMandateId);
+      mockCleanAirZonesInVccs();
+      mockDirectDebitMandatesInAccountsWithStatuses(paymentProviderMandateId);
+      mockAccountsMandateUpdateCall();
+
+      // when
+      List<CleanAirZoneWithMandates> directDebitMandates = directDebitMandatesService
+          .getDirectDebitMandates(ANY_ACCOUNT_ID);
+
+      // then
+      assertThat(directDebitMandates).hasSize(1);
+      assertThat(directDebitMandates.get(0).getMandates().get(0).getStatus())
+          .isEqualTo(Status.ACTIVE.toString());
+      assertThat(directDebitMandates.iterator().next().getMandates()).hasSize(2);
+    }
+
+    private void mockDirectDebitMandatesInAccountsWithStatuses(String paymentProviderMandateId) {
+      List<DirectDebitMandate> mandates = Stream.of(cacheableStatuses().iterator().next(),
+          notCacheableStatuses().iterator().next())
+          .map(status -> DirectDebitMandate.builder()
+              .accountId(ANY_ACCOUNT_ID)
+              .cleanAirZoneId(ANY_CLEAN_AIR_ZONE_ID)
+              .directDebitMandateId(UUID.randomUUID())
+              .status(status)
+              .paymentProviderMandateId(paymentProviderMandateId)
+              .build())
+          .collect(Collectors.toList());
+      when(accountsRepository.getAccountDirectDebitMandatesSync(ANY_ACCOUNT_ID))
+          .thenReturn(Response.success(AccountDirectDebitMandatesResponse.builder()
+              .directDebitMandates(mandates)
+              .build()));
+    }
+
+    private void mockGoCardlessSpecificMandate(String paymentProviderMandateId) {
+      MandateService mandateService = Mockito.mock(MandateService.class);
+      MandateGetRequest mandateGetRequest = Mockito.mock(MandateGetRequest.class);
+      Mandate mandate = Mockito.mock(Mandate.class);
+      Status mandateStatus = Mockito.mock(Status.class);
+      when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
+          .thenReturn(goCardlessClient);
+      when(goCardlessClient.mandates()).thenReturn(mandateService);
+      when(goCardlessClient.mandates().get(paymentProviderMandateId)).thenReturn(mandateGetRequest);
+      when(goCardlessClient.mandates().get(paymentProviderMandateId).execute()).thenReturn(mandate);
+      when(goCardlessClient.mandates().get(paymentProviderMandateId).execute().getStatus())
+          .thenReturn(mandateStatus);
+      when(goCardlessClient.mandates().get(paymentProviderMandateId).execute().getStatus().name())
+          .thenReturn(Status.ACTIVE.name());
     }
 
     @Nested
