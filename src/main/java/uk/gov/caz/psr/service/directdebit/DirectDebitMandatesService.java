@@ -399,7 +399,7 @@ public class DirectDebitMandatesService {
     try {
       com.gocardless.resources.Mandate goCardlessMandate = client
           .mandates()
-          .get(mandate.getDirectDebitMandateId().toString())
+          .get(mandate.getPaymentProviderMandateId())
           .execute();
 
       log.info("Successfully got mandate for id {}", mandate.getDirectDebitMandateId());
