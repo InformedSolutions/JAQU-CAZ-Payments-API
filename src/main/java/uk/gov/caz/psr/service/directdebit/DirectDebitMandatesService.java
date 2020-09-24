@@ -37,7 +37,6 @@ import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest.SingleDirect
 import uk.gov.caz.psr.model.directdebit.CleanAirZoneWithMandates;
 import uk.gov.caz.psr.model.directdebit.Mandate;
 import uk.gov.caz.psr.repository.AccountsRepository;
-import uk.gov.caz.psr.repository.ExternalDirectDebitRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 import uk.gov.caz.psr.util.ResponseBodyUtils;
@@ -61,7 +60,6 @@ public class DirectDebitMandatesService {
 
   private final VccsRepository vccsRepository;
   private final AccountsRepository accountsRepository;
-  private final ExternalDirectDebitRepository externalDirectDebitRepository;
   private final AbstractGoCardlessClientFactory goCardlessClientFactory;
 
   /**

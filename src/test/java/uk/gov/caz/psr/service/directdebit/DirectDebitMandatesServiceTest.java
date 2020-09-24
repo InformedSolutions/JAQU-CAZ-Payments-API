@@ -48,19 +48,13 @@ import uk.gov.caz.psr.controller.exception.directdebit.GoCardlessException;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse.DirectDebitMandate.DirectDebitMandateStatus;
-import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateResponse;
-import uk.gov.caz.psr.dto.external.directdebit.mandates.MandateStatus;
 import uk.gov.caz.psr.model.directdebit.CleanAirZoneWithMandates;
 import uk.gov.caz.psr.repository.AccountsRepository;
-import uk.gov.caz.psr.repository.ExternalDirectDebitRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 @ExtendWith(MockitoExtension.class)
 class DirectDebitMandatesServiceTest {
-
-  @Mock
-  private ExternalDirectDebitRepository externalDirectDebitRepository;
 
   @Mock
   private VccsRepository vccsRepository;

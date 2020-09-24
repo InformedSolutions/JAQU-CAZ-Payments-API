@@ -5,12 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.SingleEntrantPayment;
-import uk.gov.caz.psr.repository.ExternalDirectDebitRepository;
+import uk.gov.caz.psr.model.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.repository.PaymentRepository;
-import uk.gov.caz.psr.service.directdebit.DirectDebitPaymentStatusUpdater;
+import uk.gov.caz.psr.service.directdebit.DirectDebitPaymentFinalizer;
+import uk.gov.caz.psr.service.directdebit.DirectDebitPaymentService;
 
 /**
  * A service which is responsible creating DirectDebit Payment in PaymentProvider.
@@ -22,8 +22,8 @@ public class CreateDirectDebitPaymentService {
 
   private final PaymentRepository paymentRepository;
   private final InitiateEntrantPaymentsService initiateEntrantPaymentsService;
-  private final ExternalDirectDebitRepository externalDirectDebitRepository;
-  private final DirectDebitPaymentStatusUpdater directDebitPaymentStatusUpdater;
+  private final DirectDebitPaymentFinalizer directDebitPaymentFinalizer;
+  private final DirectDebitPaymentService directDebitPaymentService;
 
   /**
    * Creates Payment in Payment Provider, inserts Payment details into database.
@@ -33,15 +33,14 @@ public class CreateDirectDebitPaymentService {
     try {
       log.info("Create DirectPayment process: start");
       Payment paymentWithInternalId = initializePaymentWithEntrants(payment, entrantPayments);
+      DirectDebitPayment directDebitPayment = directDebitPaymentService
+          .collectPayment(payment.getCleanAirZoneId(),
+              paymentWithInternalId.getTotalPaid(), paymentWithInternalId.getReferenceNumber(),
+              paymentWithInternalId.getPaymentProviderMandateId());
 
-      DirectDebitPayment directDebitPayment = externalDirectDebitRepository
-          .collectPayment(paymentWithInternalId.getPaymentProviderMandateId(),
-              paymentWithInternalId.getTotalPaid(),
-              paymentWithInternalId.getReferenceNumber().toString(),
-              payment.getCleanAirZoneId());
-
-      Payment paymentWithExternalId = directDebitPaymentStatusUpdater
-          .updateWithDirectDebitPaymentDetails(paymentWithInternalId, directDebitPayment,
+      Payment paymentWithExternalId = directDebitPaymentFinalizer
+          .finalizeSuccessfulPayment(paymentWithInternalId,
+              directDebitPayment.getPaymentId(),
               payment.getEmailAddress());
       return paymentWithExternalId;
     } finally {
