@@ -1,0 +1,15 @@
+{
+  "error": {
+    "message": "Mandate not found",
+    "errors": [
+      {
+        "reason": "link_not_found",
+        "message": "Mandate not found"
+      }
+    ],
+    "documentation_url": "https://developer.gocardless.com/api-reference#link_not_found",
+    "type": "invalid_api_usage",
+    "request_id": "0AA40E23502D_AC12185C1F92_5F6B6909_5EE2002C",
+    "code": 422
+  }
+}

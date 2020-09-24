@@ -53,16 +53,6 @@ public class CredentialRetrievalManager {
   }
 
   /**
-   * Gets the API key for a given Direct Debit GOV.UK Pay account (each CAZ has one).
-   *
-   * @param cleanAirZoneId Clean Air Zone identifier.
-   * @return API key wrapped in {@link Optional}.
-   */
-  public Optional<String> getDirectDebitApiKey(UUID cleanAirZoneId) {
-    return getApiKeyUsingSecret(cleanAirZoneId, directDebitSecretName);
-  }
-
-  /**
    * Gets the access token for a given GoCardless account (each CAZ has one).
    *
    * @param cleanAirZoneId Clean Air Zone identifier.

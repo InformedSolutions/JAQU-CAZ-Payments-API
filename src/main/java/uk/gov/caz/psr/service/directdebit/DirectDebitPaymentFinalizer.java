@@ -6,9 +6,10 @@ import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
+import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.PaymentUpdateStatusBuilder;
@@ -18,7 +19,7 @@ import uk.gov.caz.psr.service.PaymentUpdateStatusBuilder;
  */
 @Service
 @AllArgsConstructor
-public class DirectDebitPaymentStatusUpdater {
+public class DirectDebitPaymentFinalizer {
 
   private final PaymentUpdateStatusBuilder paymentUpdateStatusBuilder;
   private final PaymentRepository internalPaymentsRepository;
@@ -27,15 +28,15 @@ public class DirectDebitPaymentStatusUpdater {
   /**
    * Updates {@code payment} with a new {@code status}.
    */
-  public Payment updateWithDirectDebitPaymentDetails(Payment payment,
-      DirectDebitPayment directDebitPayment, String email) {
-    checkPreconditions(payment, directDebitPayment, email);
+  public Payment finalizeSuccessfulPayment(Payment payment, String directDebitPaymentId,
+      String email) {
+    checkPreconditions(payment, directDebitPaymentId, email);
 
     Payment paymentWithExternalId = buildPaymentWithExternalIdAndSubmittedTimestamp(payment,
-        directDebitPayment);
+        directDebitPaymentId);
     Payment updatedPayment = paymentUpdateStatusBuilder
         .buildWithExternalPaymentDetails(paymentWithExternalId,
-            buildExternalPaymentDetails(directDebitPayment));
+            buildExternalPaymentDetailsWithSuccessPaymentStatus());
 
     internalPaymentsRepository.update(updatedPayment);
 
@@ -55,17 +56,12 @@ public class DirectDebitPaymentStatusUpdater {
 
   /**
    * Verifies passed arguments if they are valid when invoking {@link
-   * DirectDebitPaymentStatusUpdater#updateWithDirectDebitPaymentDetails(Payment,
-   * DirectDebitPayment, String)}.
+   * DirectDebitPaymentFinalizer#finalizeSuccessfulPayment(Payment, String, String)}.
    */
-  private void checkPreconditions(Payment payment, DirectDebitPayment directDebitPayment,
-      String email) {
+  private void checkPreconditions(Payment payment, String directDebitPaymentId, String email) {
     Preconditions.checkNotNull(payment, "Payment cannot be null");
-    Preconditions.checkNotNull(directDebitPayment, "DirectDebitPayment cannot be null");
-    Preconditions.checkArgument(
-        directDebitPayment.getExternalPaymentStatus() != payment.getExternalPaymentStatus(),
-        "Status cannot be equal to the existing status ('%s' != '%s')",
-        directDebitPayment.getExternalPaymentStatus(), payment.getExternalPaymentStatus());
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(directDebitPaymentId),
+        "directDebitPaymentId cannot be empty");
     Preconditions.checkArgument(!payment.getEntrantPayments().isEmpty(),
         "Entrant payments cannot be empty");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(email),
@@ -76,19 +72,18 @@ public class DirectDebitPaymentStatusUpdater {
    * Builds {@link Payment} with {@code externalId} based on {@link DirectDebitPayment}.
    */
   private Payment buildPaymentWithExternalIdAndSubmittedTimestamp(Payment payment,
-      DirectDebitPayment directDebitPayment) {
+      String directDebitPaymentId) {
     return payment.toBuilder()
         .submittedTimestamp(LocalDateTime.now())
-        .externalId(directDebitPayment.getPaymentId()).build();
+        .externalId(directDebitPaymentId).build();
   }
 
   /**
    * Builds {@link ExternalPaymentDetails} from {@link DirectDebitPayment}.
    */
-  private ExternalPaymentDetails buildExternalPaymentDetails(
-      DirectDebitPayment directDebitPayment) {
+  private ExternalPaymentDetails buildExternalPaymentDetailsWithSuccessPaymentStatus() {
     return ExternalPaymentDetails.builder()
-        .externalPaymentStatus(directDebitPayment.getExternalPaymentStatus())
+        .externalPaymentStatus(ExternalPaymentStatus.SUCCESS)
         .build();
   }
 }

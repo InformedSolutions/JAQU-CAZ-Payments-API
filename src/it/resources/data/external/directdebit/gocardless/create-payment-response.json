@@ -1,0 +1,25 @@
+{
+  "payments": {
+    "id": "PAYMENT_ID",
+    "created_at": "2020-09-23T12:21:02.660Z",
+    "charge_date": "2020-09-28",
+    "amount": 100,
+    "description": null,
+    "currency": "GBP",
+    "status": "pending_submission",
+    "amount_refunded": 0,
+    "reference": "WINEBOX001",
+    "metadata": {},
+    "fx": {
+      "fx_currency": "EUR",
+      "fx_amount": null,
+      "exchange_rate": null,
+      "estimated_exchange_rate": "1.08788"
+    },
+    "links": {
+      "mandate": "MD000BRA229NXQ",
+      "creditor": "CR000065PHEDKA"
+    },
+    "retry_if_possible": false
+  }
+}
