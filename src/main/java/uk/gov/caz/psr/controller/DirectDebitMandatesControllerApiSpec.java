@@ -69,8 +69,9 @@ public interface DirectDebitMandatesControllerApiSpec {
       @PathVariable("cleanAirZoneId") UUID cleanAirZoneId);
 
   /**
-   * Allows Fleets Front-end to create a new DirectDebitMandate assigned to company. It creates the
-   * direct-debit-mandate in GOV.UK PAY and returns next steps which needs to be completed.
+   * Allows Fleets Front-end to initiate the creation of a new Direct Debit mandate assigned to
+   * company. It creates the redirect-flow in GoCardless and returns next steps which needs to be
+   * completed.
    *
    * @return {@link CreateDirectDebitMandateResponse} wrapped in {@link ResponseEntity}.
    */
