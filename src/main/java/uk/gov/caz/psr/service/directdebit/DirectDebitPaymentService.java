@@ -26,7 +26,7 @@ public class DirectDebitPaymentService {
    * Obtains the registered direct debit mandates for the given account by its identifier {@code
    * accountId}. If the account does not exist, a list with only clean air zones is returned.
    */
-  public DirectDebitPayment collectPayment(UUID cleanAirZoneId, int amount,
+  public DirectDebitPayment collectPayment(UUID internalPaymentId, UUID cleanAirZoneId, int amount,
       Long reference, String mandateId) {
     try {
       log.info("Collect DirectDebitPayment: start");
@@ -37,6 +37,7 @@ public class DirectDebitPaymentService {
           .withCurrency(Currency.GBP)
           .withReference(reference.toString())
           .withLinksMandate(mandateId)
+          .withIdempotencyKey(internalPaymentId.toString())
           .execute();
 
       return DirectDebitPayment.from(externalPayment, mandateId);
