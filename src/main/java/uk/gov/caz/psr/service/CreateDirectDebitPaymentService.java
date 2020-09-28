@@ -34,7 +34,7 @@ public class CreateDirectDebitPaymentService {
       log.info("Create DirectPayment process: start");
       Payment paymentWithInternalId = initializePaymentWithEntrants(payment, entrantPayments);
       DirectDebitPayment directDebitPayment = directDebitPaymentService
-          .collectPayment(payment.getCleanAirZoneId(),
+          .collectPayment(paymentWithInternalId.getId(), payment.getCleanAirZoneId(),
               paymentWithInternalId.getTotalPaid(), paymentWithInternalId.getReferenceNumber(),
               paymentWithInternalId.getPaymentProviderMandateId());
 
