@@ -11,8 +11,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -99,11 +101,42 @@ public class CredentialRetrievalManagerTest {
     UUID cleanAirZoneId = UUID.fromString("105db9f8-cdd0-4b0c-b906-29ce979fdc29");
     ObjectNode node = objectMapper.createObjectNode();
     node.put(cleanAirZoneId.toString().replace("-", ""), "testApiKey");
-    Mockito.when(getSecretValueResponse.getSecretBinary()).thenReturn(ByteBuffer.wrap("eyIxMDVkYjlmOGNkZDA0YjBjYjkwNjI5Y2U5NzlmZGMyOSI6ICJ0ZXN0QXBpS2V5In0=".getBytes()));
+    Mockito.when(getSecretValueResponse.getSecretBinary()).thenReturn(ByteBuffer
+        .wrap("eyIxMDVkYjlmOGNkZDA0YjBjYjkwNjI5Y2U5NzlmZGMyOSI6ICJ0ZXN0QXBpS2V5In0=".getBytes()));
 
     Optional<String> apiKey = credentialRetrievalManager.getCardApiKey(cleanAirZoneId);
 
     assertThat(apiKey).isPresent();
     assertThat(apiKey).contains("testApiKey");
+  }
+
+  @Test
+  public void getDirectDebitAccessToken() {
+    // given
+    UUID cazId = UUID.randomUUID();
+    String accessToken = "accesstoken";
+    mockAccessTokenForCaz(cazId, accessToken);
+
+    Optional<String> result = credentialRetrievalManager
+        .getDirectDebitAccessToken(cazId);
+
+    // then
+    assertThat(result).contains(accessToken);
+  }
+
+  @SneakyThrows
+  private void mockAccessTokenForCaz(UUID cazId, String accessToken) {
+    GetSecretValueResult getSecretValueResponse = mock(GetSecretValueResult.class);
+    Mockito.when(client.getSecretValue(Mockito.any(GetSecretValueRequest.class)))
+        .thenReturn(getSecretValueResponse);
+    Mockito.when(getSecretValueResponse.getSecretString())
+        .thenReturn(
+            objectMapper.writeValueAsString(
+                Collections.singletonMap(
+                    cazId.toString().replace("-", ""),
+                    accessToken
+                )
+            )
+        );
   }
 }

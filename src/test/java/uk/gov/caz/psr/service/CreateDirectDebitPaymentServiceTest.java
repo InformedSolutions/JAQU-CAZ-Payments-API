@@ -18,9 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.dto.directdebit.CreateDirectDebitPaymentRequest;
 import uk.gov.caz.psr.model.Payment;
-import uk.gov.caz.psr.repository.ExternalDirectDebitRepository;
 import uk.gov.caz.psr.repository.PaymentRepository;
-import uk.gov.caz.psr.service.directdebit.DirectDebitPaymentStatusUpdater;
+import uk.gov.caz.psr.service.directdebit.DirectDebitPaymentFinalizer;
 import uk.gov.caz.psr.util.DirectDebitPaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -35,10 +34,7 @@ class CreateDirectDebitPaymentServiceTest {
   private InitiateEntrantPaymentsService initiateEntrantPaymentsService;
 
   @Mock
-  private ExternalDirectDebitRepository externalDirectDebitRepository;
-
-  @Mock
-  private DirectDebitPaymentStatusUpdater directDebitPaymentStatusUpdater;
+  private DirectDebitPaymentFinalizer directDebitPaymentFinalizer;
 
   @InjectMocks
   CreateDirectDebitPaymentService createDirectDebitPaymentService;

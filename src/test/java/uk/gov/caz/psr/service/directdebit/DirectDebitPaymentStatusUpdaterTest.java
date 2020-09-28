@@ -16,18 +16,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
+import uk.gov.caz.psr.model.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.model.ExternalPaymentDetails;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.PaymentUpdateStatusBuilder;
-import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.DirectDebitPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
 
 @ExtendWith(MockitoExtension.class)
-class DirectDebitPaymentStatusUpdaterTest {
+class DirectDebitPaymentFinalizerTest {
 
   private static final String ANY_EMAIL = "test@email.com";
 
@@ -39,18 +38,18 @@ class DirectDebitPaymentStatusUpdaterTest {
   private ApplicationEventPublisher applicationEventPublisher;
 
   @InjectMocks
-  DirectDebitPaymentStatusUpdater directDebitPaymentStatusUpdater;
+  DirectDebitPaymentFinalizer directDebitPaymentFinalizer;
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPaymentIsNull() {
     // given
     Payment payment = null;
-    DirectDebitPayment directDebitPayment = DirectDebitPayments.anyWithStatus("success");
+    DirectDebitPayment directDebitPayment = DirectDebitPayments.any();
 
     // when
     Throwable throwable = catchThrowable(
-        () -> directDebitPaymentStatusUpdater
-            .updateWithDirectDebitPaymentDetails(payment, directDebitPayment, ANY_EMAIL));
+        () -> directDebitPaymentFinalizer
+            .finalizeSuccessfulPayment(payment, directDebitPayment.getPaymentId(), ANY_EMAIL));
 
     // then
     assertThat(throwable).isInstanceOf(NullPointerException.class)
@@ -59,19 +58,36 @@ class DirectDebitPaymentStatusUpdaterTest {
   }
 
   @Test
-  public void shouldThrowNullPointerExceptionWhenDirectDebitPayment() {
+  public void shouldThrowIllegalArgumentExceptionWhenDirectDebitPaymentIdIsNull() {
     // given
     Payment payment = Payments.existing();
-    DirectDebitPayment directDebitPayment = null;
+    String directDebitPaymentId = null;
 
     // when
     Throwable throwable = catchThrowable(
-        () -> directDebitPaymentStatusUpdater
-            .updateWithDirectDebitPaymentDetails(payment, directDebitPayment, ANY_EMAIL));
+        () -> directDebitPaymentFinalizer
+            .finalizeSuccessfulPayment(payment, directDebitPaymentId, ANY_EMAIL));
 
     // then
-    assertThat(throwable).isInstanceOf(NullPointerException.class)
-        .hasMessage("DirectDebitPayment cannot be null");
+    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("directDebitPaymentId cannot be empty");
+    verify(applicationEventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  public void shouldThrowIllegalArgumentExceptionWhenDirectDebitPaymentIdIsEmpty() {
+    // given
+    Payment payment = Payments.existing();
+    String directDebitPaymentId = "";
+
+    // when
+    Throwable throwable = catchThrowable(
+        () -> directDebitPaymentFinalizer
+            .finalizeSuccessfulPayment(payment, directDebitPaymentId, ANY_EMAIL));
+
+    // then
+    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("directDebitPaymentId cannot be empty");
     verify(applicationEventPublisher, never()).publishEvent(any());
   }
 
@@ -79,12 +95,12 @@ class DirectDebitPaymentStatusUpdaterTest {
   public void shouldThrowIllegalArgumentExceptionWhenPaymentHasEmptyVehicleEntrants() {
     // given
     Payment payment = paymentWithEmptyVehicleEntrants();
-    DirectDebitPayment directDebitPayment = DirectDebitPayments.anyWithStatus("success");
+    DirectDebitPayment directDebitPayment = DirectDebitPayments.any();
 
     // when
     Throwable throwable = catchThrowable(
-        () -> directDebitPaymentStatusUpdater
-            .updateWithDirectDebitPaymentDetails(payment, directDebitPayment, ANY_EMAIL));
+        () -> directDebitPaymentFinalizer
+            .finalizeSuccessfulPayment(payment, directDebitPayment.getPaymentId(), ANY_EMAIL));
 
     // then
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -95,14 +111,14 @@ class DirectDebitPaymentStatusUpdaterTest {
   @Test
   public void shouldThrowIllegalArgumentExceptionWhenEmailNotPresent() {
     // given
-    Payment payment = anyPaymentWithStatus(ExternalPaymentStatus.INITIATED, null);
-    DirectDebitPayment directDebitPayment = DirectDebitPayments.anyWithStatus("success");
+    Payment payment = Payments.existing();
+    DirectDebitPayment directDebitPayment = DirectDebitPayments.any();
     String email = null;
 
     // when
     Throwable throwable = catchThrowable(
-        () -> directDebitPaymentStatusUpdater
-            .updateWithDirectDebitPaymentDetails(payment, directDebitPayment, email));
+        () -> directDebitPaymentFinalizer
+            .finalizeSuccessfulPayment(payment, directDebitPayment.getPaymentId(), email));
 
     // then
     assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
@@ -111,34 +127,15 @@ class DirectDebitPaymentStatusUpdaterTest {
   }
 
   @Test
-  public void shouldThrowIllegalArgumentExceptionWhenNewStatusIsTheSameAsTheExistingOne() {
-    // given
-    Payment payment = anyPaymentWithStatus(ExternalPaymentStatus.SUCCESS, LocalDateTime.now());
-    DirectDebitPayment directDebitPayment = DirectDebitPayments.anyWithStatus("success");
-
-    // when
-    Throwable throwable = catchThrowable(
-        () -> directDebitPaymentStatusUpdater
-            .updateWithDirectDebitPaymentDetails(payment, directDebitPayment, ANY_EMAIL));
-
-    // then
-    assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
-        .hasMessageStartingWith("Status cannot be equal to the existing status");
-    verify(applicationEventPublisher, never()).publishEvent(any());
-  }
-
-  @Test
   public void shouldPerformUpdateWithLinkingToExistingVehicleEntrants() {
     // given
-    Payment payment = anyPaymentWithStatus(ExternalPaymentStatus.INITIATED, null);
-    DirectDebitPayment directDebitPayment = DirectDebitPayments.anyWithStatus("success");
+    Payment payment = Payments.existing();
+    DirectDebitPayment directDebitPayment = DirectDebitPayments.any();
     Payment newPayment = mockCallsToServices(payment, directDebitPayment);
-    ExternalPaymentDetails externalPaymentDetails = externalPaymentDetailsForDirectDebitPayment(
-        directDebitPayment);
 
     // when
-    Payment result = directDebitPaymentStatusUpdater
-        .updateWithDirectDebitPaymentDetails(payment, directDebitPayment, ANY_EMAIL);
+    Payment result = directDebitPaymentFinalizer
+        .finalizeSuccessfulPayment(payment, directDebitPayment.getPaymentId(), ANY_EMAIL);
 
     // then
     assertThat(result).isEqualTo(newPayment);
@@ -155,36 +152,19 @@ class DirectDebitPaymentStatusUpdaterTest {
         .build();
   }
 
-  private Payment anyPaymentWithStatus(ExternalPaymentStatus status,
-      LocalDateTime authorisedTimestamp) {
-    return TestObjectFactory.Payments.existing()
-        .toBuilder()
-        .authorisedTimestamp(authorisedTimestamp)
-        .externalPaymentStatus(status)
-        .build();
-  }
-
   private Payment mockCallsToServices(Payment payment, DirectDebitPayment directDebitPayment) {
-    Payment newPayment = anyPaymentWithStatus(directDebitPayment.getExternalPaymentStatus(), LocalDateTime.now())
-        .toBuilder()
+    Payment newPayment = Payments.existing().toBuilder()
         .submittedTimestamp(LocalDateTime.now())
         .build();
-    ExternalPaymentDetails externalPaymentDetails = externalPaymentDetailsForDirectDebitPayment(
-        directDebitPayment);
+    ExternalPaymentDetails externalPaymentDetails = externalPaymentDetailsForDirectDebitPayment();
     given(paymentUpdateStatusBuilder.buildWithExternalPaymentDetails(any(),
         eq(externalPaymentDetails))).willReturn(newPayment);
     return newPayment;
   }
 
-  private ExternalPaymentDetails externalPaymentDetailsForDirectDebitPayment(
-      DirectDebitPayment directDebitPayment) {
+  private ExternalPaymentDetails externalPaymentDetailsForDirectDebitPayment() {
     return ExternalPaymentDetails.builder()
-        .externalPaymentStatus(directDebitPayment.getExternalPaymentStatus())
+        .externalPaymentStatus(ExternalPaymentStatus.SUCCESS)
         .build();
-  }
-
-  private Payment buildPaymentWithExternalId(Payment payment,
-      DirectDebitPayment directDebitPayment) {
-    return payment.toBuilder().externalId(directDebitPayment.getPaymentId()).build();
   }
 }

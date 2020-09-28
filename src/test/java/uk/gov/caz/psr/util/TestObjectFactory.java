@@ -18,8 +18,7 @@ import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.dto.directdebit.CreateDirectDebitPaymentRequest;
-import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPayment;
-import uk.gov.caz.psr.dto.external.directdebit.DirectDebitPaymentState;
+import uk.gov.caz.psr.model.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -358,7 +357,7 @@ public class TestObjectFactory {
       return DirectDebitPayment.builder()
           .amount(1000)
           .mandateId("exampleMandateId")
-          .state(DirectDebitPaymentState.builder().status("success").build())
+          .status("success")
           .reference(UUID.randomUUID().toString())
           .paymentId(UUID.randomUUID().toString())
           .build();
@@ -368,7 +367,7 @@ public class TestObjectFactory {
       return DirectDebitPayment.builder()
           .amount(1000)
           .mandateId("exampleMandateId")
-          .state(DirectDebitPaymentState.builder().status(status).build())
+          .status(status)
           .reference(UUID.randomUUID().toString())
           .paymentId(UUID.randomUUID().toString())
           .build();
