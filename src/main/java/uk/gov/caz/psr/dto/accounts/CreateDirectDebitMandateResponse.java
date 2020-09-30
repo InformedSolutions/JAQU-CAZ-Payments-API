@@ -26,7 +26,7 @@ public class CreateDirectDebitMandateResponse {
   UUID cleanAirZoneId;
 
   /**
-   * Identifier generated for the mandate by GOV.UK Pay
+   * Identifier generated for the mandate by GoCardless.
    */
   String paymentProviderMandateId;
 }
