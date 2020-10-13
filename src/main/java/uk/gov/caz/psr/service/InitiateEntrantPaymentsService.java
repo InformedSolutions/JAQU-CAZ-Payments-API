@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.caz.psr.controller.exception.EntrantPaymentAlreadyPaidException;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -100,14 +101,14 @@ public class InitiateEntrantPaymentsService {
 
   /**
    * Checks whether the associated payment for {@code entrantPayment} is finished or the payment has
-   * already been successfully completed.
-   * Checks whether the associated payment for {@code entrantPayment} is finished or the payment has
-   * already been successfully completed. If the payment is not finished yet, the payment is
-   * considered a dangling one and the same logic as for dangling payments is applied.
+   * already been successfully completed. Checks whether the associated payment for {@code
+   * entrantPayment} is finished or the payment has already been successfully completed. If the
+   * payment is not finished yet, the payment is considered a dangling one and the same logic as for
+   * dangling payments is applied.
    */
   private void processRelatedPayment(EntrantPayment entrantPayment) {
     if (InternalPaymentStatus.PAID == entrantPayment.getInternalPaymentStatus()) {
-      throw new IllegalStateException("Cannot process the payment as the entrant on "
+      throw new EntrantPaymentAlreadyPaidException("Cannot process the payment as the entrant on "
           + entrantPayment.getTravelDate() + " has already been paid");
     }
 
