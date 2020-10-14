@@ -143,7 +143,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .whenSubmitted()
 
         .then()
-        .expectHttpInternalServerErrorStatusCode()
+        .expectHttpUnprocessableEntityErrorStatusCode()
         .andNoNewPaymentEntityIsCreatedInDatabase();
   }
 
@@ -440,6 +440,11 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
           .extract()
           .response()
           .as(InitiatePaymentResponse.class);
+      return this;
+    }
+
+    public PaymentJourneyAssertion expectHttpUnprocessableEntityErrorStatusCode() {
+      validatableResponse.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value());
       return this;
     }
 
