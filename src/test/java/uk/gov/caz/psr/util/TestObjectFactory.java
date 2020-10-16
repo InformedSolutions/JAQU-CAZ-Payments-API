@@ -189,7 +189,23 @@ public class TestObjectFactory {
           .submittedTimestamp(LocalDateTime.now())
           .telephonePayment(false)
           .totalPaid(40)
+          .operatorId(UUID.randomUUID())
           .entrantPayments(newArrayList(EntrantPayments.anyPaid()))
+          .build();
+    }
+
+    public static Payment preparePaymentWithTwoEntrantPayments(UUID paymentId) {
+      return Payment.builder()
+          .id(paymentId)
+          .referenceNumber(1500L)
+          .externalId("123")
+          .externalPaymentStatus(ExternalPaymentStatus.CREATED)
+          .paymentMethod(PaymentMethod.DIRECT_DEBIT)
+          .submittedTimestamp(LocalDateTime.now())
+          .telephonePayment(false)
+          .totalPaid(40)
+          .operatorId(UUID.randomUUID())
+          .entrantPayments(newArrayList(EntrantPayments.anyPaid(), EntrantPayments.anyPaid()))
           .build();
     }
 

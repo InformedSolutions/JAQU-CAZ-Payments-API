@@ -2,18 +2,21 @@
   "cleanAirZones": [
     {
       "name": "Birmingham",
+      "directDebitEnabled": true,
       "cleanAirZoneId": "53e03a28-0627-11ea-9511-ffaaee87e375",
       "boundaryUrl": "https://www.birmingham.gov.uk/info/20076/pollution/1763/a_clean_air_zone_for_birmingham/3",
       "activeChargeStartDate": "2018-10-28"
     },
     {
       "name": "Leeds",
+      "directDebitEnabled": false,
       "cleanAirZoneId": "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3",
       "boundaryUrl": "https://cleanairleeds.co.uk",
       "activeChargeStartDate": "2018-10-29"
     },
     {
       "name": "Bath",
+      "directDebitEnabled": false,
       "cleanAirZoneId": "b8e53786-c5ca-426a-a701-b14ee74857d4",
       "boundaryUrl": "https://www.bathnes.gov.uk/bath-breathes-2021-overview/the-zone-boundary",
       "activeChargeStartDate": "2018-10-30"

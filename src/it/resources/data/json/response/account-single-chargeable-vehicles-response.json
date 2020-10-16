@@ -1,0 +1,23 @@
+{
+  "vehicles": [
+    {
+      "vrn": "CAS123",
+      "isExempt": false,
+      "isRetrofitted": false,
+      "vehicleType": "Car",
+      "cachedCharges": [
+        {
+          "cazId": "5cd7441d-766f-48ff-b8ad-1809586fea37",
+          "charge": 100,
+          "tariffCode": "tariffCode"
+        },
+        {
+          "cazId": "4dc6ea23-77d3-4bfe-8180-7662c33f88ad",
+          "charge": 100,
+          "tariffCode": "tariffCode"
+        }
+      ]
+    }
+  ],
+  "totalVehiclesCount": 1
+}

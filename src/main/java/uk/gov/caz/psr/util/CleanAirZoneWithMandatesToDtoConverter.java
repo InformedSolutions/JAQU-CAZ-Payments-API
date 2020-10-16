@@ -30,6 +30,7 @@ public class CleanAirZoneWithMandatesToDtoConverter {
         .map(cleanAirZoneWithMandate ->
             DirectDebitMandatesResponse.CleanAirZoneWithMandates.builder()
                 .cazId(cleanAirZoneWithMandate.getCleanAirZoneId())
+                .directDebitEnabled(cleanAirZoneWithMandate.isDirectDebitEnabled())
                 .cazName(cleanAirZoneWithMandate.getCazName())
                 .mandates(convertMandates(cleanAirZoneWithMandate.getMandates()))
                 .build())

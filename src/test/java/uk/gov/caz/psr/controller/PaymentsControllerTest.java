@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,7 @@ import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.PaymentDetailsConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
+import uk.gov.caz.psr.util.ReferencesHistoryConverter;
 import uk.gov.caz.psr.util.TestObjectFactory;
 import uk.gov.caz.psr.util.TestObjectFactory.EntrantPayments;
 import uk.gov.caz.psr.util.TestObjectFactory.Payments;
@@ -66,6 +68,9 @@ class PaymentsControllerTest {
 
   @MockBean
   private PaymentDetailsConverter paymentDetailsConverter;
+
+  @MockBean
+  private ReferencesHistoryConverter referencesHistoryConverter;
 
   @MockBean
   private InitiatePaymentService initiatePaymentService;
@@ -106,22 +111,9 @@ class PaymentsControllerTest {
   private static final String GET_PAID_PATH = PaymentsController.BASE_PATH + "/"
       + PaymentsController.GET_PAID_VEHICLE_ENTRANTS;
 
-  private static final String GET_CLEAN_AIR_ZONES_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_CLEAN_AIR_ZONES;
+  private static final String GET_REFERENCES_HISTORY = PaymentsController.BASE_PATH + "/"
+      + PaymentsController.GET_REFERENCES_HISTORY;
 
-  private static final String GET_COMPLIANCE_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_COMPLIANCE;
-  
-  private static final String GET_VEHICLE_DETAILS_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_VEHICLE_DETAILS;
-  
-  private static final String GET_UNRECOGNISED_VEHICLE_COMPLIANCE_PATH =
-      PaymentsController.BASE_PATH + "/"
-          + PaymentsController.GET_UNRECOGNISED_VEHICLE_COMPLIANCE;
-  
   @Nested
   class InitiatePayment {
 
@@ -144,11 +136,7 @@ class PaymentsControllerTest {
     public void emptyTransactionsShouldResultIn400() throws Exception {
       String payload = paymentRequestWithEmptyTransactions();
 
-      mockMvc
-          .perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+      executeRequest(payload)
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("'transactions' cannot be null or empty"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
@@ -159,10 +147,7 @@ class PaymentsControllerTest {
     public void lackOfTelephonePaymentShouldResultIn400() throws Exception {
       String payload = paymentRequestWithoutTelephonePayment();
 
-      mockMvc.perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+      executeRequest(payload)
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("'telephonePayment' cannot be null"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
@@ -174,11 +159,7 @@ class PaymentsControllerTest {
     public void invalidVrnShouldResultIn400(String vrn) throws Exception {
       String payload = paymentRequestWithVrn(vrn);
 
-      mockMvc
-          .perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+      executeRequest(payload)
           .andExpect(status().isBadRequest());
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
           any());
@@ -188,11 +169,7 @@ class PaymentsControllerTest {
     public void invalidChargeShouldResultIn400() throws Exception {
       String payload = paymentRequestWithAmount(-1250);
 
-      mockMvc
-          .perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+      executeRequest(payload)
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("'charge' in all transactions must be positive"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
@@ -203,11 +180,7 @@ class PaymentsControllerTest {
     public void duplicatedTransactionsShouldResultIn400() throws Exception {
       String payload = paymentRequestWithDuplicatedTransactions();
 
-      mockMvc
-          .perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+      executeRequest(payload)
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("Request cannot have duplicated travel date(s)"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
@@ -218,11 +191,7 @@ class PaymentsControllerTest {
     public void invalidReturnUrlShouldResultIn400() throws Exception {
       String payload = paymentRequestWithEmptyReturnUrl();
 
-      mockMvc
-          .perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+      executeRequest(payload)
           .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message")
           .value("'returnUrl' cannot be null or empty"));
 
@@ -234,16 +203,54 @@ class PaymentsControllerTest {
     public void invalidTariffCodeShouldResultIn400() throws Exception {
       String payload = paymentRequestWithEmptyTariffCode();
 
-      mockMvc
-          .perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+      executeRequest(payload)
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message").value(
               "'tariffCode' in all transactions cannot be null or empty"));
       verify(initiatePaymentService, never()).createPayment(any(), anyList(),
           any());
+    }
+
+    private ResultActions executeRequest(String payload) throws Exception {
+      return mockMvc
+          .perform(post(BASE_PATH).content(payload)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID));
+    }
+
+    @Nested
+    class WhenOperatorIdIsPresentAndTelephonePaymentIsFalse {
+
+      @Test
+      public void shouldResultIn400StatusCodeResponse() throws Exception {
+        String payload = paymentRequestWithOperatorIdAndTelephonePaymentSetTo(
+            UUID.randomUUID().toString(), false
+        );
+
+        executeRequest(payload)
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value(
+                "'operatorId' cannot be set when 'telephonePayment' is false"));
+        verify(initiatePaymentService, never()).createPayment(any(), anyList(),
+            any());
+      }
+    }
+
+    @Nested
+    class WhenContainsMalformedOperatorId {
+
+      @ParameterizedTest
+      @ValueSource(
+          strings = {"24d4d8f3b-3b81-44f3-968d-d1c1a48b4ac8", "malformed-uuid"})
+      public void shouldResultIn400(String operatorId) throws Exception {
+        String payload = paymentRequestWithMalformedOperatorId(operatorId);
+
+        executeRequest(payload)
+            .andExpect(status().isBadRequest()).andExpect(
+            jsonPath("$.message").value("'operatorId' must be a valid UUID"));
+        verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
+      }
     }
 
     @Nested
@@ -255,15 +262,10 @@ class PaymentsControllerTest {
       public void shouldResultIn400(String userId) throws Exception {
         String payload = paymentRequestWithMalformedUserId(userId);
 
-        mockMvc
-            .perform(post(BASE_PATH).content(payload)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+        executeRequest(payload)
             .andExpect(status().isBadRequest()).andExpect(
             jsonPath("$.message").value("'userId' must be a valid UUID"));
-        verify(initiatePaymentService, never()).createPayment(any(), anyList(),
-            any());
+        verify(initiatePaymentService, never()).createPayment(any(), anyList(), any());
       }
     }
 
@@ -276,11 +278,7 @@ class PaymentsControllerTest {
       mockSuccessfulInvocationOfInitPaymentService(requestParams,
           successfullyCreatedPayment);
 
-      mockMvc
-          .perform(post(BASE_PATH).content(payload)
-              .contentType(MediaType.APPLICATION_JSON)
-              .accept(MediaType.APPLICATION_JSON)
-              .header(X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
+      executeRequest(payload)
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.paymentId")
               .value(successfullyCreatedPayment.getId().toString()))
@@ -346,6 +344,10 @@ class PaymentsControllerTest {
       return toJsonString(requestParams);
     }
 
+    private String paymentRequestWithMalformedOperatorId(String operatorId) {
+      return paymentRequestWithOperatorIdAndTelephonePaymentSetTo(operatorId, true);
+    }
+
     private String paymentRequestWithEmptyTransactions() {
       InitiatePaymentRequest requestParams =
           baseRequestBuilder().transactions(Collections.emptyList()).build();
@@ -384,6 +386,16 @@ class PaymentsControllerTest {
       InitiatePaymentRequest requestParams =
           baseRequestBuilder().transactions(Collections.singletonList(
               ANY_TRANSACTION.toBuilder().tariffCode("").build())).build();
+      return toJsonString(requestParams);
+    }
+
+    private String paymentRequestWithOperatorIdAndTelephonePaymentSetTo(
+        String operatorId, boolean telephonePayment) {
+      InitiatePaymentRequest requestParams =
+          baseRequestBuilder()
+              .telephonePayment(telephonePayment)
+              .operatorId(operatorId)
+              .build();
       return toJsonString(requestParams);
     }
 
@@ -597,6 +609,23 @@ class PaymentsControllerTest {
       given(
           getPaidEntrantPaymentsService.getResults(any(), any(), any(), any()))
           .willReturn(result);
+    }
+  }
+
+  @Nested
+  class GetReferencesHistory {
+
+    @Test
+    public void shouldReturn404WhenThereIsNoPaymentForGivenReferenceNumber()
+        throws Exception {
+      given(paymentService.getPaymentByReferenceNumber(any())).willReturn(Optional.empty());
+
+      mockMvc
+          .perform(get(GET_REFERENCES_HISTORY, 1200)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isNotFound());
     }
   }
 

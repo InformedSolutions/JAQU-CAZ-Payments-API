@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0010-1.0
+      author: jaroslaw.piotrowski
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name:  central_reference_number
+            indexName:  central_reference_number_idx
+            schemaName:  CAZ_PAYMENT
+            tableName:  T_PAYMENT

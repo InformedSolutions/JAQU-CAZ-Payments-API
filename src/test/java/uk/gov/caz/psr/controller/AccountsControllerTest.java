@@ -30,9 +30,10 @@ import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
-import uk.gov.caz.psr.service.AccountService;
+import uk.gov.caz.psr.service.ChargeableVehiclesService;
 import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
-import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
+import uk.gov.caz.psr.util.ChargeableVehicleToDtoConverter;
+import uk.gov.caz.psr.util.ChargeableVehiclesToDtoConverter;
 
 @ContextConfiguration(classes = {ExceptionController.class, Configuration.class,
     AccountsController.class})
@@ -40,16 +41,19 @@ import uk.gov.caz.psr.service.VehicleComplianceRetrievalService;
 class AccountsControllerTest {
 
   @MockBean
-  private VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
-
-  @MockBean
-  private AccountService accountService;
-
-  @MockBean
   private QueryStringValidator queryStringValidator;
 
   @MockBean
   private RetrieveSuccessfulPaymentsService retrieveSuccessfulPaymentsService;
+
+  @MockBean
+  private ChargeableVehiclesService chargeableVehiclesService;
+
+  @MockBean
+  private ChargeableVehiclesToDtoConverter chargeableVehiclesToDtoConverter;
+
+  @MockBean
+  private ChargeableVehicleToDtoConverter chargeableVehicleToDtoConverter;
 
   @Autowired
   private MockMvc mockMvc;

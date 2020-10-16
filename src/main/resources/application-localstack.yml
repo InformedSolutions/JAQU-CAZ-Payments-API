@@ -11,3 +11,9 @@ aws:
     endpoint: http://localhost:4576
   sns:
     endpoint: http://localhost:4575
+  secretsmanager:
+    endpoint: http://localhost:4584
+    environment: localstack
+    name: config
+    prefix: payments
+    profileSeparator: .

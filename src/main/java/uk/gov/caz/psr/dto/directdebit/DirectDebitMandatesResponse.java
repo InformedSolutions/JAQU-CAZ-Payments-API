@@ -24,6 +24,7 @@ public class DirectDebitMandatesResponse {
 
     UUID cazId;
     String cazName;
+    boolean directDebitEnabled;
     List<Mandate> mandates;
 
     @Value

@@ -2,7 +2,7 @@ package uk.gov.caz.psr.journeys;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -17,7 +17,7 @@ import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntrancesPaid;
 
 public class RetrieveChargeableAccountVehiclesJourneyAssertion {
-  
+
   private String accountId;
   private String direction;
   private String pageSize;
@@ -26,9 +26,9 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
   private ValidatableResponse response;
   private ChargeableAccountVehicleResponse responseDto;
   private static final String CORRELATION_ID = UUID.randomUUID().toString();
-  
+
   public RetrieveChargeableAccountVehiclesJourneyAssertion() {
-    RestAssured.basePath = AccountsController.ACCOUNTS_PATH;    
+    RestAssured.basePath = AccountsController.ACCOUNTS_PATH;
   }
 
   public RetrieveChargeableAccountVehiclesJourneyAssertion forAccountId(String accountId) {
@@ -51,30 +51,31 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
     return this;
   }
 
-  public RetrieveChargeableAccountVehiclesJourneyAssertion forCleanAirZoneId(String cleanAirZoneId) {
+  public RetrieveChargeableAccountVehiclesJourneyAssertion forCleanAirZoneId(
+      String cleanAirZoneId) {
     this.cleanAirZoneId = cleanAirZoneId;
     return this;
   }
-  
-  public RetrieveChargeableAccountVehiclesJourneyAssertion 
+
+  public RetrieveChargeableAccountVehiclesJourneyAssertion
   whenRequestIsMadeToRetrieveChargeableAccountVehicles() {
     this.response = RestAssured
-      .given()
-      .accept(MediaType.APPLICATION_JSON.toString())
-      .contentType(MediaType.APPLICATION_JSON.toString())
-      .pathParam("account_id", this.accountId)
-      .queryParam("direction", this.direction)
-      .queryParam("pageSize", this.pageSize)
-      .queryParam("vrn", this.vrn)
-      .queryParam("cleanAirZoneId", this.cleanAirZoneId)
-      .header(Constants.X_CORRELATION_ID_HEADER, CORRELATION_ID)
-      .when()
-      .get("/{account_id}/chargeable-vehicles")
-      .then();
+        .given()
+        .accept(MediaType.APPLICATION_JSON.toString())
+        .contentType(MediaType.APPLICATION_JSON.toString())
+        .pathParam("account_id", this.accountId)
+        .queryParam("direction", this.direction)
+        .queryParam("pageSize", this.pageSize)
+        .queryParam("vrn", this.vrn)
+        .queryParam("cleanAirZoneId", this.cleanAirZoneId)
+        .header(Constants.X_CORRELATION_ID_HEADER, CORRELATION_ID)
+        .when()
+        .get("/{account_id}/chargeable-vehicles")
+        .then();
     return this;
   }
 
-  public RetrieveChargeableAccountVehiclesJourneyAssertion 
+  public RetrieveChargeableAccountVehiclesJourneyAssertion
   whenRequestIsMadeToRetrieveChargeableAccountVehiclesWithoutQueryStrings() {
     this.response = RestAssured
         .given()
@@ -85,9 +86,9 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
         .when()
         .get("/{account_id}/chargeable-vehicles")
         .then();
-      return this;
+    return this;
   }
-  
+
   public RetrieveChargeableAccountVehiclesJourneyAssertion then() {
     return this;
   }
@@ -98,28 +99,29 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
         .as(ChargeableAccountVehicleResponse.class);
     return this;
   }
-  
+
   public void responseIsReturnedWithStatusCode(int statusCode) {
     response.statusCode(statusCode);
   }
 
-  public void responseContainsExpectedData(List<String> expectedVrns, 
-      String firstVrn, String lastVrn) {
-    List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles().getResults();
-    assertTrue(this.responseDto.getChargeableAccountVehicles().getResults().size() <= Integer.parseInt(this.pageSize));
-    assertEquals(expectedVrns, results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
-    for (VrnWithTariffAndEntrancesPaid result: results) {
-      assertTrue(result.getCharge() > 0);
-      assertNotNull(result.getTariffCode());
-    }
+  public void responseContainsExpectedData(List<String> expectedVrns, String firstVrn,
+      String lastVrn) {
+    List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles()
+        .getResults();
+    assertTrue(this.responseDto.getChargeableAccountVehicles().getResults().size() <= Integer
+        .parseInt(this.pageSize));
+    assertEquals(expectedVrns,
+        results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
     assertEquals(firstVrn, this.responseDto.getFirstVrn());
     assertEquals(lastVrn, this.responseDto.getLastVrn());
   }
 
-  public void responseContainsExpectedDataWithEntrantPayments(List<String> expectedVrns, 
+  public void responseContainsExpectedDataWithEntrantPayments(List<String> expectedVrns,
       String firstVrn, String lastVrn) {
-    List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles().getResults();
-    assertEquals(expectedVrns, results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
+    List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles()
+        .getResults();
+    assertEquals(expectedVrns,
+        results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
     assertEquals(LocalDate.now(), results.get(0).getPaidDates().get(0));
     assertEquals(firstVrn, this.responseDto.getFirstVrn());
     assertEquals(lastVrn, this.responseDto.getLastVrn());
