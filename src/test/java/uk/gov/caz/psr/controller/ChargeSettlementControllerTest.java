@@ -184,6 +184,37 @@ class ChargeSettlementControllerTest {
         }
       }
 
+      @Nested
+      class PaymentMadeDate {
+
+        @ParameterizedTest
+        @ValueSource(strings = {"03.05.2019", "23/03/2008", "not-a-valid-date"})
+        public void shouldReturn400StatusCodeUponInvalidFormat(String invalidPaymentMadeDate)
+            throws Exception {
+          invalidDateFormatTest(invalidPaymentMadeDate, "paymentMadeDate");
+        }
+
+        @Test
+        public void shouldReturn400StatusCodeUponPaymentMadeDateConjunction() throws Exception {
+          LocalDate paymentMadeDate = LocalDate.now();
+
+          mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
+              .accept(MediaType.APPLICATION_JSON)
+              .param("paymentMadeDate", paymentMadeDate.toString())
+              .param("vrn", ANY_VALID_VRN)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
+              .header(Headers.X_API_KEY, ANY_API_KEY))
+              .andExpect(status().isBadRequest())
+              .andExpect(jsonPath("$.errors[0].title").value("Invalid search parameter"))
+              .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
+              .andExpect(jsonPath("$.errors[0].field").value("paymentMadeDate"))
+              .andExpect(jsonPath("$.errors[0].detail").value(
+                  "This parameter cannot be used in conjunction with another other request parameters"));
+
+        }
+      }
+
       private void invalidDateFormatTest(String invalidDate, String argumentName)
           throws Exception {
         mockMvc.perform(get(PAYMENT_INFO_GET_PATH)

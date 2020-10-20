@@ -58,6 +58,48 @@ class ChargeSettlementPaymentInfoTestIT {
   private Statistics statistics;
 
   @Nested
+  class WhenRequestForOnlyPaymentMadeDate {
+
+    @Nested
+    class AndThereAreMatchingLineItems {
+
+      @Test
+      public void shouldReturnDataForTheProvidedDay() {
+        LocalDate paymentMadeDate = LocalDate.parse("2019-11-23");
+
+        PaymentInfoAssertion.whenRequested()
+            .withParam("paymentMadeDate", paymentMadeDate.toString())
+            .then()
+            .headerContainsCorrelationId()
+            .responseHasOkStatus()
+            .totalLineItemsCountIsEqualTo(7);
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
+
+      }
+    }
+
+    @Nested
+    class AndThereAreNoMatchingLineItems {
+
+      @ParameterizedTest
+      @ValueSource(strings = {"2019-11-01", "2019-11-10"})
+      public void shouldReturnEmptyArray(String paymentMadeDateParam) {
+        LocalDate paymentMadeDate = LocalDate.parse(paymentMadeDateParam);
+
+        PaymentInfoAssertion.whenRequested()
+            .withParam("paymentMadeDate", paymentMadeDate.toString())
+            .then()
+            .headerContainsCorrelationId()
+            .responseHasOkStatus()
+            .containsEmptyResults();
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
+      }
+    }
+  }
+
+  @Nested
   class WhenRequestedForOnlyToDatePaidFor {
 
     @Nested

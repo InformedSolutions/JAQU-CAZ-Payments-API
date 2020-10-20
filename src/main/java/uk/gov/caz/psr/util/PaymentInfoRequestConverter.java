@@ -24,6 +24,7 @@ public class PaymentInfoRequestConverter {
         .fromDatePaidFor(request.getFromDatePaidFor())
         .toDatePaidFor(request.getToDatePaidFor())
         .vrn(AttributesNormaliser.normalizeVrn(request.getVrn()))
+        .paymentSubmittedTimestamp(request.getPaymentMadeDate())
         .build();
   }
 }
