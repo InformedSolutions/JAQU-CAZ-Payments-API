@@ -207,6 +207,9 @@ swagger:
           settled charges for all vehicles that have paid a charge to enter the CAZ (identified by the x-api-key header parameter) during the
           specified date range will be returned. If no fromDatePaidFor is specified, all settled charges for the prior 24 hour period corresponding
           to the specified date will be returned.
+        payment-made-date: >-
+          ISO 8601 formatted date string that can be used to obtain information about payments which were made
+          on the provided date in the specific CAZ (identified by the x-api-key header parameter).
       payment-status-update:
         vrn: Vehicle registration number
         status-updates: An array containing details of separate payment which needs to be updated

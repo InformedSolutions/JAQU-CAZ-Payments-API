@@ -54,6 +54,8 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
     }
+    request.validateParametersConjunction();
+
     log.info("Got 'get payment info' request: {}", request);
 
     List<EntrantPaymentMatchInfo> result = chargeSettlementPaymentInfoService.findPaymentInfo(
