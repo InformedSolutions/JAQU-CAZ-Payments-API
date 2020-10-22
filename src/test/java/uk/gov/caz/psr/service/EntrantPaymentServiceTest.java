@@ -2,11 +2,14 @@ package uk.gov.caz.psr.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -123,6 +126,52 @@ class EntrantPaymentServiceTest {
         public class AndThereIsLatestPaymentForThisEntrantPayment {
 
           @Nested
+          public class PaidInANextDayForGMTTimeZoneInBritishSummerTime {
+
+            @Test
+            public void thenResponseWithCorrectEntrantPaymentPropertiesWithValidPaymentMethodShouldBeReturned() {
+              // given
+              LocalDateTime gmtTime = LocalDateTime.of(2020, 10, 15, 23, 30);
+              LocalDate expectedUkTimeDay = LocalDate.of(2020, 10, 16);
+              VehicleEntrantDto dto = buildVehicleEntrantDtoForDate(gmtTime);
+              cazEntrantPaymentDtos = Arrays.asList(dto);
+
+              mockNonEmptyPaidCapturedCazEntryInBritishTimeZonePaymentRepositoryResponse(expectedUkTimeDay);
+              mockMatchingPaymentWithPaymentMethod(PaymentMethod.CREDIT_DEBIT_CARD);
+
+              // when
+              callBulkProcess();
+
+              // then
+              assertResponseProperties(PAID_PAYMENT_STATUS, CARD_PAYMENT_METHOD);
+              verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
+            }
+          }
+
+          @Nested
+          public class PaidInANextDayForGMTTimeZoneInBritishWinterTime {
+
+            @Test
+            public void thenResponseWithCorrectEntrantPaymentPropertiesWithValidPaymentMethodShouldBeReturned() {
+              // given
+              LocalDateTime gmtTime = LocalDateTime.of(2020, 12, 15, 23, 30);
+              LocalDate expectedUkTimeDay = LocalDate.of(2020, 12, 15);
+              VehicleEntrantDto dto = buildVehicleEntrantDtoForDate(gmtTime);
+              cazEntrantPaymentDtos = Arrays.asList(dto);
+
+              mockNonEmptyPaidCapturedCazEntryInBritishTimeZonePaymentRepositoryResponse(expectedUkTimeDay);
+              mockMatchingPaymentWithPaymentMethod(PaymentMethod.CREDIT_DEBIT_CARD);
+
+              // when
+              callBulkProcess();
+
+              // then
+              assertResponseProperties(PAID_PAYMENT_STATUS, CARD_PAYMENT_METHOD);
+              verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
+            }
+          }
+
+          @Nested
           public class PaidByCreditOrDebitCard {
 
             @Test
@@ -237,6 +286,12 @@ class EntrantPaymentServiceTest {
     );
   }
 
+  private void mockNonEmptyPaidCapturedCazEntryInBritishTimeZonePaymentRepositoryResponse(
+      LocalDate date) {
+    when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(UUID.class), anyString(), eq(date)))
+        .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.PAID)));
+  }
+
   private void mockNonEmptyPaidCapturedCazEntryPaymentRepositoryResponse() {
     when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
         .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.PAID)));
@@ -257,6 +312,15 @@ class EntrantPaymentServiceTest {
         .builder()
         .vrn(ANY_VRN)
         .cazEntryTimestamp(LocalDateTime.parse(ANY_TIMESTAMP))
+        .cleanZoneId(UUID.fromString(ANY_UUID))
+        .build();
+  }
+
+  private VehicleEntrantDto buildVehicleEntrantDtoForDate(LocalDateTime cazEntryTimestamp) {
+    return VehicleEntrantDto
+        .builder()
+        .vrn(ANY_VRN)
+        .cazEntryTimestamp(cazEntryTimestamp)
         .cleanZoneId(UUID.fromString(ANY_UUID))
         .build();
   }
