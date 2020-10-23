@@ -17,8 +17,11 @@ public class PaymentInfoErrorResponse {
   String detail;
   String field;
   int status = HttpStatus.BAD_REQUEST.value();
-  
+
   private static final String VALIDATION_ERROR_TITLE = "Invalid search parameter";
+  private static final String QUERY_DATE_RANGE_EXCEEDED = "Query date range exceeded";
+  private static final String THE_REQUESTED_DATES_EXCEED_THE_MAXIMUM_PERMITTED_RANGE =
+      "The requested dates exceed the maximum permitted range";
 
   /**
    * Static factory method. Error Response
@@ -45,6 +48,19 @@ public class PaymentInfoErrorResponse {
         .field(field)
         .title(VALIDATION_ERROR_TITLE)
         .detail(detail)
+        .build();
+  }
+
+  /**
+   * Creates a validation error response, i.e. title is equal to 'Query date range exceeded', and
+   * detail is equal to 'The requested dates exceed the maximum permitted range' status is equal to
+   * 400.
+   */
+  public static PaymentInfoErrorResponse maxDateRangeErrorResponseWithField(String field) {
+    return PaymentInfoErrorResponse.builder()
+        .field(field)
+        .title(QUERY_DATE_RANGE_EXCEEDED)
+        .detail(THE_REQUESTED_DATES_EXCEED_THE_MAXIMUM_PERMITTED_RANGE)
         .build();
   }
 }

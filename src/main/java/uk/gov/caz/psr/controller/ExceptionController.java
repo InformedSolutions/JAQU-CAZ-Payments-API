@@ -1,6 +1,9 @@
 
 package uk.gov.caz.psr.controller;
 
+import static uk.gov.caz.psr.dto.PaymentInfoErrorResponse.maxDateRangeErrorResponseWithField;
+
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -27,6 +30,7 @@ import uk.gov.caz.psr.dto.PaymentInfoErrorResponse;
 import uk.gov.caz.psr.dto.PaymentInfoErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
+import uk.gov.caz.psr.dto.validation.PaymentInfoMaxDateRangeValidationException;
 import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.ValidationError.ValidationErrorBuilder;
 import uk.gov.caz.psr.repository.exception.NotUniqueVehicleEntrantPaymentFoundException;
@@ -118,6 +122,22 @@ public class ExceptionController extends GlobalExceptionHandler {
     log.info("PaymentInfoVrnValidationException occurred: {}", ex);
     return ResponseEntity.badRequest().body(
         PaymentInfoErrorsResponse.singleValidationErrorResponse("vrn", ex.getMessage()));
+  }
+
+  /**
+   * Method to handle Exception when max date range exceeded.
+   *
+   * @param ex Exception object.
+   */
+  @ExceptionHandler(PaymentInfoMaxDateRangeValidationException.class)
+  public ResponseEntity<List<PaymentInfoErrorResponse>> handleMaxDateRangeExceededExceptions(
+      PaymentInfoMaxDateRangeValidationException ex) {
+    log.info("PaymentInfoMaxDateRangeValidationException occurred: {}", ex);
+    List<PaymentInfoErrorResponse> errorsList = Lists
+        .newArrayList(maxDateRangeErrorResponseWithField("fromDatePaidFor"),
+            maxDateRangeErrorResponseWithField("toDatePaidFor"));
+
+    return ResponseEntity.badRequest().body(errorsList);
   }
 
   /**
