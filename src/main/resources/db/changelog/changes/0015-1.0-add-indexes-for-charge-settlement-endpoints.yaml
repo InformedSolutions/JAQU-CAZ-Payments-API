@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0015-1.0-add-indexes-for-charge-settlement-endpoints
+      author: Informed
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0015-1.0-add-indexes-for-charge-settlement-endpoints.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true 
