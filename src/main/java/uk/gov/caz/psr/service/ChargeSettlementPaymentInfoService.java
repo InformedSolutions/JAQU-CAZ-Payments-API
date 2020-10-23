@@ -51,21 +51,22 @@ public class ChargeSettlementPaymentInfoService {
   }
 
   /**
-   * If there is no record of a vrn entering or having paid in a Clean Air Zone 
-   * then throw an error.
+   * If there is no record of a vrn entering or having paid in a Clean Air Zone then throw an
+   * error.
+   *
    * @param cleanAirZoneId the identifier of the Clean Air Zone
    * @param vrn the vrn of the vehicle to check
    */
   private void throwIfNonExistentVrn(UUID cleanAirZoneId, String vrn) {
-    if (vrn != null && entrantPaymentRepository.countByVrnAndCaz(cleanAirZoneId, 
-          AttributesNormaliser.normalizeVrn(vrn)) == 0) {
+    if (vrn != null && entrantPaymentRepository.countByVrnAndCaz(cleanAirZoneId,
+        AttributesNormaliser.normalizeVrn(vrn)) == 0) {
       throw new PaymentInfoVrnValidationException("vrn cannot be found");
     }
   }
 
   /**
-   * Returns the initial specification that selects entries for a given {@code cazId} and
-   * does not include payments with {@code notPaid} status.
+   * Returns the initial specification that selects entries for a given {@code cazId} and does not
+   * include payments with {@code notPaid} status.
    */
   private Specification<EntrantPaymentMatchInfo> initialSpecification(UUID cazId) {
     return CazIdSpecification.forCaz(cazId)
