@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.service;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,9 @@ import uk.gov.caz.psr.repository.PaymentRepository;
 @Service
 @AllArgsConstructor
 public class EntrantPaymentService {
+
+  private static final ZoneId GMT_ZONE_ID = ZoneId.of("GMT");
+  private static final ZoneId UK_ZONE_ID = ZoneId.of("Europe/London");
 
   private final EntrantPaymentRepository entrantPaymentRepository;
   private final PaymentRepository paymentRepository;
@@ -54,12 +58,14 @@ public class EntrantPaymentService {
    */
   private Optional<EntrantPayment> fetchEntrantPaymentFromRepository(
       VehicleEntrantDto vehicleEntrantDto) {
+
     return entrantPaymentRepository.findOneByVrnAndCazEntryDate(
         vehicleEntrantDto.getCleanZoneId(),
         vehicleEntrantDto.getVrn(),
-        vehicleEntrantDto.getCazEntryTimestamp().toLocalDate()
+        vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID).withZoneSameInstant(UK_ZONE_ID)
+            .toLocalDate()
     ).map(entrantPayment -> entrantPayment.toBuilder()
-        .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
+        .cazEntryTimestamp(entrantPayment.getCazEntryTimestamp())
         .build()
     );
   }
@@ -183,8 +189,8 @@ public class EntrantPaymentService {
   }
 
   /**
-   * Maps {@link EntrantPayment} and {@link Payment} to
-   * {@link EntrantPaymentWithLatestPaymentDetailsDto} and puts into resulting list.
+   * Maps {@link EntrantPayment} and {@link Payment}
+   * to {@link EntrantPaymentWithLatestPaymentDetailsDto} and puts into resulting list.
    */
   private void addToResultWithPaymentDetails(
       EntrantPayment entrantPayment, Payment payment,
