@@ -18,9 +18,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
-import uk.gov.caz.psr.dto.PaymentInfoResponse;
-import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
-import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV1;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV1.PaymentsInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV1.SinglePaymentInfo;
 import uk.gov.caz.psr.model.ExternalPaymentStatus;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentMethod;
@@ -65,7 +65,7 @@ class EntrantPaymentInfoConverterTest {
         .willAnswer(answer -> BigDecimal.valueOf(74));
 
     // when
-    PaymentInfoResponse paymentInfoResponse = converter.toPaymentInfoResponse(input);
+    PaymentInfoResponseV1 paymentInfoResponse = converter.toPaymentInfoResponse(input);
 
     // then
     assertThat(paymentInfoResponse).isNotNull();
@@ -84,7 +84,7 @@ class EntrantPaymentInfoConverterTest {
         .willAnswer(answer -> BigDecimal.valueOf(74));
 
     // when
-    PaymentInfoResponse paymentInfoResponse = converter.toPaymentInfoResponse(input);
+    PaymentInfoResponseV1 paymentInfoResponse = converter.toPaymentInfoResponse(input);
 
     // then
     assertThat(paymentInfoResponse).isNotNull();
@@ -114,7 +114,7 @@ class EntrantPaymentInfoConverterTest {
         .willAnswer(answer -> BigDecimal.valueOf(74));
 
     // when
-    PaymentInfoResponse paymentInfoResponse = converter.toPaymentInfoResponse(input);
+    PaymentInfoResponseV1 paymentInfoResponse = converter.toPaymentInfoResponse(input);
 
     // then
     assertThat(paymentInfoResponse).isNotNull();

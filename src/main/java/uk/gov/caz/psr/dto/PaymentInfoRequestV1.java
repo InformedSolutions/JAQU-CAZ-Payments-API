@@ -5,11 +5,11 @@ import static uk.gov.caz.psr.util.AttributesNormaliser.normalizeVrn;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
 import javax.validation.constraints.Size;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import lombok.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import uk.gov.caz.psr.controller.exception.PaymentInfoPaymentMadeDateValidationException;
@@ -17,12 +17,13 @@ import uk.gov.caz.psr.dto.validation.constraint.AtLeastOneParameterPresent;
 import uk.gov.caz.psr.dto.validation.constraint.FromAndToDatesInChronologicalOrder;
 import uk.gov.caz.psr.util.Strings;
 
-@Value
-@Builder
-@RequiredArgsConstructor(access = AccessLevel.PUBLIC)
+@Data
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@RequiredArgsConstructor
 @AtLeastOneParameterPresent
 @FromAndToDatesInChronologicalOrder
-public class PaymentInfoRequest {
+public class PaymentInfoRequestV1 {
 
   @ApiModelProperty(value =
       "${swagger.model.descriptions.payment-info-request.payment-provider-id}")

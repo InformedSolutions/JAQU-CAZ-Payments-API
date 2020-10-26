@@ -8,15 +8,21 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import javax.annotation.Nullable;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
 /**
  * A value object which is used as a response in the endpoint that returns details about the
  * specific payments.
  */
-@Value
-public class PaymentInfoResponse {
+@Data
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@RequiredArgsConstructor
+public class PaymentInfoResponseV1 {
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-info.results}")
   List<PaymentsInfo> results;
 

@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
@@ -37,12 +36,13 @@ class ChargeSettlementPaymentInfoServiceTest {
   @Spy
   private List<PaymentInfoSpecification> specifications = new ArrayList<>();
 
-  @InjectMocks
   private ChargeSettlementPaymentInfoService paymentInfoService;
 
   @Test
   public void shouldReturnListOfPaymentInfo() {
     // given
+    paymentInfoService = new ChargeSettlementPaymentInfoService(entrantPaymentMatchInfoRepository,
+        entrantPaymentRepository, specifications, 10);
     PaymentInfoRequestAttributes input = PaymentInfoRequestAttributes.builder().build();
     when(entrantPaymentMatchInfoRepository.findAll(Mockito.any(Specification.class)))
         .thenReturn(emptyList());
@@ -58,6 +58,8 @@ class ChargeSettlementPaymentInfoServiceTest {
   @Test
   public void shouldThrowPaymentInfoVrnValidationExceptionWhenVrnIsMissing() {
     // given
+    paymentInfoService = new ChargeSettlementPaymentInfoService(entrantPaymentMatchInfoRepository,
+        entrantPaymentRepository, specifications, 10);
     PaymentInfoRequestAttributes input = PaymentInfoRequestAttributes.builder()
         .vrn("CAS123")
         .build();

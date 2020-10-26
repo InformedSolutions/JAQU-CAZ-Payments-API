@@ -2,7 +2,11 @@ package uk.gov.caz.psr.service;
 
 import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.controller.exception.PaymentInfoVrnValidationException;
@@ -20,7 +24,6 @@ import uk.gov.caz.psr.util.AttributesNormaliser;
  * Service which merge specification and run query.
  */
 @Service
-@AllArgsConstructor
 public class ChargeSettlementPaymentInfoService {
 
   private static final OmitNotPaidPaymentInfoSpecification OMIT_NOT_PAID_PAYMENT_INFO_SPECIFICATION
@@ -31,6 +34,21 @@ public class ChargeSettlementPaymentInfoService {
   private final EntrantPaymentMatchInfoRepository entrantPaymentMatchInfoRepository;
   private final EntrantPaymentRepository entrantPaymentRepository;
   private final List<PaymentInfoSpecification> specifications;
+  private final int pageSize;
+
+  /**
+   * Default constructor.
+   */
+  public ChargeSettlementPaymentInfoService(
+      EntrantPaymentMatchInfoRepository entrantPaymentMatchInfoRepository,
+      EntrantPaymentRepository entrantPaymentRepository,
+      List<PaymentInfoSpecification> specifications,
+      @Value("${api.charge-settlement.page-size}") int pageSize) {
+    this.entrantPaymentMatchInfoRepository = entrantPaymentMatchInfoRepository;
+    this.entrantPaymentRepository = entrantPaymentRepository;
+    this.specifications = specifications;
+    this.pageSize = pageSize;
+  }
 
   /**
    * Finds payment information based on {@code attributes} and {@code cazId}.
@@ -42,12 +60,43 @@ public class ChargeSettlementPaymentInfoService {
   public List<EntrantPaymentMatchInfo> findPaymentInfo(PaymentInfoRequestAttributes attributes,
       UUID cazId) {
     throwIfNonExistentVrn(cazId, attributes.getVrn());
-    Specification<EntrantPaymentMatchInfo> specification = specifications.stream()
+    Specification<EntrantPaymentMatchInfo> specification = getSpecification(attributes, cazId);
+
+    return entrantPaymentMatchInfoRepository.findAll(specification);
+  }
+
+  /**
+   * Finds payment information based on {@code attributes} and {@code cazId}.
+   *
+   * @param attributes {@link PaymentInfoRequestAttributes}
+   * @param cazId for payment
+   * @return A list of {@link EntrantPaymentMatchInfo}
+   */
+  public Page<EntrantPaymentMatchInfo> findPaymentInfoV2(PaymentInfoRequestAttributes attributes,
+      UUID cazId, int pageNumber) {
+    throwIfNonExistentVrn(cazId, attributes.getVrn());
+    Specification<EntrantPaymentMatchInfo> specification = getSpecification(attributes, cazId);
+
+    return entrantPaymentMatchInfoRepository.findAll(specification, buildPageRequest(pageNumber));
+  }
+
+  private Specification<EntrantPaymentMatchInfo> getSpecification(
+      PaymentInfoRequestAttributes attributes, UUID cazId) {
+    return specifications.stream()
         .filter(paymentInfoSpecification -> paymentInfoSpecification.shouldUse(attributes))
         .map(paymentInfoSpecification -> paymentInfoSpecification.create(attributes))
         .reduce(initialSpecification(cazId), Specification::and);
+  }
 
-    return entrantPaymentMatchInfoRepository.findAll(specification);
+  /**
+   * Creates {@link PageRequest} based on the provided arguments.
+   */
+  private PageRequest buildPageRequest(int pageNumber) {
+    return PageRequest.of(
+        pageNumber,
+        pageSize,
+        Sort.by(Order.desc("entrantPaymentInfo.vrn"))
+    );
   }
 
   /**

@@ -92,6 +92,7 @@ swagger:
         payment-mandate-id: Direct debit mandate identifier
         telephone-payment: Indicates whether payment was done over phone.
       payment-info:
+        pages: The number of pages
         results: An array containig details about payments of queried VRNs
         vrn: Vehicle registration number
         payments: An array containing information about particular payments of the given VRN
@@ -210,6 +211,7 @@ swagger:
         payment-made-date: >-
           ISO 8601 formatted date string that can be used to obtain information about payments which were made
           on the provided date in the specific CAZ (identified by the x-api-key header parameter).
+        page-number: An optional query param that specifies the page number.
       payment-status-update:
         vrn: Vehicle registration number
         status-updates: An array containing details of separate payment which needs to be updated
@@ -391,3 +393,8 @@ swagger:
     register:
       details:
         description: Return register details from vccs
+
+api:
+  charge-settlement:
+    date-query-range: 14
+    page-size: 1500

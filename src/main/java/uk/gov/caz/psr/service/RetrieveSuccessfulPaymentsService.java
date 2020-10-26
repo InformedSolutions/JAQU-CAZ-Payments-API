@@ -132,8 +132,10 @@ public class RetrieveSuccessfulPaymentsService {
    * @return helper collection.
    */
   private Map<UUID, String> getAccountIdToAccountNameMap(List<AccountUserResponse> accountUsers) {
-    return accountUsers.stream().collect(
-        Collectors.toMap(AccountUserResponse::getAccountUserId, this::selectNameForAccountUser));
+    return accountUsers
+        .stream()
+        .collect(Collectors
+            .toMap(AccountUserResponse::getAccountUserId, this::selectNameForAccountUser));
   }
 
   /**
@@ -211,7 +213,6 @@ public class RetrieveSuccessfulPaymentsService {
 
     return enrichedPaymentSummaries;
   }
-
 
 
   /**
