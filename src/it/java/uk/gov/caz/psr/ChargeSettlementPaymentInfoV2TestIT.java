@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.ChargeSettlementController;
 import uk.gov.caz.psr.util.PaymentInfoAssertion;
@@ -124,10 +125,48 @@ class ChargeSettlementPaymentInfoV2TestIT extends ChargeSettlementPaymentInfoTes
                 .hasSecondResultWith("ND84VSX")
                 .totalLineItemsCountIsEqualTo(4);
 
-
             verifyResultsWereFetchedByOneDatabaseQuery();
           }
         }
+      }
+    }
+
+    @Nested
+    class WhenRequestedWithPageNumber {
+
+      @ParameterizedTest
+      @ValueSource(ints = {-99, -5, -2, 1000, 1111})
+      public void shouldReturnErrorsForRequestedDaysRangeWithPage(int page) {
+        PaymentInfoAssertion.whenRequested()
+            .withParam("fromDatePaidFor", "2019-11-01")
+            .withParam("toDatePaidFor", "2019-11-02")
+            .withParam("page", String.valueOf(page))
+            .then()
+            .headerContainsCorrelationId()
+            .responseHasBadRequestStatus()
+            .containsErrors(1)
+            .andContainsErrorWith(0, 400, "page",
+                "Invalid page number",
+                "Parameter validation error");
+      }
+
+      @Test
+      public void shouldReturnSortedDataWithPagesForRequestedDaysRange() {
+        PaymentInfoAssertion.whenRequested()
+            .withParam("fromDatePaidFor", "2019-11-01")
+            .withParam("toDatePaidFor", "2019-11-02")
+            .withParam("page", "0")
+            .then()
+            .headerContainsCorrelationId()
+            .responseHasOkStatus()
+            .doesNotContainNotPaidEntries()
+            .containsReferenceNumbers()
+            .containsPages(1)
+            .hasFirstResultWith("AB11CDE")
+            .hasSecondResultWith("ND84VSX")
+            .totalLineItemsCountIsEqualTo(4);
+
+        verifyResultsWereFetchedByOneDatabaseQuery();
       }
     }
   }

@@ -28,12 +28,12 @@ public class MaximumDateQueryRangeValidator {
     if (fromDatePaidFor == null || toDatePaidFor == null) {
       return;
     }
-    if (checkMaxDateQueryRange(fromDatePaidFor, toDatePaidFor)) {
+    if (maxDateQueryRangeExceeded(fromDatePaidFor, toDatePaidFor)) {
       throw new PaymentInfoMaxDateRangeValidationException("max date query range exceeded");
     }
   }
 
-  private boolean checkMaxDateQueryRange(LocalDate fromDatePaidFor, LocalDate toDatePaidFor) {
+  private boolean maxDateQueryRangeExceeded(LocalDate fromDatePaidFor, LocalDate toDatePaidFor) {
     return fromDatePaidFor.plus(maxDateQueryRange, ChronoUnit.DAYS).isBefore(toDatePaidFor);
   }
 }

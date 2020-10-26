@@ -63,4 +63,16 @@ public class PaymentInfoErrorResponse {
         .detail(THE_REQUESTED_DATES_EXCEED_THE_MAXIMUM_PERMITTED_RANGE)
         .build();
   }
+
+  /**
+   * Creates a validation error response, i.e. title is equal to 'Parameter validation error', and
+   * detail is equal to 'Invalid page number' status is equal to 400.
+   */
+  public static PaymentInfoErrorResponse pageNumberErrorResponseWithField(String field) {
+    return PaymentInfoErrorResponse.builder()
+        .field(field)
+        .title("Parameter validation error")
+        .detail("Invalid page number")
+        .build();
+  }
 }

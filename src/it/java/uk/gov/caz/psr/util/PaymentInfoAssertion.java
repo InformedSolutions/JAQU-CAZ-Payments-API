@@ -13,13 +13,12 @@ import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.stream.Stream;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.Headers;
-import uk.gov.caz.psr.dto.PaymentInfoErrorResponse;
+import uk.gov.caz.psr.dto.PaymentInfoErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentInfoResponseV2;
 
 public class PaymentInfoAssertion {
@@ -37,7 +36,7 @@ public class PaymentInfoAssertion {
 
   private RequestSpecification requestSpecification = commonRequestSpecification();
   private ValidatableResponse validatableResponse;
-  private List<PaymentInfoErrorResponse> paymentInfoErrors;
+  private PaymentInfoErrorsResponse paymentInfoErrors;
   private PaymentInfoResponseV2 paymentInfoResponseV2;
 
   public static PaymentInfoAssertion whenRequested() {
@@ -126,8 +125,7 @@ public class PaymentInfoAssertion {
 
   public PaymentInfoAssertion containsErrors(int errors) {
     validatableResponse.body("errors.size()", equalTo(errors));
-    paymentInfoErrors = validatableResponse.extract().body().jsonPath()
-        .getList(".", PaymentInfoErrorResponse.class);
+    paymentInfoErrors = validatableResponse.extract().body().as(PaymentInfoErrorsResponse.class);
     return this;
   }
 
@@ -148,10 +146,10 @@ public class PaymentInfoAssertion {
 
   public PaymentInfoAssertion andContainsErrorWith(int errorNumber, int statusValue,
       String fieldValue, String detailValue, String titleValue) {
-    assertThat(paymentInfoErrors.get(errorNumber).getStatus()).isEqualTo(statusValue);
-    assertThat(paymentInfoErrors.get(errorNumber).getField()).isEqualTo(fieldValue);
-    assertThat(paymentInfoErrors.get(errorNumber).getDetail()).isEqualTo(detailValue);
-    assertThat(paymentInfoErrors.get(errorNumber).getTitle()).isEqualTo(titleValue);
+    assertThat(paymentInfoErrors.getErrors().get(errorNumber).getStatus()).isEqualTo(statusValue);
+    assertThat(paymentInfoErrors.getErrors().get(errorNumber).getField()).isEqualTo(fieldValue);
+    assertThat(paymentInfoErrors.getErrors().get(errorNumber).getDetail()).isEqualTo(detailValue);
+    assertThat(paymentInfoErrors.getErrors().get(errorNumber).getTitle()).isEqualTo(titleValue);
     return this;
   }
 }

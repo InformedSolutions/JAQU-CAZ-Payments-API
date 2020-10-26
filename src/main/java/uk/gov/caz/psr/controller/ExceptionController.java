@@ -2,8 +2,10 @@
 package uk.gov.caz.psr.controller;
 
 import static uk.gov.caz.psr.dto.PaymentInfoErrorResponse.maxDateRangeErrorResponseWithField;
+import static uk.gov.caz.psr.dto.PaymentInfoErrorResponse.pageNumberErrorResponseWithField;
 
 import com.google.common.collect.Lists;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -30,6 +32,7 @@ import uk.gov.caz.psr.dto.PaymentInfoErrorResponse;
 import uk.gov.caz.psr.dto.PaymentInfoErrorsResponse;
 import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusErrorsResponse;
+import uk.gov.caz.psr.dto.validation.PageNumberValidationException;
 import uk.gov.caz.psr.dto.validation.PaymentInfoMaxDateRangeValidationException;
 import uk.gov.caz.psr.model.ValidationError;
 import uk.gov.caz.psr.model.ValidationError.ValidationErrorBuilder;
@@ -130,14 +133,14 @@ public class ExceptionController extends GlobalExceptionHandler {
    * @param ex Exception object.
    */
   @ExceptionHandler(PaymentInfoMaxDateRangeValidationException.class)
-  public ResponseEntity<List<PaymentInfoErrorResponse>> handleMaxDateRangeExceededExceptions(
+  public ResponseEntity<PaymentInfoErrorsResponse> handleMaxDateRangeExceededExceptions(
       PaymentInfoMaxDateRangeValidationException ex) {
     log.info("PaymentInfoMaxDateRangeValidationException occurred: {}", ex);
     List<PaymentInfoErrorResponse> errorsList = Lists
         .newArrayList(maxDateRangeErrorResponseWithField("fromDatePaidFor"),
             maxDateRangeErrorResponseWithField("toDatePaidFor"));
 
-    return ResponseEntity.badRequest().body(errorsList);
+    return ResponseEntity.badRequest().body(PaymentInfoErrorsResponse.from(errorsList));
   }
 
   /**
@@ -152,6 +155,19 @@ public class ExceptionController extends GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(
         PaymentInfoErrorsResponse
             .singleValidationErrorResponse("paymentMadeDate", ex.getMessage()));
+  }
+
+  /**
+   * Method to handle Exception when page number is not correct.
+   *
+   * @param ex Exception object.
+   */
+  @ExceptionHandler(PageNumberValidationException.class)
+  public ResponseEntity<PaymentInfoErrorsResponse> handlePageNumberValidation(
+      PageNumberValidationException ex) {
+    log.info("PageNumberValidationException occurred: {}", ex);
+    return ResponseEntity.badRequest().body(PaymentInfoErrorsResponse
+        .from(Collections.singletonList(pageNumberErrorResponseWithField("page"))));
   }
 
   /**

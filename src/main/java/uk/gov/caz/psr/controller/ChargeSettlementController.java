@@ -79,7 +79,7 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
     }
-    request.validateParametersConjunction();
+    request.validate();
     maximumDateQueryRangeValidator.validateDateRange(request);
 
     log.info("Got 'get payment info v2' request: {}", request);
