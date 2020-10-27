@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.service;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,13 +60,16 @@ public class EntrantPaymentService {
   private Optional<EntrantPayment> fetchEntrantPaymentFromRepository(
       VehicleEntrantDto vehicleEntrantDto) {
 
+    LocalDateTime normalizedEntryTimestamp = LocalDateTime.from(
+        vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
+            .withZoneSameInstant(UK_ZONE_ID));
+
     return entrantPaymentRepository.findOneByVrnAndCazEntryDate(
         vehicleEntrantDto.getCleanZoneId(),
         vehicleEntrantDto.getVrn(),
-        vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID).withZoneSameInstant(UK_ZONE_ID)
-            .toLocalDate()
+        normalizedEntryTimestamp.toLocalDate()
     ).map(entrantPayment -> entrantPayment.toBuilder()
-        .cazEntryTimestamp(entrantPayment.getCazEntryTimestamp())
+        .cazEntryTimestamp(normalizedEntryTimestamp)
         .build()
     );
   }
@@ -189,8 +193,8 @@ public class EntrantPaymentService {
   }
 
   /**
-   * Maps {@link EntrantPayment} and {@link Payment}
-   * to {@link EntrantPaymentWithLatestPaymentDetailsDto} and puts into resulting list.
+   * Maps {@link EntrantPayment} and {@link Payment} to
+   * {@link EntrantPaymentWithLatestPaymentDetailsDto} and puts into resulting list.
    */
   private void addToResultWithPaymentDetails(
       EntrantPayment entrantPayment, Payment payment,
