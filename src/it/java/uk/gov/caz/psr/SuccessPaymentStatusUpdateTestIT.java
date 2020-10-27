@@ -68,8 +68,7 @@ public class SuccessPaymentStatusUpdateTestIT {
   public void startMockServer() {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
-    RestAssured.basePath = ChargeSettlementController.BASE_PATH +
-        ChargeSettlementController.PAYMENT_STATUS_PATH;
+    RestAssured.basePath = ChargeSettlementController.PAYMENT_STATUS_PATH;
   }
 
   @ParameterizedTest

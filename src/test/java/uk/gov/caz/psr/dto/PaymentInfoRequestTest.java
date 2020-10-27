@@ -22,7 +22,7 @@ class PaymentInfoRequestTest {
     @Test
     public void shouldThrowExceptionWhenPaymentMadeDateAndPaymentProviderIdArePresent() {
       // given
-      PaymentInfoRequest request = PaymentInfoRequest.builder()
+      PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
           .paymentProviderId(ANY_PAYMENT_PROVIDER_ID)
           .paymentMadeDate(ANY_PAYMENT_MADE_DATE)
           .build();
@@ -40,7 +40,7 @@ class PaymentInfoRequestTest {
     @Test
     public void shouldThrowExceptionWhenPaymentMadeDateAndVrnArePresent() {
       // given
-      PaymentInfoRequest request = PaymentInfoRequest.builder()
+      PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
           .vrn(ANY_VRN)
           .paymentMadeDate(ANY_PAYMENT_MADE_DATE)
           .build();
@@ -59,7 +59,7 @@ class PaymentInfoRequestTest {
     @Test
     public void shouldThrowExceptionWhenPaymentMadeDateAndFromDatePaidArePresent() {
       // given
-      PaymentInfoRequest request = PaymentInfoRequest.builder()
+      PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
           .fromDatePaidFor(ANY_FROM_PAID_FOR)
           .paymentMadeDate(ANY_PAYMENT_MADE_DATE)
           .build();
@@ -78,7 +78,7 @@ class PaymentInfoRequestTest {
     @Test
     public void shouldThrowExceptionWhenPaymentMadeDateAndToPaidDateArePresent() {
       // given
-      PaymentInfoRequest request = PaymentInfoRequest.builder()
+      PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
           .toDatePaidFor(ANY_TO_DATE_PAID_FOR)
           .paymentMadeDate(ANY_PAYMENT_MADE_DATE)
           .build();
@@ -96,7 +96,7 @@ class PaymentInfoRequestTest {
     @Test
     public void shouldNotThrowExceptionWhenPaymentMadeDateIsNull() {
       // given
-      PaymentInfoRequest request = PaymentInfoRequest.builder()
+      PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
           .paymentProviderId(ANY_PAYMENT_PROVIDER_ID)
           .fromDatePaidFor(ANY_FROM_PAID_FOR)
           .toDatePaidFor(ANY_TO_DATE_PAID_FOR)
@@ -113,7 +113,7 @@ class PaymentInfoRequestTest {
     @Test
     public void shouldNotThrowExceptionWhenOnlyPaymentMadeDateIsPresent() {
       // given
-      PaymentInfoRequest request = PaymentInfoRequest.builder()
+      PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
           .paymentMadeDate(ANY_PAYMENT_MADE_DATE)
           .build();
 

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.dto.PaymentInfoRequest;
+import uk.gov.caz.psr.dto.PaymentInfoRequestV1;
 
 @ExtendWith(MockitoExtension.class)
 class FromAndToDatesInChronologicalOrderValidatorTest {
@@ -22,7 +22,7 @@ class FromAndToDatesInChronologicalOrderValidatorTest {
   @Test
   public void shouldReturnTrueWhenInputIsNull() {
     // given
-    PaymentInfoRequest request = null;
+    PaymentInfoRequestV1 request = null;
 
     // when
     boolean result = validator.isValid(request, context);
@@ -34,7 +34,7 @@ class FromAndToDatesInChronologicalOrderValidatorTest {
   @Test
   public void shouldReturnTrueWhenFromDateIsNull() {
     // given
-    PaymentInfoRequest request = PaymentInfoRequest.builder()
+    PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
         .toDatePaidFor(LocalDate.now())
         .build();
 
@@ -48,7 +48,7 @@ class FromAndToDatesInChronologicalOrderValidatorTest {
   @Test
   public void shouldReturnTrueWhenToDateIsNull() {
     // given
-    PaymentInfoRequest request = PaymentInfoRequest.builder()
+    PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
         .fromDatePaidFor(LocalDate.now())
         .build();
 
@@ -64,7 +64,7 @@ class FromAndToDatesInChronologicalOrderValidatorTest {
     // given
     LocalDate fromDate = LocalDate.now();
     LocalDate toDate = LocalDate.now();
-    PaymentInfoRequest request = PaymentInfoRequest.builder()
+    PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
         .fromDatePaidFor(fromDate)
         .toDatePaidFor(toDate)
         .build();
@@ -81,7 +81,7 @@ class FromAndToDatesInChronologicalOrderValidatorTest {
     // given
     LocalDate fromDate = LocalDate.now();
     LocalDate toDate = fromDate.plusDays(1);
-    PaymentInfoRequest request = PaymentInfoRequest.builder()
+    PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
         .fromDatePaidFor(fromDate)
         .toDatePaidFor(toDate)
         .build();
@@ -98,7 +98,7 @@ class FromAndToDatesInChronologicalOrderValidatorTest {
     // given
     LocalDate fromDate = LocalDate.now();
     LocalDate toDate = fromDate.minusDays(1);
-    PaymentInfoRequest request = PaymentInfoRequest.builder()
+    PaymentInfoRequestV1 request = PaymentInfoRequestV1.builder()
         .fromDatePaidFor(fromDate)
         .toDatePaidFor(toDate)
         .build();

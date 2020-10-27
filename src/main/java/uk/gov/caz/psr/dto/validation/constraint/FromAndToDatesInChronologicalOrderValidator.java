@@ -3,14 +3,14 @@ package uk.gov.caz.psr.dto.validation.constraint;
 import java.time.LocalDate;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-import uk.gov.caz.psr.dto.PaymentInfoRequest;
+import uk.gov.caz.psr.dto.PaymentInfoRequestV1;
 
 /**
  * Custom validator that checks whether the request contains from and to dates in chronological
  * order.
  */
 public class FromAndToDatesInChronologicalOrderValidator implements
-    ConstraintValidator<FromAndToDatesInChronologicalOrder, PaymentInfoRequest> {
+    ConstraintValidator<FromAndToDatesInChronologicalOrder, PaymentInfoRequestV1> {
 
   /**
    * Checks if the passed {@code input} contains from and to dates in chronological order.
@@ -20,7 +20,7 @@ public class FromAndToDatesInChronologicalOrderValidator implements
    * @return true if {@code input} contains from and to dates in chronological order.
    */
   @Override
-  public boolean isValid(PaymentInfoRequest input, ConstraintValidatorContext context) {
+  public boolean isValid(PaymentInfoRequestV1 input, ConstraintValidatorContext context) {
     if (input == null) {
       return true;
     }
