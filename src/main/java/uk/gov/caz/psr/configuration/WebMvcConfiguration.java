@@ -9,11 +9,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 class WebMvcConfiguration implements WebMvcConfigurer {
   /**
-  * override method to set default content type to Json for all APIs
+  * Override method to set default content type to Json for all APIs.
   */
   @Override
   public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-	// set default content type for responses to Json
+    // set default content type for responses to Json
     configurer.defaultContentType(MediaType.APPLICATION_JSON);
   }
 }
