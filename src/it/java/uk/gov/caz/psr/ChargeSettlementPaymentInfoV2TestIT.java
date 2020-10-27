@@ -168,6 +168,21 @@ class ChargeSettlementPaymentInfoV2TestIT extends ChargeSettlementPaymentInfoTes
 
         verifyResultsWereFetchedByOneDatabaseQuery();
       }
+
+      @Test
+      public void shouldReturnErrorForIncorrectPage() {
+        PaymentInfoAssertion.whenRequested()
+            .withParam("fromDatePaidFor", "2019-11-01")
+            .withParam("toDatePaidFor", "2019-11-02")
+            .withParam("page", "1")
+            .then()
+            .headerContainsCorrelationId()
+            .responseHasBadRequestStatus()
+            .containsErrors(1)
+            .andContainsErrorWith(0, 400, "page",
+                "Invalid page number",
+                "Parameter validation error");
+      }
     }
   }
 
