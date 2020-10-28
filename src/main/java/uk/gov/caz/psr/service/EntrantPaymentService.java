@@ -59,7 +59,6 @@ public class EntrantPaymentService {
    */
   private Optional<EntrantPayment> fetchEntrantPaymentFromRepository(
       VehicleEntrantDto vehicleEntrantDto) {
-
     LocalDateTime normalizedEntryTimestamp = LocalDateTime.from(
         vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
             .withZoneSameInstant(UK_ZONE_ID));
@@ -126,11 +125,15 @@ public class EntrantPaymentService {
    * "captured" because we know this request comes from ANPR through VCCS.
    */
   private EntrantPayment buildNewEntrantPayment(VehicleEntrantDto vehicleEntrantDto) {
+    LocalDateTime normalizedEntryTimestamp = LocalDateTime.from(
+        vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
+            .withZoneSameInstant(UK_ZONE_ID));
+
     return EntrantPayment.builder()
         .vrn(vehicleEntrantDto.getVrn())
         .cleanAirZoneId(vehicleEntrantDto.getCleanZoneId())
-        .travelDate(vehicleEntrantDto.getCazEntryTimestamp().toLocalDate())
-        .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
+        .travelDate(normalizedEntryTimestamp.toLocalDate())
+        .cazEntryTimestamp(normalizedEntryTimestamp)
         .vehicleEntrantCaptured(true)
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
@@ -193,8 +196,8 @@ public class EntrantPaymentService {
   }
 
   /**
-   * Maps {@link EntrantPayment} and {@link Payment} to
-   * {@link EntrantPaymentWithLatestPaymentDetailsDto} and puts into resulting list.
+   * Maps {@link EntrantPayment} and {@link Payment}
+   * to {@link EntrantPaymentWithLatestPaymentDetailsDto} and puts into resulting list.
    */
   private void addToResultWithPaymentDetails(
       EntrantPayment entrantPayment, Payment payment,
