@@ -96,6 +96,61 @@ class EntrantPaymentServiceTest {
         verify(entrantPaymentRepository).insert(buildCazEntrantPaymentToInsert());
         verifyNoInteractions(paymentRepository);
       }
+
+      @Nested
+      public class InBritishSummerTime {
+
+        @Test
+        public void thenResponseWithCorrectEntrantPaymentPropertiesWithValidPaymentMethodShouldBeReturned() {
+          // given
+          LocalDateTime gmtTime = LocalDateTime.of(2020, 10, 15, 23, 30);
+          LocalDateTime ukTime = LocalDateTime.of(2020, 10, 16, 00, 30);
+          VehicleEntrantDto dto = buildVehicleEntrantDtoForDate(gmtTime);
+          cazEntrantPaymentDtos = Arrays.asList(dto);
+
+          when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
+              .thenReturn(Optional.empty());
+          when(entrantPaymentRepository.insert(any(EntrantPayment.class))).thenReturn(
+              buildCazEntrantPaymentToInsert().toBuilder()
+                  .cleanAirZoneEntrantPaymentId(UUID.fromString(ANY_UUID))
+                  .build()
+          );
+
+          // when
+          callBulkProcess();
+
+          // then
+          assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD);
+          verify(entrantPaymentRepository).insert(expectedEntrantPaymentInsert(dto, ukTime));
+        }
+      }
+
+      @Nested
+      public class InBritishWinterTime {
+
+        @Test
+        public void thenResponseWithCorrectEntrantPaymentPropertiesWithValidPaymentMethodShouldBeReturned() {
+          // given
+          LocalDateTime gmtTime = LocalDateTime.of(2020, 12, 15, 23, 30);
+          VehicleEntrantDto dto = buildVehicleEntrantDtoForDate(gmtTime);
+          cazEntrantPaymentDtos = Arrays.asList(dto);
+
+          when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
+              .thenReturn(Optional.empty());
+          when(entrantPaymentRepository.insert(any(EntrantPayment.class))).thenReturn(
+              buildCazEntrantPaymentToInsert().toBuilder()
+                  .cleanAirZoneEntrantPaymentId(UUID.fromString(ANY_UUID))
+                  .build()
+          );
+
+          // when
+          callBulkProcess();
+
+          // then
+          assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD);
+          verify(entrantPaymentRepository).insert(expectedEntrantPaymentInsert(dto, gmtTime));
+        }
+      }
     }
 
     @Nested
@@ -136,7 +191,8 @@ class EntrantPaymentServiceTest {
               VehicleEntrantDto dto = buildVehicleEntrantDtoForDate(gmtTime);
               cazEntrantPaymentDtos = Arrays.asList(dto);
 
-              mockNonEmptyPaidCapturedCazEntryInBritishTimeZonePaymentRepositoryResponse(expectedUkTimeDay);
+              mockNonEmptyPaidCapturedCazEntryInBritishTimeZonePaymentRepositoryResponse(
+                  expectedUkTimeDay);
               mockMatchingPaymentWithPaymentMethod(PaymentMethod.CREDIT_DEBIT_CARD);
 
               // when
@@ -159,7 +215,8 @@ class EntrantPaymentServiceTest {
               VehicleEntrantDto dto = buildVehicleEntrantDtoForDate(gmtTime);
               cazEntrantPaymentDtos = Arrays.asList(dto);
 
-              mockNonEmptyPaidCapturedCazEntryInBritishTimeZonePaymentRepositoryResponse(expectedUkTimeDay);
+              mockNonEmptyPaidCapturedCazEntryInBritishTimeZonePaymentRepositoryResponse(
+                  expectedUkTimeDay);
               mockMatchingPaymentWithPaymentMethod(PaymentMethod.CREDIT_DEBIT_CARD);
 
               // when
@@ -288,7 +345,8 @@ class EntrantPaymentServiceTest {
 
   private void mockNonEmptyPaidCapturedCazEntryInBritishTimeZonePaymentRepositoryResponse(
       LocalDate date) {
-    when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(UUID.class), anyString(), eq(date)))
+    when(entrantPaymentRepository
+        .findOneByVrnAndCazEntryDate(any(UUID.class), anyString(), eq(date)))
         .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.PAID)));
   }
 
@@ -349,6 +407,19 @@ class EntrantPaymentServiceTest {
         .vehicleEntrantCaptured(true)
         .travelDate(LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate())
         .cazEntryTimestamp(LocalDateTime.parse(ANY_TIMESTAMP))
+        .updateActor(EntrantPaymentUpdateActor.VCCS_API)
+        .build();
+  }
+
+  private EntrantPayment expectedEntrantPaymentInsert(VehicleEntrantDto vehicleEntrantDto,
+      LocalDateTime expectedDateTime) {
+    return EntrantPayment.builder()
+        .cleanAirZoneId(vehicleEntrantDto.getCleanZoneId())
+        .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
+        .vrn(vehicleEntrantDto.getVrn())
+        .vehicleEntrantCaptured(true)
+        .travelDate(expectedDateTime.toLocalDate())
+        .cazEntryTimestamp(expectedDateTime)
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .build();
   }
