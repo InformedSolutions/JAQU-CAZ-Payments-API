@@ -16,7 +16,7 @@ class MaximumDateQueryRangeValidatorTest {
   MaximumDateQueryRangeValidator validator = new MaximumDateQueryRangeValidator(14);
 
   @ParameterizedTest
-  @ValueSource(ints = {15, 22, 33, 111, 333, 643, 712})
+  @ValueSource(ints = {14, 15, 22, 33, 111, 333, 643, 712})
   public void shouldThrowExceptionWhenDateRangeIsExceeded(int days) {
     // given
     PaymentInfoRequestV1 paymentInfoRequest = preparePaymentInfoRequestV1(days);
@@ -29,7 +29,7 @@ class MaximumDateQueryRangeValidatorTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {1, 2, 3, 4, 5, 6, 7, 8, 9, 14})
+  @ValueSource(ints = {1, 2, 3, 4, 5, 6, 7, 8, 9, 13})
   public void shouldNotThrowExceptionWhenDateRangeIsNotExceeded(int days) {
     // given
     PaymentInfoRequestV1 paymentInfoRequest = preparePaymentInfoRequestV1(days);
