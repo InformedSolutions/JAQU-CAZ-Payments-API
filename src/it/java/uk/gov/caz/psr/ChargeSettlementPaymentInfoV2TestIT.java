@@ -31,6 +31,25 @@ class ChargeSettlementPaymentInfoV2TestIT extends ChargeSettlementPaymentInfoTes
         @Nested
         class WhenRequestedWithDatesRange {
 
+          @Test
+          public void shouldReturnErrorsWithQueryDateRangeExceededWhenDateRangeIs15() {
+            String vrn = "ND84VSX";
+            PaymentInfoAssertion.whenRequested()
+                .withParam("vrn", vrn)
+                .withParam("fromDatePaidFor", "2020-01-01")
+                .withParam("toDatePaidFor", "2020-01-15")
+                .then()
+                .headerContainsCorrelationId()
+                .responseHasBadRequestStatus()
+                .containsErrors(2)
+                .andContainsErrorWith(0, 400, "fromDatePaidFor",
+                    "The requested dates exceed the maximum permitted range",
+                    "Query date range exceeded")
+                .andContainsErrorWith(1, 400, "toDatePaidFor",
+                    "The requested dates exceed the maximum permitted range",
+                    "Query date range exceeded");
+          }
+
           @Nested
           class WhichIsCovered {
 
