@@ -419,7 +419,7 @@ class EntrantPaymentServiceTest {
         .vrn(vehicleEntrantDto.getVrn())
         .vehicleEntrantCaptured(true)
         .travelDate(expectedDateTime.toLocalDate())
-        .cazEntryTimestamp(expectedDateTime)
+        .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .build();
   }

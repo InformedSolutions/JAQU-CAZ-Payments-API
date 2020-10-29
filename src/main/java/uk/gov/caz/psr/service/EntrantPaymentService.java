@@ -123,15 +123,12 @@ public class EntrantPaymentService {
    * "captured" because we know this request comes from ANPR through VCCS.
    */
   private EntrantPayment buildNewEntrantPayment(VehicleEntrantDto vehicleEntrantDto) {
-    LocalDateTime normalizedEntryTimestamp = LocalDateTime.from(
-        vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
-            .withZoneSameInstant(UK_ZONE_ID));
-
     return EntrantPayment.builder()
         .vrn(vehicleEntrantDto.getVrn())
         .cleanAirZoneId(vehicleEntrantDto.getCleanZoneId())
-        .travelDate(normalizedEntryTimestamp.toLocalDate())
-        .cazEntryTimestamp(normalizedEntryTimestamp)
+        .travelDate(LocalDateTime.from(vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
+            .withZoneSameInstant(UK_ZONE_ID)).toLocalDate())
+        .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
         .vehicleEntrantCaptured(true)
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
         .internalPaymentStatus(InternalPaymentStatus.NOT_PAID)
