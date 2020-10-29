@@ -59,16 +59,14 @@ public class EntrantPaymentService {
    */
   private Optional<EntrantPayment> fetchEntrantPaymentFromRepository(
       VehicleEntrantDto vehicleEntrantDto) {
-    LocalDateTime normalizedEntryTimestamp = LocalDateTime.from(
-        vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
-            .withZoneSameInstant(UK_ZONE_ID));
 
     return entrantPaymentRepository.findOneByVrnAndCazEntryDate(
         vehicleEntrantDto.getCleanZoneId(),
         vehicleEntrantDto.getVrn(),
-        normalizedEntryTimestamp.toLocalDate()
+        LocalDateTime.from(vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
+            .withZoneSameInstant(UK_ZONE_ID)).toLocalDate()
     ).map(entrantPayment -> entrantPayment.toBuilder()
-        .cazEntryTimestamp(normalizedEntryTimestamp)
+        .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
         .build()
     );
   }
