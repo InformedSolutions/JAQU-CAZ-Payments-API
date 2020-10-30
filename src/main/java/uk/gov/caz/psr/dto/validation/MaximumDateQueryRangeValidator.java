@@ -16,7 +16,7 @@ public class MaximumDateQueryRangeValidator {
    */
   public MaximumDateQueryRangeValidator(
       @Value("${api.charge-settlement.date-query-range}") int maxDateQueryRange) {
-    this.maxDateQueryRange = maxDateQueryRange;
+    this.maxDateQueryRange = maxDateQueryRange - 1;
   }
 
   /**

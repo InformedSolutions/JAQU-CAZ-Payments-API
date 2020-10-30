@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.service;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,10 +63,10 @@ public class EntrantPaymentService {
     return entrantPaymentRepository.findOneByVrnAndCazEntryDate(
         vehicleEntrantDto.getCleanZoneId(),
         vehicleEntrantDto.getVrn(),
-        vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID).withZoneSameInstant(UK_ZONE_ID)
-            .toLocalDate()
+        LocalDateTime.from(vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
+            .withZoneSameInstant(UK_ZONE_ID)).toLocalDate()
     ).map(entrantPayment -> entrantPayment.toBuilder()
-        .cazEntryTimestamp(entrantPayment.getCazEntryTimestamp())
+        .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
         .build()
     );
   }
@@ -125,7 +126,8 @@ public class EntrantPaymentService {
     return EntrantPayment.builder()
         .vrn(vehicleEntrantDto.getVrn())
         .cleanAirZoneId(vehicleEntrantDto.getCleanZoneId())
-        .travelDate(vehicleEntrantDto.getCazEntryTimestamp().toLocalDate())
+        .travelDate(LocalDateTime.from(vehicleEntrantDto.getCazEntryTimestamp().atZone(GMT_ZONE_ID)
+            .withZoneSameInstant(UK_ZONE_ID)).toLocalDate())
         .cazEntryTimestamp(vehicleEntrantDto.getCazEntryTimestamp())
         .vehicleEntrantCaptured(true)
         .updateActor(EntrantPaymentUpdateActor.VCCS_API)
