@@ -1,18 +1,19 @@
 package uk.gov.caz.psr.service;
 
-import java.util.Comparator;
-import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
+import uk.gov.caz.definitions.dto.CleanAirZoneDto;
+import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.definitions.dto.ComplianceResultsDto;
 import uk.gov.caz.definitions.dto.VehicleDto;
 import uk.gov.caz.definitions.dto.VehicleTypeCazChargesDto;
 import uk.gov.caz.psr.dto.vccs.RegisterDetailsDto;
 import uk.gov.caz.psr.repository.VccsRepository;
-import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
 /**
  * Class responsible to call vccs for compliance.
@@ -22,34 +23,7 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 @Slf4j
 public class VehicleComplianceRetrievalService {
 
-  @Value("${services.connection-timeout-seconds:10}")
-  private int serviceCallTimeout;
-
   private final VccsRepository vccsRepository;
-
-  /**
-   * Coordinate asynchronous requests to the vehicle checker to retrieve
-   * compliance information on a list of VRNs.
-   * 
-   * @param vrns a list of vrns
-   * @param zones a list of zones to check compliance for
-   * @return a list of compliance results sorted by vrn
-   */
-  public List<ComplianceResultsDto> retrieveVehicleCompliance(List<String> vrns,
-      String zones) {
-    Response<List<ComplianceResultsDto>> response = vccsRepository
-        .findComplianceInBulkSync(vrns, zones);
-    
-    if (response.isSuccessful()) {
-      List<ComplianceResultsDto> results = response.body();
-      results.sort(
-          Comparator.comparing(ComplianceResultsDto::getRegistrationNumber));
-      return results; 
-    } else {
-      throw new ExternalServiceCallException(
-          "Vehicle Checker returned response code " + response.code());
-    }
-  }
 
   /**
    * Coordinate asynchronous requests to the vehicle checker to retrieve
@@ -115,5 +89,16 @@ public class VehicleComplianceRetrievalService {
     } finally {
       log.debug("Fetching register details from VCCS: finish");
     }
+  }
+
+  /**
+   * Method performs a call to {@link VccsRepository} to fetch cleanAirZones data and returns helper
+   * collection which maps cleanAirZone ID to cleanAirZone name (e.g.
+   * '1b33865b-1fcb-4d28-ac7d-d4586327de7d' => 'Birmingham').
+   */
+  public Map<UUID, String> getCleanAirZoneIdToCleanAirZoneNameMap() {
+    Response<CleanAirZonesDto> cleanAirZonesResponse = vccsRepository.findCleanAirZonesSync();
+    return cleanAirZonesResponse.body().getCleanAirZones().stream()
+        .collect(Collectors.toMap(CleanAirZoneDto::getCleanAirZoneId, CleanAirZoneDto::getName));
   }
 }

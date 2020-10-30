@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -32,6 +33,9 @@ public class InitiatePaymentRequest {
           .put(positiveCharge(), "'charge' in all transactions must be positive")
           .put(userIdShouldBeUuidIfPresent(), "'userId' must be a valid UUID")
           .put(telephonePaymentNotNull(), "'telephonePayment' cannot be null")
+          .put(operatorIdNullIfTelephonePaymentFalse(), "'operatorId' cannot be set when "
+              + "'telephonePayment' is false")
+          .put(operatorIdShouldBeUuidIfPresent(), "'operatorId' must be a valid UUID")
           .put(travelDateNotNull(), "'travelDate' in all transactions cannot be null")
           .put(tariffCodeNotEmpty(), "'tariffCode' in all transactions cannot be null or empty")
           .put(containsNoDuplicatedEntrants(), "Request cannot have duplicated travel date(s)")
@@ -48,6 +52,9 @@ public class InitiatePaymentRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.telephone-payment}")
   Boolean telephonePayment;
+
+  @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.operator-id}")
+  String operatorId;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payments-initiate.transactions}")
   List<Transaction> transactions;
@@ -112,6 +119,13 @@ public class InitiatePaymentRequest {
   }
 
   /**
+   * Returns a lambda that verifies that 'operatorId' is null when 'telephonePayment' is false.
+   */
+  private static Function<InitiatePaymentRequest, Boolean> operatorIdNullIfTelephonePaymentFalse() {
+    return request -> request.getTelephonePayment() || Objects.isNull(request.getOperatorId());
+  }
+
+  /**
    * Returns a lambda that verifies if 'vrn's length does not exceed imposed limits.
    */
   private static Function<InitiatePaymentRequest, Boolean> vrnsMaxLength() {
@@ -160,6 +174,16 @@ public class InitiatePaymentRequest {
       }
       return isValidUuid(userId);
     };
+  }
+
+  /**
+   * Returns a lambda that verifies if 'operator id' is a valid value, unless it is not set.
+   */
+  private static Function<InitiatePaymentRequest, Boolean> operatorIdShouldBeUuidIfPresent() {
+    return request -> Optional.ofNullable(request.getOperatorId())
+        .filter(StringUtils::hasText)
+        .map(InitiatePaymentRequest::isValidUuid)
+        .orElse(Boolean.TRUE);
   }
 
   private static boolean isValidUuid(String userId) {

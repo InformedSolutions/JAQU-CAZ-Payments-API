@@ -10,7 +10,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +32,6 @@ import uk.gov.caz.psr.model.PaymentToCleanAirZoneMapping;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.PaymentSummaryRepository;
 import uk.gov.caz.psr.repository.PaymentToCleanAirZoneMappingRepository;
-import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.util.CurrencyFormatter;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,7 +41,7 @@ class RetrieveSuccessfulPaymentsServiceTest {
   private AccountsRepository accountsRepository;
 
   @Mock
-  private VccsRepository vccsRepository;
+  private VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
 
   @Mock
   private PaymentToCleanAirZoneMappingRepository paymentToCleanAirZoneMappingRepository;
@@ -79,7 +80,7 @@ class RetrieveSuccessfulPaymentsServiceTest {
       verify(paymentToCleanAirZoneMappingRepository).getPaymentToCleanAirZoneMapping(any());
       verify(paymentSummaryRepository)
           .getPaginatedPaymentSummaryForUserIds(any(), anyInt(), anyInt());
-      verify(vccsRepository).findCleanAirZonesSync();
+      verify(vehicleComplianceRetrievalService).getCleanAirZoneIdToCleanAirZoneNameMap();
       verify(paymentSummaryRepository).getTotalPaymentsCountForUserIds(any());
     }
 
@@ -112,7 +113,7 @@ class RetrieveSuccessfulPaymentsServiceTest {
       verify(paymentToCleanAirZoneMappingRepository).getPaymentToCleanAirZoneMapping(any());
       verify(paymentSummaryRepository)
           .getPaginatedPaymentSummaryForUserIds(any(), anyInt(), anyInt());
-      verify(vccsRepository).findCleanAirZonesSync();
+      verify(vehicleComplianceRetrievalService).getCleanAirZoneIdToCleanAirZoneNameMap();
       verify(paymentSummaryRepository).getTotalPaymentsCountForUserIds(any());
     }
 
@@ -137,7 +138,8 @@ class RetrieveSuccessfulPaymentsServiceTest {
         .thenReturn(samplePaymentToCazMappingResult());
     when(paymentSummaryRepository.getPaginatedPaymentSummaryForUserIds(any(), anyInt(), anyInt()))
         .thenReturn(samplePaymentSummaryResult());
-    when(vccsRepository.findCleanAirZonesSync()).thenReturn(sampleCleanAirZonesResponse());
+    when(vehicleComplianceRetrievalService.getCleanAirZoneIdToCleanAirZoneNameMap())
+        .thenReturn(sampleCleanAirZonesMap());
     when(paymentSummaryRepository.getTotalPaymentsCountForUserIds(any()))
         .thenReturn(ANY_PAYMENTS_COUNT_RESULT);
     when(currencyFormatter.parsePenniesToBigDecimal(anyInt())).thenReturn(BigDecimal.valueOf(50));
@@ -181,6 +183,13 @@ class RetrieveSuccessfulPaymentsServiceTest {
         .cleanAirZones(cazDtosList)
         .build();
     return Response.success(cleanAirZonesDto);
+  }
+
+  private Map<UUID, String> sampleCleanAirZonesMap() {
+    List<CleanAirZoneDto> cazDtosList = sampleCleanAirZoneDtosList();
+    Map<UUID, String> cazMap = cazDtosList.stream().collect(Collectors.toMap(CleanAirZoneDto::getCleanAirZoneId,
+        CleanAirZoneDto::getName));
+    return cazMap;
   }
 
   private List<CleanAirZoneDto> sampleCleanAirZoneDtosList() {

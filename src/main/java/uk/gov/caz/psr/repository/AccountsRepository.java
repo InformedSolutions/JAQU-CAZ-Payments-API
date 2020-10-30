@@ -1,7 +1,6 @@
 package uk.gov.caz.psr.repository;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -12,9 +11,9 @@ import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import uk.gov.caz.definitions.dto.accounts.ChargeableVehiclesResponseDto;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
-import uk.gov.caz.psr.dto.AccountVehicleResponse;
-import uk.gov.caz.psr.dto.AccountVehicleRetrievalResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
@@ -28,42 +27,13 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 public interface AccountsRepository {
 
   /**
-   * Method to create retrofit2 account service for getAccountVehicleVrns call.
-   *
-   * @return {@link Call}
-   */
-  @Headers("Accept: application/json")
-  @GET("v1/accounts/{accountId}/vehicles")
-  Call<AccountVehicleRetrievalResponse> getAccountVehicleVrns(
-      @Path("accountId") UUID accountId,
-      @Query("pageNumber") String pageNumber,
-      @Query("pageSize") String pageSize
-    );
-  
-  /**
-   * Synchronous wrapper for getAccountVehicleVrns call.
-   * @param accountId the identifier of the account
-   * @param pageNumber the number of the page
-   * @param pageSize the size of the page
-   * @return
-   */
-  default Response<AccountVehicleRetrievalResponse> getAccountVehicleVrnsSync(
-      UUID accountId, String pageNumber, String pageSize) {
-    try {
-      return getAccountVehicleVrns(accountId, pageNumber, pageSize).execute();
-    } catch (IOException e) {
-      throw new ExternalServiceCallException(e.getMessage());
-    }
-  }
-  
-  /**
    * Method to create retrofit2 account service for getAccountVehicleVrnsByCursor call.
    *
    * @return {@link Call}
    */
   @Headers("Accept: application/json")
   @GET("v1/accounts/{accountId}/vehicles/sorted-page")
-  Call<List<String>> getAccountVehicleVrnsByCursor(
+  Call<ChargeableVehiclesResponseDto> getAccountChargeableVehiclesByCursor(
       @Path("accountId") String accountId,
       @Query("direction") String direction,
       @Query("pageSize") String pageSize,
@@ -76,10 +46,10 @@ public interface AccountsRepository {
    * @param pageSize the size of the page
    * @return
    */
-  default Response<List<String>> getAccountVehicleVrnsByCursorSync(
+  default Response<ChargeableVehiclesResponseDto> getAccountChargeableVehiclesByCursorSync(
       UUID accountId, String direction, int pageSize, String vrn) {
     try {
-      return getAccountVehicleVrnsByCursor(accountId.toString(), direction, 
+      return getAccountChargeableVehiclesByCursor(accountId.toString(), direction,
           Integer.toString(pageSize), vrn).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
@@ -93,7 +63,7 @@ public interface AccountsRepository {
    */
   @Headers("Accept: application/json")
   @GET("v1/accounts/{accountId}/vehicles/{vrn}")
-  Call<AccountVehicleResponse> getAccountSingleVehicleVrn(
+  Call<VehicleWithCharges> getAccountSingleVehicleVrn(
       @Path("accountId") UUID accountId, @Path("vrn") String vrn
     );
 
@@ -123,7 +93,7 @@ public interface AccountsRepository {
    * @param vrn the VRN to query.
    * @return details of a single vehicle vrn.
    */
-  default Response<AccountVehicleResponse> getAccountSingleVehicleVrnSync(
+  default Response<VehicleWithCharges> getAccountSingleVehicleVrnSync(
       UUID accountId, String vrn) {
     try {
       return getAccountSingleVehicleVrn(accountId, vrn).execute();

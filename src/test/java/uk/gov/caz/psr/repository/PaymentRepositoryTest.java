@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,27 @@ class PaymentRepositoryTest {
       // then
       assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
           .hasMessage("Payment cannot have ID");
+    }
+
+    @Nested
+    class WhenPaymentHasFalseTelephonePaymentAndValidOperatorId {
+
+      @Test
+      public void shouldThrowIllegalArgumentException() {
+        // given
+        Payment payment = Payments.forRandomDays().toBuilder()
+            .entrantPayments(Collections.emptyList())
+            .telephonePayment(false)
+            .operatorId(UUID.randomUUID())
+            .build();
+
+        // when
+        Throwable throwable = catchThrowable(() -> paymentRepository.insert(payment));
+
+        // then
+        assertThat(throwable).isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Operator ID must be null if telephonePayment is false");
+      }
     }
   }
 

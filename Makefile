@@ -85,7 +85,7 @@ sam-local-run:
 	SPRING_PROFILES_ACTIVE='sam-local' sam local invoke JaquCazFunction -t sam.yaml -e $$EVENT --docker-network postgres_docker_default
 
 localstack-up:
-	SERVICES='s3,sqs,sns' docker-compose -f docker/docker-compose-localstack.yml -p localstack_docker up -d
+	SERVICES='s3,sqs,sns,secretsmanager' docker-compose -f docker/docker-compose-localstack.yml -p localstack_docker up -d
 
 localstack-down:
 	docker-compose -f docker/docker-compose-localstack.yml -p localstack_docker down

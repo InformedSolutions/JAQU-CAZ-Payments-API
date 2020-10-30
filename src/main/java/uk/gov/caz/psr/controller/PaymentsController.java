@@ -17,6 +17,7 @@ import uk.gov.caz.psr.dto.PaidPaymentsRequest;
 import uk.gov.caz.psr.dto.PaidPaymentsResponse;
 import uk.gov.caz.psr.dto.PaymentDetailsResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
+import uk.gov.caz.psr.dto.ReferencesHistoryResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
@@ -26,6 +27,7 @@ import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.PaymentDetailsConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
+import uk.gov.caz.psr.util.ReferencesHistoryConverter;
 
 @RestController
 @AllArgsConstructor
@@ -41,11 +43,15 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   @VisibleForTesting
   public static final String GET_PAYMENT_DETAILS = "{payment_id}";
 
+  @VisibleForTesting
+  public static final String GET_REFERENCES_HISTORY = "references-history/{paymentReference}";
+
   private final InitiatePaymentService initiatePaymentService;
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
   private final PaymentService paymentService;
   private final PaymentDetailsConverter paymentDetailsConverter;
+  private final ReferencesHistoryConverter referencesHistoryConverter;
 
   @Override
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(
@@ -86,6 +92,14 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   public ResponseEntity<PaymentDetailsResponse> getPaymentDetails(UUID paymentId) {
     return paymentService.getPayment(paymentId)
         .map(paymentDetailsConverter::toPaymentDetailsResponse)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.notFound().build());
+  }
+
+  @Override
+  public ResponseEntity<ReferencesHistoryResponse> getReferencesHistory(Long paymentReference) {
+    return paymentService.getPaymentByReferenceNumber(paymentReference)
+        .map(referencesHistoryConverter::toReferencesHistoryResponse)
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
   }
