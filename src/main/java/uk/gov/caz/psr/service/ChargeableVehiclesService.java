@@ -1,9 +1,7 @@
 package uk.gov.caz.psr.service;
 
-import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -108,33 +106,17 @@ public class ChargeableVehiclesService {
    * Gets list of chargeable vehicles from the Accounts Service.
    */
   private List<ChargeableVehicle> getPageOfChargeableVehicles(UUID accountId, String vrn,
-      UUID cazId, String direction,
-      int pageSize) {
-    Boolean lastPage = false;
-    String cursorVrn = vrn;
-    List<ChargeableVehicle> results = new ArrayList<>();
+      UUID cazId, String direction, int pageSize) {
 
-    while (results.size() < (pageSize + 1) && !lastPage) {
-      log.info("Fetching page of vehicles form Accounts API");
-      ChargeableVehiclesResponseDto accountVehicles = accountService
-          .getAccountVehiclesByCursor(accountId, direction, pageSize * 3, cursorVrn);
+    ChargeableVehiclesResponseDto accountVehicles = accountService
+        .getAccountVehiclesByCursor(accountId, direction, pageSize, vrn, cazId);
+    List<ChargeableVehicle> chargeableVehicles = accountVehicles.getVehicles().stream()
+        .map(vehicleWithCharges ->
+            ChargeableVehicle.from(vehicleWithCharges.getVrn(),
+                getCachedChargeForCaz(vehicleWithCharges, cazId))).collect(
+            Collectors.toList());
 
-      List<ChargeableVehicle> foundChargeableVehicle = accountVehicles.getVehicles().stream()
-          .filter(vehicle -> isVehicleChargeableInCaz(vehicle, cazId))
-          .map(vehicle -> ChargeableVehicle
-              .from(vehicle.getVrn(), getCachedChargeForCaz(vehicle, cazId))).collect(
-              Collectors.toList());
-      results.addAll(foundChargeableVehicle);
-
-      // check if the end of pages has been reached, if not set new cursor
-      if (accountVehicles.getVehicles().size() < pageSize * 3) {
-        lastPage = true;
-      } else {
-        cursorVrn = Iterables.getLast(accountVehicles.getVehicles()).getVrn();
-      }
-    }
-
-    return results;
+    return chargeableVehicles;
   }
 
   /**
