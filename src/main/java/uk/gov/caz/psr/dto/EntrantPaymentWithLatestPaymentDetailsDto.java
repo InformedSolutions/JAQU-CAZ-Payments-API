@@ -52,6 +52,10 @@ public class EntrantPaymentWithLatestPaymentDetailsDto {
   @NotNull
   UUID cleanAirZoneId;
 
+  @ApiModelProperty(value = "${swagger.model.descriptions.caz-entrant-payment.tariff-code}")
+  @Nullable
+  String tariffCode;
+
   /**
    * Maps {@link EntrantPayment} and possibly from {@link Payment} to {@link
    * EntrantPaymentWithLatestPaymentDetailsDto}.
@@ -71,6 +75,7 @@ public class EntrantPaymentWithLatestPaymentDetailsDto {
         .cleanAirZoneId(entrantPayment.getCleanAirZoneId())
         .paymentMethod(
             payment != null ? payment.getPaymentMethod().accept(paymentMethodToDtoString) : "null")
+        .tariffCode(entrantPayment.getTariffCode())
         .build();
   }
 
