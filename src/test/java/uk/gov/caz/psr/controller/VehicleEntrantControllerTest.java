@@ -168,7 +168,8 @@ class VehicleEntrantControllerTest {
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(jsonPath("$[0].paymentStatus").value(InternalPaymentStatus.NOT_PAID.name()))
-        .andExpect(jsonPath("$[0].paymentMethod").value("null"));
+        .andExpect(jsonPath("$[0].paymentMethod").value("null"))
+        .andExpect(jsonPath("$[0].tariffCode").isEmpty());
 
     verify(entrantPaymentService).bulkProcess(any());
   }
@@ -186,7 +187,8 @@ class VehicleEntrantControllerTest {
         .andExpect(status().isOk())
         .andExpect(header().string(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID))
         .andExpect(jsonPath("$[0].paymentStatus").value(InternalPaymentStatus.PAID.name()))
-        .andExpect(jsonPath("$[0].paymentMethod").value("card"));
+        .andExpect(jsonPath("$[0].paymentMethod").value("card"))
+        .andExpect(jsonPath("$[0].tariffCode").value("any-tariff-code"));
 
     verify(entrantPaymentService).bulkProcess(any());
   }

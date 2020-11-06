@@ -236,6 +236,7 @@ swagger:
         vrn: Vehicle registration number
         travel-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
         clean-zone-id: Clean Air Zone identifier
+        tariff-code: the identifier for the tariff on the travel date
       payments-initiate:
         vrn: Vehicle registration number
         travel-date: ISO 8601 formatted date string that specifies the date for which user wants to pay
