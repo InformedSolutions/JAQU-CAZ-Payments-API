@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS clean_air_zone_entrant_payment_id ON caz_payment.t_clean_air_zone_entrant_payment_match (clean_air_zone_entrant_payment_id);
