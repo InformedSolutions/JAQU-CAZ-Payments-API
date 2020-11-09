@@ -37,7 +37,8 @@ public interface AccountsRepository {
       @Path("accountId") String accountId,
       @Query("direction") String direction,
       @Query("pageSize") String pageSize,
-      @Query("vrn") String vrn
+      @Query("vrn") String vrn,
+      @Query("chargeableCazId") String chargeableCazId
     );
   
   /**
@@ -47,10 +48,10 @@ public interface AccountsRepository {
    * @return
    */
   default Response<ChargeableVehiclesResponseDto> getAccountChargeableVehiclesByCursorSync(
-      UUID accountId, String direction, int pageSize, String vrn) {
+      UUID accountId, String direction, int pageSize, String vrn, UUID cazId) {
     try {
       return getAccountChargeableVehiclesByCursor(accountId.toString(), direction,
-          Integer.toString(pageSize), vrn).execute();
+          Integer.toString(pageSize), vrn, cazId.toString()).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }
