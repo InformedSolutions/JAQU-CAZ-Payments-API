@@ -109,7 +109,7 @@ public class ChargeableVehiclesService {
       UUID cazId, String direction, int pageSize) {
 
     ChargeableVehiclesResponseDto accountVehicles = accountService
-        .getAccountVehiclesByCursor(accountId, direction, pageSize, vrn, cazId);
+        .getAccountVehiclesByCursor(accountId, direction, pageSize + 1, vrn, cazId);
     List<ChargeableVehicle> chargeableVehicles = accountVehicles.getVehicles().stream()
         .map(vehicleWithCharges ->
             ChargeableVehicle.from(vehicleWithCharges.getVrn(),
