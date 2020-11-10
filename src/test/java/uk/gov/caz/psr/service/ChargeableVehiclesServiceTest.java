@@ -209,7 +209,7 @@ class ChargeableVehiclesServiceTest {
 
   private void mockAccountServiceChargeableVehiclesCall() throws JsonProcessingException {
     when(accountService
-        .getAccountVehiclesByCursor(ANY_ACCOUNT_ID, "previous", ANY_PAGE_SIZE, ANY_CURSOR_VRN,
+        .getAccountVehiclesByCursor(ANY_ACCOUNT_ID, "previous", ANY_PAGE_SIZE + 1, ANY_CURSOR_VRN,
             ANY_CAZ_ID))
         .thenReturn(exampleChargeableVehiclesResponseDto());
   }
@@ -233,7 +233,7 @@ class ChargeableVehiclesServiceTest {
 
   private void mockAccountServiceNonChargeableVehiclesCall(int pageSize) {
     when(accountService
-        .getAccountVehiclesByCursor(ANY_ACCOUNT_ID, "previous", pageSize, ANY_CURSOR_VRN,
+        .getAccountVehiclesByCursor(ANY_ACCOUNT_ID, "previous", pageSize + 1, ANY_CURSOR_VRN,
             ANY_CAZ_ID))
         .thenReturn(exampleNonChargeableVehiclesResponseDto());
   }
