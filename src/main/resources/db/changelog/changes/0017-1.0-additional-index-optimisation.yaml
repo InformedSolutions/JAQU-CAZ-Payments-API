@@ -7,7 +7,7 @@ databaseChangeLog:
             dbms: postgresql
             encoding: utf8
             endDelimiter: ;GO
-            path: ../rawSql/0017-1.0-add-indexes-for-payment-match-queries.sql
+            path: ../rawSql/0017-1.0-additional-index-optimsation.sql
             relativeToChangelogFile: true
             splitStatements: true
             stripComments: true 
