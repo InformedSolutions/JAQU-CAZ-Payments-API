@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0018-1.0-additional-indexing
+      author: Informed
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0018-1.0-additional-index-optimsation.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true 

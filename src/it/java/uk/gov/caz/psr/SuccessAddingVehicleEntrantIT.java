@@ -68,29 +68,46 @@ public class SuccessAddingVehicleEntrantIT {
 
   @Test
   public void createEntrantPaymentJourney() {
-    LocalDateTime dayWithoutEntrantPayment = LocalDateTime.of(2020, 1, 1, 12, 0);
+    LocalDateTime dayWithoutEntrantPayment = LocalDateTime.of(2020, 1, 1, 11, 0);
 
     given()
         .vehicleEntrantRequest(vehicleEntrantRequest(dayWithoutEntrantPayment))
         .whenSubmitted()
         .then()
         .responseContainsDataMatchingRequest()
+        .responseContainsExpectedTariffCode(null)
         .entrantPaymentMatchIsNotCreatedInDatabase()
         .entrantPaymentIsCreatedInDatabase()
-		.masterRecordCreatedInDatabase()
-		.detailRecordCreatedInDatabase(dayWithoutEntrantPayment)
+        .masterRecordCreatedInDatabase()
+        .detailRecordCreatedInDatabase(dayWithoutEntrantPayment)
         .andHasVehicleEntrantCapturedSetToTrue();
   }
 
   @Test
-  public void fetchEntrantPaymentJourney() {
-    LocalDateTime notCapturedDay = LocalDateTime.of(2020, 1, 13, 12, 30);
+  public void fetchNotPaidEntrantPaymentJourney() {
+    LocalDateTime notCapturedDay = LocalDateTime.of(2020, 1, 12, 12, 30);
 
     given()
         .vehicleEntrantRequest(vehicleEntrantRequest(notCapturedDay))
         .whenSubmitted()
         .then()
         .responseContainsDataMatchingRequest()
+        .responseContainsExpectedTariffCode(null)
+        .entrantPaymentMatchIsNotCreatedInDatabase()
+        .entrantPaymentIsFoundInDatabase()
+        .andHasVehicleEntrantCapturedSetToTrue();
+  }
+
+  @Test
+  public void fetchPaidEntrantPaymentJourney() {
+    LocalDateTime capturedDay = LocalDateTime.of(2020, 1, 13, 12, 30);
+
+    given()
+        .vehicleEntrantRequest(vehicleEntrantRequest(capturedDay))
+        .whenSubmitted()
+        .then()
+        .responseContainsDataMatchingRequest()
+        .responseContainsExpectedTariffCode("TARIFF_CODE_PAID")
         .entrantPaymentMatchIsNotCreatedInDatabase()
         .entrantPaymentIsFoundInDatabase()
         .andHasVehicleEntrantCapturedSetToTrue();
@@ -102,9 +119,9 @@ public class SuccessAddingVehicleEntrantIT {
 
   private VehicleEntrantDto vehicleEntrantRequest(LocalDateTime cazEntry) {
     VehicleEntrantDto vehicleEntrantDto = VehicleEntrantDto.builder()
-        .cleanZoneId(UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4"))
+        .cleanZoneId(UUID.fromString("4dc6ea23-77d3-4bfe-8180-7662c33f88ad"))
         .cazEntryTimestamp(cazEntry)
-        .vrn("ND84VSX")
+        .vrn("EST123")
         .build();
 
     return vehicleEntrantDto;
@@ -148,7 +165,8 @@ public class SuccessAddingVehicleEntrantIT {
           .header(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE)
           .statusCode(HttpStatus.OK.value())
           .extract().body()
-          .as(new TypeRef<List<EntrantPaymentWithLatestPaymentDetailsDto>>() {});
+          .as(new TypeRef<List<EntrantPaymentWithLatestPaymentDetailsDto>>() {
+          });
       return this;
     }
 
@@ -156,14 +174,14 @@ public class SuccessAddingVehicleEntrantIT {
       verifyThatVehicleEntrantExists();
       return this;
     }
-	
-	public VehicleEntrantJourneyAssertion masterRecordCreatedInDatabase() {
-	  verifyThatMasterTableUpdated();
-	  return this;
-	}
+
+    public VehicleEntrantJourneyAssertion masterRecordCreatedInDatabase() {
+      verifyThatMasterTableUpdated();
+      return this;
+    }
 
     public VehicleEntrantJourneyAssertion detailRecordCreatedInDatabase(LocalDateTime travelDate) {
-      int detailRecordsBefore = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, 
+      int detailRecordsBefore = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment_audit.t_clean_air_zone_payment_detail",
           "travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
       verifyThatDetailTableUpdated(travelDate, detailRecordsBefore);
@@ -187,8 +205,16 @@ public class SuccessAddingVehicleEntrantIT {
     public VehicleEntrantJourneyAssertion responseContainsDataMatchingRequest() {
       EntrantPaymentWithLatestPaymentDetailsDto responseData = response.iterator().next();
       assertThat(responseData.getCleanAirZoneId()).isEqualTo(vehicleEntrantDto.getCleanZoneId());
-      assertThat(responseData.getCazEntryTimestamp()).isEqualTo(vehicleEntrantDto.getCazEntryTimestamp());
+      assertThat(responseData.getCazEntryTimestamp())
+          .isEqualTo(vehicleEntrantDto.getCazEntryTimestamp());
       assertThat(responseData.getVrn()).isEqualTo(vehicleEntrantDto.getVrn());
+      return this;
+    }
+
+    public VehicleEntrantJourneyAssertion responseContainsExpectedTariffCode(
+        String expectedTariffCode) {
+      EntrantPaymentWithLatestPaymentDetailsDto responseData = response.iterator().next();
+      assertThat(responseData.getTariffCode()).isEqualTo(expectedTariffCode);
       return this;
     }
 
@@ -224,16 +250,17 @@ public class SuccessAddingVehicleEntrantIT {
               + "vrn = '" + createdRecordData.getVrn() + "'");
       assertThat(masterRecordCount).isEqualTo(1);
     }
-    
+
     private void verifyThatDetailTableUpdated(LocalDateTime travelDate, int detailRecords) {
       VehicleEntrantDto createdRecordData = vehicleEntrantDto;
-      Object[] params = new Object[] {createdRecordData.getVrn(), createdRecordData.getCleanZoneId()};
-      UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, 
+      Object[] params = new Object[]{createdRecordData.getVrn(),
+          createdRecordData.getCleanZoneId()};
+      UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL,
           params, UUID.class);
       int detailRecordCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           "caz_payment_audit.t_clean_air_zone_payment_detail",
           "clean_air_zone_payment_master_id = '" + masterId +
-          "' AND travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
+              "' AND travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
       assertThat(detailRecordCount).isEqualTo(1);
     }
 

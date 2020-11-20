@@ -236,6 +236,7 @@ swagger:
         vrn: Vehicle registration number
         travel-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
         clean-zone-id: Clean Air Zone identifier
+        tariff-code: the identifier for the tariff on the travel date
       payments-initiate:
         vrn: Vehicle registration number
         travel-date: ISO 8601 formatted date string that specifies the date for which user wants to pay
@@ -325,6 +326,8 @@ swagger:
         paymentId: id of payment
         paymentReference: reference number for payment
         paymentStatus: external status of payment (f.e. FAILED, SUCCESS)
+      resend-receipt-email:
+        email: email to which the receipt email is going to be resent
 
   operations:
     accounts:
@@ -360,6 +363,8 @@ swagger:
         description: Fetches history of payments per vehicle
       direct-debit-mandate-complete-creation:
         description: Completes the process of the mandate creation.
+      resend-receipt-email:
+        description: Resends the receipt email.
     charge-settlement:
       payment-status-update:
         description: >-

@@ -58,6 +58,8 @@ class EntrantPaymentServiceTest {
   private final static String NULL_PAYMENT_METHOD = "null";
   private final static String CARD_PAYMENT_METHOD = "card";
   private final static String DIRECT_DEBIT_PAYMENT_METHOD = "direct_debit";
+  private final static String ANY_TARIFF_CODE = "any-tariff-code";
+  private final static String NULL_TARIFF_CODE = null;
 
   @BeforeEach
   public void setup() {
@@ -92,7 +94,7 @@ class EntrantPaymentServiceTest {
         callBulkProcess();
 
         // then
-        assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD);
+        assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD, NULL_TARIFF_CODE);
         verify(entrantPaymentRepository).insert(buildCazEntrantPaymentToInsert());
         verifyNoInteractions(paymentRepository);
       }
@@ -120,7 +122,7 @@ class EntrantPaymentServiceTest {
           callBulkProcess();
 
           // then
-          assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD);
+          assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD, NULL_TARIFF_CODE);
           verify(entrantPaymentRepository).insert(expectedEntrantPaymentInsert(dto, ukTime));
         }
       }
@@ -147,7 +149,7 @@ class EntrantPaymentServiceTest {
           callBulkProcess();
 
           // then
-          assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD);
+          assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD, NULL_TARIFF_CODE);
           verify(entrantPaymentRepository).insert(expectedEntrantPaymentInsert(dto, gmtTime));
         }
       }
@@ -172,7 +174,7 @@ class EntrantPaymentServiceTest {
             callBulkProcess();
 
             // then
-            assertResponseProperties(PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD);
+            assertResponseProperties(PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD, ANY_TARIFF_CODE);
             verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
           }
         }
@@ -199,7 +201,7 @@ class EntrantPaymentServiceTest {
               callBulkProcess();
 
               // then
-              assertResponseProperties(PAID_PAYMENT_STATUS, CARD_PAYMENT_METHOD);
+              assertResponseProperties(PAID_PAYMENT_STATUS, CARD_PAYMENT_METHOD, ANY_TARIFF_CODE);
               verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
             }
           }
@@ -223,7 +225,7 @@ class EntrantPaymentServiceTest {
               callBulkProcess();
 
               // then
-              assertResponseProperties(PAID_PAYMENT_STATUS, CARD_PAYMENT_METHOD);
+              assertResponseProperties(PAID_PAYMENT_STATUS, CARD_PAYMENT_METHOD, ANY_TARIFF_CODE);
               verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
             }
           }
@@ -241,7 +243,7 @@ class EntrantPaymentServiceTest {
               callBulkProcess();
 
               // then
-              assertResponseProperties(PAID_PAYMENT_STATUS, CARD_PAYMENT_METHOD);
+              assertResponseProperties(PAID_PAYMENT_STATUS, CARD_PAYMENT_METHOD, ANY_TARIFF_CODE);
               verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
             }
           }
@@ -259,7 +261,7 @@ class EntrantPaymentServiceTest {
               callBulkProcess();
 
               // then
-              assertResponseProperties(PAID_PAYMENT_STATUS, DIRECT_DEBIT_PAYMENT_METHOD);
+              assertResponseProperties(PAID_PAYMENT_STATUS, DIRECT_DEBIT_PAYMENT_METHOD, ANY_TARIFF_CODE);
               verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
             }
           }
@@ -278,7 +280,7 @@ class EntrantPaymentServiceTest {
           callBulkProcess();
 
           // then
-          assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD);
+          assertResponseProperties(NOT_PAID_PAYMENT_STATUS, NULL_PAYMENT_METHOD, ANY_TARIFF_CODE);
           verifyNoInteractions(paymentRepository);
         }
       }
@@ -391,7 +393,7 @@ class EntrantPaymentServiceTest {
         .internalPaymentStatus(internalPaymentStatus)
         .vrn(ANY_VRN)
         .vehicleEntrantCaptured(vehicleEntrantCaptured)
-        .tariffCode("any-tariff-code")
+        .tariffCode(ANY_TARIFF_CODE)
         .charge(50)
         .travelDate(LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate())
         .cazEntryTimestamp(LocalDateTime.parse(ANY_TIMESTAMP))
@@ -441,9 +443,10 @@ class EntrantPaymentServiceTest {
   }
 
   private void assertResponseProperties(String expectedPaymentStatus,
-      String expectedPaymentMethod) {
+      String expectedPaymentMethod, String expectedTariffCode) {
     assertThat(response).isNotEmpty();
     assertThat(response.get(0).getPaymentStatus()).isEqualTo(expectedPaymentStatus);
     assertThat(response.get(0).getPaymentMethod()).isEqualTo(expectedPaymentMethod);
+    assertThat(response.get(0).getTariffCode()).isEqualTo(expectedTariffCode);
   }
 }

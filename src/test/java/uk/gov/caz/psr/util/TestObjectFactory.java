@@ -237,6 +237,7 @@ public class TestObjectFactory {
           .updateActor(EntrantPaymentUpdateActor.VCCS_API)
           .internalPaymentStatus(InternalPaymentStatus.PAID)
           .vrn("CAS310")
+          .tariffCode("any-tariff-code")
           .build();
     }
 
