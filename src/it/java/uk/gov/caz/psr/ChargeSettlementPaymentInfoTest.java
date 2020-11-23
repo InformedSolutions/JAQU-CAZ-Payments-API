@@ -45,19 +45,41 @@ public abstract class ChargeSettlementPaymentInfoTest {
       @Nested
       class AndThereAreMatchingLineItems {
 
-        @Test
-        public void shouldReturnDataForTheProvidedDay() {
-          LocalDate paymentMadeDate = LocalDate.parse("2019-11-23");
+        @Nested
+        class AndIsUkWinterTime {
 
-          PaymentInfoAssertion.whenRequested()
-              .withParam("paymentMadeDate", paymentMadeDate.toString())
-              .then()
-              .headerContainsCorrelationId()
-              .responseHasOkStatus()
-              .totalLineItemsCountIsEqualTo(7);
+          @Test
+          public void shouldReturnDataForTheProvidedDay() {
+            LocalDate paymentMadeDate = LocalDate.parse("2020-11-02");
 
-          verifyResultsWereFetchedByOneDatabaseQuery();
+            PaymentInfoAssertion.whenRequested()
+                .withParam("paymentMadeDate", paymentMadeDate.toString())
+                .then()
+                .headerContainsCorrelationId()
+                .responseHasOkStatus()
+                .totalLineItemsCountIsEqualTo(2)
+                .containsExactlyLineItemsWithTravelDates("2020-11-02", "2020-11-03");
 
+            verifyResultsWereFetchedByOneDatabaseQuery();
+          }
+        }
+
+        @Nested
+        class AndIsUkSummerTime {
+          @Test
+          public void shouldReturnDataForTheProvidedDay() {
+            LocalDate paymentMadeDate = LocalDate.parse("2020-09-02");
+
+            PaymentInfoAssertion.whenRequested()
+                .withParam("paymentMadeDate", paymentMadeDate.toString())
+                .then()
+                .headerContainsCorrelationId()
+                .responseHasOkStatus()
+                .totalLineItemsCountIsEqualTo(2)
+                .containsExactlyLineItemsWithTravelDates("2020-09-01", "2020-09-02");
+
+            verifyResultsWereFetchedByOneDatabaseQuery();
+          }
         }
       }
 
