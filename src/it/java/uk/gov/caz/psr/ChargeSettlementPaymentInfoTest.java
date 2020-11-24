@@ -58,7 +58,8 @@ public abstract class ChargeSettlementPaymentInfoTest {
                 .headerContainsCorrelationId()
                 .responseHasOkStatus()
                 .totalLineItemsCountIsEqualTo(2)
-                .containsExactlyLineItemsWithTravelDates("2020-11-02", "2020-11-03");
+                .containsExactlyLineItemsWithTravelDates("2020-11-02", "2020-11-03")
+                .containsExactlyPaymentsFromDate("2020-11-02");
 
             verifyResultsWereFetchedByOneDatabaseQuery();
           }
@@ -76,7 +77,8 @@ public abstract class ChargeSettlementPaymentInfoTest {
                 .headerContainsCorrelationId()
                 .responseHasOkStatus()
                 .totalLineItemsCountIsEqualTo(2)
-                .containsExactlyLineItemsWithTravelDates("2020-09-01", "2020-09-02");
+                .containsExactlyLineItemsWithTravelDates("2020-09-01", "2020-09-02")
+                .containsExactlyPaymentsFromDate("2020-09-02");
 
             verifyResultsWereFetchedByOneDatabaseQuery();
           }
