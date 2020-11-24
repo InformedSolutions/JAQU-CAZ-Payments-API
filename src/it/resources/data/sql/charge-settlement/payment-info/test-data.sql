@@ -70,3 +70,84 @@ INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zon
 VALUES
 ('1e8ed2c2-3d03-11ea-b5aa-430f46682f15', 'e218c724-102c-11ea-be9e-973e776167e1', 'eb3f1a6a-102c-11ea-be9e-2b1c2964eba8', true),
 ('250a771e-3d03-11ea-b5aa-f3262a385212', 'e593130a-102c-11ea-be9e-975729b598b5', 'eb3f1a6a-102c-11ea-be9e-2b1c2964eba8', true);
+
+-- payment for 'ND84VSX' in British Summer Time.
+-- 23:39:09 GMT - day before the call
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, payment_submitted_timestamp, payment_authorised_timestamp)
+values ('3c868536-2d7b-11eb-adc1-0242ac120002', 'ext-payment-id-10', 'CREDIT_DEBIT_CARD', 'SUCCESS', 440, '2020-09-01T23:38:08.272Z', '2020-09-01T23:39:08.272Z');
+
+insert into caz_payment.t_clean_air_zone_entrant_payment (
+clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
+values
+('3e7f648e-2d7b-11eb-adc1-0242ac120002', 'EST123', '53e03a28-0627-11ea-9511-ffaaee87e375', '2020-09-01', 'tariff-1', 88, 'PAID', 'USER');
+
+INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)
+VALUES
+('646e75e8-2d82-11eb-adc1-0242ac120002', '3e7f648e-2d7b-11eb-adc1-0242ac120002', '3c868536-2d7b-11eb-adc1-0242ac120002', true);
+
+-- 12:39:09 GMT - day of the call
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, payment_submitted_timestamp, payment_authorised_timestamp)
+values ('793f1f60-2d7b-11eb-adc1-0242ac120002', 'ext-payment-id-10', 'CREDIT_DEBIT_CARD', 'SUCCESS', 440, '2020-09-02T12:38:09.272Z', '2020-09-02T12:39:08.272Z');
+
+insert into caz_payment.t_clean_air_zone_entrant_payment (
+clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
+values
+('d8e00128-2d7b-11eb-adc1-0242ac120002', 'EST123', '53e03a28-0627-11ea-9511-ffaaee87e375', '2020-09-02', 'tariff-1', 88, 'PAID', 'USER');
+
+INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)
+VALUES
+('dfb849c8-2d7c-11eb-adc1-0242ac120002', 'd8e00128-2d7b-11eb-adc1-0242ac120002', '793f1f60-2d7b-11eb-adc1-0242ac120002', true);
+
+-- 23:39:09 GMT - day of the call
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, payment_submitted_timestamp, payment_authorised_timestamp)
+values ('63514686-2d7d-11eb-adc1-0242ac120002', 'ext-payment-id-10', 'CREDIT_DEBIT_CARD', 'SUCCESS', 440, '2020-09-02T23:38:09.272Z', '2020-09-02T12:39:08.272Z');
+
+insert into caz_payment.t_clean_air_zone_entrant_payment (
+clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
+values
+('819919d4-2d7d-11eb-adc1-0242ac120002', 'EST123', '53e03a28-0627-11ea-9511-ffaaee87e375', '2020-09-03', 'tariff-1', 88, 'PAID', 'USER');
+
+INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)
+VALUES
+('89083fb0-2d7d-11eb-adc1-0242ac120002', '819919d4-2d7d-11eb-adc1-0242ac120002', '63514686-2d7d-11eb-adc1-0242ac120002', true);
+
+
+-- payment for 'EST123' in British WINTER Time.
+-- 23:39:09 GMT - day before the call
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, payment_submitted_timestamp, payment_authorised_timestamp)
+values ('9018d7d8-2d7d-11eb-adc1-0242ac120002', 'ext-payment-id-10', 'CREDIT_DEBIT_CARD', 'SUCCESS', 440, '2020-11-01T23:38:08.272Z', '2020-11-01T23:39:08.272Z');
+
+insert into caz_payment.t_clean_air_zone_entrant_payment (
+clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
+values
+('2048b846-2d7e-11eb-adc1-0242ac120002', 'EST123', '53e03a28-0627-11ea-9511-ffaaee87e375', '2020-11-01', 'tariff-1', 88, 'PAID', 'USER');
+
+INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)
+VALUES
+('2792d2a8-2d7e-11eb-adc1-0242ac120002', '2048b846-2d7e-11eb-adc1-0242ac120002', '9018d7d8-2d7d-11eb-adc1-0242ac120002', true);
+
+-- 12:39:09 GMT - day of the call
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, payment_submitted_timestamp, payment_authorised_timestamp)
+values ('2ed662dc-2d7e-11eb-adc1-0242ac120002', 'ext-payment-id-10', 'CREDIT_DEBIT_CARD', 'SUCCESS', 440, '2020-11-02T12:38:09.272Z', '2020-11-02T12:39:08.272Z');
+
+insert into caz_payment.t_clean_air_zone_entrant_payment (
+clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
+values
+('3456aa46-2d7e-11eb-adc1-0242ac120002', 'EST123', '53e03a28-0627-11ea-9511-ffaaee87e375', '2020-11-02', 'tariff-1', 88, 'PAID', 'USER');
+
+INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)
+VALUES
+('3d3bfe72-2d7e-11eb-adc1-0242ac120002', '3456aa46-2d7e-11eb-adc1-0242ac120002', '2ed662dc-2d7e-11eb-adc1-0242ac120002', true);
+
+-- 23:39:09 GMT - day of the call
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, payment_submitted_timestamp, payment_authorised_timestamp)
+values ('4495f470-2d7e-11eb-adc1-0242ac120002', 'ext-payment-id-10', 'CREDIT_DEBIT_CARD', 'SUCCESS', 440, '2020-11-02T23:38:09.272Z', '2020-11-02T12:39:08.272Z');
+
+insert into caz_payment.t_clean_air_zone_entrant_payment (
+clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
+values
+('4ce50314-2d7e-11eb-adc1-0242ac120002', 'EST123', '53e03a28-0627-11ea-9511-ffaaee87e375', '2020-11-03', 'tariff-1', 88, 'PAID', 'USER');
+
+INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)
+VALUES
+('535433aa-2d7e-11eb-adc1-0242ac120002', '4ce50314-2d7e-11eb-adc1-0242ac120002', '4495f470-2d7e-11eb-adc1-0242ac120002', true);
