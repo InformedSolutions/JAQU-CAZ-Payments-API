@@ -23,7 +23,7 @@ public interface DirectDebitPaymentsControllerApiSpec {
 
   /**
    * Allows Front-end to create a new Direct Debit payment based on requested
-   * details. It creates the payment in GOV.UK PAY.
+   * details. It creates the payment in GoCardless.
    *
    * @return {@link CreateDirectDebitPaymentResponse} wrapped in {@link ResponseEntity}.
    */

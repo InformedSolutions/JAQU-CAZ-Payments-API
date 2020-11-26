@@ -18,7 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <rest-assured.version>4.0.0</rest-assured.version>
-    <internal.libraries.version>2.13.1-SNAPSHOT</internal.libraries.version>
+    <internal.libraries.version>2.14.0-SNAPSHOT</internal.libraries.version>
     <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
@@ -288,6 +288,32 @@
       <artifactId>postgresql</artifactId>
     </dependency>
     <!-- db: end -->
+
+    <dependency>
+      <groupId>com.gocardless</groupId>
+      <artifactId>gocardless-pro</artifactId>
+      <version>4.4.0</version>
+
+      <exclusions>
+        <exclusion>
+          <groupId>com.squareup.okio</groupId>
+          <artifactId>okio</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!--
+     We are using 2 different versions of okttp client:
+      - 2.x by gocardless-pro
+      - 3.x by by retrofit
+      As suggested here https://github.com/square/okhttp/issues/2705#issuecomment-231060222, it is
+      possible to use both versions, but it is required to explicitly set version of 'Okio'
+    -->
+    <dependency>
+      <groupId>com.squareup.okio</groupId>
+      <artifactId>okio</artifactId>
+      <version>1.17.2</version>
+    </dependency>
 
     <!-- development-related: begin -->
     
@@ -687,8 +713,8 @@
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
                 <!-- exclude retrofit classes -->
-                <exclude>**/psr/repository/VccsRepository.class</exclude>             
-                <exclude>**/psr/repository/AccountsRepository.class</exclude>             
+                <exclude>**/psr/repository/VccsRepository.class</exclude>
+                <exclude>**/psr/repository/AccountsRepository.class</exclude>
                 <!-- Permit exclusion of nested Logger class injected via DI in VCCS Repository -->
                 <exclude>**/psr/repository/VccsRepository$*.class</exclude>
                 <!-- Remove with CAZ-2168 -->

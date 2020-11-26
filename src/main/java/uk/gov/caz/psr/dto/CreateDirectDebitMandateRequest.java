@@ -21,6 +21,7 @@ public class CreateDirectDebitMandateRequest {
       ImmutableMap.<Function<CreateDirectDebitMandateRequest, Boolean>, String>builder()
           .put(cleanAirZoneIdNotNull(), "'cleanAirZoneId' cannot be null")
           .put(returnUrlNotEmpty(), "'returnUrl' cannot be null or empty")
+          .put(sessionIdNotEmpty(), "'sessionId' cannot be null or empty")
           .build();
 
   @ApiModelProperty(
@@ -29,6 +30,9 @@ public class CreateDirectDebitMandateRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.direct-debit-mandate-create.return-url}")
   String returnUrl;
+
+  @ApiModelProperty(value = "${swagger.model.descriptions.direct-debit-mandate-create.session-id}")
+  String sessionId;
 
   /**
    * Public method that validates given object and throws exceptions if validation doesn't pass.
@@ -55,5 +59,12 @@ public class CreateDirectDebitMandateRequest {
    */
   private static Function<CreateDirectDebitMandateRequest, Boolean> returnUrlNotEmpty() {
     return request -> StringUtils.hasText(request.getReturnUrl());
+  }
+
+  /**
+   * Returns a lambda that verifies if 'sessionId' is not null and not empty.
+   */
+  private static Function<CreateDirectDebitMandateRequest, Boolean> sessionIdNotEmpty() {
+    return request -> StringUtils.hasText(request.getSessionId());
   }
 }

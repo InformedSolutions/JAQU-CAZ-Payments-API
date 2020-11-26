@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.caz.psr.controller.exception.EntrantPaymentAlreadyPaidException;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentMatch;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -162,7 +163,7 @@ class InitiateEntrantPaymentsServiceTest {
     class WhenRelatedPaymentHasAlreadyBeenPaid {
 
       @Test
-      public void shouldThrowIllegalStateException() {
+      public void shouldThrowEntrantPaymentAlreadyPaidException() {
         // given
         LocalDate notMatchingDate = LocalDate.now();
         LocalDate matchingDate = LocalDate.now().minusDays(1);
@@ -189,7 +190,7 @@ class InitiateEntrantPaymentsServiceTest {
             ANY_PAYMENT_ID, ANY_CLEAN_AIR_ZONE_ID, transactions));
 
         // then
-        assertThat(throwable).isInstanceOf(IllegalStateException.class)
+        assertThat(throwable).isInstanceOf(EntrantPaymentAlreadyPaidException.class)
             .hasMessageStartingWith("Cannot process the payment as the entrant on");
         verify(entrantPaymentRepository, never()).insert(any(EntrantPayment.class));
         verify(entrantPaymentMatchRepository, never())

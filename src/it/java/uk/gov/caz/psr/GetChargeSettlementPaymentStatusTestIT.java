@@ -60,8 +60,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private static final Long VALID_PAYMENT_REFERENCE = 3001L;
   private static final Long PAYMENT_REFERENCE_UNPAID = 3000L;
   private static final Long PAYMENT_REFERENCE_TELEPHONE = 3004L;
-  private static final String PAYMENT_STATUS_GET_PATH = ChargeSettlementController.BASE_PATH +
-      ChargeSettlementController.PAYMENT_STATUS_PATH;
+  private static final String PAYMENT_STATUS_GET_PATH = ChargeSettlementController.PAYMENT_STATUS_PATH;
 
   private static final PaymentMethod VALID_PAYMENT_METHOD = PaymentMethod.CREDIT_DEBIT_CARD;
 

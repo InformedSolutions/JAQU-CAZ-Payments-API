@@ -8,6 +8,13 @@ springfox:
       v2:
         path: /v1/swagger-docs
 
+logging:
+  level:
+    uk:
+      gov:
+        caz:
+          correlationid: INFO
+
 spring:
   jpa:
     open-in-view: false
@@ -69,6 +76,9 @@ aws:
 swagger:
   model:
     descriptions:
+      complete-direct-debit-mandate-creation:
+        session-token: A unique identifier of a browser session of a person who is creating the mandate
+        caz-id: Clean Air Zone identifier
       payment-status:
         payment-status: Status of the payment. Can be either 'paid', 'refunded' or 'chargeback'
         caz-payment-reference: The central reference for the payment
@@ -82,6 +92,7 @@ swagger:
         payment-mandate-id: Direct debit mandate identifier
         telephone-payment: Indicates whether payment was done over phone.
       payment-info:
+        pages: The number of pages
         results: An array containig details about payments of queried VRNs
         vrn: Vehicle registration number
         payments: An array containing information about particular payments of the given VRN
@@ -197,6 +208,10 @@ swagger:
           settled charges for all vehicles that have paid a charge to enter the CAZ (identified by the x-api-key header parameter) during the
           specified date range will be returned. If no fromDatePaidFor is specified, all settled charges for the prior 24 hour period corresponding
           to the specified date will be returned.
+        payment-made-date: >-
+          ISO 8601 formatted date string that can be used to obtain information about payments which were made
+          on the provided date in the specific CAZ (identified by the x-api-key header parameter).
+        page-number: An optional query param that specifies the page number.
       payment-status-update:
         vrn: Vehicle registration number
         status-updates: An array containing details of separate payment which needs to be updated
@@ -219,6 +234,7 @@ swagger:
         vrn: Vehicle registration number
         travel-timestamp: ISO 8601 formatted datetime string that specifies the date and time on which the vehicle entered the CAZ
         clean-zone-id: Clean Air Zone identifier
+        tariff-code: the identifier for the tariff on the travel date
       payments-initiate:
         vrn: Vehicle registration number
         travel-date: ISO 8601 formatted date string that specifies the date for which user wants to pay
@@ -264,8 +280,9 @@ swagger:
           charges: List of Charges
       direct-debit-mandate-create:
         clean-zone-id: Clean Air Zone identifier
-        return-url: Front end URL used as return URL after direct debit mandate createion
+        return-url: Front end URL used as return URL after direct debit mandate creation
         account-id: Identifies the fleet's account which is creating direct debit mandate
+        session-id: Session token of user who performs direct debit mandate creation
       create-direct-debit-payment:
         clean-zone-id: Clean Air Zone identifier
         mandate-id: Identifies the direct debit mandate in payment provider.
@@ -340,6 +357,8 @@ swagger:
         description: Create Payment via DirectDebit payment method.
       get-payment-history-for-vehicle:
         description: Fetches history of payments per vehicle
+      direct-debit-mandate-complete-creation:
+        description: Completes the process of the mandate creation.
     charge-settlement:
       payment-status-update:
         description: >-
@@ -375,3 +394,8 @@ swagger:
     register:
       details:
         description: Return register details from vccs
+
+api:
+  charge-settlement:
+    date-query-range: 14
+    page-size: 1500

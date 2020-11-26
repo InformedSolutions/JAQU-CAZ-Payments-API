@@ -1,8 +1,12 @@
 package uk.gov.caz.psr.directdebit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -11,11 +15,13 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,10 +45,12 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.DirectDebitMandatesController;
 import uk.gov.caz.psr.controller.DirectDebitPaymentsController;
+import uk.gov.caz.psr.controller.DirectDebitRedirectFlowsController;
 import uk.gov.caz.psr.dto.CreateDirectDebitMandateRequest;
+import uk.gov.caz.psr.dto.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.Transaction;
+import uk.gov.caz.psr.dto.directdebit.CompleteMandateCreationRequest;
 import uk.gov.caz.psr.dto.directdebit.CreateDirectDebitPaymentRequest;
-import uk.gov.caz.psr.repository.ExternalDirectDebitRepository;
 import uk.gov.caz.psr.util.SecretsManagerInitialisation;
 
 @FullyRunningServerIntegrationTest
@@ -57,12 +65,16 @@ public class DirectDebitJourneyTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private JdbcTemplate jdbcTemplate;
+  @Autowired
+  private AmazonSQS sqsClient;
+  @Value("${services.sqs.new-queue-name}")
+  private String emailSqsQueueName;
   @Value("${aws.direct-debit-secret-name}")
   private String apiKeySecretName;
   @LocalServerPort
   int randomServerPort;
 
-  private static ClientAndServer govUkPayMockServer;
+  private static ClientAndServer goCardlessMockServer;
   private static ClientAndServer accountsServiceMockServer;
   private static ClientAndServer vccsServiceMockServer;
 
@@ -77,27 +89,72 @@ public class DirectDebitJourneyTestIT {
   );
 
   @Nested
-  class CreateMandate {
+  class CompleteMandateCreation {
 
     @Test
     public void successfullyCreatedDirectDebitMandate() {
       // given
+      String cazId = "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3";
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
+      String returnUrl = "http://return-url.com";
+      String sessionToken = "3212e91fcbd19261493c909cd7a76520";
 
-      mockSuccessCreateMandateQueryResponseInGovUkPay();
+      String flowId = performRedirectFlowCreationRequestAndReturnFlowId(accountId, cazId,
+          sessionToken, returnUrl);
+
+      mockSuccessCompleteMandateResponseInGoCardless(flowId, accountId, sessionToken, cazId);
       mockSuccessCreateMandateQueryResponseInAccounts(accountId);
-      mockMandateCreationResponse();
 
       // when
-      ValidatableResponse response = makeRequestToCreateMandate(accountId);
+      ValidatableResponse response = makeRequestToCompleteMandateCreation(flowId, sessionToken,
+          cazId);
 
       // then
-      response.statusCode(HttpStatus.CREATED.value());
+      response.statusCode(HttpStatus.OK.value());
       response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
-      response.contentType(ContentType.JSON);
-      assertThat(response.extract().body().asString())
-          .isEqualToIgnoringWhitespace(
-              readInternalResponse("create-direct-debit-mandate-response.json"));
+    }
+
+    private String performRedirectFlowCreationRequestAndReturnFlowId(String accountId, String cazId,
+        String sessionToken,
+        String returnUrl) {
+      mockSuccessCreateRedirectFlowResponseInGoCardless(accountId, cazId, sessionToken, returnUrl);
+
+      // Redirect Flow creation
+      ValidatableResponse createRedirectFlowResponse = makeRequestToCreateRedirectFlow(accountId,
+          cazId, sessionToken, returnUrl);
+
+      CreateDirectDebitMandateResponse createDirectDebitMandateResponse = createRedirectFlowResponse
+          .extract().as(CreateDirectDebitMandateResponse.class);
+
+      assertThat(createDirectDebitMandateResponse.getNextUrl()).isNotBlank();
+
+      // extract flowId from Redirect Flow creation response
+      return StringUtils.substringAfterLast(createDirectDebitMandateResponse.getNextUrl(), "/");
+    }
+
+    @Nested
+    class WhenPassedInvalidSessionToken {
+
+      @Test
+      public void shouldReturn400StatusCode() {
+        // given
+        String flowId = "RE0002W59W1ZNBRMCVWWTEVWM3B346Y3";
+        String sessionToken = "3212e91fcbd19261493c909cd7a76520";
+        String cazId = "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3";
+
+        mockInvalidTokenFailureInCompleteMandateResponseInGoCardless(flowId);
+
+        // when
+        ValidatableResponse response = makeRequestToCompleteMandateCreation(flowId, sessionToken,
+            cazId);
+
+        // then
+        response.statusCode(HttpStatus.BAD_REQUEST.value());
+        response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
+        response.body("status", equalTo(400));
+        response.body("message", equalTo("The session token provided is not valid for "
+            + "this redirect flow"));
+      }
     }
 
   }
@@ -111,7 +168,7 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockSuccessVccsCleanAirZonesResponse();
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
       mockSuccessMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -132,7 +189,7 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockFailVccsCleanAirZonesCall();
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
       mockSuccessMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -144,12 +201,12 @@ public class DirectDebitJourneyTestIT {
     }
 
     @Test
-    public void testWhenRequestToGovUkFails() {
+    public void testWhenRequestToGoCardlessFails() {
       // given
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockSuccessVccsCleanAirZonesResponse();
-      mockFailMandateQueryResponseInGovUkPay();
+      mockFailMandateQueryResponseInGoCardless();
       mockSuccessMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -166,7 +223,7 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockSuccessVccsCleanAirZonesResponse();
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
       mockFailMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -183,7 +240,7 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       mockSuccessVccsCleanAirZonesResponse();
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
       mockEmptyMandateQueryResponseInAccounts(accountId);
       mockSuccessMandateUpdateResponse(accountId);
 
@@ -210,7 +267,8 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
       String birminghamCazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
 
-      mockSuccessMandateQueryResponseInGovUkPay();
+      mockSuccessMandateQueryResponseInGoCardless();
+
       mockSuccessMandateQueryResponseInAccounts(accountId);
 
       // when
@@ -224,7 +282,6 @@ public class DirectDebitJourneyTestIT {
           .isEqualToIgnoringWhitespace(
               readInternalResponse("direct-debit-mandates-for-caz-response.json"));
     }
-
   }
 
   @Nested
@@ -235,10 +292,12 @@ public class DirectDebitJourneyTestIT {
       // given
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
       String mandateId = "i4nuo03jginfke5c3ebrvgig6a";
+      String externalPaymentId = "u6dogn2lb0nedi1pl5i61hl41a";
 
       clearAllPayments();
       setupRestAssuredForCreateDirectDebitPayment();
-      mockSuccessCreateDirectDebitPaymentInGovUkPay();
+      mockSuccessCreateDirectDebitPaymentInGoCardless(externalPaymentId);
+      mockSuccessVccsCleanAirZonesResponse();
 
       // when
       ValidatableResponse response = makeRequestToCreateDirectDebitPayment(accountId, mandateId);
@@ -247,7 +306,6 @@ public class DirectDebitJourneyTestIT {
       response.statusCode(HttpStatus.CREATED.value());
       response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
       response.contentType(ContentType.JSON);
-      String externalPaymentId = "u6dogn2lb0nedi1pl5i61hl41a";
       assertThat(response.extract().body().asString()
           .contains("\"externalPaymentId\":\"" + externalPaymentId + "\""))
           .isTrue();
@@ -265,23 +323,18 @@ public class DirectDebitJourneyTestIT {
 
       clearAllPayments();
       setupRestAssuredForCreateDirectDebitPayment();
-      mockFailedCreateDirectDebitPaymentInGovUkPay();
+      mockFailedCreateDirectDebitPaymentInGoCardless();
 
       // when
       ValidatableResponse response = makeRequestToCreateDirectDebitPayment(accountId, mandateId);
 
       // then
-      response.statusCode(HttpStatus.CREATED.value());
+      response.statusCode(HttpStatus.BAD_REQUEST.value());
       response.header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID);
       response.contentType(ContentType.JSON);
-      String externalPaymentId = "u6dogn2lb0nedi1pl5i61hl41a";
       assertThat(response.extract().body().asString()
-          .contains("\"externalPaymentId\":\"" + externalPaymentId + "\""))
+          .contains("\"message\":\"Mandate not found\""))
           .isTrue();
-      assertThat(response.extract().body().asString()
-          .contains("\"paymentStatus\":\"ERROR\""))
-          .isTrue();
-      verifyThatPaymentSubmittedTimestampIsNotNullFor(externalPaymentId);
     }
 
     private void verifyThatPaymentSubmittedTimestampIsNotNullFor(String externalPaymentId) {
@@ -327,27 +380,141 @@ public class DirectDebitJourneyTestIT {
           .build();
     }
 
-    private void mockSuccessCreateDirectDebitPaymentInGovUkPay() {
-      whenCreatePaymentRequestToGovUkPayIsMade()
+    private void mockSuccessCreateDirectDebitPaymentInGoCardless(String externalPaymentId) {
+      whenCreatePaymentRequestToGoCardlessIsMade()
           .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
               .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-              .withBody(readDirectDebitFile("create-payment-response.json")));
+              .withBody(readGoCardlessFile("create-payment-response.json")
+                  .replace("PAYMENT_ID", externalPaymentId)));
     }
 
-    private void mockFailedCreateDirectDebitPaymentInGovUkPay() {
-      whenCreatePaymentRequestToGovUkPayIsMade()
-          .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
+    private void mockFailedCreateDirectDebitPaymentInGoCardless() {
+      whenCreatePaymentRequestToGoCardlessIsMade()
+          .respond(HttpResponse.response().withStatusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
               .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-              .withBody(readDirectDebitFile("create-failed-payment-response.json")));
+              .withBody(readGoCardlessFile("create-payment-failed-response.json")));
     }
 
-    private ForwardChainExpectation whenCreatePaymentRequestToGovUkPayIsMade() {
-      return govUkPayMockServer
-          .when(HttpRequest.request().withMethod("POST")
-              .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-              .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-              .withPath(ExternalDirectDebitRepository.COLLECT_PAYMENT_URI));
+    private ForwardChainExpectation whenCreatePaymentRequestToGoCardlessIsMade() {
+      return goCardlessMockServer
+          .when(HttpRequest.request()
+              .withMethod("POST")
+              .withPath(String.format("/payments")));
     }
+  }
+
+  private void mockSuccessCompleteMandateResponseInGoCardless(String flowId,
+      String accountId, String sessionToken, String cazId) {
+    goCardlessMockServer
+        .when(HttpRequest.request()
+            .withMethod("POST")
+            .withPath(String.format("/redirect_flows/%s/actions/complete", flowId)))
+        .respond(HttpResponse.response()
+            .withStatusCode(HttpStatus.OK.value())
+            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+            .withBody(
+                readGoCardlessFile("complete-mandate-creation-response.json")
+                    .replace("ACCOUNT_ID", accountId)
+                    .replace("REDIRECT_FLOW_ID", flowId)
+                    .replace("SESSION_TOKEN", sessionToken)
+                    .replace("CAZ_ID", cazId)
+            )
+        );
+  }
+
+  private void mockInvalidTokenFailureInCompleteMandateResponseInGoCardless(String flowId) {
+    goCardlessMockServer
+        .when(HttpRequest.request()
+            .withMethod("POST")
+            .withPath(String.format("/redirect_flows/%s/actions/complete", flowId)))
+        .respond(HttpResponse.response()
+            .withStatusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
+            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+            .withBody(
+                readGoCardlessFile("complete-mandate-creation-error-invalid-token.json")
+            )
+        );
+  }
+
+  private void mockSuccessCreateMandateQueryResponseInAccounts(String accountId) {
+    whenRequestToAccountsIsMadeToCreateMandate(accountId)
+        .respond(HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
+            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+            .withBody(readInternalResponse("account-create-direct-debit-mandate-response.json")));
+  }
+
+  private ForwardChainExpectation whenRequestToAccountsIsMadeToCreateMandate(String accountId) {
+    return accountsServiceMockServer
+        .when(HttpRequest.request().withMethod("POST")
+            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
+            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+            .withPath(String.format("/v1/accounts/%s/direct-debit-mandates", accountId)));
+  }
+
+  private ValidatableResponse makeRequestToCompleteMandateCreation(String flowId,
+      String sessionToken, String cazId) {
+    RestAssured.basePath = DirectDebitRedirectFlowsController.BASE_PATH;
+
+    return RestAssured.given()
+        .pathParam("flowId", flowId)
+        .body(toJsonString(createCompleteMandateCreationRequest(sessionToken, cazId)))
+        .accept(MediaType.APPLICATION_JSON_VALUE)
+        .contentType(MediaType.APPLICATION_JSON_VALUE)
+        .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+        .when()
+        .post()
+        .then();
+  }
+
+  private CompleteMandateCreationRequest createCompleteMandateCreationRequest(
+      String sessionToken, String cazId) {
+    return CompleteMandateCreationRequest.builder()
+        .sessionToken(sessionToken)
+        .cleanAirZoneId(cazId)
+        .build();
+  }
+
+  private void mockSuccessCreateRedirectFlowResponseInGoCardless(String accountId,
+      String cleanAirZoneId, String sessionToken, String redirectUrl) {
+    goCardlessMockServer
+        .when(HttpRequest.request()
+            .withMethod("POST")
+            .withPath(String.format("/redirect_flows")))
+        .respond(HttpResponse.response()
+            .withStatusCode(HttpStatus.CREATED.value())
+            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+            .withBody(
+                readGoCardlessFile("create-redirect-flow-response.json")
+                    .replace("ACCOUNT_ID", accountId)
+                    .replace("SESSION_TOKEN", sessionToken)
+                    .replace("CAZ_ID", cleanAirZoneId)
+                    .replace("REDIRECT_URL", redirectUrl)
+            ));
+  }
+
+  private ValidatableResponse makeRequestToCreateRedirectFlow(String accountId,
+      String cleanAirZoneId, String sessionToken, String returnUrl) {
+    RestAssured.basePath = DirectDebitMandatesController.BASE_PATH;
+
+    return RestAssured.given()
+        .pathParam("accountId", accountId)
+        .body(toJsonString(
+            createDirectDebitMandateRequest(cleanAirZoneId, sessionToken, returnUrl)))
+        .accept(MediaType.APPLICATION_JSON_VALUE)
+        .contentType(MediaType.APPLICATION_JSON_VALUE)
+        .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+        .when()
+        .post()
+        .then();
+  }
+
+  private CreateDirectDebitMandateRequest createDirectDebitMandateRequest(String cleanAirZoneId,
+      String sessionToken, String returnUrl) {
+    return CreateDirectDebitMandateRequest.builder()
+        .cleanAirZoneId(UUID.fromString(cleanAirZoneId))
+        .sessionId(sessionToken)
+        .returnUrl(returnUrl)
+        .build();
   }
 
   private ValidatableResponse makeRequestToCreateMandate(String accountId) {
@@ -360,31 +527,6 @@ public class DirectDebitJourneyTestIT {
         .when()
         .post()
         .then();
-  }
-
-  private void mockMandateCreationResponse() {
-    govUkPayMockServer
-        .when(HttpRequest.request().withMethod("POST")
-            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withPath(ExternalDirectDebitRepository.CREATE_MANDATE_URI))
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readDirectDebitFile("create-mandate-response.json")));
-  }
-
-  private void mockSuccessCreateMandateQueryResponseInGovUkPay() {
-    whenRequestToGovUkPayIsMade()
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readDirectDebitFile("create-mandate-response.json")));
-  }
-
-  private void mockSuccessCreateMandateQueryResponseInAccounts(String accountId) {
-    whenRequestToAccountsIsMadeToCreateMandate(accountId)
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.CREATED.value())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readInternalResponse("account-create-direct-debit-mandate-response.json")));
   }
 
   private ValidatableResponse makeRequestToGetMandatesByCaz(String accountId,
@@ -422,17 +564,19 @@ public class DirectDebitJourneyTestIT {
             .withBody(readExternalFile("get-clean-air-zones.json")));
   }
 
-  private void mockSuccessMandateQueryResponseInGovUkPay() {
-    whenRequestToGovUkPayIsMade()
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.OK.value())
+  private void mockSuccessMandateQueryResponseInGoCardless() {
+    whenRequestToGoCardlessIsMade()
+        .respond(HttpResponse.response()
+            .withStatusCode(HttpStatus.OK.value())
             .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withBody(readDirectDebitFile("get-mandate-response.json")));
+            .withBody(readGoCardlessFile("get-mandate-response.json")));
   }
 
-  private void mockFailMandateQueryResponseInGovUkPay() {
-    whenRequestToGovUkPayIsMade()
-        .respond(HttpResponse.response().withStatusCode(HttpStatus.SERVICE_UNAVAILABLE.value())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString()));
+  private void mockFailMandateQueryResponseInGoCardless() {
+    whenRequestToGoCardlessIsMade()
+        .respond(HttpResponse.response()
+            .withStatusCode(HttpStatus.SERVICE_UNAVAILABLE.value())
+            .withBody(readGoCardlessFile("invalid-api-usage-response.json")));
   }
 
   private void mockSuccessMandateQueryResponseInAccounts(String accountId) {
@@ -471,14 +615,6 @@ public class DirectDebitJourneyTestIT {
             .withPath("/v1/compliance-checker/clean-air-zones"));
   }
 
-  private ForwardChainExpectation whenRequestToAccountsIsMadeToCreateMandate(String accountId) {
-    return accountsServiceMockServer
-        .when(HttpRequest.request().withMethod("POST")
-            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
-            .withPath(String.format("/v1/accounts/%s/direct-debit-mandates", accountId)));
-  }
-
   private ForwardChainExpectation whenRequestToAccountsIsMade(String accountId) {
     return accountsServiceMockServer
         .when(HttpRequest.request().withMethod("GET")
@@ -486,11 +622,11 @@ public class DirectDebitJourneyTestIT {
             .withPath(String.format("/v1/accounts/%s/direct-debit-mandates", accountId)));
   }
 
-  private ForwardChainExpectation whenRequestToGovUkPayIsMade() {
-    return govUkPayMockServer
-        .when(HttpRequest.request().withMethod("GET")
-            .withHeader("Accept", MediaType.APPLICATION_JSON.toString())
-            .withPath("/v1/directdebit/mandates/.*"));
+  private ForwardChainExpectation whenRequestToGoCardlessIsMade() {
+    return goCardlessMockServer
+        .when(HttpRequest.request()
+            .withMethod("GET")
+            .withPath("/mandates/.*"));
   }
 
   @BeforeEach
@@ -511,34 +647,47 @@ public class DirectDebitJourneyTestIT {
   @BeforeAll
   public static void startMockServers() {
     accountsServiceMockServer = startClientAndServer(1091);
-    govUkPayMockServer = startClientAndServer(1080);
+    goCardlessMockServer = startClientAndServer(1080);
     vccsServiceMockServer = startClientAndServer(1090);
   }
 
   @AfterAll
   public static void stopMockServers() {
     vccsServiceMockServer.stop();
-    govUkPayMockServer.stop();
+    goCardlessMockServer.stop();
     accountsServiceMockServer.stop();
   }
 
   @AfterEach
   public void resetMockServers() {
     vccsServiceMockServer.reset();
-    govUkPayMockServer.reset();
+    goCardlessMockServer.reset();
     accountsServiceMockServer.reset();
+  }
+
+  @BeforeEach
+  public void createEmailQueue() {
+    CreateQueueRequest createQueueRequest = new CreateQueueRequest(emailSqsQueueName)
+        .withAttributes(Collections.singletonMap("FifoQueue", "true"));
+    sqsClient.createQueue(createQueueRequest);
+  }
+
+  @AfterEach
+  public void deleteQueue() {
+    GetQueueUrlResult queueUrlResult = sqsClient.getQueueUrl(emailSqsQueueName);
+    sqsClient.deleteQueue(queueUrlResult.getQueueUrl());
   }
 
   @BeforeEach
   public void setApiKeyInSecretsManagerForBirminghamAndLeeds() {
     String leedsCazId = "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3";
     String birminghamCazId = "53e03a28-0627-11ea-9511-ffaaee87e375";
-    secretsManagerInitialisation.createSecret(apiKeySecretName, leedsCazId,
+    secretsManagerInitialisation.createSecret(apiKeySecretName, "testApiKey", leedsCazId,
         birminghamCazId);
   }
 
-  private String readDirectDebitFile(String filename) {
-    return readExternalFile("/directdebit/" + filename);
+  private String readGoCardlessFile(String filename) {
+    return readExternalFile("/directdebit/gocardless/" + filename);
   }
 
   private String readExternalFile(String filename) {
