@@ -5,7 +5,8 @@ DELETE FROM caz_payment_audit.t_clean_air_zone_payment_detail CASCADE;
 DELETE FROM caz_payment_audit.t_clean_air_zone_payment_master CASCADE;
 DELETE FROM caz_payment.t_clean_air_zone_entrant_payment_match CASCADE;
 DELETE FROM caz_payment.t_clean_air_zone_entrant_payment CASCADE;
-DELETE FROM caz_payment.t_payment CASCADE;
+TRUNCATE TABLE caz_payment.t_payment RESTART IDENTITY CASCADE;
+ALTER SEQUENCE caz_payment.reference_number RESTART WITH 1627;
 DELETE FROM caz_payment_audit.logged_actions CASCADE;
 
 -- Verify no records are now present
