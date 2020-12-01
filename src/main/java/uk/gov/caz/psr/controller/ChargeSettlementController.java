@@ -9,17 +9,21 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.controller.exception.PaymentInfoDtoValidationException;
 import uk.gov.caz.psr.controller.exception.PaymentStatusDtoValidationException;
-import uk.gov.caz.psr.dto.PaymentInfoRequest;
-import uk.gov.caz.psr.dto.PaymentInfoResponse;
+import uk.gov.caz.psr.dto.PaymentInfoRequestV1;
+import uk.gov.caz.psr.dto.PaymentInfoRequestV2;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV1;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV2;
 import uk.gov.caz.psr.dto.PaymentStatusRequest;
 import uk.gov.caz.psr.dto.PaymentStatusResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
 import uk.gov.caz.psr.dto.PaymentUpdateSuccessResponse;
+import uk.gov.caz.psr.dto.validation.MaximumDateQueryRangeValidator;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.service.ChargeSettlementPaymentInfoService;
@@ -37,23 +41,26 @@ import uk.gov.caz.psr.util.PaymentInfoRequestConverter;
 public class ChargeSettlementController implements ChargeSettlementControllerApiSpec {
 
   public static final String TIMESTAMP = "timestamp";
-  public static final String BASE_PATH = "/v1/charge-settlement";
-  public static final String PAYMENT_INFO_PATH = "/payment-info";
-  public static final String PAYMENT_STATUS_PATH = "/payment-status";
+  public static final String PAYMENT_INFO_PATH_V1 = "/v1/charge-settlement/payment-info";
+  public static final String PAYMENT_INFO_PATH_V2 = "/v2/charge-settlement/payment-info";
+  public static final String PAYMENT_STATUS_PATH = "/v1/charge-settlement/payment-status";
 
   private final PaymentStatusUpdateService paymentStatusUpdateService;
   private final ChargeSettlementService chargeSettlementService;
   private final ChargeSettlementPaymentInfoService chargeSettlementPaymentInfoService;
   private final EntrantPaymentInfoConverter entrantPaymentInfoConverter;
   private final PaymentInfoRequestConverter paymentInfoRequestConverter;
+  private final MaximumDateQueryRangeValidator maximumDateQueryRangeValidator;
 
   @Override
-  public ResponseEntity<PaymentInfoResponse> getPaymentInfo(PaymentInfoRequest request,
+  public ResponseEntity<PaymentInfoResponseV1> getPaymentInfo(PaymentInfoRequestV1 request,
       BindingResult bindingResult, UUID cleanAirZoneId, LocalDateTime timestamp) {
     if (bindingResult.hasErrors()) {
       throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
           bindingResult);
     }
+    request.validateParametersConjunction();
+
     log.info("Got 'get payment info' request: {}", request);
 
     List<EntrantPaymentMatchInfo> result = chargeSettlementPaymentInfoService.findPaymentInfo(
@@ -63,6 +70,29 @@ public class ChargeSettlementController implements ChargeSettlementControllerApi
     log.info("Found {} matching vehicle entrant payments for payment-info request {}",
         result.size(), request);
     return ResponseEntity.ok(entrantPaymentInfoConverter.toPaymentInfoResponse(result));
+  }
+
+  @Override
+  public ResponseEntity<PaymentInfoResponseV2> getPaymentInfoV2(PaymentInfoRequestV2 request,
+      BindingResult bindingResult, UUID cleanAirZoneId, LocalDateTime timestamp) {
+    if (bindingResult.hasErrors()) {
+      throw new PaymentInfoDtoValidationException("paymentInfo.validationErrorTitle",
+          bindingResult);
+    }
+    request.validate();
+    maximumDateQueryRangeValidator.validateDateRange(request);
+
+    log.info("Got 'get payment info v2' request: {}", request);
+
+    Page<EntrantPaymentMatchInfo> result = chargeSettlementPaymentInfoService.findPaymentInfoV2(
+        paymentInfoRequestConverter.toPaymentInfoRequestAttributes(request),
+        cleanAirZoneId,
+        request.getPage()
+    );
+
+    log.info("Found {} matching vehicle entrant payments for payment-info request {}",
+        result.getContent().size(), request);
+    return ResponseEntity.ok(entrantPaymentInfoConverter.toPaymentInfoResponseV2(result));
   }
 
   @Override

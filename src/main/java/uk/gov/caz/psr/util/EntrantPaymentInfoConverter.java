@@ -8,15 +8,18 @@ import com.google.common.base.Preconditions;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentMethod;
 import uk.gov.caz.psr.dto.ChargeSettlementPaymentStatus;
-import uk.gov.caz.psr.dto.PaymentInfoResponse;
-import uk.gov.caz.psr.dto.PaymentInfoResponse.PaymentsInfo;
-import uk.gov.caz.psr.dto.PaymentInfoResponse.SinglePaymentInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV1;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV1.PaymentsInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV1.SinglePaymentInfo;
+import uk.gov.caz.psr.dto.PaymentInfoResponseV2;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.info.EntrantPaymentInfo;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
@@ -24,7 +27,7 @@ import uk.gov.caz.psr.model.info.PaymentInfo;
 
 /**
  * A utility class that converts a collection of {@link EntrantPaymentInfo} into {@link
- * PaymentInfoResponse}.
+ * PaymentInfoResponseV1}.
  */
 @Component
 @AllArgsConstructor
@@ -34,12 +37,12 @@ public class EntrantPaymentInfoConverter {
 
   /**
    * Converts the passed {@code entrantPaymentMatchInfos} into an instance of {@link
-   * PaymentInfoResponse}.
+   * PaymentInfoResponseV1}.
    *
    * @param entrantPaymentMatchInfos A collection of {@link EntrantPaymentInfo}.
-   * @return An instance of {@link PaymentInfoResponse}.
+   * @return An instance of {@link PaymentInfoResponseV1}.
    */
-  public PaymentInfoResponse toPaymentInfoResponse(
+  public PaymentInfoResponseV1 toPaymentInfoResponse(
       Collection<EntrantPaymentMatchInfo> entrantPaymentMatchInfos) {
     Preconditions.checkNotNull(entrantPaymentMatchInfos, "entrantPaymentMatchInfos cannot be null");
 
@@ -50,7 +53,29 @@ public class EntrantPaymentInfoConverter {
             vrnWithVehicleEntrantPayments.getKey(),
             vrnWithVehicleEntrantPayments.getValue())
         ).collect(toList());
-    return new PaymentInfoResponse(paymentsInfo);
+    return new PaymentInfoResponseV1(paymentsInfo);
+  }
+
+  /**
+   * Converts the passed {@code entrantPaymentMatchInfos} into an instance of {@link
+   * PaymentInfoResponseV2}.
+   *
+   * @param entrantPaymentMatchInfos A collection of {@link EntrantPaymentInfo}.
+   * @return An instance of {@link PaymentInfoResponseV2}.
+   */
+  public PaymentInfoResponseV2 toPaymentInfoResponseV2(
+      Page<EntrantPaymentMatchInfo> entrantPaymentMatchInfos) {
+    Preconditions.checkNotNull(entrantPaymentMatchInfos, "entrantPaymentMatchInfos cannot be null");
+
+    List<PaymentsInfo> paymentsInfo = groupByVrnAndPayment(entrantPaymentMatchInfos.getContent())
+        .entrySet()
+        .stream()
+        .map(vrnWithVehicleEntrantPayments -> toPaymentsInfo(
+            vrnWithVehicleEntrantPayments.getKey(),
+            vrnWithVehicleEntrantPayments.getValue()))
+        .sorted(Comparator.comparing(PaymentsInfo::getVrn))
+        .collect(toList());
+    return new PaymentInfoResponseV2(paymentsInfo, entrantPaymentMatchInfos.getTotalPages());
   }
 
   /**
@@ -132,8 +157,8 @@ public class EntrantPaymentInfoConverter {
   }
 
   /**
-   * Groups the passed {@code entrantPaymentInfos} by vrn and payment info and return the
-   * result as a map.
+   * Groups the passed {@code entrantPaymentInfos} by vrn and payment info and return the result as
+   * a map.
    */
   private Map<String, Map<PaymentInfo, List<EntrantPaymentInfo>>> groupByVrnAndPayment(
       Collection<EntrantPaymentMatchInfo> entrantPaymentInfos) {

@@ -10,8 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.caz.correlationid.Constants.X_CORRELATION_ID_HEADER;
-import static uk.gov.caz.psr.controller.ChargeSettlementController.BASE_PATH;
-import static uk.gov.caz.psr.controller.ChargeSettlementController.PAYMENT_INFO_PATH;
+import static uk.gov.caz.psr.controller.ChargeSettlementController.PAYMENT_INFO_PATH_V1;
 import static uk.gov.caz.psr.controller.ChargeSettlementController.PAYMENT_STATUS_PATH;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +43,7 @@ import uk.gov.caz.psr.configuration.MessageBundleConfiguration;
 import uk.gov.caz.psr.dto.Headers;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateRequest;
+import uk.gov.caz.psr.dto.validation.MaximumDateQueryRangeValidator;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaymentStatus;
 import uk.gov.caz.psr.service.ChargeSettlementPaymentInfoService;
@@ -75,6 +75,8 @@ class ChargeSettlementControllerTest {
   private EntrantPaymentInfoConverter entrantPaymentInfoConverter;
   @MockBean
   private PaymentInfoRequestConverter paymentInfoRequestConverter;
+  @MockBean
+  private MaximumDateQueryRangeValidator maximumDateQueryRangeValidator;
 
   private static final String ANY_VALID_VRN = "DL76MWX";
   private static final String ANY_VALID_DATE_STRING = LocalDate.now().toString();
@@ -82,9 +84,9 @@ class ChargeSettlementControllerTest {
   private static final String ANY_API_KEY = "e6d892be-15a2-11ea-b483-a3ea711c89e8";
   private static final LocalDateTime ANY_TIMESTAMP = LocalDateTime.now();
   private static final String ANY_PAYMENT_ID = "payment-id";
-  private static final String PAYMENT_INFO_GET_PATH = BASE_PATH + "/" + PAYMENT_INFO_PATH;
-  private static final String PAYMENT_STATUS_GET_PATH = BASE_PATH + "/" + PAYMENT_STATUS_PATH;
-  private static final String PAYMENT_STATUS_PUT_PATH = BASE_PATH + PAYMENT_STATUS_PATH;
+  private static final String PAYMENT_INFO_GET_PATH = PAYMENT_INFO_PATH_V1;
+  private static final String PAYMENT_STATUS_GET_PATH = PAYMENT_STATUS_PATH;
+  private static final String PAYMENT_STATUS_PUT_PATH = PAYMENT_STATUS_PATH;
 
   @Nested
   class GetPaymentInfo {
@@ -181,6 +183,37 @@ class ChargeSettlementControllerTest {
         public void shouldReturn400StatusCodeUponInvalidFormat(String invalidFromDatePaidFor)
             throws Exception {
           invalidDateFormatTest(invalidFromDatePaidFor, "fromDatePaidFor");
+        }
+      }
+
+      @Nested
+      class PaymentMadeDate {
+
+        @ParameterizedTest
+        @ValueSource(strings = {"03.05.2019", "23/03/2008", "not-a-valid-date"})
+        public void shouldReturn400StatusCodeUponInvalidFormat(String invalidPaymentMadeDate)
+            throws Exception {
+          invalidDateFormatTest(invalidPaymentMadeDate, "paymentMadeDate");
+        }
+
+        @Test
+        public void shouldReturn400StatusCodeUponPaymentMadeDateConjunction() throws Exception {
+          LocalDate paymentMadeDate = LocalDate.now();
+
+          mockMvc.perform(get(PAYMENT_INFO_GET_PATH)
+              .accept(MediaType.APPLICATION_JSON)
+              .param("paymentMadeDate", paymentMadeDate.toString())
+              .param("vrn", ANY_VALID_VRN)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .header(Headers.TIMESTAMP, ANY_TIMESTAMP)
+              .header(Headers.X_API_KEY, ANY_API_KEY))
+              .andExpect(status().isBadRequest())
+              .andExpect(jsonPath("$.errors[0].title").value("Invalid search parameter"))
+              .andExpect(jsonPath("$.errors[0].status").value(HttpStatus.BAD_REQUEST.value()))
+              .andExpect(jsonPath("$.errors[0].field").value("paymentMadeDate"))
+              .andExpect(jsonPath("$.errors[0].detail").value(
+                  "This parameter cannot be used in conjunction with another other request parameters"));
+
         }
       }
 

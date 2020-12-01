@@ -21,11 +21,11 @@ public class SecretsManagerInitialisation {
   private final AWSSecretsManager secretsManager;
 
   @SneakyThrows
-  public void createSecret(String secretName, String ...cleanAirZoneId) {
+  public void createSecret(String secretName, String apiKey, String... cleanAirZoneId) {
     Map<String, String> apiKeysMap = Arrays.asList(cleanAirZoneId)
         .stream()
         .map(cazId -> cazId.replace("-", ""))
-        .collect(Collectors.toMap(Function.identity(), string -> "testApiKey"));
+        .collect(Collectors.toMap(Function.identity(), string -> apiKey));
     String secretString = objectMapper.writeValueAsString(apiKeysMap);
     try {
       CreateSecretRequest createSecretRequest = new CreateSecretRequest()

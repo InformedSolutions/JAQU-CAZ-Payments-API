@@ -71,7 +71,7 @@ steps:
         from_secret: charge_settlement_cognito_id
       LOCATION: 'local'
     commands:
-      - sleep 5m
+      - sleep 8m
       - cd JAQU-CAZ-QA-selenium
       - cucumber -t @CHARGESETTLEMENT --retry 2
 
@@ -344,6 +344,27 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in dev
+  - name: subscribe to operational monitoring alert in dev
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i dev -i accounts JAQU-CAZ-OPERATIONALMONITORING@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_lower_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_lower_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::311075478274:role/jaqu-lowerServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: dev
+    when:
+      event:
+        - push
 
   ################################################# End of Dev Environment Steps #######################################################
 
@@ -684,9 +705,31 @@ steps:
         from_secret: charge_settlement_cognito_id
       LOCATION: 'local'
     commands:
-      - sleep 5m
+      - sleep 8m
       - cd JAQU-CAZ-QA-selenium
       - cucumber -t @CHARGESETTLEMENT --retry 2
+    when:
+      event:
+        - push
+
+  # subscribe to operational monitoring alert in st
+  - name: subscribe to operational monitoring alert in st
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i st -i payments JAQU-CAZ-OPERATIONALMONITORING@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: st
     when:
       event:
         - push
@@ -988,6 +1031,27 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in sit
+  - name: subscribe to operational monitoring alert in sit
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i sit -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: sit
+    when:
+      event:
+        - push
 
   ################################################# End of SIT Environment Steps #######################################################
 
@@ -1188,6 +1252,28 @@ steps:
       PROJECT: payments
       DEPLOY_ENVIRONMENT: preprod
       LAMBDA_BUCKET: jaqu-shared-project-lambda-bucket
+    when:
+      event:
+        - push
+
+  # subscribe to operational monitoring alert in preprod
+  - name: subscribe to operational monitoring alert in preprod
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i preprod -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_staging_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_staging_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::360470905865:role/jaqu-stagingServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: preprod
     when:
       event:
         - push
@@ -1695,6 +1781,27 @@ steps:
       event:
         - push
 
+  # subscribe to operational monitoring alert in prod
+  - name: subscribe to operational monitoring alert in prod
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i prod -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_prod_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_prod_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::286199435714:role/jaqu-prodServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: prod
+    when:
+      event:
+        - push
 
   ################################################# End of Prod Environment Steps #######################################################
 

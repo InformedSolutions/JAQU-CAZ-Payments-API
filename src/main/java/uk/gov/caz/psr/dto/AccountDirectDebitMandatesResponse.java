@@ -21,6 +21,7 @@ public class AccountDirectDebitMandatesResponse {
   @Value
   @Builder
   public static class DirectDebitMandate {
+
     UUID directDebitMandateId;
 
     UUID accountId;
@@ -32,17 +33,18 @@ public class AccountDirectDebitMandatesResponse {
     DirectDebitMandateStatus status;
 
     Date created;
-    
+
+    /**
+     * These statuses come from https://developer.gocardless.com/api-reference/#core-endpoints-mandates.
+     */
     public enum DirectDebitMandateStatus {
-      CREATED,
-      STARTED,
-      ABANDONED,
-      FAILED,
-      PENDING,
+      PENDING_CUSTOMER_APPROVAL,
+      PENDING_SUBMISSION,
+      SUBMITTED,
       ACTIVE,
+      FAILED,
       CANCELLED,
-      INACTIVE,
-      ERROR
+      EXPIRED
     }
   }
 }

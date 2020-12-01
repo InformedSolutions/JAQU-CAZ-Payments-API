@@ -17,4 +17,6 @@ public class PaymentInfoRequestAttributes {
   LocalDate fromDatePaidFor;
 
   LocalDate toDatePaidFor;
+
+  LocalDate paymentSubmittedTimestamp;
 }

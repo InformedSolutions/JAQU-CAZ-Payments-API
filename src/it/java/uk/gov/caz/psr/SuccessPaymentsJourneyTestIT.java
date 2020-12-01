@@ -144,7 +144,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
         .whenSubmitted()
 
         .then()
-        .expectHttpInternalServerErrorStatusCode()
+        .expectHttpUnprocessableEntityErrorStatusCode()
         .andNoNewPaymentEntityIsCreatedInDatabase();
   }
 
@@ -359,7 +359,7 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
   @BeforeEach
   public void createSecret() {
-    secretsManagerInitialisation.createSecret(secretName, "53e03a28-0627-11ea-9511-ffaaee87e375");
+    secretsManagerInitialisation.createSecret(secretName, "testApiKey", "53e03a28-0627-11ea-9511-ffaaee87e375");
   }
 
   @BeforeAll
@@ -441,6 +441,11 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
           .extract()
           .response()
           .as(InitiatePaymentResponse.class);
+      return this;
+    }
+
+    public PaymentJourneyAssertion expectHttpUnprocessableEntityErrorStatusCode() {
+      validatableResponse.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value());
       return this;
     }
 

@@ -1,0 +1,15 @@
+{
+  "error": {
+    "message": "The session token provided is not valid for this redirect flow",
+    "errors": [
+      {
+        "reason": "validation_failed",
+        "message": "The session token provided is not valid for this redirect flow"
+      }
+    ],
+    "documentation_url": "https://developer.gocardless.com/api-reference#validation_failed",
+    "type": "validation_failed",
+    "request_id": "0AA40E1C826D_AC12043A1F92_5F647C60_45C6002A",
+    "code": 422
+  }
+}
