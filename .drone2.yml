@@ -71,7 +71,6 @@ steps:
         from_secret: charge_settlement_cognito_id
       LOCATION: 'local'
     commands:
-      - sleep 8m
       - cd JAQU-CAZ-QA-selenium
       - cucumber -t @CHARGESETTLEMENT --retry 2
 
