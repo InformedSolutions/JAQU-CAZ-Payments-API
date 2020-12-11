@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toList;
 import com.google.common.base.Preconditions;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -125,7 +126,9 @@ public class EntrantPaymentInfoConverter {
    * Maps the provided {@code timestamp} to a date provided it is non null. Returns null otherwise.
    */
   private LocalDate toLocalDate(LocalDateTime timestamp) {
-    return timestamp == null ? null : timestamp.toLocalDate();
+    return timestamp == null ? null
+        : timestamp.atZone(ZoneId.of("GMT")).withZoneSameInstant(ZoneId.of("Europe/London"))
+            .toLocalDate();
   }
 
   /**

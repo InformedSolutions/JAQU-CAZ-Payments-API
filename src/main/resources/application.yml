@@ -29,6 +29,8 @@ spring:
       maximum-pool-size: 2
       connection-timeout: 5000 # in ms
       max-lifetime: 0 # always keep the connection in the pool unless it has been closed
+  main:
+    banner-mode: "off"
   profiles:
     active: dev
 
@@ -324,6 +326,8 @@ swagger:
         paymentId: id of payment
         paymentReference: reference number for payment
         paymentStatus: external status of payment (f.e. FAILED, SUCCESS)
+      resend-receipt-email:
+        email: email to which the receipt email is going to be resent
 
   operations:
     accounts:
@@ -359,6 +363,8 @@ swagger:
         description: Fetches history of payments per vehicle
       direct-debit-mandate-complete-creation:
         description: Completes the process of the mandate creation.
+      resend-receipt-email:
+        description: Resends the receipt email.
     charge-settlement:
       payment-status-update:
         description: >-

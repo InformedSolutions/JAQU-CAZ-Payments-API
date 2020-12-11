@@ -12,6 +12,7 @@ import static uk.gov.caz.psr.controller.ChargeSettlementController.TIMESTAMP;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 import org.springframework.http.HttpStatus;
@@ -80,6 +81,12 @@ public class PaymentInfoAssertion {
   public PaymentInfoAssertion containsExactlyLineItemsWithTravelDates(String... travelDates) {
     validatableResponse.body("results.payments.lineItems.flatten().travelDate.toSet()",
         containsInAnyOrder(travelDates));
+    return this;
+  }
+
+  public PaymentInfoAssertion containsExactlyPaymentsFromDate(String date) {
+    validatableResponse
+        .body("results.payments.flatten().paymentDate.unique()", containsInAnyOrder(date));
     return this;
   }
 

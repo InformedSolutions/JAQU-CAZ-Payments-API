@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.service.paymentinfo;
 
+import java.time.ZoneId;
 import java.util.Optional;
 import javax.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,11 +31,14 @@ public class PaymentInfoSpecificationByPaymentSubmittedDate implements PaymentIn
       return criteriaBuilder.and(
           criteriaBuilder.greaterThan(
               joinPayment.get(PaymentInfo_.submittedTimestamp),
-              attributes.getPaymentSubmittedTimestamp().atStartOfDay()
+              attributes.getPaymentSubmittedTimestamp().atStartOfDay(ZoneId.of("Europe/London"))
+                  .withZoneSameInstant(ZoneId.of("GMT")).toLocalDateTime()
           ),
           criteriaBuilder.lessThan(
               joinPayment.get(PaymentInfo_.submittedTimestamp),
-              attributes.getPaymentSubmittedTimestamp().plusDays(1).atStartOfDay()
+              attributes.getPaymentSubmittedTimestamp().plusDays(1)
+                  .atStartOfDay(ZoneId.of("Europe/London")).withZoneSameInstant(ZoneId.of("GMT"))
+                  .toLocalDateTime()
           )
       );
     };
