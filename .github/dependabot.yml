@@ -9,6 +9,9 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "monthly"
+      open-pull-requests-limit: 0  
+      timezone: "etc/utc" # set time zone
+      time: "19:00" # set time
 
   - package-ecosystem: "npm" # See documentation for possible values
     directory: "/developer-resources/scripts/" # Location of package manifests
