@@ -88,10 +88,7 @@ steps:
       - bzt -o modules.jmeter.properties.theapikey=$CHARGE_SETTLEMENT_COGNITO_ID -o modules.jmeter.properties.theclientid=$CHARGE_SETTLEMENT_CLIENT_ID -o modules.jmeter.properties.theclientsecret=$CHARGE_SETTLEMENT_CLIENT_SECRET jmeter/micro-perf-payment-info.jmx jmeter/assertion.yml	
     volumes:	
       - name: docker_sock	
-        path: /var/run/docker.sock	
-    when:	
-      event:	
-        - push
+        path: /var/run/docker.sock
 
 
 ################################################# End Nightly Steps ############################################################
