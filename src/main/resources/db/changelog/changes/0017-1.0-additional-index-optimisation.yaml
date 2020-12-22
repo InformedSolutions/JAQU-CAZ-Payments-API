@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0017-1.0-add-indexes-for-payment-match-queries
+      author: Informed
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0017-1.0-additional-index-optimsation.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true 

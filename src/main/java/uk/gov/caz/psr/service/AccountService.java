@@ -63,9 +63,9 @@ public class AccountService {
    * @throws AccountNotFoundException if API returns status 404
    */
   public ChargeableVehiclesResponseDto getAccountVehiclesByCursor(UUID accountId,
-      String direction, int pageSize, String vrnCursor) {
+      String direction, int pageSize, String vrnCursor, UUID cazId) {
     Response<ChargeableVehiclesResponseDto> accountsResponse = accountsRepository
-        .getAccountChargeableVehiclesByCursorSync(accountId, direction, pageSize, vrnCursor);
+        .getAccountChargeableVehiclesByCursorSync(accountId, direction, pageSize, vrnCursor, cazId);
     if (accountsResponse.isSuccessful()) {
       return accountsResponse.body();
     } else {
