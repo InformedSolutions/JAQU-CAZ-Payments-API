@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
-import uk.gov.caz.definitions.dto.accounts.ChargeableVehiclesResponseDto;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto;
 import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
 import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
@@ -56,16 +56,17 @@ public class AccountService {
    * Fetches a list of vehicles from the Accounts Service.
    *
    * @param accountId the account whose vehicles should be returned
-   * @param direction 'next' or 'previous' in terms of pages
+   * @param pageNumber number of the page
    * @param pageSize the size of the list to be returned
-   * @param vrnCursor the "cursor" on which to search the account vehicles
+   * @param cazId Clean Air Zone Id
+   * @param query part of the VRN used to partial search
    * @return a response from the Accounts API
    * @throws AccountNotFoundException if API returns status 404
    */
-  public ChargeableVehiclesResponseDto getAccountVehiclesByCursor(UUID accountId,
-      String direction, int pageSize, String vrnCursor, UUID cazId) {
-    Response<ChargeableVehiclesResponseDto> accountsResponse = accountsRepository
-        .getAccountChargeableVehiclesByCursorSync(accountId, direction, pageSize, vrnCursor, cazId);
+  public VehiclesResponseDto getAccountVehicles(UUID accountId, int pageNumber,
+      int pageSize, UUID cazId, String query) {
+    Response<VehiclesResponseDto> accountsResponse = accountsRepository
+        .getAccountChargeableVehiclesSync(accountId, pageNumber, pageSize, cazId, query);
     if (accountsResponse.isSuccessful()) {
       return accountsResponse.body();
     } else {

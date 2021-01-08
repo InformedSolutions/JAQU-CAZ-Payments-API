@@ -99,31 +99,30 @@ public class ExternalCallsIT {
         .respond(emptyResponse(statusCode));
   }
 
-  public void mockAccountServiceCursorCall(String accountId, String cursor,
-      String responseFile) {
-    Parameter parameter = new Parameter("vrn", cursor);
+  public void mockAccountServiceVehiclesCall(String accountId, String pageNumber, String responseFile) {
+    Parameter parameter = new Parameter("pageNumber", pageNumber);
     accountsMockServer
-        .when(requestGetWithQueryString("/v1/accounts/" + accountId + "/vehicles/sorted-page",
+        .when(requestGetWithQueryString("/v1/accounts/" + accountId + "/vehicles",
             parameter))
         .respond(response(responseFile, 200));
   }
 
-  public void mockAccountServiceCursorCallWithoutCursorParameter(String accountId,
-      String responseFile) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles/sorted-page"), exactly(1))
-        .respond(response(responseFile, 200));
-  }
-
-  public void mockAccountServiceCursorCallWithError(String accountId, String cursor,
+  public void mockAccountServiceVehiclesCallWithError(String accountId, String pageNumber,
       int statusCode) {
-    Parameter parameter = new Parameter("vrn", cursor);
+    Parameter parameter = new Parameter("pageNumber", pageNumber);
     accountsMockServer
-        .when(requestGetWithQueryString("/v1/accounts/" + accountId + "/vehicles/sorted-page",
+        .when(requestGetWithQueryString("/v1/accounts/" + accountId + "/vehicles",
             parameter))
         .respond(emptyResponse(statusCode));
   }
 
+  public void mockAccountServiceVehiclesCallWithoutParameter(String accountId,
+      String responseFile) {
+    accountsMockServer
+        .when(requestGet("/v1/accounts/" + accountId + "/vehicles"), exactly(1))
+        .respond(response(responseFile, 200));
+  }
+  
   public void mockAccountServiceChargesSingleVrnCall(String accountId, String vrn, int statusCode) {
     accountsMockServer
         .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),

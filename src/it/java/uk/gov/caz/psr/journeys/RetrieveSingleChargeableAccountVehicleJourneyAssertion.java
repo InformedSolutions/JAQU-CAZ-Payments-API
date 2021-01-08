@@ -1,13 +1,13 @@
 package uk.gov.caz.psr.journeys;
 
-import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import java.util.UUID;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.controller.AccountsController;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
@@ -16,8 +16,8 @@ import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 public class RetrieveSingleChargeableAccountVehicleJourneyAssertion {
   
   private String accountId;
-  private String vrn;
   private String cleanAirZoneId;
+  private String vrn;
   private ValidatableResponse response;
   private ChargeableAccountVehicleResponse responseDto;
   private static final String CORRELATION_ID = UUID.randomUUID().toString();
@@ -36,8 +36,8 @@ public class RetrieveSingleChargeableAccountVehicleJourneyAssertion {
     this.cleanAirZoneId = cleanAirZoneId;
     return this;
   }
-  
-  public RetrieveSingleChargeableAccountVehicleJourneyAssertion 
+
+  public RetrieveSingleChargeableAccountVehicleJourneyAssertion
   whenRequestIsMadeToRetrieveASingleChargeableAccountVehicle() {
     RestAssured.basePath = AccountsController.ACCOUNTS_PATH;
     this.response = RestAssured
@@ -53,7 +53,7 @@ public class RetrieveSingleChargeableAccountVehicleJourneyAssertion {
       .then();
     return this;
   }
-  
+
   public RetrieveSingleChargeableAccountVehicleJourneyAssertion then() {
     return this;
   }
@@ -64,7 +64,7 @@ public class RetrieveSingleChargeableAccountVehicleJourneyAssertion {
         .as(ChargeableAccountVehicleResponse.class);
     return this;
   }
-  
+
   public void responseIsReturnedWithHttp404StatusCode() {
     this.response.statusCode(404);
   }
@@ -72,11 +72,9 @@ public class RetrieveSingleChargeableAccountVehicleJourneyAssertion {
   public void responseIsReturnedWithHttp400StatusCode() {
     this.response.statusCode(400);
   }
-  
+
   public void responseContainsExpectedData(String expectedVrn, int detectedPaymentsSize) {
     assertEquals(this.responseDto.getChargeableAccountVehicles().getResults().get(0).getVrn(), expectedVrn);
     assertEquals(this.responseDto.getChargeableAccountVehicles().getResults().get(0).getPaidDates().size(), detectedPaymentsSize);
-    assertNull(this.responseDto.getFirstVrn());
-    assertNull(this.responseDto.getLastVrn());
   }
 }
