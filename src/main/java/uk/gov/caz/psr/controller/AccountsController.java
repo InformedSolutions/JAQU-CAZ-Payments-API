@@ -8,12 +8,12 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 import uk.gov.caz.psr.dto.SuccessfulPaymentsResponse;
 import uk.gov.caz.psr.model.ChargeableVehicle;
+import uk.gov.caz.psr.model.ChargeableVehiclesPage;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.service.ChargeableVehiclesService;
@@ -29,6 +29,7 @@ public class AccountsController implements AccountControllerApiSpec {
   private static final String PAGE_NUMBER_QUERYSTRING_KEY = "pageNumber";
   private static final String PAGE_SIZE_QUERYSTRING_KEY = "pageSize";
   private static final String CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY = "cleanAirZoneId";
+  private static final String QUERY_QUERYSTRING_KEY = "query";
 
   private final ChargeableVehiclesService chargeableVehiclesService;
   private final QueryStringValidator queryStringValidator;
@@ -41,20 +42,20 @@ public class AccountsController implements AccountControllerApiSpec {
       Map<String, String> queryStrings) {
 
     queryStringValidator.validateRequest(queryStrings,
-        Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY), Arrays.asList(PAGE_SIZE_QUERYSTRING_KEY));
+        Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY),
+        Arrays.asList(PAGE_SIZE_QUERYSTRING_KEY, PAGE_NUMBER_QUERYSTRING_KEY));
 
-    String vrn = queryStrings.get("vrn");
     UUID cleanAirZoneId = UUID.fromString(queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY));
-    String direction = queryStrings.get("direction");
+    String query = queryStrings.get(QUERY_QUERYSTRING_KEY);
+    int pageNumber = Integer.parseInt(queryStrings.get(PAGE_NUMBER_QUERYSTRING_KEY));
     int pageSize = Integer.parseInt(queryStrings.get(PAGE_SIZE_QUERYSTRING_KEY));
 
-    List<ChargeableVehicle> chargeableVehicles = chargeableVehiclesService
-        .retrieve(accountId, vrn, cleanAirZoneId, direction, pageSize);
+    ChargeableVehiclesPage chargeableVehiclesPage = chargeableVehiclesService
+        .retrieve(accountId, cleanAirZoneId, query, pageNumber, pageSize);
 
     return ResponseEntity.ok()
         .body(chargeableVehiclesToDtoConverter
-            .toChargeableAccountVehicleResponse(chargeableVehicles, direction, pageSize,
-                !StringUtils.hasText(vrn)));
+            .toChargeableAccountVehicleResponse(chargeableVehiclesPage));
   }
 
   @Override

@@ -6,8 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -28,7 +26,6 @@ import org.springframework.util.ResourceUtils;
 import uk.gov.caz.definitions.dto.accounts.ChargeableVehiclesResponseDto;
 import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
 import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges.VehicleCharge;
-import uk.gov.caz.psr.controller.exception.InvalidRequestPayloadException;
 import uk.gov.caz.psr.model.ChargeableVehicle;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
@@ -39,8 +36,7 @@ class ChargeableVehiclesServiceTest {
 
   private final static UUID ANY_ACCOUNT_ID = UUID.randomUUID();
   private final static UUID ANY_CAZ_ID = UUID.fromString("5cd7441d-766f-48ff-b8ad-1809586fea37");
-  private final static String ANY_CURSOR_VRN = "ANY123";
-  private final static int ANY_PAGE_SIZE = 10;
+  private final static String ANY_VRN = "ANY123";
 
   @Mock
   private AccountService accountService;
@@ -78,7 +74,7 @@ class ChargeableVehiclesServiceTest {
 
       // when
       ChargeableVehicle chargeableVehicle = chargeableVehiclesService
-          .retrieveOne(ANY_ACCOUNT_ID, ANY_CURSOR_VRN, ANY_CAZ_ID);
+          .retrieveOne(ANY_ACCOUNT_ID, ANY_VRN, ANY_CAZ_ID);
 
       // then
       assertThat(chargeableVehicle).isNotNull();
@@ -87,7 +83,7 @@ class ChargeableVehiclesServiceTest {
     private void assertExceptionThrowOnServiceCall() {
       // when
       Throwable throwable = catchThrowable(
-          () -> chargeableVehiclesService.retrieveOne(ANY_ACCOUNT_ID, ANY_CURSOR_VRN, ANY_CAZ_ID));
+          () -> chargeableVehiclesService.retrieveOne(ANY_ACCOUNT_ID, ANY_VRN, ANY_CAZ_ID));
 
       // then
       assertThat(throwable).isInstanceOf(ChargeableAccountVehicleNotFoundException.class)
@@ -96,7 +92,7 @@ class ChargeableVehiclesServiceTest {
 
     private void mockMissingVehicleCharge() {
       VehicleWithCharges vehicleWithCharges = VehicleWithCharges.builder()
-          .vrn(ANY_CURSOR_VRN)
+          .vrn(ANY_VRN)
           .cachedCharges(Collections.emptyList())
           .build();
       when(accountService.retrieveSingleAccountVehicle(any(), anyString()))
@@ -105,7 +101,7 @@ class ChargeableVehiclesServiceTest {
 
     private void mockZeroChargeInVehicleCharge() {
       VehicleWithCharges vehicleWithCharges = VehicleWithCharges.builder()
-          .vrn(ANY_CURSOR_VRN)
+          .vrn(ANY_VRN)
           .cachedCharges(Arrays.asList(VehicleCharge.builder().cazId(ANY_CAZ_ID).build()))
           .build();
       when(accountService.retrieveSingleAccountVehicle(any(), anyString()))
@@ -114,7 +110,7 @@ class ChargeableVehiclesServiceTest {
 
     private void mockMissingChargeInVehicleCharge() {
       VehicleWithCharges vehicleWithCharges = VehicleWithCharges.builder()
-          .vrn(ANY_CURSOR_VRN)
+          .vrn(ANY_VRN)
           .cachedCharges(Arrays
               .asList(VehicleCharge.builder().charge(BigDecimal.ZERO).cazId(ANY_CAZ_ID).build()))
           .build();
@@ -129,89 +125,12 @@ class ChargeableVehiclesServiceTest {
           .tariffCode("tariff-code")
           .build();
       VehicleWithCharges vehicleWithCharges = VehicleWithCharges.builder()
-          .vrn(ANY_CURSOR_VRN)
+          .vrn(ANY_VRN)
           .cachedCharges(Arrays.asList(vehicleCharge))
           .build();
       when(accountService.retrieveSingleAccountVehicle(any(), anyString()))
           .thenReturn(vehicleWithCharges);
     }
-  }
-
-  @Nested
-  class Retrieve {
-
-    @Test
-    public void shouldThrowInvalidRequestPayloadExceptionWhenInvalidDirection() {
-      // given
-      String direction = "any";
-
-      // when
-      Throwable throwable =
-          catchThrowable(
-              () -> chargeableVehiclesService
-                  .retrieve(ANY_ACCOUNT_ID, ANY_CURSOR_VRN, ANY_CAZ_ID, direction, 1));
-
-      // then
-      assertThat(throwable).isInstanceOf(InvalidRequestPayloadException.class)
-          .hasMessage("Direction supplied must be one of either 'next' or 'previous'.");
-    }
-
-    @Test
-    public void shouldThrowInvalidRequestPayloadExceptionWhenPreviousDirectionAndNoCursor() {
-      // given
-      String cursorVrn = "";
-      String direction = "previous";
-
-      // when
-      Throwable throwable =
-          catchThrowable(
-              () -> chargeableVehiclesService
-                  .retrieve(ANY_ACCOUNT_ID, cursorVrn, ANY_CAZ_ID, direction, 1));
-
-      // then
-      assertThat(throwable).isInstanceOf(InvalidRequestPayloadException.class)
-          .hasMessage("Direction cannot be set to 'previous' if no VRN has been provided.");
-    }
-
-    @Test
-    public void shouldNotThrowInvalidRequestPayloadExceptionWhenPreviousDirectionAndPresentCursor()
-        throws JsonProcessingException {
-      // given
-      String direction = "previous";
-      mockAccountServiceChargeableVehiclesCall();
-      mockAccountServicePaidEntrantPaymentsCall();
-
-      // when
-      Throwable throwable =
-          catchThrowable(
-              () -> chargeableVehiclesService
-                  .retrieve(ANY_ACCOUNT_ID, ANY_CURSOR_VRN, ANY_CAZ_ID, direction, ANY_PAGE_SIZE));
-
-      // then
-      assertThat(throwable).isNull();
-    }
-
-    @Test
-    public void shouldNotReturnNonChargeableVehiclesFromApi() {
-      // given
-      String direction = "previous";
-      int pageSize = 3;
-      mockAccountServiceNonChargeableVehiclesCall(pageSize);
-
-      // when
-      List<ChargeableVehicle> response = chargeableVehiclesService
-          .retrieve(ANY_ACCOUNT_ID, ANY_CURSOR_VRN, ANY_CAZ_ID, direction, pageSize);
-
-      // then
-      assertThat(response.size()).isEqualTo(0);
-    }
-  }
-
-  private void mockAccountServiceChargeableVehiclesCall() throws JsonProcessingException {
-    when(accountService
-        .getAccountVehiclesByCursor(ANY_ACCOUNT_ID, "previous", ANY_PAGE_SIZE + 1, ANY_CURSOR_VRN,
-            ANY_CAZ_ID))
-        .thenReturn(exampleChargeableVehiclesResponseDto());
   }
 
   private void mockAccountServicePaidEntrantPaymentsCall() {
@@ -222,20 +141,6 @@ class ChargeableVehiclesServiceTest {
         ImmutableMap.of("CAS123", Arrays.asList(validEntrantPayment));
 
     when(accountService.getPaidEntrantPayments(any(), any())).thenReturn(result);
-  }
-
-  private ChargeableVehiclesResponseDto exampleChargeableVehiclesResponseDto()
-      throws JsonProcessingException {
-    return new ObjectMapper()
-        .readValue(readJson("account-single-chargeable-vehicles-response.json"),
-            ChargeableVehiclesResponseDto.class);
-  }
-
-  private void mockAccountServiceNonChargeableVehiclesCall(int pageSize) {
-    when(accountService
-        .getAccountVehiclesByCursor(ANY_ACCOUNT_ID, "previous", pageSize + 1, ANY_CURSOR_VRN,
-            ANY_CAZ_ID))
-        .thenReturn(exampleNonChargeableVehiclesResponseDto());
   }
 
   private ChargeableVehiclesResponseDto exampleNonChargeableVehiclesResponseDto() {
@@ -250,5 +155,4 @@ class ChargeableVehiclesServiceTest {
     return new String(
         Files.readAllBytes(ResourceUtils.getFile("classpath:data/json/response/" + file).toPath()));
   }
-
 }

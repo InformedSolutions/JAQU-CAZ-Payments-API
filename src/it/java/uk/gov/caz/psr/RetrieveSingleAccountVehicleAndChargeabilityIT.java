@@ -23,7 +23,7 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
   }
-  
+
   @Test
   public void shouldReturn200OkAndResponseWhenValid() {
     mockAccountServiceChargesSingleVrnCall(ACCOUNT_ID, "CAS300", 200);
@@ -50,7 +50,7 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
         .then()
         .responseIsReturnedWithHttp404StatusCode();
   }
-  
+
   @Test
   public void shouldReturn400BadRequestAndResponseWhenZonesNotProvided() {
     givenSingleAccountVehicleChargeRetrieval()
@@ -60,7 +60,7 @@ public class RetrieveSingleAccountVehicleAndChargeabilityIT extends ExternalCall
       .then()
       .responseIsReturnedWithHttp400StatusCode();
   }
-  
+
   @Test
   public void shouldReturn404NotFoundWhenVehicleCannotBeFoundOnAccount() {
     mockAccountServiceChargesSingleVrnCallWithError(ACCOUNT_ID, "CAS300", 404);

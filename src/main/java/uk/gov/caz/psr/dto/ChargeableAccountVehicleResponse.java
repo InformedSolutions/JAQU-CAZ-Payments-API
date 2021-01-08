@@ -8,7 +8,6 @@ import lombok.Value;
 public class ChargeableAccountVehicleResponse {
   
   ChargeableAccountVehiclesResult chargeableAccountVehicles;
-  String firstVrn;
-  String lastVrn;
-
+  long totalVehiclesCount;
+  int pageCount;
 }

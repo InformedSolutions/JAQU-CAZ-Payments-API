@@ -49,17 +49,17 @@ public interface AccountControllerApiSpec {
           required = true,
           value = "The clean air zones for which to return charges",
           paramType = "query"),
-      @ApiImplicitParam(name = "direction",
-          required = true,
-          value = "Either 'next' or 'previous', determines the direction of the paging sort",
-          paramType = "query"),
       @ApiImplicitParam(name = "pageSize",
           required = true,
           value = "The size of the page to retrieve",
           paramType = "query"),
-      @ApiImplicitParam(name = "vrn",
+      @ApiImplicitParam(name = "pageNumber",
           required = true,
-          value = "The vrn to use as a cursor for the pagination",
+          value = "The number of page to retrieve",
+          paramType = "query"),
+      @ApiImplicitParam(name = "query",
+          required = false,
+          value = "The number of page to retrieve",
           paramType = "query")})
   @GetMapping("/{accountId}/chargeable-vehicles")
   ResponseEntity<ChargeableAccountVehicleResponse> retrieveChargeableVehicles(
