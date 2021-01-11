@@ -32,7 +32,6 @@ import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.service.ChargeableVehiclesService;
 import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
-import uk.gov.caz.psr.util.ChargeableVehicleToDtoConverter;
 import uk.gov.caz.psr.util.ChargeableVehiclesToDtoConverter;
 
 @ContextConfiguration(classes = {ExceptionController.class, Configuration.class,
@@ -51,9 +50,6 @@ class AccountsControllerTest {
 
   @MockBean
   private ChargeableVehiclesToDtoConverter chargeableVehiclesToDtoConverter;
-
-  @MockBean
-  private ChargeableVehicleToDtoConverter chargeableVehicleToDtoConverter;
 
   @Autowired
   private MockMvc mockMvc;

@@ -6,16 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import retrofit2.Response;
 import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto;
-import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
 import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
-import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 import uk.gov.caz.psr.service.exception.UserNotFoundException;
 
@@ -30,27 +27,6 @@ public class AccountService {
   private static final String DELETED_USER = "Deleted user";
   private final AccountsRepository accountsRepository;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
-
-  /**
-   * Method for retrieving a single chargeable vehicle linked to an account by a quoted vrn.
-   *
-   * @param accountId the unique id of the user account
-   * @param vrn the vrn to query for chargeability
-   * @return a list of chargeable VRNs
-   */
-  public VehicleWithCharges retrieveSingleAccountVehicle(
-      UUID accountId, String vrn) {
-
-    Response<VehicleWithCharges> accountVehicleResponse =
-        accountsRepository.getAccountSingleVehicleVrnSync(accountId, vrn);
-
-    // If vehicle could not be found or is not chargeable yield early 404.
-    if (accountVehicleResponse.code() == HttpStatus.NOT_FOUND.value()) {
-      throw new ChargeableAccountVehicleNotFoundException();
-    }
-
-    return accountVehicleResponse.body();
-  }
 
   /**
    * Fetches a list of vehicles from the Accounts Service.

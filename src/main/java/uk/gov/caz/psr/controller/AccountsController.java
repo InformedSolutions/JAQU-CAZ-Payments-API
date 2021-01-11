@@ -12,13 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.caz.psr.controller.util.QueryStringValidator;
 import uk.gov.caz.psr.dto.ChargeableAccountVehicleResponse;
 import uk.gov.caz.psr.dto.SuccessfulPaymentsResponse;
-import uk.gov.caz.psr.model.ChargeableVehicle;
 import uk.gov.caz.psr.model.ChargeableVehiclesPage;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.service.ChargeableVehiclesService;
 import uk.gov.caz.psr.service.RetrieveSuccessfulPaymentsService;
-import uk.gov.caz.psr.util.ChargeableVehicleToDtoConverter;
 import uk.gov.caz.psr.util.ChargeableVehiclesToDtoConverter;
 
 @AllArgsConstructor
@@ -35,7 +33,6 @@ public class AccountsController implements AccountControllerApiSpec {
   private final QueryStringValidator queryStringValidator;
   private final RetrieveSuccessfulPaymentsService retrieveSuccessfulPaymentsService;
   private final ChargeableVehiclesToDtoConverter chargeableVehiclesToDtoConverter;
-  private final ChargeableVehicleToDtoConverter chargeableVehicleToDtoConverter;
 
   @Override
   public ResponseEntity<ChargeableAccountVehicleResponse> retrieveChargeableVehicles(UUID accountId,
@@ -56,21 +53,6 @@ public class AccountsController implements AccountControllerApiSpec {
     return ResponseEntity.ok()
         .body(chargeableVehiclesToDtoConverter
             .toChargeableAccountVehicleResponse(chargeableVehiclesPage));
-  }
-
-  @Override
-  public ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
-      UUID accountId, String vrn, Map<String, String> queryStrings) {
-
-    queryStringValidator.validateRequest(queryStrings,
-        Arrays.asList(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY), null);
-    UUID cleanAirZoneId = UUID.fromString(queryStrings.get(CLEAN_AIR_ZONE_ID_QUERYSTRING_KEY));
-
-    ChargeableVehicle chargeableVehicle = chargeableVehiclesService
-        .retrieveOne(accountId, vrn, cleanAirZoneId);
-
-    return ResponseEntity
-        .ok(chargeableVehicleToDtoConverter.toChargeableAccountVehicleResponse(chargeableVehicle));
   }
 
   @Override
