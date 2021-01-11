@@ -1,11 +1,8 @@
 package uk.gov.caz.psr.service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -17,7 +14,6 @@ import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharge
 import uk.gov.caz.psr.model.ChargeableVehicle;
 import uk.gov.caz.psr.model.ChargeableVehiclesPage;
 import uk.gov.caz.psr.model.EntrantPayment;
-import uk.gov.caz.psr.service.exception.ChargeableAccountVehicleNotFoundException;
 
 /**
  * Service responsible for getting and processing chargeable vehicles from the Accounts API.
@@ -58,31 +54,6 @@ public class ChargeableVehiclesService {
   }
 
   /**
-   * Method which retrieve single Chargeable Vehicle with its paid dates.
-   *
-   * @param accountId selected account identifier
-   * @param vrn Vehicle Registration Number to find
-   * @param cazId selected Clean Air Zone ID
-   * @return {@link ChargeableVehicle} build based on details from accounts API
-   * @throws ChargeableAccountVehicleNotFoundException if found vehicle is not chargeable in
-   *     CAZ
-   */
-  public ChargeableVehicle retrieveOne(UUID accountId, String vrn, UUID cazId) {
-    VehicleWithCharges vehicleWithCharges = accountService
-        .retrieveSingleAccountVehicle(accountId, vrn);
-
-    if (!isVehicleChargeableInCaz(vehicleWithCharges, cazId)) {
-      throw new ChargeableAccountVehicleNotFoundException();
-    }
-
-    return ChargeableVehicle.from(
-        vehicleWithCharges.getVrn(),
-        getCachedChargeForCaz(vehicleWithCharges, cazId),
-        getPaidDatesForSingleVrn(vrn, cazId)
-    );
-  }
-
-  /**
    * Gets list of chargeable vehicles from the Accounts Service.
    */
   private ChargeableVehiclesPage getPageOfChargeableVehicles(UUID accountId,
@@ -103,17 +74,6 @@ public class ChargeableVehiclesService {
   }
 
   /**
-   * checks if vehicle is chargeable.
-   */
-  private boolean isVehicleChargeableInCaz(VehicleWithCharges vehicleWithCharges, UUID cazId) {
-    Optional<VehicleCharge> vehicleCharge = vehicleWithCharges.getCachedCharges().stream()
-        .filter(cachedCharge -> cachedCharge.getCazId().equals(cazId))
-        .findFirst();
-    return vehicleCharge.isPresent() && vehicleCharge.get().getCharge() != null
-        && vehicleCharge.get().getCharge().compareTo(BigDecimal.ZERO) > 0;
-  }
-
-  /**
    * Gets Chargeable vrns from API response.
    */
   private List<String> getVrns(List<ChargeableVehicle> chargeableVehicles) {
@@ -130,19 +90,6 @@ public class ChargeableVehiclesService {
     return chargeableAccountVehicle.getCachedCharges().stream()
         .filter(cachedCharge -> cachedCharge.getCazId().equals(cazId))
         .iterator().next();
-  }
-
-  /**
-   * Gets paid Dates for provided vrn.
-   */
-  private List<LocalDate> getPaidDatesForSingleVrn(String vrn, UUID cazId) {
-    return collectPaidDates(
-        accountService.getPaidEntrantPayments(Collections.singletonList(vrn), cazId)
-            .entrySet()
-            .iterator()
-            .next()
-            .getValue()
-    );
   }
 
   /**

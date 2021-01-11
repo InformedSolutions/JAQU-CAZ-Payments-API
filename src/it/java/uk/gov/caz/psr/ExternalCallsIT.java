@@ -123,28 +123,6 @@ public class ExternalCallsIT {
         .respond(response(responseFile, 200));
   }
   
-  public void mockAccountServiceChargesSingleVrnCall(String accountId, String vrn, int statusCode) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
-            exactly(1))
-        .respond(responseWithRegisterDetails("single-account-vehicle-response.json", statusCode));
-  }
-
-  public void mockAccountServiceChargesSingleNoChargeVrnCall(String accountId, String vrn) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
-            exactly(1))
-        .respond(responseWithRegisterDetails("single-account-vehicle-no-charge-response.json", 200));
-  }
-
-  public void mockAccountServiceChargesSingleVrnCallWithError(String accountId, String vrn,
-      int statusCode) {
-    accountsMockServer
-        .when(requestGet("/v1/accounts/" + accountId + "/vehicles/" + vrn),
-            exactly(1))
-        .respond(emptyResponse(statusCode));
-  }
-
   public void mockAccountServiceGetAllUsersCall(String accountId, int statusCode) {
     accountsMockServer
         .when(requestGet("/v1/accounts/" + accountId + "/users"),

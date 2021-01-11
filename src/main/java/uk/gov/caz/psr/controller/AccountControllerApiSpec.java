@@ -67,42 +67,6 @@ public interface AccountControllerApiSpec {
       @RequestParam(required = true) Map<String, String> queryStrings);
 
   /**
-   * An endpoint to retrieve a single chargeable vehicle registered against an account.
-   *
-   * @return {@link ChargeableAccountVehicleResponse} wrapped in {@link ResponseEntity}.
-   */
-  @ApiOperation(value = "${swagger.operations.accounts.chargeable-vehicles.description}",
-      response = ChargeableAccountVehicleResponse.class)
-  @ApiResponses({
-      @ApiResponse(code = 500, message = "Internal Server Error / No message available"),
-      @ApiResponse(code = 400, message = "Bad Request (the request is missing a mandatory "
-          + "element)"),
-      @ApiResponse(code = 404, message = "Account vehicle not found"),
-      @ApiResponse(code = 429, message = "Too many requests"),
-  })
-  @ApiImplicitParams({
-      @ApiImplicitParam(name = "account_id",
-          required = true,
-          value = "The identifier of the account to retrieve vehicles for",
-          paramType = "path"),
-      @ApiImplicitParam(name = Constants.X_CORRELATION_ID_HEADER,
-          required = true,
-          value = "UUID formatted string to track the request through the enquiries stack",
-          paramType = "header"),
-      @ApiImplicitParam(name = "cleanAirZoneId",
-          required = true,
-          value = "The clean air zones for which to return charges",
-          paramType = "query"),
-      @ApiImplicitParam(name = "vrn",
-          required = true,
-          value = "The vrn to query",
-          paramType = "path")})
-  @GetMapping("/{accountId}/chargeable-vehicles/{vrn}")
-  ResponseEntity<ChargeableAccountVehicleResponse> retrieveSingleChargeableVehicle(
-      @PathVariable("accountId") UUID accountId, @PathVariable("vrn") String vrn,
-      @RequestParam(required = true) Map<String, String> queryStrings);
-
-  /**
    * An endpoint to retrieve successful payments data of a user associated with a specific account.
    *
    * @return {@link SuccessfulPaymentsResponse} wrapped in {@link ResponseEntity}.
