@@ -64,7 +64,7 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
         .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
         .then()
         .responseIsReturnedWithHttpOkStatusCode()
-        .responseContainsExpectedData(vrns, 20L, 2);
+        .responseContainsExpectedData(vrns, 20L, 2, false);
   }
 
   @Test
@@ -79,7 +79,7 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
         .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
         .then()
         .responseIsReturnedWithHttpOkStatusCode()
-        .responseContainsExpectedData(Collections.emptyList(), 0, 0);
+        .responseContainsExpectedData(Collections.emptyList(), 0, 0, true);
   }
 
   @ParameterizedTest
@@ -105,6 +105,19 @@ public class RetrieveChargeableAccountVehiclesIT extends ExternalCallsIT {
     givenAssertion()
         .forAccountId(ACCOUNT_ID)
         .whenRequestIsMadeToRetrieveChargeableAccountVehiclesWithoutQueryStrings()
+        .then()
+        .responseIsReturnedWithStatusCode(400);
+  }
+
+  @Test
+  public void shouldReturnHttpBadRequestWhenAccountsApiReturnsBadRequest() {
+    mockAccountServiceVehiclesCallWithError(ACCOUNT_ID, "1", 400);
+    givenAssertion()
+        .forAccountId(ACCOUNT_ID)
+        .forPageSize("10")
+        .forPage("1")
+        .forCleanAirZoneId(CLEAN_AIR_ZONE_ID)
+        .whenRequestIsMadeToRetrieveChargeableAccountVehicles()
         .then()
         .responseIsReturnedWithStatusCode(400);
   }

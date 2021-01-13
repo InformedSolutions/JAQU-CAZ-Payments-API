@@ -104,7 +104,7 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
   }
 
   public void responseContainsExpectedData(List<String> expectedVrns, long expectedVehiclesCount,
-      int expectedPageCount) {
+      int expectedPageCount, boolean expectedAnyUndeterminedVehicles) {
     List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles()
         .getResults();
     assertTrue(this.responseDto.getChargeableAccountVehicles().getResults().size() <= Integer
@@ -113,6 +113,7 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
         results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
     assertEquals(expectedVehiclesCount, this.responseDto.getTotalVehiclesCount());
     assertEquals(expectedPageCount, this.responseDto.getPageCount());
+    assertEquals(expectedAnyUndeterminedVehicles, this.responseDto.isAnyUndeterminedVehicles());
   }
 
   public void responseContainsExpectedDataWithEntrantPayments(List<String> expectedVrns,

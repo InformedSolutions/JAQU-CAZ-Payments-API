@@ -25,4 +25,9 @@ public class ChargeableVehiclesPage {
    * Total number of pages.
    */
   int pageCount;
+
+  /**
+   * Boolean value to check if Account has any undetermined vehicles.
+   */
+  boolean anyUndeterminedVehicles;
 }
