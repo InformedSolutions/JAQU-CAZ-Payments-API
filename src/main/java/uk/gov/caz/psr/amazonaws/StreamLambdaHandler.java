@@ -3,7 +3,6 @@ package uk.gov.caz.psr.amazonaws;
 import static uk.gov.caz.awslambda.AwsHelpers.splitToArray;
 
 import com.amazonaws.serverless.exceptions.ContainerInitializationException;
-import com.amazonaws.serverless.proxy.internal.LambdaContainerHandler;
 import com.amazonaws.serverless.proxy.internal.testutils.AwsProxyRequestBuilder;
 import com.amazonaws.serverless.proxy.model.AwsProxyRequest;
 import com.amazonaws.serverless.proxy.model.AwsProxyResponse;
@@ -20,7 +19,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,26 +36,33 @@ public class StreamLambdaHandler implements RequestStreamHandler {
   private static final String KEEP_WARM_ACTION = "keep-warm";
   private static SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
 
-  private static final int INITIALIZATION_TIMEOUT_IN_MS = 60_000;
-
   static {
-    long startTime = Instant.now().toEpochMilli();
     try {
       // For applications that take longer than 10 seconds to start, use the async builder:
-      setDefaultContentCharset();
-      String listOfActiveSpringProfiles = System.getenv("SPRING_PROFILES_ACTIVE");
-      LambdaContainerHandler.getContainerConfig().setInitializationTimeout(
-          INITIALIZATION_TIMEOUT_IN_MS);
-      String[] springProfiles = listOfActiveSpringProfiles == null ? null
-          : splitToArray(listOfActiveSpringProfiles);
-      handler = new SpringBootProxyHandlerBuilder()
-          .defaultProxy()
-          .asyncInit(startTime)
-          .springBootApplication(Application.class)
-          .profiles(springProfiles)
-          .buildAndInitialize();
+      log.info("Initialising lambda handler");
+      
+      String listOfActiveSpringProfiles =
+          System.getenv("SPRING_PROFILES_ACTIVE");
+      
+      if (listOfActiveSpringProfiles != null) {
+        handler = new SpringBootProxyHandlerBuilder<AwsProxyRequest>()
+            .defaultProxy()
+            .asyncInit()
+            .springBootApplication(Application.class)
+            .profiles(splitToArray(listOfActiveSpringProfiles))
+            .buildAndInitialize();
+      } else {
+        handler = new SpringBootProxyHandlerBuilder<AwsProxyRequest>()
+            .defaultProxy()
+            .asyncInit()
+            .springBootApplication(Application.class)
+            .buildAndInitialize();
+      }
+      
+      log.info("Lambda handler initialisation finished");
     } catch (ContainerInitializationException e) {
       // if we fail here. We re-throw the exception to force another cold start
+      log.info("Initialisation of lambda failed");
       throw new IllegalStateException("Could not initialize Spring Boot application", e);
     }
   }
@@ -76,15 +81,6 @@ public class StreamLambdaHandler implements RequestStreamHandler {
       LambdaContainerStats.setLatestRequestTime(LocalDateTime.now());
       handler.proxyStream(new ByteArrayInputStream(input.getBytes()), outputStream, context);
     }
-  }
-
-  /**
-   * Sets default character set to UTF-8.
-   * https://github.com/awslabs/aws-serverless-java-container/issues/352
-   */
-  private static void setDefaultContentCharset() {
-    LambdaContainerHandler.getContainerConfig()
-        .setDefaultContentCharset(StandardCharsets.UTF_8.name());
   }
 
   /**
