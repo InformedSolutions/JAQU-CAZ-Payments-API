@@ -45,7 +45,7 @@ services:
     rootUrl: https://publicapi.payments.service.gov.uk
     api-key: to-be-replaced-by-external-value
   vehicle-compliance-checker:
-    root-url: https://dev-api.cleanairzonevehiclecheck.co.uk
+    root-url: https://localhost:1090
   accounts:
     root-url: http://localhost:1091
   whitelist:
