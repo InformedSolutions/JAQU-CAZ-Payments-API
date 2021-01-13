@@ -38,8 +38,7 @@ public class StreamLambdaHandler implements RequestStreamHandler {
 
   static {
     try {
-      // For applications that take longer than 10 seconds to start, use the async builder:
-      log.info("Initialising lambda handler");
+      log.info("Initializing lambda handler");
       
       String listOfActiveSpringProfiles =
           System.getenv("SPRING_PROFILES_ACTIVE");
@@ -59,10 +58,10 @@ public class StreamLambdaHandler implements RequestStreamHandler {
             .buildAndInitialize();
       }
       
-      log.info("Lambda handler initialisation finished");
+      log.info("Lambda handler initialization finished");
     } catch (ContainerInitializationException e) {
-      // if we fail here. We re-throw the exception to force another cold start
-      log.info("Initialisation of lambda failed");
+      // If we fail here. We re-throw the exception to force another cold start
+      log.info("Initialization of lambda failed");
       throw new IllegalStateException("Could not initialize Spring Boot application", e);
     }
   }
