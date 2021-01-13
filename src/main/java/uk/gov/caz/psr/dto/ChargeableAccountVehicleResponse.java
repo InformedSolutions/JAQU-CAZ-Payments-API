@@ -10,4 +10,5 @@ public class ChargeableAccountVehicleResponse {
   ChargeableAccountVehiclesResult chargeableAccountVehicles;
   long totalVehiclesCount;
   int pageCount;
+  boolean anyUndeterminedVehicles;
 }

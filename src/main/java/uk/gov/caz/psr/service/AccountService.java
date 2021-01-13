@@ -13,6 +13,7 @@ import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.service.exception.AccountNotFoundException;
+import uk.gov.caz.psr.service.exception.AccountVehiclesBadRequest;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 import uk.gov.caz.psr.service.exception.UserNotFoundException;
 
@@ -48,6 +49,8 @@ public class AccountService {
     } else {
       if (accountsResponse.code() == 404) {
         throw new AccountNotFoundException();
+      } else if (accountsResponse.code() == 400) {
+        throw new AccountVehiclesBadRequest();
       } else {
         throw new ExternalServiceCallException();
       }

@@ -27,6 +27,7 @@ public class ChargeableVehiclesToDtoConverter {
             chargeableAccountVehiclesResultFrom(chargeableVehiclesPage.getChargeableVehicles()))
         .totalVehiclesCount(chargeableVehiclesPage.getTotalVehiclesCount())
         .pageCount(chargeableVehiclesPage.getPageCount())
+        .anyUndeterminedVehicles(chargeableVehiclesPage.isAnyUndeterminedVehicles())
         .build();
   }
 

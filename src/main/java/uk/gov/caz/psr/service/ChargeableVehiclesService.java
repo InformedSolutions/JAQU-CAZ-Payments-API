@@ -70,6 +70,7 @@ public class ChargeableVehiclesService {
         .chargeableVehicles(chargeableVehicles)
         .totalVehiclesCount(accountVehicles.getTotalVehiclesCount())
         .pageCount(accountVehicles.getPageCount())
+        .anyUndeterminedVehicles(accountVehicles.isAnyUndeterminedVehicles())
         .build();
   }
 
