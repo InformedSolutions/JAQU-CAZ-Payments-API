@@ -16,6 +16,10 @@ logging:
           correlationid: INFO
 
 spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
   jpa:
     open-in-view: false
   liquibase:

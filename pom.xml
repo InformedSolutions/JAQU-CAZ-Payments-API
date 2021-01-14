@@ -19,7 +19,7 @@
 
     <rest-assured.version>4.0.0</rest-assured.version>
     <internal.libraries.version>2.14.0-SNAPSHOT</internal.libraries.version>
-    <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
+    <spring-cloud.version>Greenwich.SR6</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
     <codeCoverage.classMaxMissedCount>0</codeCoverage.classMaxMissedCount>
