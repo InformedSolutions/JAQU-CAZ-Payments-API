@@ -77,7 +77,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("Missing request header 'X-Correlation-ID'"));
       verify(directDebitMandatesService, never())
-          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString(), any());
     }
 
     @Test
@@ -93,7 +93,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'cleanAirZoneId' cannot be null"));
       verify(directDebitMandatesService, never())
-          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString(), any());
     }
 
     @Test
@@ -109,7 +109,23 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'returnUrl' cannot be null or empty"));
       verify(directDebitMandatesService, never())
-          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString(), any());
+    }
+
+    @Test
+    public void emptyAccountUserIdShouldResultIn400() throws Exception {
+      String payload = directDebitMandateRequestWithEmptyAccountUserId();
+
+      mockMvc
+          .perform(post(BASE_PATH, ANY_ACCOUNT_ID).content(payload)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON)
+              .header(X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message")
+              .value("'accountUserId' cannot be null"));
+      verify(directDebitMandatesService, never())
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString(), any());
     }
 
     @Test
@@ -125,7 +141,7 @@ class DirectDebitMandatesControllerTest {
           .andExpect(jsonPath("$.message")
               .value("'returnUrl' cannot be null or empty"));
       verify(directDebitMandatesService, never())
-          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString(), any());
     }
 
     @Test
@@ -142,7 +158,7 @@ class DirectDebitMandatesControllerTest {
               .value("'sessionId' cannot be null or empty"));
 
       verify(directDebitMandatesService, never())
-          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString(), any());
     }
 
     @Test
@@ -156,7 +172,7 @@ class DirectDebitMandatesControllerTest {
               .header(X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER))
           .andExpect(status().isCreated());
       verify(directDebitMandatesService)
-          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString());
+          .initiateDirectDebitMandateCreation(any(), any(), any(), anyString(), any());
     }
 
     private CreateDirectDebitMandateRequest.CreateDirectDebitMandateRequestBuilder baseRequestBuilder() {
@@ -184,6 +200,13 @@ class DirectDebitMandatesControllerTest {
     private String directDebitMandateRequestWithSessionId(String sessionId) {
       CreateDirectDebitMandateRequest requestParams = baseRequestBuilder()
           .sessionId(sessionId)
+          .build();
+      return toJsonString(requestParams);
+    }
+
+    private String directDebitMandateRequestWithEmptyAccountUserId() {
+      CreateDirectDebitMandateRequest requestParams = baseRequestBuilder()
+          .accountUserId(null)
           .build();
       return toJsonString(requestParams);
     }

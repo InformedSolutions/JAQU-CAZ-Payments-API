@@ -77,6 +77,8 @@ class DirectDebitMandatesServiceTest {
   private final static String ANY_RETURN_URL = "http://return-url.com";
   private final static String NEXT_URL = "http://some-address.com";
   private static final String ANY_SESSION_ID = "SESS_wSs0uGYMISxzqOBq";
+  private final static UUID ANY_ACCOUNT_USER_ID = UUID.randomUUID();
+
 
   @Nested
   class CreateDirectDebitMandateRedirectFlow {
@@ -89,7 +91,7 @@ class DirectDebitMandatesServiceTest {
       // when
       String redirectUrl = directDebitMandatesService
           .initiateDirectDebitMandateCreation(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL,
-              ANY_SESSION_ID);
+              ANY_SESSION_ID, ANY_ACCOUNT_USER_ID);
 
       // then
       assertThat(redirectUrl).isEqualTo(NEXT_URL);
@@ -103,7 +105,7 @@ class DirectDebitMandatesServiceTest {
       // when
       Throwable throwable = catchThrowable(() -> directDebitMandatesService
           .initiateDirectDebitMandateCreation(ANY_CLEAN_AIR_ZONE_ID, ANY_ACCOUNT_ID, ANY_RETURN_URL,
-              ANY_SESSION_ID));
+              ANY_SESSION_ID, ANY_ACCOUNT_USER_ID));
 
       // then
       assertThat(throwable).isInstanceOf(GoCardlessException.class);

@@ -102,7 +102,7 @@ public class DirectDebitMandatesService {
    * creation on the frontend.
    */
   public String initiateDirectDebitMandateCreation(UUID cleanAirZoneId, UUID accountId,
-      String returnUrl, String sessionId) {
+      String returnUrl, String sessionId, UUID accountUserId) {
     GoCardlessClient client = goCardlessClientFactory.createClientFor(cleanAirZoneId);
     try {
       log.info("Creating direct debit mandate for account '{}' : start", accountId);
@@ -114,6 +114,7 @@ public class DirectDebitMandatesService {
           .withScheme(Scheme.BACS)
           .withMetadata("accountId", accountId.toString())
           .withMetadata("cleanAirZoneId", cleanAirZoneId.toString())
+          .withMetadata("accountUserId", accountUserId.toString())
           .execute();
 
       return redirectFlow.getRedirectUrl();
