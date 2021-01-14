@@ -163,7 +163,8 @@ class DirectDebitMandatesControllerTest {
       return CreateDirectDebitMandateRequest.builder()
           .cleanAirZoneId(UUID.randomUUID())
           .returnUrl("https://example.return.url")
-          .sessionId(ANY_SESSION_ID);
+          .sessionId(ANY_SESSION_ID)
+          .accountUserId(UUID.randomUUID());
     }
 
     private String directDebitMandateRequestWithEmptyCaz() {

@@ -499,7 +499,8 @@ public class DirectDebitJourneyTestIT {
     return RestAssured.given()
         .pathParam("accountId", accountId)
         .body(toJsonString(
-            createDirectDebitMandateRequest(cleanAirZoneId, sessionToken, returnUrl)))
+            createDirectDebitMandateRequest(cleanAirZoneId, sessionToken, returnUrl,
+                UUID.randomUUID())))
         .accept(MediaType.APPLICATION_JSON_VALUE)
         .contentType(MediaType.APPLICATION_JSON_VALUE)
         .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
@@ -509,11 +510,12 @@ public class DirectDebitJourneyTestIT {
   }
 
   private CreateDirectDebitMandateRequest createDirectDebitMandateRequest(String cleanAirZoneId,
-      String sessionToken, String returnUrl) {
+      String sessionToken, String returnUrl, UUID accountUserId) {
     return CreateDirectDebitMandateRequest.builder()
         .cleanAirZoneId(UUID.fromString(cleanAirZoneId))
         .sessionId(sessionToken)
         .returnUrl(returnUrl)
+        .accountUserId(accountUserId)
         .build();
   }
 
