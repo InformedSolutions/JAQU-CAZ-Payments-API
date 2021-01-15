@@ -102,7 +102,7 @@ public class DirectDebitMandatesService {
    * creation on the frontend.
    */
   public String initiateDirectDebitMandateCreation(UUID cleanAirZoneId, UUID accountId,
-      String returnUrl, String sessionId) {
+      String returnUrl, String sessionId, UUID accountUserId) {
     GoCardlessClient client = goCardlessClientFactory.createClientFor(cleanAirZoneId);
     try {
       log.info("Creating direct debit mandate for account '{}' : start", accountId);
@@ -114,6 +114,7 @@ public class DirectDebitMandatesService {
           .withScheme(Scheme.BACS)
           .withMetadata("accountId", accountId.toString())
           .withMetadata("cleanAirZoneId", cleanAirZoneId.toString())
+          .withMetadata("accountUserId", accountUserId.toString())
           .execute();
 
       return redirectFlow.getRedirectUrl();
@@ -142,7 +143,8 @@ public class DirectDebitMandatesService {
       createMandateInAccountsService(
           cleanAirZoneId,
           extractMandateId(redirectFlow),
-          extractAccountIdFromMetadata(redirectFlow)
+          extractAccountIdFromMetadata(redirectFlow),
+          extractAccountUserIdFromMetadata(redirectFlow)
       );
 
       log.info("Successfully created mandate for caz {}", cleanAirZoneId);
@@ -174,13 +176,27 @@ public class DirectDebitMandatesService {
   }
 
   /**
+   * Extracts `accountUserId` from the passed redirect flow object's metadata or throw {@link
+   * IllegalStateException} if absent.
+   */
+  private UUID extractAccountUserIdFromMetadata(RedirectFlow redirectFlow) {
+    String accountUserId = redirectFlow.getMetadata().get("accountUserId");
+    if (!StringUtils.hasText(accountUserId)) {
+      throw new IllegalStateException("'accountUserId' is absent in the metadata! "
+          + "Please set it when the redirect flow is initiated");
+    }
+    return UUID.fromString(accountUserId);
+  }
+
+  /**
    * Creates the newly obtained mandate in Accounts service.
    */
   private void createMandateInAccountsService(UUID cleanAirZoneId, String mandateId,
-      UUID accountId) {
+      UUID accountId, UUID accountUserId) {
     CreateDirectDebitMandateRequest request = CreateDirectDebitMandateRequest.builder()
         .cleanAirZoneId(cleanAirZoneId)
         .mandateId(mandateId)
+        .accountUserId(accountUserId)
         .build();
     Response<CreateDirectDebitMandateResponse> response = accountsRepository
         .createDirectDebitMandateSync(accountId, request);
