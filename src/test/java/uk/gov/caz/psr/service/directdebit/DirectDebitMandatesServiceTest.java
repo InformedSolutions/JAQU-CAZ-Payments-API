@@ -22,10 +22,12 @@ import com.gocardless.services.RedirectFlowService;
 import com.gocardless.services.RedirectFlowService.RedirectFlowCompleteRequest;
 import com.gocardless.services.RedirectFlowService.RedirectFlowCreateRequest;
 import com.gocardless.services.RedirectFlowService.RedirectFlowCreateRequest.Scheme;
+import com.google.common.collect.Maps;
 import java.net.URI;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -152,11 +154,13 @@ class DirectDebitMandatesServiceTest {
     class WhenCallToCreateMandateInAccountsFails {
 
       @Test
-      public void shouldThrowExceptionOnMissingMetadata() {
+      public void shouldThrowExceptionOnMissingAccountId() {
         // given
         String flowId = "my-flow";
         String sessionToken = "my-session-token";
-        mockAbsenceOfAccountIdMetadata();
+        Map metadataParams = Maps.newHashMap();
+        metadataParams.put("accountUserId", UUID.randomUUID().toString());
+        mockSuccessfulGoCardlessCreation(metadataParams);
 
         // when
         Throwable throwable = catchThrowable(() -> directDebitMandatesService
@@ -170,11 +174,34 @@ class DirectDebitMandatesServiceTest {
       }
 
       @Test
+      public void shouldThrowExceptionOnMissingAccountUserId() {
+        // given
+        String flowId = "my-flow";
+        String sessionToken = "my-session-token";
+        Map metadataParams = Maps.newHashMap();
+        metadataParams.put("accountId", UUID.randomUUID().toString());
+        mockSuccessfulGoCardlessCreation(metadataParams);
+
+        // when
+        Throwable throwable = catchThrowable(() -> directDebitMandatesService
+            .completeMandateCreation(ANY_CLEAN_AIR_ZONE_ID, flowId, sessionToken));
+
+        // then
+        assertThat(throwable)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("'accountUserId' is absent in the metadata! Please set it when the redirect "
+                + "flow is initiated");
+      }
+
+      @Test
       public void shouldThrowExternalServiceCallExceptionOnUnsuccessfulResponse() {
         // given
         String flowId = "my-flow";
         String sessionToken = "my-session-token";
-        mockSuccessfulGoCardlessCreation();
+        Map metadataParams = Maps.newHashMap();
+        metadataParams.put("accountId", UUID.randomUUID().toString());
+        metadataParams.put("accountUserId", UUID.randomUUID().toString());
+        mockSuccessfulGoCardlessCreation(metadataParams);
         mockUnsuccessfulAccountsResponse();
 
         // when
@@ -185,32 +212,13 @@ class DirectDebitMandatesServiceTest {
         assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
       }
 
-      private void mockSuccessfulGoCardlessCreation() {
-        when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
-            .thenReturn(goCardlessClient);
-        RedirectFlowService redirectFlowService = Mockito.mock(RedirectFlowService.class);
-        RedirectFlowCompleteRequest completeRequest = Mockito
-            .mock(RedirectFlowCompleteRequest.class);
-        RedirectFlow response = Mockito.mock(RedirectFlow.class);
-        Links links = mock(Links.class);
-
-        when(goCardlessClient.redirectFlows()).thenReturn(redirectFlowService);
-        when(redirectFlowService.complete(anyString())).thenReturn(completeRequest);
-        when(completeRequest.withSessionToken(anyString())).thenReturn(completeRequest);
-        when(completeRequest.execute()).thenReturn(response);
-        when(response.getMetadata())
-            .thenReturn(Collections.singletonMap("accountId", UUID.randomUUID().toString()));
-        when(response.getLinks()).thenReturn(links);
-        when(links.getMandate()).thenReturn("any-mandate-id");
-      }
-
       private void mockUnsuccessfulAccountsResponse() {
         when(accountsRepository.createDirectDebitMandateSync(any(), any()))
             .thenReturn(
                 Response.error(400, ResponseBody.create(MediaType.get("application/json"), "")));
       }
 
-      private void mockAbsenceOfAccountIdMetadata() {
+      private void mockSuccessfulGoCardlessCreation(Map responseMetadata) {
         when(goCardlessClientFactory.createClientFor(ANY_CLEAN_AIR_ZONE_ID))
             .thenReturn(goCardlessClient);
         RedirectFlowService redirectFlowService = Mockito.mock(RedirectFlowService.class);
@@ -223,7 +231,7 @@ class DirectDebitMandatesServiceTest {
         when(redirectFlowService.complete(anyString())).thenReturn(completeRequest);
         when(completeRequest.withSessionToken(anyString())).thenReturn(completeRequest);
         when(completeRequest.execute()).thenReturn(response);
-        when(response.getMetadata()).thenReturn(Collections.emptyMap());
+        when(response.getMetadata()).thenReturn(responseMetadata);
         when(response.getLinks()).thenReturn(links);
         when(links.getMandate()).thenReturn("any-mandate-id");
       }

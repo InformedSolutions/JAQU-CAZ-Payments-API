@@ -14,7 +14,8 @@
     },
     "metadata": {
       "cazId": "CAZ_ID",
-      "accountId": "ACCOUNT_ID"
+      "accountId": "ACCOUNT_ID",
+      "accountUserId": "ACCOUNT_USER_ID"
     },
     "confirmation_url": "https://pay-sandbox.gocardless.com/flow/REDIRECT_FLOW_ID/success"
   }

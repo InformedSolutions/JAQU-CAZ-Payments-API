@@ -98,11 +98,13 @@ public class DirectDebitJourneyTestIT {
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
       String returnUrl = "http://return-url.com";
       String sessionToken = "3212e91fcbd19261493c909cd7a76520";
+      String accountUserId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
 
       String flowId = performRedirectFlowCreationRequestAndReturnFlowId(accountId, cazId,
-          sessionToken, returnUrl);
+          sessionToken, returnUrl, accountUserId);
 
-      mockSuccessCompleteMandateResponseInGoCardless(flowId, accountId, sessionToken, cazId);
+      mockSuccessCompleteMandateResponseInGoCardless(flowId, accountId, sessionToken, cazId,
+          accountUserId);
       mockSuccessCreateMandateQueryResponseInAccounts(accountId);
 
       // when
@@ -115,8 +117,7 @@ public class DirectDebitJourneyTestIT {
     }
 
     private String performRedirectFlowCreationRequestAndReturnFlowId(String accountId, String cazId,
-        String sessionToken,
-        String returnUrl) {
+        String sessionToken, String returnUrl, String accountUserId) {
       mockSuccessCreateRedirectFlowResponseInGoCardless(accountId, cazId, sessionToken, returnUrl);
 
       // Redirect Flow creation
@@ -404,7 +405,7 @@ public class DirectDebitJourneyTestIT {
   }
 
   private void mockSuccessCompleteMandateResponseInGoCardless(String flowId,
-      String accountId, String sessionToken, String cazId) {
+      String accountId, String sessionToken, String cazId, String accountUserId) {
     goCardlessMockServer
         .when(HttpRequest.request()
             .withMethod("POST")
@@ -418,6 +419,7 @@ public class DirectDebitJourneyTestIT {
                     .replace("REDIRECT_FLOW_ID", flowId)
                     .replace("SESSION_TOKEN", sessionToken)
                     .replace("CAZ_ID", cazId)
+                    .replace("ACCOUNT_USER_ID", accountUserId)
             )
         );
   }

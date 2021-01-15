@@ -143,7 +143,8 @@ public class DirectDebitMandatesService {
       createMandateInAccountsService(
           cleanAirZoneId,
           extractMandateId(redirectFlow),
-          extractAccountIdFromMetadata(redirectFlow)
+          extractAccountIdFromMetadata(redirectFlow),
+          extractAccountUserIdFromMetadata(redirectFlow)
       );
 
       log.info("Successfully created mandate for caz {}", cleanAirZoneId);
@@ -175,13 +176,27 @@ public class DirectDebitMandatesService {
   }
 
   /**
+   * Extracts `accountUserId` from the passed redirect flow object's metadata or throw {@link
+   * IllegalStateException} if absent.
+   */
+  private UUID extractAccountUserIdFromMetadata(RedirectFlow redirectFlow) {
+    String accountUserId = redirectFlow.getMetadata().get("accountUserId");
+    if (!StringUtils.hasText(accountUserId)) {
+      throw new IllegalStateException("'accountUserId' is absent in the metadata! "
+          + "Please set it when the redirect flow is initiated");
+    }
+    return UUID.fromString(accountUserId);
+  }
+
+  /**
    * Creates the newly obtained mandate in Accounts service.
    */
   private void createMandateInAccountsService(UUID cleanAirZoneId, String mandateId,
-      UUID accountId) {
+      UUID accountId, UUID accountUserId) {
     CreateDirectDebitMandateRequest request = CreateDirectDebitMandateRequest.builder()
         .cleanAirZoneId(cleanAirZoneId)
         .mandateId(mandateId)
+        .accountUserId(accountUserId)
         .build();
     Response<CreateDirectDebitMandateResponse> response = accountsRepository
         .createDirectDebitMandateSync(accountId, request);
