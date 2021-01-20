@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import uk.gov.caz.psr.dto.directdebit.DirectDebitMandatesForCazResponse;
-import uk.gov.caz.psr.dto.directdebit.DirectDebitMandatesResponse;
 import uk.gov.caz.psr.model.directdebit.Mandate;
 
 /**
@@ -22,7 +21,7 @@ public class MandatesToDtoConverter {
 
     return DirectDebitMandatesForCazResponse.builder()
         .mandates(mandates.stream()
-            .map(mandate -> DirectDebitMandatesResponse.CleanAirZoneWithMandates.Mandate.builder()
+            .map(mandate -> DirectDebitMandatesForCazResponse.Mandate.builder()
                 .id(mandate.getId())
                 .created(mandate.getCreated())
                 .status(mandate.getStatus()).build()
