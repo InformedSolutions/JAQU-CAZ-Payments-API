@@ -354,6 +354,7 @@ public class DirectDebitMandatesService {
   private Mandate toMandate(MandateWithCachedAndActualStatuses mandate) {
     return Mandate.builder()
         .id(mandate.getPaymentProviderMandateId())
+        .accountUserId(mandate.getAccountUserId())
         .created(mandate.getCreated())
         .status(mandate.getActualStatus().name())
         .build();
@@ -365,6 +366,7 @@ public class DirectDebitMandatesService {
   private Mandate toMandate(DirectDebitMandate mandate) {
     return Mandate.builder()
         .id(mandate.getPaymentProviderMandateId())
+        .accountUserId(mandate.getAccountUserId())
         .status(mandate.getStatus().name()) // status cannot be null here
         .build();
   }
@@ -400,6 +402,7 @@ public class DirectDebitMandatesService {
       DirectDebitMandateStatus externalStatus) {
     return MandateWithCachedAndActualStatuses.builder()
         .paymentProviderMandateId(mandate.getPaymentProviderMandateId())
+        .accountUserId(mandate.getAccountUserId())
         .actualStatus(externalStatus)
         .cachedStatus(mandate.getStatus())
         .created(mandate.getCreated())
@@ -461,6 +464,8 @@ public class DirectDebitMandatesService {
 
     @NonNull
     String paymentProviderMandateId;
+
+    UUID accountUserId;
 
     Date created;
 
