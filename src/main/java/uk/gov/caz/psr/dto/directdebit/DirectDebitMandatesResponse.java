@@ -32,6 +32,7 @@ public class DirectDebitMandatesResponse {
     public static class Mandate {
       String id;
       String status;
+      UUID accountUserId;
       
       @JsonFormat(shape = Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
       Date created;
