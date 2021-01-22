@@ -37,7 +37,7 @@ public interface AccountsRepository {
       @Path("accountId") String accountId,
       @Query("pageNumber") String pageNumber,
       @Query("pageSize") String pageSize,
-      @Query("chargeableCazId") String chargeableCazId,
+      @Query("cazId") String cazId,
       @Query("query") String query,
       @Query("onlyChargeable") String onlyChargeable,
       @Query("onlyDetermined") String onlyDetermined
