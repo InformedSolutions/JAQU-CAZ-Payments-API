@@ -107,6 +107,11 @@ public class Payment {
   boolean telephonePayment;
 
   /**
+   * Flag indicating whether the confirmation email was sent or not.
+   */
+  boolean emailConfirmationSent;
+
+  /**
    * An overridden lombok's builder.
    */
   public static class PaymentBuilder {
@@ -128,7 +133,7 @@ public class Payment {
       return new Payment(id, externalId, referenceNumber, paymentMethod, totalPaid, entrantPayments,
           externalPaymentStatus, submittedTimestamp, authorisedTimestamp, nextUrl,
           emailAddress, cleanAirZoneId, userId, operatorId, paymentProviderMandateId,
-          telephonePayment);
+          telephonePayment, emailConfirmationSent);
     }
 
     private boolean externalStatusMatchesExternalPaymentId() {
