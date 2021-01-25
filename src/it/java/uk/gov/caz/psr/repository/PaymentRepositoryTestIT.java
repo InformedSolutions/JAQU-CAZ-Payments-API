@@ -60,4 +60,18 @@ class PaymentRepositoryTestIT {
         .isEqualTo(paymentToUpdate.getExternalPaymentStatus());
     assertThat(updatedPayment.getExternalId()).isEqualTo(paymentToUpdate.getExternalId());
   }
+
+  @Test
+  public void shouldSetConfirmationEmailSentToTrue() {
+    // given
+    UUID id = UUID.fromString("b71b72a5-902f-4a16-a91d-1a4463b801db");
+    Payment payment = paymentRepository.findById(id).get();
+
+    // when
+    paymentRepository.markSentConfirmationEmail(payment.getId());
+    Payment updatedPayment = paymentRepository.findById(id).get();
+
+    // then
+    assertThat(updatedPayment.isEmailConfirmationSent()).isTrue();
+  }
 }

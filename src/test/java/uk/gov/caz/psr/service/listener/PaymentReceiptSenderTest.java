@@ -30,6 +30,7 @@ import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.PaymentMethod;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
+import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.PaymentReceiptEmailCreator;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,6 +73,9 @@ public class PaymentReceiptSenderTest {
 
   @Mock
   PaymentReceiptEmailCreator paymentReceiptEmailCreator;
+
+  @Mock
+  PaymentRepository paymentRepository;
 
   @Spy
   Set<String> emailsToSkip = EMAILS_TO_SKIP;
@@ -130,6 +134,7 @@ public class PaymentReceiptSenderTest {
 
     // then
     verify(messagingClient).publishMessage(sendEmailRequest);
+    verify(paymentRepository).markSentConfirmationEmail(ANY_PAYMENT.getId());
   }
 
   @Test
@@ -144,6 +149,7 @@ public class PaymentReceiptSenderTest {
 
       // then
       verifyNoInteractions(messagingClient);
+      verify(paymentRepository, never()).markSentConfirmationEmail(ANY_PAYMENT.getId());
     }
   }
 
