@@ -137,4 +137,19 @@ class PaymentRepositoryTest {
       ).thenReturn(Arrays.asList(Payments.forRandomDays(), Payments.forRandomDays()));
     }
   }
+
+  @Nested
+  class MarkSentConfirmationEmail {
+
+    @Test
+    public void shouldMarkTheProvidedPaymentAsConfirmationEmailSent() {
+      UUID paymentId = null;
+
+      Throwable throwable = catchThrowable(
+          () -> paymentRepository.markSentConfirmationEmail(paymentId));
+
+      assertThat(throwable).isInstanceOf(NullPointerException.class)
+          .hasMessage("paymentId cannot be null");
+    }
+  }
 }
