@@ -3,13 +3,11 @@ databaseChangeLog:
       id: 0019-1.0
       author: antoni.pstras
       changes:
-        - addColumn:
-            schemaName: CAZ_PAYMENT
-            tableName: T_PAYMENT
-            columns:
-              - column:
-                  name: email_confirmation_sent
-                  type: boolean
-                  defaultValueBoolean: false
-                  constraints:
-                    nullable: false
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0019-1.0-add-email-confirmation-sent-to-t-payment-table.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
