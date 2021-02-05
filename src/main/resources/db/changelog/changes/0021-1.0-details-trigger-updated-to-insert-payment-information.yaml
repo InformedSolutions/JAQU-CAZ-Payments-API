@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0021-1.0
+      author: lukasz.kuczynski
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0021-1.0-details_trigger_to_insert_payment_info.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
