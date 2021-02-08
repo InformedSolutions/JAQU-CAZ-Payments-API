@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 0021-1.0
+      id: 0021-1.0-iod
       author: lukasz.kuczynski
       changes:
         - sqlFile:
