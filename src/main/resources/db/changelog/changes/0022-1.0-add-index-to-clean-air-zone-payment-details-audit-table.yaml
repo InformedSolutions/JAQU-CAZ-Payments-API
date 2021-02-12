@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0022-1.0-add-index-for-payment-details-audit
+      author: Informed
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0022-1.0-add-index-to-clean-air-zone-payment-details-audit-table.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
