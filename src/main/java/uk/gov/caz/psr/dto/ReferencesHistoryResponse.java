@@ -48,6 +48,9 @@ public class ReferencesHistoryResponse {
   @ApiModelProperty(value = "${swagger.model.descriptions.references-history.line-items}")
   List<VehicleEntrantPaymentDetails> lineItems;
 
+  @ApiModelProperty(value = "${swagger.model.descriptions.references-history.modification-history}")
+  List<ModificationHistoryDetails> modificationHistory;
+
   @Value
   @Builder
   public static class VehicleEntrantPaymentDetails {
@@ -61,6 +64,45 @@ public class ReferencesHistoryResponse {
 
     @ApiModelProperty(value = "${swagger.model.descriptions.references-history.vrn}")
     String vrn;
+
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
+    @ToString.Include(name = "vrn")
+    private String maskedVrn() {
+      return Strings.mask(normalizeVrn(vrn));
+    }
+  }
+
+  @Value
+  @Builder
+  public static class ModificationHistoryDetails {
+
+    @ApiModelProperty(
+        value = "${swagger.model.descriptions.references-history.modification-amount}"
+    )
+    int amount;
+
+    @ApiModelProperty(
+        value = "${swagger.model.descriptions.references-history.modification-travel-date}"
+    )
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    LocalDate travelDate;
+
+    @ApiModelProperty(value = "${swagger.model.descriptions.references-history.modification-vrn}")
+    String vrn;
+
+    @ApiModelProperty(value =
+        "${swagger.model.descriptions.references-history.modification-case-reference}")
+    String caseReference;
+
+    @ApiModelProperty(value =
+        "${swagger.model.descriptions.references-history.modification-timestamp}")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    LocalDateTime modificationTimestamp;
+
+    @ApiModelProperty(value =
+        "${swagger.model.descriptions.references-history.modification-entrant-payment-status}")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    String entrantPaymentStatus;
 
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     @ToString.Include(name = "vrn")
