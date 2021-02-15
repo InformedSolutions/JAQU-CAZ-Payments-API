@@ -98,9 +98,6 @@ public class PaymentsController implements PaymentsControllerApiSpec {
 
   @Override
   public ResponseEntity<ReferencesHistoryResponse> getReferencesHistory(Long paymentReference) {
-    return paymentService.getPaymentByReferenceNumber(paymentReference)
-        .map(referencesHistoryConverter::toReferencesHistoryResponse)
-        .map(ResponseEntity::ok)
-        .orElseGet(() -> ResponseEntity.notFound().build());
+    return ResponseEntity.ok(paymentService.getPaymentHistoryByReferenceNumber(paymentReference));
   }
 }
