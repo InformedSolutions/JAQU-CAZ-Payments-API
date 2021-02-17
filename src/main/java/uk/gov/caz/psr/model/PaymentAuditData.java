@@ -12,7 +12,7 @@ import lombok.Value;
  */
 @Value
 @Builder
-public class PaymentStatusAuditData {
+public class PaymentAuditData {
 
   /**
    * Vehicle registration number.

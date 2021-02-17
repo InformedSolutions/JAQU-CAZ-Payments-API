@@ -34,3 +34,12 @@ VALUES
 ('62127799-74b5-4587-9eb2-2d3e89468173', '057e7b23-10ac-4ed2-b21b-cf53abd653bd', '282ccd65-1319-4b3b-a21c-dfe58809bedf', true),
 -- for payment '3e06222d-dd81-4621-8915-b2a03a8da9ef'
 ('14fcdc13-7a6a-4e97-b964-f809f4506ede', '8d709391-ee19-4dcd-a05b-a27dc7c7bff2', '3e06222d-dd81-4621-8915-b2a03a8da9ef', true);
+
+-- Update entrant payment to record payment audit tables.
+UPDATE caz_payment.t_clean_air_zone_entrant_payment
+SET payment_status = 'CHARGEBACK', update_actor = 'LA'
+WHERE clean_air_zone_entrant_payment_id = 'c59d0f46-0f8d-11ea-bbdd-9bfba959fef8';
+
+UPDATE caz_payment.t_clean_air_zone_entrant_payment
+SET payment_status = 'REFUNDED', update_actor = 'LA'
+WHERE clean_air_zone_entrant_payment_id = 'd572fea8-0f8d-11ea-bbdd-2b420f74f6f3';
