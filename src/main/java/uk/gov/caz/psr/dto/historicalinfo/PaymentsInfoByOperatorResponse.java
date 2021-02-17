@@ -1,6 +1,8 @@
 package uk.gov.caz.psr.dto.historicalinfo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,6 +56,7 @@ public class PaymentsInfoByOperatorResponse {
 
   @Value
   @Builder
+  @JsonIgnoreProperties({"refunded", "chargedback"})
   public static class SinglePaymentsInfoByOperator {
 
     /**
@@ -105,5 +108,13 @@ public class PaymentsInfoByOperatorResponse {
     @ApiModelProperty(value =
         "${swagger.model.descriptions.payments-info-by-operator-id-response.status}")
     String paymentProviderStatus;
+
+    @ApiModelProperty(value = "${swagger.model.payments-info-by-operator-id-response.isRefunded")
+    @JsonProperty(value = "isRefunded")
+    boolean isRefunded;
+
+    @ApiModelProperty(value = "${swagger.model.payments-info-by-operator-id-response.isChargedback")
+    @JsonProperty(value = "isChargedback")
+    boolean isChargedback;
   }
 }
