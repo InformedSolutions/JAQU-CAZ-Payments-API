@@ -17,7 +17,7 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.EntrantPaymentEnriched;
-import uk.gov.caz.psr.model.PaymentStatusAuditData;
+import uk.gov.caz.psr.model.PaymentAuditData;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo_;
 import uk.gov.caz.psr.repository.audit.PaymentDetailRepository;
@@ -62,7 +62,7 @@ public class VehiclePaymentHistoryService {
     Map<UUID, EntrantPaymentMatchInfo> entrantPaymentMatchById = getEntrantPaymentMatchInfoById(
         pageWithOrderedIds, sort);
 
-    List<PaymentStatusAuditData> auditData = fetchPaymentStatusesFromAuditDataForVrn(vrn,
+    List<PaymentAuditData> auditData = fetchPaymentStatusesFromAuditDataForVrn(vrn,
         entrantPaymentMatchById);
 
     Page<EntrantPaymentEnriched> enrichedPage = pageWithOrderedIds
@@ -73,7 +73,7 @@ public class VehiclePaymentHistoryService {
     return enrichedPage;
   }
 
-  private List<PaymentStatusAuditData> fetchPaymentStatusesFromAuditDataForVrn(String vrn,
+  private List<PaymentAuditData> fetchPaymentStatusesFromAuditDataForVrn(String vrn,
       Map<UUID, EntrantPaymentMatchInfo> entrantPaymentMatchById) {
 
     Set<UUID> cazIds = entrantPaymentMatchById.values().stream().map(
@@ -86,7 +86,7 @@ public class VehiclePaymentHistoryService {
         .map(entrantPaymentMatchInfo -> entrantPaymentMatchInfo.getPaymentInfo().getId())
         .collect(Collectors.toSet());
 
-    return paymentDetailRepository.getPaymentStatuses(vrn, cazIds, travelDates, paymentIds);
+    return paymentDetailRepository.getPaymentStatusesForVrn(vrn, cazIds, travelDates, paymentIds);
   }
 
   private Map<UUID, EntrantPaymentMatchInfo> getEntrantPaymentMatchInfoById(
