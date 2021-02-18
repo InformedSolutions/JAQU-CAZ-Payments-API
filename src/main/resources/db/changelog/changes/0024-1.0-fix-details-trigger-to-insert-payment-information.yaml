@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0024-1.0-iod
+      author: dawid.ratka
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0024-1.0-fix_details_trigger_to_insert_payment_info.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
