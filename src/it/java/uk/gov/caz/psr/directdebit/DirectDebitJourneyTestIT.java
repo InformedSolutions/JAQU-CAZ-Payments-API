@@ -94,7 +94,7 @@ public class DirectDebitJourneyTestIT {
     @Test
     public void successfullyCreatedDirectDebitMandate() {
       // given
-      String cazId = "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3";
+      String cazId = "b8e53786-c5ca-426a-a701-b14ee74857d4";
       String accountId = "36354a93-4e42-483c-ae2f-74511f6ab60e";
       String returnUrl = "http://return-url.com";
       String sessionToken = "3212e91fcbd19261493c909cd7a76520";
@@ -141,7 +141,7 @@ public class DirectDebitJourneyTestIT {
         // given
         String flowId = "RE0002W59W1ZNBRMCVWWTEVWM3B346Y3";
         String sessionToken = "3212e91fcbd19261493c909cd7a76520";
-        String cazId = "39e54ed8-3ed2-441d-be3f-38fc9b70c8d3";
+        String cazId = "b8e53786-c5ca-426a-a701-b14ee74857d4";
 
         mockInvalidTokenFailureInCompleteMandateResponseInGoCardless(flowId);
 
