@@ -24,7 +24,7 @@ values
 insert into caz_payment.t_clean_air_zone_entrant_payment (clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)
 values
 ('e218c724-102c-11ea-be9e-973e776167e2', 'AB11CDE', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-03', 'tariff-1', 70, 'PAID', 'USER'),
-('e593130a-102c-11ea-be9e-975729b598b6', 'AB11CDE', '39e54ed8-3ed2-441d-be3f-38fc9b70c8d3', '2019-11-04', 'tariff-1', 70, 'PAID', 'USER');
+('e593130a-102c-11ea-be9e-975729b598b6', 'AB11CDE', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-04', 'tariff-1', 70, 'PAID', 'USER');
 
 INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)
 VALUES

@@ -89,7 +89,7 @@ class ReferencesHistoryConverterTest {
             .build(),
         CleanAirZoneDto.builder()
             .cleanAirZoneId(UUID.fromString("5e554ef5-8513-4d98-8cd5-625dc6a77e80"))
-            .name("Leeds")
+            .name("Bath")
             .build()
     );
   }
