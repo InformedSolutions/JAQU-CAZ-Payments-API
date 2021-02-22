@@ -1,7 +1,6 @@
 package uk.gov.caz.psr.service.paymentinfo;
 
 import java.util.Optional;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -30,12 +29,13 @@ public class PaymentInfoSpecificationTravelDateFromAndTo implements PaymentInfoS
 
 
       Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin;
-      if(currentQueryIsCountRecords(criteriaQuery)) {
-        entrantPaymentInfoJoin = QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+      if (QueryUtil.currentQueryIsCountRecords(criteriaQuery)) {
+        entrantPaymentInfoJoin = QueryUtil.getOrCreateJoin(root,
+            EntrantPaymentMatchInfo_.entrantPaymentInfo);
       } else {
-        entrantPaymentInfoJoin = QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+        entrantPaymentInfoJoin = QueryUtil.getOrCreateJoinFetch(root,
+            EntrantPaymentMatchInfo_.entrantPaymentInfo);
       }
-
 
       return criteriaBuilder.and(
           criteriaBuilder.greaterThanOrEqualTo(
@@ -48,9 +48,5 @@ public class PaymentInfoSpecificationTravelDateFromAndTo implements PaymentInfoS
           )
       );
     };
-  }
-
-  private boolean currentQueryIsCountRecords(CriteriaQuery<?> criteriaQuery) {
-    return criteriaQuery.getResultType() == Long.class || criteriaQuery.getResultType() == long.class;
   }
 }

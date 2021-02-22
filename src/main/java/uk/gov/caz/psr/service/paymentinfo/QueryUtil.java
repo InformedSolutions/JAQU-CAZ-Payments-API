@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.service.paymentinfo;
 
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.Attribute;
@@ -30,7 +31,7 @@ public class QueryUtil {
   }
 
   /**
-   * Helper method to create or find existing join, to avoid multiple joins on the same table.
+   * Helper method to create or find existing join with inner fetches for Lazy loading entities, to avoid multiple joins on the same table.
    *
    * @param from {@link Root}
    * @param attribute {@link PluralAttribute}
@@ -43,5 +44,19 @@ public class QueryUtil {
         .filter(fetch -> attribute.getName().equals(fetch.getAttribute().getName()))
         .findFirst()
         .orElseGet(() -> from.fetch(attribute.getName()));
+  }
+  
+  /**
+   * Method to determine whether a query is being issued to identify the count
+   * value of a paged response.
+   * 
+   * @param criteriaQuery {@link CriteriaQuery}
+   * @return boolean value for whether a query is to identify the count value of
+   *         a paged response.
+   */
+  public static boolean currentQueryIsCountRecords(
+      CriteriaQuery<?> criteriaQuery) {
+    return criteriaQuery.getResultType() == Long.class
+        || criteriaQuery.getResultType() == long.class;
   }
 }
