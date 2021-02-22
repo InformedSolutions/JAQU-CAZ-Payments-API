@@ -1,5 +1,6 @@
 package uk.gov.caz.psr.service.paymentinfo;
 
+import javax.persistence.criteria.CriteriaQuery;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;

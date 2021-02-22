@@ -20,9 +20,19 @@ public class OmitNotPaidPaymentInfoSpecification implements Specification<Entran
   @Override
   public Predicate toPredicate(Root<EntrantPaymentMatchInfo> root, CriteriaQuery<?> criteriaQuery,
       CriteriaBuilder criteriaBuilder) {
-    Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin =
-        QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+
+    Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin;
+    if(currentQueryIsCountRecords(criteriaQuery)) {
+      entrantPaymentInfoJoin = QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+    } else {
+      entrantPaymentInfoJoin = QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+    }
     return criteriaBuilder.notEqual(entrantPaymentInfoJoin.get(EntrantPaymentInfo_.paymentStatus),
         InternalPaymentStatus.NOT_PAID);
+  }
+
+
+  private boolean currentQueryIsCountRecords(CriteriaQuery<?> criteriaQuery) {
+    return criteriaQuery.getResultType() == Long.class || criteriaQuery.getResultType() == long.class;
   }
 }

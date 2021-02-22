@@ -25,7 +25,7 @@ public class PaymentInfoSpecificationVrn implements PaymentInfoSpecification {
   public Specification<EntrantPaymentMatchInfo> create(PaymentInfoRequestAttributes attributes) {
     return (root, criteriaQuery, criteriaBuilder) -> {
       Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin =
-          QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+          QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
       return criteriaBuilder.equal(
           entrantPaymentInfoJoin.get(EntrantPaymentInfo_.vrn),
           attributes.getVrn()

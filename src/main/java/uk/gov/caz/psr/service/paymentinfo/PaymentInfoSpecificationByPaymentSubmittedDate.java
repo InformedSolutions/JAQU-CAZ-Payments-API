@@ -2,10 +2,12 @@ package uk.gov.caz.psr.service.paymentinfo;
 
 import java.time.ZoneId;
 import java.util.Optional;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
+import uk.gov.caz.psr.model.info.EntrantPaymentInfo;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo_;
 import uk.gov.caz.psr.model.info.PaymentInfo;
@@ -25,8 +27,13 @@ public class PaymentInfoSpecificationByPaymentSubmittedDate implements PaymentIn
   @Override
   public Specification<EntrantPaymentMatchInfo> create(PaymentInfoRequestAttributes attributes) {
     return (root, criteriaQuery, criteriaBuilder) -> {
-      Join<EntrantPaymentMatchInfo, PaymentInfo> joinPayment =
-          QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo);
+
+      Join<EntrantPaymentMatchInfo, PaymentInfo> joinPayment;
+      if(currentQueryIsCountRecords(criteriaQuery)) {
+        joinPayment = QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo);
+      } else {
+        joinPayment = QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.paymentInfo);
+      }
 
       return criteriaBuilder.and(
           criteriaBuilder.greaterThan(
@@ -42,5 +49,8 @@ public class PaymentInfoSpecificationByPaymentSubmittedDate implements PaymentIn
           )
       );
     };
+  }
+  private boolean currentQueryIsCountRecords(CriteriaQuery<?> criteriaQuery) {
+    return criteriaQuery.getResultType() == Long.class || criteriaQuery.getResultType() == long.class;
   }
 }

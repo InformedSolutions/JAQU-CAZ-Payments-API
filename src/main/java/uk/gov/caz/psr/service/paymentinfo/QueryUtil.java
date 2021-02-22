@@ -22,6 +22,22 @@ public class QueryUtil {
    * @param <T> child class of join
    */
   public static <V, T> Join<V, T> getOrCreateJoin(Root<V> from, Attribute attribute) {
+    return (Join<V, T>) from.getJoins()
+        .stream()
+        .filter(fetch -> attribute.getName().equals(fetch.getAttribute().getName()))
+        .findFirst()
+        .orElseGet(() -> from.join(attribute.getName()));
+  }
+
+  /**
+   * Helper method to create or find existing join, to avoid multiple joins on the same table.
+   *
+   * @param from {@link Root}
+   * @param attribute {@link PluralAttribute}
+   * @param <V> parent class of join
+   * @param <T> child class of join
+   */
+  public static <V, T> Join<V, T> getOrCreateJoinFetch(Root<V> from, Attribute attribute) {
     return (Join<V, T>) from.getFetches()
         .stream()
         .filter(fetch -> attribute.getName().equals(fetch.getAttribute().getName()))

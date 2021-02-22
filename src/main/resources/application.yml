@@ -421,4 +421,4 @@ swagger:
 api:
   charge-settlement:
     date-query-range: 14
-    page-size: 1500
+    page-size: 2
