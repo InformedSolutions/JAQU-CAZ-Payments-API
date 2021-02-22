@@ -26,8 +26,11 @@ public class PaymentInfoSpecificationTravelDateFromAndTo implements PaymentInfoS
   public Specification<EntrantPaymentMatchInfo> create(
       PaymentInfoRequestAttributes attributes) {
     return (root, criteriaQuery, criteriaBuilder) -> {
-      Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin =
-          QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+
+      Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin = QueryUtil
+          .getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo,
+              QueryUtil.currentQueryIsCountRecords(criteriaQuery));
+
       return criteriaBuilder.and(
           criteriaBuilder.greaterThanOrEqualTo(
               entrantPaymentInfoJoin.get(EntrantPaymentInfo_.travelDate),
