@@ -25,8 +25,10 @@ public class PaymentInfoSpecificationByPaymentSubmittedDate implements PaymentIn
   @Override
   public Specification<EntrantPaymentMatchInfo> create(PaymentInfoRequestAttributes attributes) {
     return (root, criteriaQuery, criteriaBuilder) -> {
-      Join<EntrantPaymentMatchInfo, PaymentInfo> joinPayment =
-          QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo);
+
+      Join<EntrantPaymentMatchInfo, PaymentInfo> joinPayment = QueryUtil
+          .getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo,
+              QueryUtil.currentQueryIsCountRecords(criteriaQuery));
 
       return criteriaBuilder.and(
           criteriaBuilder.greaterThan(
