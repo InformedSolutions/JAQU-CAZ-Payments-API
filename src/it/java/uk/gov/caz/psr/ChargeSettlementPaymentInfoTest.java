@@ -900,11 +900,6 @@ public abstract class ChargeSettlementPaymentInfoTest {
     assertThat(queryExecutionCount).isOne();
   }
 
-  protected void verifyResultsWereFetchedByTwoDatabaseQueries() {
-    long queryExecutionCount = statistics.getQueryExecutionCount();
-    assertThat(queryExecutionCount).isEqualTo(2);
-  }
-
   @BeforeEach
   public void setupRestAssured() {
     RestAssured.port = randomServerPort;

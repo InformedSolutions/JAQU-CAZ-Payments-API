@@ -25,14 +25,11 @@ public class CazIdSpecification implements Specification<EntrantPaymentMatchInfo
   @Override
   public Predicate toPredicate(Root<EntrantPaymentMatchInfo> root, CriteriaQuery<?> criteriaQuery,
       CriteriaBuilder criteriaBuilder) {
-    Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin;
-    if(currentQueryIsCountRecords(criteriaQuery)) {
-      QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo);
-      entrantPaymentInfoJoin = QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
-    } else {
-      QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.paymentInfo);
-      entrantPaymentInfoJoin = QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
-    }
+    QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo,
+        QueryUtil.currentQueryIsCountRecords(criteriaQuery));
+    Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin = QueryUtil
+        .getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo,
+            QueryUtil.currentQueryIsCountRecords(criteriaQuery));
 
     return criteriaBuilder.equal(
         entrantPaymentInfoJoin.get(EntrantPaymentInfo_.cleanAirZoneId),
@@ -46,10 +43,5 @@ public class CazIdSpecification implements Specification<EntrantPaymentMatchInfo
    */
   public static CazIdSpecification forCaz(UUID cazId) {
     return new CazIdSpecification(cazId);
-  }
-
-  private boolean currentQueryIsCountRecords(CriteriaQuery<?> criteriaQuery) {
-    return criteriaQuery.getResultType() == Long.class
-        || criteriaQuery.getResultType() == long.class;
   }
 }

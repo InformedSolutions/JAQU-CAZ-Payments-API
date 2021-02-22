@@ -196,32 +196,8 @@ class ChargeSettlementPaymentInfoV2TestIT extends ChargeSettlementPaymentInfoTes
             .withParam("page", "1")
             .then()
             .headerContainsCorrelationId()
-            .responseHasOkStatus()
-            .doesNotContainNotPaidEntries()
-            .containsReferenceNumbers();
-//            .containsPages(4)
-//            .hasFirstResultWith("AB11CDE")
-//            .hasSecondResultWith("ND84VSX")
-//            .totalLineItemsCountIsEqualTo(1);
-
-        // We need to verify it there were only two DB queries:
-        // for data and pagination count
-        verifyResultsWereFetchedByTwoDatabaseQueries();
-      }
-
-      @Test
-      public void shouldReturnErrorForIncorrectPage() {
-        PaymentInfoAssertion.whenRequested()
-            .withParam("fromDatePaidFor", "2019-11-01")
-            .withParam("toDatePaidFor", "2019-11-02")
-            .withParam("page", "1")
-            .then()
-            .headerContainsCorrelationId()
-            .responseHasBadRequestStatus()
-            .containsErrors(1)
-            .andContainsErrorWith(0, 400, "page",
-                "Invalid page number",
-                "Parameter validation error");
+            .containsPages(1)
+            .containsEmptyResults();
       }
     }
   }

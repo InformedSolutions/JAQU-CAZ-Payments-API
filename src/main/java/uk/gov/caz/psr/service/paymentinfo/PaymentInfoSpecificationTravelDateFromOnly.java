@@ -26,7 +26,8 @@ public class PaymentInfoSpecificationTravelDateFromOnly implements PaymentInfoSp
   public Specification<EntrantPaymentMatchInfo> create(PaymentInfoRequestAttributes attributes) {
     return (root, criteriaQuery, criteriaBuilder) -> {
       Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin =
-          QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+          QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo,
+              QueryUtil.currentQueryIsCountRecords(criteriaQuery));
       return criteriaBuilder.equal(
           entrantPaymentInfoJoin.get(EntrantPaymentInfo_.travelDate),
           attributes.getFromDatePaidFor()

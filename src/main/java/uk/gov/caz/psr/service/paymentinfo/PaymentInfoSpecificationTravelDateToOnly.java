@@ -26,10 +26,11 @@ public class PaymentInfoSpecificationTravelDateToOnly implements PaymentInfoSpec
   public Specification<EntrantPaymentMatchInfo> create(PaymentInfoRequestAttributes attributes) {
     return (root, criteriaQuery, criteriaBuilder) -> {
       Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin =
-          QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+          QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo,
+              QueryUtil.currentQueryIsCountRecords(criteriaQuery));
       return criteriaBuilder.equal(
           entrantPaymentInfoJoin.get(EntrantPaymentInfo_.travelDate),
-              attributes.getToDatePaidFor().minusDays(1)
+          attributes.getToDatePaidFor().minusDays(1)
       );
     };
   }

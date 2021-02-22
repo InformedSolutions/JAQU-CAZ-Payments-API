@@ -25,7 +25,8 @@ public class PaymentInfoSpecificationPaymentId implements PaymentInfoSpecificati
   public Specification<EntrantPaymentMatchInfo> create(PaymentInfoRequestAttributes attributes) {
     return (root, criteriaQuery, criteriaBuilder) -> {
       Join<EntrantPaymentMatchInfo, PaymentInfo> joinPayment =
-          QueryUtil.getOrCreateJoinFetch(root, EntrantPaymentMatchInfo_.paymentInfo);
+          QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo,
+              QueryUtil.currentQueryIsCountRecords(criteriaQuery));
       return criteriaBuilder.equal(
           joinPayment.get(PaymentInfo_.externalId),
           attributes.getExternalPaymentId()
