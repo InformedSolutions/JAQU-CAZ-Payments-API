@@ -26,6 +26,8 @@ public class AccountDirectDebitMandatesResponse {
 
     UUID accountId;
 
+    UUID accountUserId;
+
     UUID cleanAirZoneId;
 
     String paymentProviderMandateId;

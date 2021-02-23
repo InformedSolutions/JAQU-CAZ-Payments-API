@@ -12,6 +12,7 @@ import uk.gov.caz.psr.dto.SendEmailRequest;
 import uk.gov.caz.psr.messaging.MessagingClient;
 import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.model.events.PaymentStatusUpdatedEvent;
+import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.PaymentReceiptEmailCreator;
 
 /**
@@ -26,7 +27,7 @@ public class PaymentReceiptSender {
   private final PaymentReceiptEmailCreator paymentReceiptEmailCreator;
   @Value("#{'${application.emails-to-skip}'.split(',')}")
   private final Set<String> emailsToSkip;
-
+  private final PaymentRepository paymentRepository;
 
   /**
    * Processes a payment event (given that its external status is SUCCESS).
@@ -43,6 +44,7 @@ public class PaymentReceiptSender {
       if (shouldBeSent) {
         SendEmailRequest request = paymentReceiptEmailCreator.createSendEmailRequest(payment);
         messagingClient.publishMessage(request);
+        setEmailConfirmationSentForPayment(payment);
         log.info("Email for payment with ID {} has been sent", payment.getId());
       } else {
         log.info("Skipping email sending for payment with ID: {}", payment.getId());
@@ -52,6 +54,10 @@ public class PaymentReceiptSender {
     } finally {
       log.info("Finished processing email event for payment with ID: {}", payment.getId());
     }
+  }
+
+  private void setEmailConfirmationSentForPayment(Payment payment) {
+    paymentRepository.markSentConfirmationEmail(payment.getId());
   }
 
   private boolean checkIfShouldBeSent(Payment payment) {

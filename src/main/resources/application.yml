@@ -16,6 +16,10 @@ logging:
           correlationid: INFO
 
 spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
   jpa:
     open-in-view: false
   liquibase:
@@ -285,6 +289,7 @@ swagger:
         return-url: Front end URL used as return URL after direct debit mandate creation
         account-id: Identifies the fleet's account which is creating direct debit mandate
         session-id: Session token of user who performs direct debit mandate creation
+        account-user-id: Direct Debite mandate creator
       create-direct-debit-payment:
         clean-zone-id: Clean Air Zone identifier
         mandate-id: Identifies the direct debit mandate in payment provider.

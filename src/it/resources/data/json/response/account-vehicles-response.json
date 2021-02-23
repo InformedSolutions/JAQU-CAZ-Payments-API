@@ -181,5 +181,7 @@
       ]
     }
   ],
-  "totalVehiclesCount": 20
+  "totalVehiclesCount": 20,
+  "pageCount": 2,
+  "anyUndeterminedVehicles": false
 }

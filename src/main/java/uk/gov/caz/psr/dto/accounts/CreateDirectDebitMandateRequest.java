@@ -22,4 +22,10 @@ public class CreateDirectDebitMandateRequest {
    */
   @NonNull
   UUID cleanAirZoneId;
+
+  /**
+   * An indentifier of the Debit creator.
+   */
+  @NonNull
+  UUID accountUserId;
 }

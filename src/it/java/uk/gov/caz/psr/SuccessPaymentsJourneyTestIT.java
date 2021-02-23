@@ -592,19 +592,19 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
       checkMasterTableWrittenToOnlyOnce(vrns, cleanAirZoneId);
       checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(vrns, cleanAirZoneId);
-      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.CREATED);
-      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.INITIATED);
-      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.SUCCESS);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.CREATED, 1);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.INITIATED, 1);
+      checkDetailTableWrittenToForPaymentStatus(paymentId, ExternalPaymentStatus.SUCCESS, 2);
 
       return this;
     }
 
     private void checkDetailTableWrittenToForPaymentStatus(UUID paymentId,
-        ExternalPaymentStatus status) {
+        ExternalPaymentStatus status, int count) {
       int detailPaymentCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
           AuditTableWrapper.DETAIL,
           "payment_id = '" + paymentId + "' AND payment_provider_status = '" + status.name() + "'");
-      assertThat(detailPaymentCount).isEqualTo(1);
+      assertThat(detailPaymentCount).isEqualTo(count);
     }
 
     private void checkDetailTableWrittenToWithPaidAndNotPaidStatusForEachEntrantPayment(Set<String> vrns,
