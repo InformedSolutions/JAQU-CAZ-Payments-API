@@ -3,6 +3,8 @@ package uk.gov.caz.psr.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,12 +28,15 @@ import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.psr.dto.accounts.AccountUserResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.model.PaymentSummary;
 import uk.gov.caz.psr.model.PaymentToCleanAirZoneMapping;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.PaymentSummaryRepository;
 import uk.gov.caz.psr.repository.PaymentToCleanAirZoneMappingRepository;
+import uk.gov.caz.psr.repository.audit.PaymentDetailRepository;
 import uk.gov.caz.psr.util.CurrencyFormatter;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,6 +53,9 @@ class RetrieveSuccessfulPaymentsServiceTest {
 
   @Mock
   private PaymentSummaryRepository paymentSummaryRepository;
+
+  @Mock
+  private PaymentDetailRepository paymentDetailRepository;
 
   @Mock
   private CurrencyFormatter currencyFormatter;
@@ -82,6 +90,7 @@ class RetrieveSuccessfulPaymentsServiceTest {
           .getPaginatedPaymentSummaryForUserIds(any(), anyInt(), anyInt());
       verify(vehicleComplianceRetrievalService).getCleanAirZoneIdToCleanAirZoneNameMap();
       verify(paymentSummaryRepository).getTotalPaymentsCountForUserIds(any());
+      verify(paymentDetailRepository).getPaymentStatusesForPaymentIds(anySet(), any(), anyList());
     }
 
     @Test
@@ -115,6 +124,7 @@ class RetrieveSuccessfulPaymentsServiceTest {
           .getPaginatedPaymentSummaryForUserIds(any(), anyInt(), anyInt());
       verify(vehicleComplianceRetrievalService).getCleanAirZoneIdToCleanAirZoneNameMap();
       verify(paymentSummaryRepository).getTotalPaymentsCountForUserIds(any());
+      verify(paymentDetailRepository).getPaymentStatusesForPaymentIds(anySet(), any(), anyList());
     }
 
     @Test
@@ -187,8 +197,9 @@ class RetrieveSuccessfulPaymentsServiceTest {
 
   private Map<UUID, String> sampleCleanAirZonesMap() {
     List<CleanAirZoneDto> cazDtosList = sampleCleanAirZoneDtosList();
-    Map<UUID, String> cazMap = cazDtosList.stream().collect(Collectors.toMap(CleanAirZoneDto::getCleanAirZoneId,
-        CleanAirZoneDto::getName));
+    Map<UUID, String> cazMap = cazDtosList.stream()
+        .collect(Collectors.toMap(CleanAirZoneDto::getCleanAirZoneId,
+            CleanAirZoneDto::getName));
     return cazMap;
   }
 

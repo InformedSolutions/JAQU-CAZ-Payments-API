@@ -61,7 +61,8 @@ public class RetrieveSuccessfulPaymentsTestIT extends ExternalCallsIT {
         .whenRequestIsMade()
         .then()
         .responseIsReturnedWithHttpOkStatusCode()
-        .responseIncludeDataOfASingleUser();
+        .responseIncludeDataOfASingleUser()
+        .responseIncludeChargebackFlag();
   }
 
   @Test
