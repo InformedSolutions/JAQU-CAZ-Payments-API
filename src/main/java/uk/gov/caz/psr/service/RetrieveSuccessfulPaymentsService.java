@@ -1,7 +1,9 @@
 package uk.gov.caz.psr.service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -11,12 +13,16 @@ import retrofit2.Response;
 import uk.gov.caz.psr.dto.accounts.AccountUserResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
+import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
+import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaginationData;
+import uk.gov.caz.psr.model.PaymentModificationStatus;
 import uk.gov.caz.psr.model.PaymentSummary;
 import uk.gov.caz.psr.model.PaymentToCleanAirZoneMapping;
 import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.PaymentSummaryRepository;
 import uk.gov.caz.psr.repository.PaymentToCleanAirZoneMappingRepository;
+import uk.gov.caz.psr.repository.audit.PaymentDetailRepository;
 import uk.gov.caz.psr.util.CurrencyFormatter;
 
 /**
@@ -31,6 +37,7 @@ public class RetrieveSuccessfulPaymentsService {
   private final AccountsRepository accountsRepository;
   private final PaymentToCleanAirZoneMappingRepository paymentToCleanAirZoneMappingRepository;
   private final PaymentSummaryRepository paymentSummaryRepository;
+  private final PaymentDetailRepository paymentDetailRepository;
   private final CurrencyFormatter currencyFormatter;
   private final VehicleComplianceRetrievalService vehicleComplianceRetrievalService;
 
@@ -49,7 +56,6 @@ public class RetrieveSuccessfulPaymentsService {
     List<AccountUserResponse> selectedAccountUser = accountUsers.stream()
         .filter(accountUserResponse -> accountUserResponse.getAccountUserId().equals(accountUserId))
         .collect(Collectors.toList());
-
     return retrieveForSelectedUsers(selectedAccountUser, pageNumber, pageSize);
   }
 
@@ -120,7 +126,7 @@ public class RetrieveSuccessfulPaymentsService {
    * @return list of user Ids.
    */
   private List<UUID> getUserIds(List<AccountUserResponse> accountUsers) {
-    return accountUsers.stream().map(user -> user.getAccountUserId()).collect(
+    return accountUsers.stream().map(AccountUserResponse::getAccountUserId).collect(
         Collectors.toList());
   }
 
@@ -181,11 +187,9 @@ public class RetrieveSuccessfulPaymentsService {
   private Map<UUID, UUID> getPaymentIdToCleanAirZoneIdMap(List<UUID> userIds) {
     List<PaymentToCleanAirZoneMapping> mappings = paymentToCleanAirZoneMappingRepository
         .getPaymentToCleanAirZoneMapping(userIds);
-    Map<UUID, UUID> paymentToCleanAirZoneMap = mappings.stream().collect(Collectors
+    return mappings.stream().collect(Collectors
         .toMap(PaymentToCleanAirZoneMapping::getPaymentId,
             PaymentToCleanAirZoneMapping::getCleanAirZoneId));
-
-    return paymentToCleanAirZoneMap;
   }
 
   /**
@@ -200,8 +204,10 @@ public class RetrieveSuccessfulPaymentsService {
       List<PaymentSummary> paymentSummaries, Map<UUID, String> accountIdToNameMap) {
     Map<UUID, String> cleanAirZonesIdToNameMap = vehicleComplianceRetrievalService
         .getCleanAirZoneIdToCleanAirZoneNameMap();
+    Map<UUID, List<PaymentModificationStatus>> matchingPaymentModificationStatuses =
+        findPaymentModifiedStatusesByPaymentId(paymentSummaries);
 
-    List<EnrichedPaymentSummary> enrichedPaymentSummaries = paymentSummaries.stream()
+    return paymentSummaries.stream()
         .map(paymentSummary -> EnrichedPaymentSummary.builder()
             .paymentId(paymentSummary.getPaymentId())
             .entriesCount(paymentSummary.getEntriesCount())
@@ -209,9 +215,14 @@ public class RetrieveSuccessfulPaymentsService {
             .cazName(cleanAirZonesIdToNameMap.get(paymentSummary.getCleanAirZoneId()))
             .payerName(accountIdToNameMap.get(paymentSummary.getPayerId()))
             .paymentDate(paymentSummary.getPaymentDate())
-            .build()).collect(Collectors.toList());
-
-    return enrichedPaymentSummaries;
+            .isChargedback(
+                paymentHadModifiedStatus(paymentSummary.getPaymentId(),
+                    matchingPaymentModificationStatuses, InternalPaymentStatus.CHARGEBACK))
+            .isRefunded(
+                paymentHadModifiedStatus(paymentSummary.getPaymentId(),
+                    matchingPaymentModificationStatuses, InternalPaymentStatus.REFUNDED))
+            .build())
+        .collect(Collectors.toList());
   }
 
 
@@ -231,4 +242,42 @@ public class RetrieveSuccessfulPaymentsService {
     }
     return accountUser.getName();
   }
+
+  /**
+   * For the given payment IDs from {@code paymentInfos} finds all entrant payment modifications in
+   * payment audit tables. The result is grouped by payment id.
+   */
+  private Map<UUID, List<PaymentModificationStatus>> findPaymentModifiedStatusesByPaymentId(
+      List<PaymentSummary> paymentSummaries) {
+    Set<UUID> paymentIds = extractPaymentIdsFrom(paymentSummaries);
+    List<PaymentModificationStatus> paymentModificationStatuses = paymentDetailRepository
+        .getPaymentStatusesForPaymentIds(paymentIds,
+            EntrantPaymentUpdateActor.LA,
+            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK));
+    return paymentModificationStatuses.stream()
+        .collect(Collectors.groupingBy(PaymentModificationStatus::getPaymentId));
+  }
+
+  /**
+   * Extracts IDs from the passed {@code paymentInfos} and maps them to a set.
+   */
+  private Set<UUID> extractPaymentIdsFrom(List<PaymentSummary> paymentSummaries) {
+    return paymentSummaries.stream()
+        .map(PaymentSummary::getPaymentId)
+        .collect(Collectors.toSet());
+  }
+
+  private boolean paymentHadModifiedStatus(UUID paymentId,
+      Map<UUID, List<PaymentModificationStatus>> matchingPaymentModificationStatuses,
+      InternalPaymentStatus expectedModificationStatus) {
+
+    if (matchingPaymentModificationStatuses.containsKey(paymentId)) {
+      return matchingPaymentModificationStatuses.get(paymentId).stream()
+          .anyMatch(paymentModificationStatus -> paymentModificationStatus.getPaymentStatus()
+              .equals(expectedModificationStatus));
+    } else {
+      return false;
+    }
+  }
+
 }

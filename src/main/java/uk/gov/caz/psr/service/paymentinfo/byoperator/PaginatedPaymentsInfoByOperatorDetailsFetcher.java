@@ -137,8 +137,8 @@ class PaginatedPaymentsInfoByOperatorDetailsFetcher {
   }
 
   /**
-   * For the given payment IDs from {@code paymentInfos} finds all entrant payment matches alongside
-   * with payment info and entrant payment info. The result is grouped by payment id.
+   * For the given payment IDs from {@code paymentInfos} finds all entrant payment modifications in
+   * payment audit tables. The result is grouped by payment id.
    */
   private Map<UUID, List<PaymentModificationStatus>> findPaymentModifiedStatusesByPaymentId(
       List<PaymentInfo> paymentInfos) {
