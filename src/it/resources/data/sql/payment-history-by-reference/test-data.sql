@@ -29,6 +29,7 @@ VALUES
 -- for payment '282ccd65-1319-4b3b-a21c-dfe58809bedf'
 ('62127799-74b5-4587-9eb2-2d3e89468173', '057e7b23-10ac-4ed2-b21b-cf53abd653bd', '282ccd65-1319-4b3b-a21c-dfe58809bedf', true);
 
+-- Update entrant payments to have chargeback and refunded statuses in payments audit table
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
 SET payment_status = 'CHARGEBACK', update_actor = 'LA'
 WHERE clean_air_zone_entrant_payment_id = 'c59d0f46-0f8d-11ea-bbdd-9bfba959fef8';

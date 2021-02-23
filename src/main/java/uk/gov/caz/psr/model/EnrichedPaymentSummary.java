@@ -1,6 +1,8 @@
 package uk.gov.caz.psr.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -12,6 +14,7 @@ import lombok.Value;
  */
 @Value
 @Builder
+@JsonIgnoreProperties({"refunded", "chargedback"})
 public class EnrichedPaymentSummary {
 
   /**
@@ -38,6 +41,19 @@ public class EnrichedPaymentSummary {
    * Name of the payer.
    */
   String payerName;
+
+  /**
+   * Indicates if the payment was refunded.
+   */
+  @JsonProperty(value = "isRefunded")
+  boolean isRefunded;
+
+  /**
+   * Indicates if the payment was charged back.
+   */
+  @JsonProperty(value = "isChargedback")
+  boolean isChargedback;
+
 
   /**
    * Date of the payment.
