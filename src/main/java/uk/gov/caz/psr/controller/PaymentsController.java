@@ -25,9 +25,7 @@ import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.PaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
-import uk.gov.caz.psr.util.PaymentDetailsConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
-import uk.gov.caz.psr.util.ReferencesHistoryConverter;
 
 @RestController
 @AllArgsConstructor
@@ -50,8 +48,6 @@ public class PaymentsController implements PaymentsControllerApiSpec {
   private final ReconcilePaymentStatusService reconcilePaymentStatusService;
   private final GetPaidEntrantPaymentsService getPaidEntrantPaymentsService;
   private final PaymentService paymentService;
-  private final PaymentDetailsConverter paymentDetailsConverter;
-  private final ReferencesHistoryConverter referencesHistoryConverter;
 
   @Override
   public ResponseEntity<InitiatePaymentResponse> initiatePayment(
@@ -90,10 +86,7 @@ public class PaymentsController implements PaymentsControllerApiSpec {
 
   @Override
   public ResponseEntity<PaymentDetailsResponse> getPaymentDetails(UUID paymentId) {
-    return paymentService.getPayment(paymentId)
-        .map(paymentDetailsConverter::toPaymentDetailsResponse)
-        .map(ResponseEntity::ok)
-        .orElseGet(() -> ResponseEntity.notFound().build());
+    return ResponseEntity.ok(paymentService.getPayment(paymentId));
   }
 
   @Override
