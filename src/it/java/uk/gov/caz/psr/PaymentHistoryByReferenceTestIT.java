@@ -92,6 +92,21 @@ public class PaymentHistoryByReferenceTestIT {
     }
   }
 
+  @Nested
+  class WhenRequestedForPaymentWithEntrantPaymentTakenFromAnotherPaymentAndChargebackByLA {
+
+    @Test
+    public void shouldReturnValidResponse() {
+      mockSuccessVccsCleanAirZonesResponse();
+
+      whenRequested()
+          .withPaymentReferenceEqualTo(BigInteger.valueOf(998L))
+          .then()
+          .hasElementsInModificationHistory(1)
+          .responseHasOkStatus();
+    }
+  }
+
   @BeforeEach
   public void setupRestAssured() {
     RestAssured.port = randomServerPort;

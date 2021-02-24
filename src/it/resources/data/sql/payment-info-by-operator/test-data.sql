@@ -18,8 +18,8 @@ values
 ('c9801856-0f8d-11ea-bbdd-0fb9b9867da0', 'MD84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-02', 'tariff-1', 88, 'PAID', 'USER'),
 ('ce083912-0f8d-11ea-bbdd-47debb103c06', 'OD84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-03', 'tariff-1', 88, 'PAID', 'USER'),
 ('d22c4d6c-0f8d-11ea-bbdd-7ff4b1cc8ff1', 'PD84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-04', 'tariff-1', 88, 'PAID', 'USER'),
-('d572fea8-0f8d-11ea-bbdd-2b420f74f6f3', 'QD84VSX', '39e54ed8-3ed2-441d-be3f-38fc9b70c8d3', '2019-11-05', 'tariff-1', 260, 'PAID', 'USER'),
-('057e7b23-10ac-4ed2-b21b-cf53abd653bd', 'RD84VSX', '39e54ed8-3ed2-441d-be3f-38fc9b70c8d3', '2019-11-06', 'tariff-1', 280, 'PAID', 'USER'),
+('d572fea8-0f8d-11ea-bbdd-2b420f74f6f3', 'QD84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-05', 'tariff-1', 260, 'PAID', 'USER'),
+('057e7b23-10ac-4ed2-b21b-cf53abd653bd', 'RD84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-06', 'tariff-1', 280, 'PAID', 'USER'),
 ('8d709391-ee19-4dcd-a05b-a27dc7c7bff2', 'MD16ABC', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-06', 'tariff-1', 780, 'PAID', 'USER');
 
 INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)

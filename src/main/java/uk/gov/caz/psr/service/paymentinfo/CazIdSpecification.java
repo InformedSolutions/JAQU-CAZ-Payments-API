@@ -25,9 +25,12 @@ public class CazIdSpecification implements Specification<EntrantPaymentMatchInfo
   @Override
   public Predicate toPredicate(Root<EntrantPaymentMatchInfo> root, CriteriaQuery<?> criteriaQuery,
       CriteriaBuilder criteriaBuilder) {
-    QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo);
-    Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin =
-        QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo);
+    QueryUtil.getOrCreateJoin(root, EntrantPaymentMatchInfo_.paymentInfo,
+        QueryUtil.currentQueryIsCountRecords(criteriaQuery));
+    Join<EntrantPaymentMatchInfo, EntrantPaymentInfo> entrantPaymentInfoJoin = QueryUtil
+        .getOrCreateJoin(root, EntrantPaymentMatchInfo_.entrantPaymentInfo,
+            QueryUtil.currentQueryIsCountRecords(criteriaQuery));
+
     return criteriaBuilder.equal(
         entrantPaymentInfoJoin.get(EntrantPaymentInfo_.cleanAirZoneId),
         cazId
