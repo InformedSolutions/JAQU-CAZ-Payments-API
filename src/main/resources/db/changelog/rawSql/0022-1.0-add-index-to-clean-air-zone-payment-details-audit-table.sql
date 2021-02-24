@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS travel_date_payment_id_update_actor_on_payment_detail_idx ON
+caz_payment_audit.t_clean_air_zone_payment_detail(travel_date, payment_id, update_actor);
