@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0020-1.0
+      author: antoni.pstras
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0020-1.0-populate_email_confirmation_sent.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
