@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0023-1.0-iod
+      author: dawid.ratka
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) from pg_indexes where schemaname = 'caz_payment_audit' AND indexname = 'payment_id_update_actor_payment_status';
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name:  payment_id
+              - column:
+                  name:  update_actor
+              - column:
+                  name:  payment_status
+            indexName:  payment_id_update_actor_payment_status
+            schemaName:  caz_payment_audit
+            tableName:  t_clean_air_zone_payment_detail

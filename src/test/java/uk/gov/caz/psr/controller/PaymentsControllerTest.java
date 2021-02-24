@@ -42,6 +42,7 @@ import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.PaidPaymentsRequest;
+import uk.gov.caz.psr.dto.ReferencesHistoryResponse;
 import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
@@ -50,6 +51,7 @@ import uk.gov.caz.psr.service.GetPaidEntrantPaymentsService;
 import uk.gov.caz.psr.service.InitiatePaymentService;
 import uk.gov.caz.psr.service.PaymentService;
 import uk.gov.caz.psr.service.ReconcilePaymentStatusService;
+import uk.gov.caz.psr.service.exception.PaymentNotFoundException;
 import uk.gov.caz.psr.util.InitiatePaymentRequestToModelConverter;
 import uk.gov.caz.psr.util.PaymentDetailsConverter;
 import uk.gov.caz.psr.util.PaymentTransactionsToEntrantsConverter;
@@ -618,7 +620,8 @@ class PaymentsControllerTest {
     @Test
     public void shouldReturn404WhenThereIsNoPaymentForGivenReferenceNumber()
         throws Exception {
-      given(paymentService.getPaymentByReferenceNumber(any())).willReturn(Optional.empty());
+      given(paymentService.getPaymentHistoryByReferenceNumber(any())).willThrow(
+          new PaymentNotFoundException("Payment with provided reference number does not exist"));
 
       mockMvc
           .perform(get(GET_REFERENCES_HISTORY, 1200)
@@ -626,6 +629,20 @@ class PaymentsControllerTest {
               .contentType(MediaType.APPLICATION_JSON)
               .accept(MediaType.APPLICATION_JSON))
           .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturn200WhenThereIsPaymentForGivenReferenceNumber()
+        throws Exception {
+      given(paymentService.getPaymentHistoryByReferenceNumber(any())).willReturn(
+          ReferencesHistoryResponse.builder().build());
+
+      mockMvc
+          .perform(get(GET_REFERENCES_HISTORY, 1200)
+              .header(Constants.X_CORRELATION_ID_HEADER, ANY_CORRELATION_ID)
+              .contentType(MediaType.APPLICATION_JSON)
+              .accept(MediaType.APPLICATION_JSON))
+          .andExpect(status().isOk());
     }
   }
 

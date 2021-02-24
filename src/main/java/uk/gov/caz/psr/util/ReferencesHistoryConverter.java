@@ -2,6 +2,8 @@ package uk.gov.caz.psr.util;
 
 import static java.util.stream.Collectors.toList;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -10,9 +12,11 @@ import retrofit2.Response;
 import uk.gov.caz.definitions.dto.CleanAirZoneDto;
 import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.psr.dto.ReferencesHistoryResponse;
+import uk.gov.caz.psr.dto.ReferencesHistoryResponse.ModificationHistoryDetails;
 import uk.gov.caz.psr.dto.ReferencesHistoryResponse.VehicleEntrantPaymentDetails;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.PaymentModification;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.util.exception.CleanAirZoneIsNotUniqueException;
 
@@ -23,6 +27,9 @@ import uk.gov.caz.psr.util.exception.CleanAirZoneIsNotUniqueException;
 @AllArgsConstructor
 public class ReferencesHistoryConverter {
 
+  private static final ZoneId GMT_ZONE_ID = ZoneId.of("GMT");
+  private static final ZoneId UK_ZONE_ID = ZoneId.of("Europe/London");
+
   private final VccsRepository vccsRepository;
 
   /**
@@ -31,7 +38,8 @@ public class ReferencesHistoryConverter {
    * @param payment {@link Payment}
    * @return An instance of {@link ReferencesHistoryResponse}.
    */
-  public ReferencesHistoryResponse toReferencesHistoryResponse(Payment payment) {
+  public ReferencesHistoryResponse toReferencesHistoryResponse(Payment payment,
+      List<PaymentModification> paymentModifications) {
     checkIfCazIsUnique(payment);
 
     UUID cleanAirZoneId = payment.getEntrantPayments().stream()
@@ -47,6 +55,7 @@ public class ReferencesHistoryConverter {
         .cazName(getCleanAirZoneName(cleanAirZoneId))
         .paymentProviderStatus(payment.getExternalPaymentStatus())
         .lineItems(toVehicleEntrantPaymentsDetails(payment.getEntrantPayments()))
+        .modificationHistory(toModificationHistory(paymentModifications))
         .build();
   }
 
@@ -72,12 +81,33 @@ public class ReferencesHistoryConverter {
         .collect(toList());
   }
 
+  private List<ModificationHistoryDetails> toModificationHistory(
+      List<PaymentModification> paymentModifications) {
+    return paymentModifications.stream()
+        .map(this::toModificationHistoryDetails)
+        .collect(toList());
+  }
+
   private ReferencesHistoryResponse.VehicleEntrantPaymentDetails toVehicleEntrantPaymentDetails(
       EntrantPayment entrantPayment) {
     return ReferencesHistoryResponse.VehicleEntrantPaymentDetails.builder()
         .chargePaid(entrantPayment.getCharge())
         .travelDate(entrantPayment.getTravelDate())
         .vrn(entrantPayment.getVrn())
+        .build();
+  }
+
+  private ReferencesHistoryResponse.ModificationHistoryDetails toModificationHistoryDetails(
+      PaymentModification paymentModification) {
+    return ModificationHistoryDetails.builder()
+        .amount(paymentModification.getAmount())
+        .travelDate(paymentModification.getTravelDate())
+        .vrn(paymentModification.getVrn())
+        .caseReference(paymentModification.getCaseReference())
+        .modificationTimestamp(
+            LocalDateTime.from(paymentModification.getModificationTimestamp()).atZone(GMT_ZONE_ID)
+                .withZoneSameInstant(UK_ZONE_ID).toLocalDateTime())
+        .entrantPaymentStatus(paymentModification.getEntrantPaymentStatus())
         .build();
   }
 
