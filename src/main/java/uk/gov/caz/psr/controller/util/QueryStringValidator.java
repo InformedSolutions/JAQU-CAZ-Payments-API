@@ -26,11 +26,9 @@ public class QueryStringValidator {
       }
     }
 
-    if (requiredNumericalParams != null) {
-      for (String param : requiredNumericalParams) {
-        if (numericalQueryStringInvalid(param, map)) {
-          throw new InvalidRequestPayloadException("Incorrect parameters supplied");
-        }
+    for (String param : requiredNumericalParams) {
+      if (numericalQueryStringInvalid(param, map)) {
+        throw new InvalidRequestPayloadException("Incorrect parameters supplied");
       }
     }
   }

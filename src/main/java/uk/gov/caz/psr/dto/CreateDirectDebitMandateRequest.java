@@ -22,6 +22,7 @@ public class CreateDirectDebitMandateRequest {
           .put(cleanAirZoneIdNotNull(), "'cleanAirZoneId' cannot be null")
           .put(returnUrlNotEmpty(), "'returnUrl' cannot be null or empty")
           .put(sessionIdNotEmpty(), "'sessionId' cannot be null or empty")
+          .put(accountUserIdNotNull(), "'accountUserId' cannot be null")
           .build();
 
   @ApiModelProperty(
@@ -33,6 +34,10 @@ public class CreateDirectDebitMandateRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.direct-debit-mandate-create.session-id}")
   String sessionId;
+
+  @ApiModelProperty(
+      value = "${swagger.model.descriptions.direct-debit-mandate-create.account-user-id}")
+  UUID accountUserId;
 
   /**
    * Public method that validates given object and throws exceptions if validation doesn't pass.
@@ -66,5 +71,12 @@ public class CreateDirectDebitMandateRequest {
    */
   private static Function<CreateDirectDebitMandateRequest, Boolean> sessionIdNotEmpty() {
     return request -> StringUtils.hasText(request.getSessionId());
+  }
+
+  /**
+   * Returns a lambda that verifies if 'accountUserId' is not null.
+   */
+  private static Function<CreateDirectDebitMandateRequest, Boolean> accountUserIdNotNull() {
+    return request -> Objects.nonNull(request.getAccountUserId());
   }
 }

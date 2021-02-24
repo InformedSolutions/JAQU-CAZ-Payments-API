@@ -71,9 +71,24 @@ steps:
         from_secret: charge_settlement_cognito_id
       LOCATION: 'local'
     commands:
-      - sleep 8m
       - cd JAQU-CAZ-QA-selenium
       - cucumber -t @CHARGESETTLEMENT --retry 2
+
+  # execute jmeter micro perf scripts
+  - name: micro-performance tests	
+    image: blazemeter/taurus	
+    environment:	
+      CHARGE_SETTLEMENT_CLIENT_ID:
+        from_secret: charge_settlement_id
+      CHARGE_SETTLEMENT_CLIENT_SECRET:
+        from_secret:  charge_settlement_secret
+      CHARGE_SETTLEMENT_COGNITO_ID:
+        from_secret: charge_settlement_cognito_id
+    commands:	
+      - bzt -o modules.jmeter.properties.theapikey=$CHARGE_SETTLEMENT_COGNITO_ID -o modules.jmeter.properties.theclientid=$CHARGE_SETTLEMENT_CLIENT_ID -o modules.jmeter.properties.theclientsecret=$CHARGE_SETTLEMENT_CLIENT_SECRET jmeter/micro-perf-payment-info.jmx jmeter/assertion.yml	
+    volumes:	
+      - name: docker_sock	
+        path: /var/run/docker.sock
 
 
 ################################################# End Nightly Steps ############################################################
