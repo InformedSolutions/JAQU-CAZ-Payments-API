@@ -39,6 +39,9 @@ public class PaymentDetailsResponse {
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-details.line-items}")
   List<VehicleEntrantPaymentDetails> lineItems;
 
+  @ApiModelProperty(value = "${swagger.model.descriptions.payment-details.modification-history}")
+  List<ModificationHistoryDetails> modificationHistory;
+
   @Value
   @Builder
   public static class VehicleEntrantPaymentDetails {
