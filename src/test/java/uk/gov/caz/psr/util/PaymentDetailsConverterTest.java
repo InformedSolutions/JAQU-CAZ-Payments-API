@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static uk.gov.caz.psr.util.TestObjectFactory.Payments.preparePayment;
+import static uk.gov.caz.psr.util.TestObjectFactory.Payments.preparePaymentModifications;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -38,7 +39,7 @@ class PaymentDetailsConverterTest {
 
     // when
     PaymentDetailsResponse paymentDetailsResponse = converter
-        .toPaymentDetailsResponse(preparePayment(UUID.randomUUID()));
+        .toPaymentDetailsResponse(preparePayment(UUID.randomUUID()), preparePaymentModifications());
 
     // then
     assertThat(paymentDetailsResponse).isNotNull();
