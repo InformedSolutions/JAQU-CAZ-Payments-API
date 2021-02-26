@@ -135,7 +135,7 @@ public class PaymentDetailRepository {
     try {
       deleteDataBeforeDate("caz_payment_audit.t_clean_air_zone_payment_master", inputDate);
     } catch (Exception ex) {
-      // FOREIN KEY VIOLATION happens when there is record(s) in table 
+      // FOREIGN KEY VIOLATION happens when there is record(s) in table
       // t_clean_air_zone_payment_detail that refer to a record in 
       // t_clean_air_zone_payment_master
       resetMasterRecordCreationTime(inputDate);

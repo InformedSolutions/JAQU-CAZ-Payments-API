@@ -164,6 +164,8 @@ swagger:
         vrn: Vehicle registration number
         payer-name: >-
           When a given user is an account owner, payerName should be “Administrator”. If a user has been deleted it should be set to “Deleted user” otherwise name.
+        modification-history: >-
+          Array containing objects that contains information about modifications of payments made by LA.
       references-history:
         central-payment-reference: The central reference for the payment
         payment-provider-id: GOV.UK Pay unique payment identifier
