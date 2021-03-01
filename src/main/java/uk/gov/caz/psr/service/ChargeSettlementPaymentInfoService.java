@@ -3,7 +3,6 @@ package uk.gov.caz.psr.service;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -11,7 +10,6 @@ import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.caz.psr.controller.exception.PaymentInfoVrnValidationException;
-import uk.gov.caz.psr.dto.validation.PageNumberValidationException;
 import uk.gov.caz.psr.model.PaymentInfoRequestAttributes;
 import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
 import uk.gov.caz.psr.repository.EntrantPaymentRepository;
@@ -79,11 +77,7 @@ public class ChargeSettlementPaymentInfoService {
     throwIfNonExistentVrn(cazId, attributes.getVrn());
     Specification<EntrantPaymentMatchInfo> specification = getSpecification(attributes, cazId);
 
-    try {
-      return entrantPaymentMatchInfoRepository.findAll(specification, buildPageRequest(pageNumber));
-    } catch (InvalidDataAccessApiUsageException ex) {
-      throw new PageNumberValidationException("Given page number is incorrect.");
-    }
+    return entrantPaymentMatchInfoRepository.findAll(specification, buildPageRequest(pageNumber));
   }
 
   private Specification<EntrantPaymentMatchInfo> getSpecification(

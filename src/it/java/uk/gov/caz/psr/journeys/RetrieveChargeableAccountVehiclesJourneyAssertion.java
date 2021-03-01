@@ -19,10 +19,10 @@ import uk.gov.caz.psr.dto.ChargeableAccountVehiclesResult.VrnWithTariffAndEntran
 public class RetrieveChargeableAccountVehiclesJourneyAssertion {
 
   private String accountId;
-  private String direction;
+  private String pageNumber;
   private String pageSize;
-  private String vrn;
   private String cleanAirZoneId;
+  private String query;
   private ValidatableResponse response;
   private ChargeableAccountVehicleResponse responseDto;
   private static final String CORRELATION_ID = UUID.randomUUID().toString();
@@ -36,8 +36,8 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
     return this;
   }
 
-  public RetrieveChargeableAccountVehiclesJourneyAssertion forDirection(String direction) {
-    this.direction = direction;
+  public RetrieveChargeableAccountVehiclesJourneyAssertion forPage(String pageNumber) {
+    this.pageNumber = pageNumber;
     return this;
   }
 
@@ -46,8 +46,8 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
     return this;
   }
 
-  public RetrieveChargeableAccountVehiclesJourneyAssertion forVrn(String vrn) {
-    this.vrn = vrn;
+  public RetrieveChargeableAccountVehiclesJourneyAssertion forQuery(String query) {
+    this.query = query;
     return this;
   }
 
@@ -64,9 +64,8 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
         .accept(MediaType.APPLICATION_JSON.toString())
         .contentType(MediaType.APPLICATION_JSON.toString())
         .pathParam("account_id", this.accountId)
-        .queryParam("direction", this.direction)
+        .queryParam("pageNumber", this.pageNumber)
         .queryParam("pageSize", this.pageSize)
-        .queryParam("vrn", this.vrn)
         .queryParam("cleanAirZoneId", this.cleanAirZoneId)
         .header(Constants.X_CORRELATION_ID_HEADER, CORRELATION_ID)
         .when()
@@ -104,26 +103,27 @@ public class RetrieveChargeableAccountVehiclesJourneyAssertion {
     response.statusCode(statusCode);
   }
 
-  public void responseContainsExpectedData(List<String> expectedVrns, String firstVrn,
-      String lastVrn) {
+  public void responseContainsExpectedData(List<String> expectedVrns, long expectedVehiclesCount,
+      int expectedPageCount, boolean expectedAnyUndeterminedVehicles) {
     List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles()
         .getResults();
     assertTrue(this.responseDto.getChargeableAccountVehicles().getResults().size() <= Integer
         .parseInt(this.pageSize));
     assertEquals(expectedVrns,
         results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
-    assertEquals(firstVrn, this.responseDto.getFirstVrn());
-    assertEquals(lastVrn, this.responseDto.getLastVrn());
+    assertEquals(expectedVehiclesCount, this.responseDto.getTotalVehiclesCount());
+    assertEquals(expectedPageCount, this.responseDto.getPageCount());
+    assertEquals(expectedAnyUndeterminedVehicles, this.responseDto.isAnyUndeterminedVehicles());
   }
 
   public void responseContainsExpectedDataWithEntrantPayments(List<String> expectedVrns,
-      String firstVrn, String lastVrn) {
+      long expectedVehiclesCount, int expectedPageCount) {
     List<VrnWithTariffAndEntrancesPaid> results = this.responseDto.getChargeableAccountVehicles()
         .getResults();
     assertEquals(expectedVrns,
         results.stream().map(result -> result.getVrn()).collect(Collectors.toList()));
     assertEquals(LocalDate.now(), results.get(0).getPaidDates().get(0));
-    assertEquals(firstVrn, this.responseDto.getFirstVrn());
-    assertEquals(lastVrn, this.responseDto.getLastVrn());
+    assertEquals(expectedVehiclesCount, this.responseDto.getTotalVehiclesCount());
+    assertEquals(expectedPageCount, this.responseDto.getPageCount());
   }
 }

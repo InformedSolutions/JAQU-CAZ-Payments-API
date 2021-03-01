@@ -44,8 +44,8 @@ public class EntrantPayment {
   LocalDateTime cazEntryTimestamp;
 
   /**
-   * An tariff code used to calculate payment. Null for entrant payments that were created before
-   * a payment was made.
+   * An tariff code used to calculate payment. Null for entrant payments that were created before a
+   * payment was made.
    */
   String tariffCode;
 

@@ -11,7 +11,7 @@ import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
-import uk.gov.caz.definitions.dto.accounts.ChargeableVehiclesResponseDto;
+import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto;
 import uk.gov.caz.definitions.dto.accounts.VehiclesResponseDto.VehicleWithCharges;
 import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
@@ -27,36 +27,41 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 public interface AccountsRepository {
 
   /**
-   * Method to create retrofit2 account service for getAccountVehicleVrnsByCursor call.
+   * Method to create retrofit2 account service for getAccountVehicles call.
    *
    * @return {@link Call}
    */
   @Headers("Accept: application/json")
-  @GET("v1/accounts/{accountId}/vehicles/sorted-page")
-  Call<ChargeableVehiclesResponseDto> getAccountChargeableVehiclesByCursor(
+  @GET("v1/accounts/{accountId}/vehicles")
+  Call<VehiclesResponseDto> getAccountVehicles(
       @Path("accountId") String accountId,
-      @Query("direction") String direction,
+      @Query("pageNumber") String pageNumber,
       @Query("pageSize") String pageSize,
-      @Query("vrn") String vrn,
-      @Query("chargeableCazId") String chargeableCazId
-    );
-  
+      @Query("cazId") String cazId,
+      @Query("query") String query,
+      @Query("onlyChargeable") String onlyChargeable,
+      @Query("onlyDetermined") String onlyDetermined
+  );
+
   /**
-   * Synchronous wrapper for getAccountVehicleVrnsByCursor call.
+   * Synchronous wrapper for getAccountVehicles call.
+   *
    * @param accountId the identifier of the account
+   * @param pageNumber the number of the page
    * @param pageSize the size of the page
-   * @return
+   * @param cazId Clean Air Zone ID
+   * @param query part of VRN for partial search
    */
-  default Response<ChargeableVehiclesResponseDto> getAccountChargeableVehiclesByCursorSync(
-      UUID accountId, String direction, int pageSize, String vrn, UUID cazId) {
+  default Response<VehiclesResponseDto> getAccountChargeableVehiclesSync(
+      UUID accountId, int pageNumber, int pageSize, UUID cazId, String query) {
     try {
-      return getAccountChargeableVehiclesByCursor(accountId.toString(), direction,
-          Integer.toString(pageSize), vrn, cazId.toString()).execute();
+      return getAccountVehicles(accountId.toString(), Integer.toString(pageNumber),
+          Integer.toString(pageSize), cazId.toString(), query, "true", "true").execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }
   }
-  
+
   /**
    * Method to create retrofit2 account service for get account vehicle call.
    *
@@ -66,7 +71,7 @@ public interface AccountsRepository {
   @GET("v1/accounts/{accountId}/vehicles/{vrn}")
   Call<VehicleWithCharges> getAccountSingleVehicleVrn(
       @Path("accountId") UUID accountId, @Path("vrn") String vrn
-    );
+  );
 
   /**
    * Gets a list of mandates for the account by its identifier ({@code accountId}).
@@ -90,6 +95,7 @@ public interface AccountsRepository {
 
   /**
    * Synchronous wrapper for getAccountVehicleVrns call.
+   *
    * @param accountId the identifier of the account
    * @param vrn the VRN to query.
    * @return details of a single vehicle vrn.
@@ -118,6 +124,7 @@ public interface AccountsRepository {
 
   /**
    * Synchronous wrapper for createDirectDebitMandate call.
+   *
    * @param accountId the identifier of the account
    * @param body DirectDebitMandate details which need to be saved in Accounts Service
    * @return details of a created DirectDebitMandate from AccountService

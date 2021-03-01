@@ -4,6 +4,7 @@ import static com.google.common.collect.Lists.newArrayList;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import uk.gov.caz.psr.dto.PaymentStatusErrorResponse;
 import uk.gov.caz.psr.dto.PaymentStatusUpdateDetails;
 import uk.gov.caz.psr.dto.Transaction;
 import uk.gov.caz.psr.dto.directdebit.CreateDirectDebitPaymentRequest;
+import uk.gov.caz.psr.model.PaymentModification;
 import uk.gov.caz.psr.model.directdebit.DirectDebitPayment;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentStatusUpdate;
@@ -190,6 +192,22 @@ public class TestObjectFactory {
           .totalPaid(40)
           .operatorId(UUID.randomUUID())
           .entrantPayments(newArrayList(EntrantPayments.anyPaid()))
+          .build();
+    }
+
+    public static List<PaymentModification> preparePaymentModifications() {
+      return Arrays
+          .asList(preparePaymentModification("VRN123"), preparePaymentModification("VRN321"));
+    }
+
+    public static PaymentModification preparePaymentModification(String vrn) {
+      return PaymentModification.builder()
+          .vrn(vrn)
+          .modificationTimestamp(LocalDateTime.now().minusDays(1))
+          .travelDate(LocalDate.now().minusDays(5))
+          .entrantPaymentStatus(InternalPaymentStatus.CHARGEBACK.toString())
+          .caseReference("ANY_REFERENCE")
+          .amount(20)
           .build();
     }
 

@@ -61,6 +61,7 @@ public class PaymentRepository {
     private static final String TELEPHONE_PAYMENT = "telephone_payment";
     private static final String PAYMENT_SUBMITTED_TIMESTAMP = "payment_submitted_timestamp";
     private static final String PAYMENT_AUTHORISED_TIMESTAMP = "payment_authorised_timestamp";
+    private static final String EMAIL_CONFIRMATION_SENT = "email_confirmation_sent";
   }
 
   /**
@@ -219,6 +220,19 @@ public class PaymentRepository {
   }
 
   /**
+   * Sets {@code payment.confirmationEmailSent} to true.
+   *
+   * @param paymentId Identifier of the payment.
+   */
+  public void markSentConfirmationEmail(UUID paymentId) {
+    Preconditions.checkNotNull(paymentId, "paymentId cannot be null");
+
+    jdbcTemplate.update(Sql.SET_EMAIL_CONFIRMATION_SENT, preparedStatementSetter -> {
+      preparedStatementSetter.setObject(1, paymentId);
+    });
+  }
+
+  /**
    * Converts {@code payment} into a map of attributes which will be saved in the database for an
    * external payment.
    */
@@ -250,7 +264,8 @@ public class PaymentRepository {
         + "payment.user_id, "
         + "payment.operator_id, "
         + "payment.payment_provider_mandate_id, "
-        + "payment.payment_provider_id "
+        + "payment.payment_provider_id, "
+        + "payment.email_confirmation_sent "
         + "FROM caz_payment.t_clean_air_zone_entrant_payment entrant_payment "
         + "INNER JOIN caz_payment.t_clean_air_zone_entrant_payment_match entrant_payment_match "
         + "ON entrant_payment.clean_air_zone_entrant_payment_id = "
@@ -268,10 +283,16 @@ public class PaymentRepository {
         + "update_timestamp = CURRENT_TIMESTAMP "
         + "WHERE payment_id = ?";
 
+    static final String SET_EMAIL_CONFIRMATION_SENT = "UPDATE caz_payment.t_payment "
+        + "SET email_confirmation_sent = true "
+        + "WHERE payment_id = ?";
+
     private static final String ALL_PAYMENT_ATTRIBUTES =
         "payment_id, payment_method, payment_provider_id, central_reference_number, "
-        + "total_paid, payment_provider_status, user_id, operator_id, payment_provider_mandate_id,"
-        + " payment_submitted_timestamp, payment_authorised_timestamp, telephone_payment ";
+            + " total_paid, payment_provider_status, user_id, operator_id,"
+            + " payment_provider_mandate_id, payment_submitted_timestamp, "
+            + " payment_authorised_timestamp, telephone_payment,"
+            + " email_confirmation_sent ";
 
     static final String SELECT_DANGLING_PAYMENTS =
         "SELECT " + ALL_PAYMENT_ATTRIBUTES + "FROM caz_payment.t_payment " + "WHERE "
@@ -289,6 +310,7 @@ public class PaymentRepository {
 
     static final String SELECT_PAYMENT_ID_BY_REFERENCE_NUMBER =
         "SELECT payment_id FROM caz_payment.t_payment WHERE central_reference_number = ?";
+
   }
 
   /**
@@ -320,6 +342,7 @@ public class PaymentRepository {
           .operatorId(nullIfAbsentOrUuidFrom(resultSet.getString(Columns.OPERATOR_ID)))
           .paymentProviderMandateId(resultSet.getString(Columns.PAYMENT_MANDATE_PROVIDER_ID))
           .telephonePayment(resultSet.getBoolean(Columns.TELEPHONE_PAYMENT))
+          .emailConfirmationSent(resultSet.getBoolean(Columns.EMAIL_CONFIRMATION_SENT))
           .entrantPayments(entrantPayments)
           .build();
     }

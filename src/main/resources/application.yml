@@ -16,6 +16,10 @@ logging:
           correlationid: INFO
 
 spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
   jpa:
     open-in-view: false
   liquibase:
@@ -179,6 +183,14 @@ swagger:
           the charge (i.e. whether it has been paid or refunded); and, (4) any Local Authority case reference associated with the
           charge (e.g. that may be linked to a customer query relating to the charge).
           1 object will be returned for each date of travel associated with the payment.
+        modification-history: >-
+          Array containing objects that contains information about modifications of payments made by LA.
+        modification-amount: Payment amount expressed in pennies
+        modification-travel-date: ISO 8601 formatted date string that specifies a date for which the vehicle has paid to travel in to the CAZ
+        modification-vrn: Vehicle registration number
+        modification-case-reference: A unique identifier that provides traceability between the central CAZ Service and Local Authority.
+        modification-timestamp: Timestamp of modification.
+        modification-entrant-payment-status: Payment Status of created Vehicle Entrant
         charge-paid: >-
           The value of a single entrant payment linked to the paymentProviderId expressed in pennies.
         travel-date: >-
@@ -285,6 +297,7 @@ swagger:
         return-url: Front end URL used as return URL after direct debit mandate creation
         account-id: Identifies the fleet's account which is creating direct debit mandate
         session-id: Session token of user who performs direct debit mandate creation
+        account-user-id: Direct Debite mandate creator
       create-direct-debit-payment:
         clean-zone-id: Clean Air Zone identifier
         mandate-id: Identifies the direct debit mandate in payment provider.
@@ -326,6 +339,8 @@ swagger:
         paymentId: id of payment
         paymentReference: reference number for payment
         paymentStatus: external status of payment (f.e. FAILED, SUCCESS)
+        isRefunded: indicates if the payment was refunded
+        isChargedback: indicates if the payment was charged back
       resend-receipt-email:
         email: email to which the receipt email is going to be resent
 

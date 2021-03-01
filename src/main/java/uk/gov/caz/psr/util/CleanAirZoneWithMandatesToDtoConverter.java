@@ -43,6 +43,7 @@ public class CleanAirZoneWithMandatesToDtoConverter {
         .map(mandate -> DirectDebitMandatesResponse.CleanAirZoneWithMandates.Mandate.builder()
             .id(mandate.getId())
             .status(mandate.getStatus())
+            .accountUserId(mandate.getAccountUserId())
             .created(mandate.getCreated())
             .build())
         .collect(Collectors.toList());

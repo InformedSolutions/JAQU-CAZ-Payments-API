@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0019-1.0
+      author: antoni.pstras
+      changes:
+        - addColumn:
+            schemaName: CAZ_PAYMENT
+            tableName: T_PAYMENT
+            columns:
+              - column:
+                  name: email_confirmation_sent
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

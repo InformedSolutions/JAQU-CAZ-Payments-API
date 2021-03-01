@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
@@ -71,6 +72,9 @@ public class PaymentReceiptSenderTestIT {
 
   @Value("#{'${application.emails-to-skip}'.split(',')}")
   Set<String> emailsToSkip;
+
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
   private String CORRECT_EMAIL = "man@informed.com";
 
@@ -154,7 +158,8 @@ public class PaymentReceiptSenderTestIT {
 
   @SneakyThrows
   private Map<String, Object> extractToMap(String json) {
-    return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+    return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
+    });
   }
 
   private Optional<Message> receiveSqsMessage() {
