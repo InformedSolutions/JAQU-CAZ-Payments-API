@@ -9,7 +9,7 @@ import uk.gov.caz.psr.dto.PaymentHistoryCsvExportResponse;
 @RestController
 public class CsvExportController implements CsvExportControllerApiSpec {
 
-  public static final String CSV_EXPORT_PATH = "/v1/accounts/{accountId}/payments/csv-export";
+  public static final String CSV_EXPORT_PATH = "/v1/accounts/{accountId}/payments/csv-exports";
 
   @Override
   public ResponseEntity<PaymentHistoryCsvExportResponse> generatePaymentHistoryCsv(UUID accountId,
