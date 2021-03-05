@@ -167,6 +167,75 @@ class PaymentDetailRepositoryTest {
   }
 
   @Nested
+  class FindAllForPaymentsHistory {
+
+    @Nested
+    class WhenPaymentIdsAreNotProvided {
+
+      @Test
+      public void shouldThrowNullPointerException() {
+        // given
+        List<UUID> paymentIds = null;
+        EntrantPaymentUpdateActor updateActor = EntrantPaymentUpdateActor.LA;
+        List<InternalPaymentStatus> paymentStatuses = Arrays
+            .asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK);
+
+        // when
+        Throwable throwable = catchThrowable(
+            () -> paymentDetailRepository
+                .findAllForPaymentsHistory(paymentIds, updateActor, paymentStatuses));
+
+        // then
+        assertThat(throwable).isInstanceOf(NullPointerException.class);
+        assertThat(throwable).hasMessage("paymentIds cannot be null");
+      }
+    }
+
+    @Nested
+    class WhenUpdateActorAreNotProvided {
+
+      @Test
+      public void shouldThrowNullPointerException() {
+        // given
+        List<UUID> paymentIds = Arrays.asList(UUID.randomUUID());
+        EntrantPaymentUpdateActor updateActor = null;
+        List<InternalPaymentStatus> paymentStatuses = Arrays
+            .asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK);
+
+        // when
+        Throwable throwable = catchThrowable(
+            () -> paymentDetailRepository
+                .findAllForPaymentsHistory(paymentIds, updateActor, paymentStatuses));
+
+        // then
+        assertThat(throwable).isInstanceOf(NullPointerException.class);
+        assertThat(throwable).hasMessage("updateActor cannot be null");
+      }
+    }
+
+    @Nested
+    class WhenPaymentStatusesAreNotProvided {
+
+      @Test
+      public void shouldThrowNullPointerException() {
+        // given
+        List<UUID> paymentIds = Arrays.asList(UUID.randomUUID());
+        EntrantPaymentUpdateActor updateActor = EntrantPaymentUpdateActor.LA;
+        List<InternalPaymentStatus> paymentStatuses = null;
+
+        // when
+        Throwable throwable = catchThrowable(
+            () -> paymentDetailRepository
+                .findAllForPaymentsHistory(paymentIds, updateActor, paymentStatuses));
+
+        // then
+        assertThat(throwable).isInstanceOf(NullPointerException.class);
+        assertThat(throwable).hasMessage("paymentStatuses cannot be null");
+      }
+    }
+  }
+
+  @Nested
   class GetPaymentStatusesForVrn {
 
     @Nested

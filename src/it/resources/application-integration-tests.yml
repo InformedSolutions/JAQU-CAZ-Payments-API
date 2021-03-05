@@ -14,6 +14,8 @@ spring:
         format_sql: false
 
 aws:
+  s3:
+    endpoint: http://${aws.s3.url:localhost:4572}
   secret-name: payments
   sqs:
     endpoint: http://${aws.sqs.url:localhost:4576}

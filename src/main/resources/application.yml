@@ -429,3 +429,5 @@ api:
   charge-settlement:
     date-query-range: 14
     page-size: 1500
+
+csv-export-bucket: csv-export-bucket

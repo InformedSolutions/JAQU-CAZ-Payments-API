@@ -29,7 +29,6 @@ import uk.gov.caz.psr.model.PaymentModificationStatus;
 @AllArgsConstructor
 public class PaymentDetailRepository {
 
-
   private static final PaymentModificationMapper PAYMENT_MODIFICATION_ROW_MAPPER =
       new PaymentModificationMapper();
 
@@ -99,6 +98,30 @@ public class PaymentDetailRepository {
     );
   }
 
+  /**
+   * Gets payment audit details for paymentId, updateActor and provided payment statuses.
+   *
+   * @param paymentIds List of PaymentIDs
+   * @param updateActor Describes which actor is responsible for updating the state of Entrant
+   *     Payment
+   * @param paymentStatuses List of statuses to get from the DB
+   * @return list of found {@link PaymentModification}
+   */
+  public List<PaymentModification> findAllForPaymentsHistory(List<UUID> paymentIds,
+      EntrantPaymentUpdateActor updateActor, List<InternalPaymentStatus> paymentStatuses) {
+    Preconditions.checkNotNull(paymentIds, "paymentIds cannot be null");
+    Preconditions.checkNotNull(updateActor, "updateActor cannot be null");
+    Preconditions.checkNotNull(paymentStatuses, "paymentStatuses cannot be null");
+
+    return jdbcTemplate.query(connection -> {
+      PreparedStatement preparedStatement = connection.prepareStatement(
+          Sql.FIND_ALL_FOR_PAYMENTS_HISTORY);
+      preparedStatement.setArray(1, connection.createArrayOf("uuid", paymentIds.toArray()));
+      preparedStatement.setString(2, updateActor.toString());
+      preparedStatement.setArray(3, connection.createArrayOf("varchar", paymentStatuses.toArray()));
+      return preparedStatement;
+    }, PAYMENT_MODIFICATION_ROW_MAPPER);
+  }
 
   /**
    * Gets payment audit details for paymentId, updateActor and provided payment statuses.
@@ -173,6 +196,7 @@ public class PaymentDetailRepository {
   private static class Sql {
 
     static final String FIND_ALL_FOR_PAYMENT_HISTORY = "SELECT "
+        + "t_detail.payment_id, "
         + "t_detail.charge, "
         + "t_detail.travel_date, "
         + "t_detail.case_reference, "
@@ -186,6 +210,21 @@ public class PaymentDetailRepository {
         + "AND t_detail.update_actor = ? "
         + "AND t_detail.payment_status = any (?) "
         + "ORDER BY t_detail.entrant_payment_update_timestamp ASC;";
+
+    static final String FIND_ALL_FOR_PAYMENTS_HISTORY = "SELECT "
+        + "t_detail.payment_id, "
+        + "t_detail.charge, "
+        + "t_detail.travel_date, "
+        + "t_detail.case_reference, "
+        + "t_detail.entrant_payment_update_timestamp, "
+        + "t_detail.payment_status, "
+        + "t_master.vrn "
+        + "FROM caz_payment_audit.t_clean_air_zone_payment_detail t_detail "
+        + "INNER JOIN caz_payment_audit.t_clean_air_zone_payment_master t_master ON "
+        + "t_detail.clean_air_zone_payment_master_id = t_master.clean_air_zone_payment_master_id "
+        + "AND t_detail.payment_id = ANY (?) "
+        + "AND t_detail.update_actor = ? "
+        + "AND t_detail.payment_status = any (?);";
 
     private static final String SELECT_PAYMENT_STATUSES_SQL =
         "SELECT vrn, clean_air_zone_id, travel_date, payment_id, payment_status "
@@ -250,6 +289,7 @@ public class PaymentDetailRepository {
     @Override
     public PaymentModification mapRow(ResultSet resultSet, int i) throws SQLException {
       return PaymentModification.builder()
+          .paymentId(UUID.fromString(resultSet.getString("payment_id")))
           .amount(resultSet.getInt("charge"))
           .caseReference(resultSet.getString("case_reference"))
           .entrantPaymentStatus(resultSet.getString("payment_status"))
