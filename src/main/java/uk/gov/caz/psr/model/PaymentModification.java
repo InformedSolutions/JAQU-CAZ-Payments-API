@@ -2,6 +2,7 @@ package uk.gov.caz.psr.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.Builder;
 import lombok.ToString;
 import lombok.Value;
@@ -12,6 +13,11 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class PaymentModification {
+
+  /**
+   * Id of Payment.
+   */
+  UUID paymentId;
 
   /**
    * Payment detail amount.

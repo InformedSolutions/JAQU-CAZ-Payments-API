@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.dto;
 
 import io.swagger.annotations.ApiModelProperty;
+import java.net.URL;
 import lombok.Builder;
 import lombok.Value;
 
@@ -15,7 +16,7 @@ public class PaymentHistoryCsvExportResponse {
    * String containing the url to the s3 file.
    */
   @ApiModelProperty(value = "swagger.model.descriptions.payment-history-csv-export.fileUrl")
-  String fileUrl;
+  URL fileUrl;
 
   /**
    * String containing the bucket name.
