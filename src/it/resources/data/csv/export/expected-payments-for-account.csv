@@ -1,8 +1,8 @@
-Date of Payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,Payment reference,GOV.UK payment ID,Entries paid for,Total amount paid,Status,Date received from local authority,Case reference
-2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,280,1881,ext-payment-id-3,1,280,,,
-2019-11-24,Deleted user,Birmingham,PD84VSX,2019-11-04,88,998,ext-payment-id-2,2,260,CHARGEBACK,2021-03-05,
-2019-11-24,Deleted user,Birmingham,QD84VSX,2019-11-05,260,998,ext-payment-id-2,2,260,,,
-2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-01,88,87,ext-payment-id-1,4,352,REFUNDED,2021-03-05,
-2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-02,88,87,ext-payment-id-1,4,352,CHARGEBACK,2021-03-05,
-2019-11-23,Administrator,Birmingham,OD84VSX,2019-11-03,88,87,ext-payment-id-1,4,352,,,
-2019-11-23,Administrator,Birmingham,PD84VSX,2019-11-04,88,87,ext-payment-id-1,4,352,,,
+Date of payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,Payment reference,GOV.UK payment ID,Entries paid for,Total amount paid,Status,Date received from local authority,Case reference
+2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,£28.00,1881,ext-payment-id-3,1,£28.00,,,
+2019-11-24,Deleted user,Birmingham,PD84VSX,2019-11-04,£11.00,998,ext-payment-id-2,2,£37.00,CHARGEBACK,2021-03-08,
+2019-11-24,Deleted user,Birmingham,QD84VSX,2019-11-05,£26.00,998,ext-payment-id-2,2,£37.00,,,
+2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-01,£8.00,87,ext-payment-id-1,4,£35.00,REFUNDED,2021-03-08,
+2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-02,£8.00,87,ext-payment-id-1,4,£35.00,CHARGEBACK,2021-03-08,
+2019-11-23,Administrator,Birmingham,OD84VSX,2019-11-03,£8.00,87,ext-payment-id-1,4,£35.00,,,
+2019-11-23,Administrator,Birmingham,PD84VSX,2019-11-04,£11.00,87,ext-payment-id-1,4,£35.00,,,

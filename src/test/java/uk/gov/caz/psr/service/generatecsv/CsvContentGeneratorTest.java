@@ -15,6 +15,7 @@ import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.repository.audit.PaymentDetailRepository;
 import uk.gov.caz.psr.repository.generatecsv.CsvEntrantPaymentRepository;
+import uk.gov.caz.psr.util.CurrencyFormatter;
 
 @ExtendWith(MockitoExtension.class)
 class CsvContentGeneratorTest {
@@ -31,6 +32,9 @@ class CsvContentGeneratorTest {
   private CsvEntrantPaymentRepository csvEntrantPaymentRepository;
 
   @Mock
+  CurrencyFormatter currencyFormatter;
+
+  @Mock
   private PaymentDetailRepository paymentDetailRepository;
 
   @Mock
@@ -39,7 +43,7 @@ class CsvContentGeneratorTest {
   @BeforeEach
   public void setup() {
     csvGeneratorService = new CsvContentGenerator(accountsRepository, csvEntrantPaymentRepository,
-        paymentDetailRepository, vccsRepository);
+        currencyFormatter, paymentDetailRepository, vccsRepository);
     mockClearAirZones();
   }
 
