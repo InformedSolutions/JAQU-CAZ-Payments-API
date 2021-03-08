@@ -37,26 +37,30 @@ class CsvContentGeneratorTestIT extends ExternalCallsIT {
     // then
     assertThat(csvRowResults).hasSize(8);
     assertThat(String.join(",", csvRowResults.get(0))).isEqualTo(
-        "Date of Payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,"
+        "Date of payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,"
             + "Payment reference,GOV.UK payment ID,Entries paid for,Total amount paid,"
             + "Status,Date received from local authority,Case reference");
     assertThat(String.join(",", csvRowResults.get(1))).isEqualTo(
-        "2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,280,1881,ext-payment-id-3,1,280,,,");
+        "2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,£28.00,1881,ext-payment-id-3,1,"
+            + "£28.00,,,");
     assertThat(String.join(",", csvRowResults.get(2))).isEqualTo(
-        "2019-11-24,Deleted user,Birmingham,PD84VSX,2019-11-04,88,998,ext-payment-id-2,2,260,CHARGEBACK,"
-            + LocalDate.now().toString() + ",");
+        "2019-11-24,Deleted user,Birmingham,PD84VSX,2019-11-04,£11.00,998,ext-payment-id-2,2,"
+            + "£37.00,CHARGEBACK," + LocalDate.now().toString() + ",");
     assertThat(String.join(",", csvRowResults.get(3))).isEqualTo(
-        "2019-11-24,Deleted user,Birmingham,QD84VSX,2019-11-05,260,998,ext-payment-id-2,2,260,,,");
+        "2019-11-24,Deleted user,Birmingham,QD84VSX,2019-11-05,£26.00,998,ext-payment-id-2,2,"
+            + "£37.00,,,");
     assertThat(String.join(",", csvRowResults.get(4))).isEqualTo(
-        "2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-01,88,87,ext-payment-id-1,4,352,REFUNDED,"
-            + LocalDate.now().toString() + ",");
+        "2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-01,£8.00,87,ext-payment-id-1,4,£35.00,"
+            + "REFUNDED," + LocalDate.now().toString() + ",");
     assertThat(String.join(",", csvRowResults.get(5))).isEqualTo(
-        "2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-02,88,87,ext-payment-id-1,4,352,CHARGEBACK,"
-            + LocalDate.now().toString() + ",");
+        "2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-02,£8.00,87,ext-payment-id-1,4,£35.00,"
+            + "CHARGEBACK," + LocalDate.now().toString() + ",");
     assertThat(String.join(",", csvRowResults.get(6))).isEqualTo(
-        "2019-11-23,Administrator,Birmingham,OD84VSX,2019-11-03,88,87,ext-payment-id-1,4,352,,,");
+        "2019-11-23,Administrator,Birmingham,OD84VSX,2019-11-03,£8.00,87,ext-payment-id-1,4,"
+            + "£35.00,,,");
     assertThat(String.join(",", csvRowResults.get(7))).isEqualTo(
-        "2019-11-23,Administrator,Birmingham,PD84VSX,2019-11-04,88,87,ext-payment-id-1,4,352,,,");
+        "2019-11-23,Administrator,Birmingham,PD84VSX,2019-11-04,£11.00,87,ext-payment-id-1,4,"
+            + "£35.00,,,");
   }
 
   @Test
@@ -73,10 +77,11 @@ class CsvContentGeneratorTestIT extends ExternalCallsIT {
     // then
     assertThat(csvRowResults).hasSize(2);
     assertThat(String.join(",", csvRowResults.get(0))).isEqualTo(
-        "Date of Payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,"
+        "Date of payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,"
             + "Payment reference,GOV.UK payment ID,Entries paid for,Total amount paid,"
             + "Status,Date received from local authority,Case reference");
     assertThat(String.join(",", csvRowResults.get(1))).isEqualTo(
-        "2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,280,1881,ext-payment-id-3,1,280,,,");
+        "2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,£28.00,1881,ext-payment-id-3,1,"
+            + "£28.00,,,");
   }
 }

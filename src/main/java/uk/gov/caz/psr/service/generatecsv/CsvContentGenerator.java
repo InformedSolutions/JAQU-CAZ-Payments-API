@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service.generatecsv;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.repository.audit.PaymentDetailRepository;
 import uk.gov.caz.psr.repository.generatecsv.CsvEntrantPaymentRepository;
+import uk.gov.caz.psr.util.CurrencyFormatter;
 
 /**
  * Generates content for csv file.
@@ -31,7 +33,7 @@ import uk.gov.caz.psr.repository.generatecsv.CsvEntrantPaymentRepository;
 @AllArgsConstructor
 public class CsvContentGenerator {
 
-  private static final String CSV_HEADER = "Date of Payment,Payment made by,"
+  private static final String CSV_HEADER = "Date of payment,Payment made by,"
       + "Clean Air Zone,Number plate,Date of entry,Charge,Payment reference,"
       + "GOV.UK payment ID,Entries paid for,Total amount paid,Status,"
       + "Date received from local authority,Case reference";
@@ -40,6 +42,7 @@ public class CsvContentGenerator {
 
   private final AccountsRepository accountsRepository;
   private final CsvEntrantPaymentRepository csvEntrantPaymentRepository;
+  private final CurrencyFormatter currencyFormatter;
   private final PaymentDetailRepository paymentDetailRepository;
   private final VccsRepository vccsRepository;
 
@@ -162,11 +165,11 @@ public class CsvContentGenerator {
         safeToString(enrichedCsvEntrantPayment.getCazName()),
         safeToString(enrichedCsvEntrantPayment.getVrn()),
         safeToString(enrichedCsvEntrantPayment.getDateOfEntry()),
-        safeToString(enrichedCsvEntrantPayment.getCharge()),
+        toFormattedPounds(enrichedCsvEntrantPayment.getCharge()),
         safeToString(enrichedCsvEntrantPayment.getPaymentReference()),
         safeToString(enrichedCsvEntrantPayment.getPaymentProviderId()),
         safeToString(enrichedCsvEntrantPayment.getEntriesCount()),
-        safeToString(enrichedCsvEntrantPayment.getTotalPaid()),
+        toFormattedPounds(enrichedCsvEntrantPayment.getTotalPaid()),
         safeToString(enrichedCsvEntrantPayment.getStatus()),
         safeToString(enrichedCsvEntrantPayment.getDateReceivedFromLa()),
         safeToString(enrichedCsvEntrantPayment.getCaseReference())
@@ -178,6 +181,21 @@ public class CsvContentGenerator {
    */
   private String safeToString(Object o) {
     return o == null ? "" : o.toString();
+  }
+
+  /**
+   * Converts pennies to its string representation in pounds.
+   */
+  final String toFormattedPounds(int amountInPennies) {
+    double amountInPounds = toPounds(amountInPennies);
+    return "£" + String.format(Locale.UK, "%.2f", amountInPounds);
+  }
+
+  /**
+   * Converts pennies ({@code amountInPennies}) to pounds.
+   */
+  final double toPounds(int amountInPennies) {
+    return currencyFormatter.parsePennies(amountInPennies);
   }
 
   /**
