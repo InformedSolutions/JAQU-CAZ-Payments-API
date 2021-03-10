@@ -347,6 +347,9 @@ swagger:
         isChargedback: indicates if the payment was charged back
       resend-receipt-email:
         email: email to which the receipt email is going to be resent
+      payment-history-csv-export:
+        fileUrl: String containing the url to the s3 file
+        bucketName: String containing the bucket name
 
   operations:
     accounts:
@@ -403,6 +406,8 @@ swagger:
       vehicle-details:
         description: >-
           Gets details of a whitelisted vehicle. It is a proxy to the whitelist service
+    export-payments-history-to-csv:
+      description: Performs an export of a selected payments to CSV file and uploads it to S3.
     db:
       migration:
         description: Evolve DB schema
@@ -424,3 +429,5 @@ api:
   charge-settlement:
     date-query-range: 14
     page-size: 1500
+
+csv-export-bucket: csv-export-bucket
