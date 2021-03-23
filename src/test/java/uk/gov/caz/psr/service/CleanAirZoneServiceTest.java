@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.BDDMockito.given;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ public class CleanAirZoneServiceTest {
   private static final UUID ANY_VALID_CAZ_ID = UUID.randomUUID();
   private static final String ANY_VALID_CAZ_NAME = "CAZ_NAME";
   private static final String ANY_VALID_OPERATOR_NAME = "OPERATOR_NAME";
+  private static final URI ANY_URL = URI.create("www.test.uk");
 
   @InjectMocks
   private CleanAirZoneService cleanAirZoneService;
@@ -88,6 +90,11 @@ public class CleanAirZoneServiceTest {
     assertThat(result.getBody().getCleanAirZones().get(0).getName()).isEqualTo(ANY_VALID_CAZ_NAME);
     assertThat(result.getBody().getCleanAirZones().get(0).getOperatorName())
         .isEqualTo(ANY_VALID_OPERATOR_NAME);
+    assertThat(result.getBody().getCleanAirZones().get(0).getActiveChargeStartDateText())
+        .isEqualTo("1 June 2021");
+    assertThat(result.getBody().getCleanAirZones().get(0).getDisplayFrom()).isEqualTo("2021-01-01");
+    assertThat(result.getBody().getCleanAirZones().get(0).getDisplayOrder()).isEqualTo(2);
+    assertThat(result.getBody().getCleanAirZones().get(0).getPrivacyPolicyUrl()).isEqualTo(ANY_URL);
   }
 
   private void mockRepositoryResultForCleanAirZones() {
@@ -102,6 +109,10 @@ public class CleanAirZoneServiceTest {
                 .name(ANY_VALID_CAZ_NAME)
                 .operatorName(ANY_VALID_OPERATOR_NAME)
                 .activeChargeStartDate("2018-10-18")
+                .activeChargeStartDateText("1 June 2021")
+                .displayFrom("2021-01-01")
+                .displayOrder(2)
+                .privacyPolicyUrl(ANY_URL)
                 .build()))
         .build());
   }
