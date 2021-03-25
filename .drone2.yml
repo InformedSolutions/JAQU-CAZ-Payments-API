@@ -500,6 +500,8 @@ steps:
       REDIS_CUSTOM_PORT: 6379
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
+      
+
 
   # Package
   - name: package

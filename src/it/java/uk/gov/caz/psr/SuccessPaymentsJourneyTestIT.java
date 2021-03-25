@@ -54,6 +54,7 @@ import org.springframework.util.StringUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
+import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.dto.Transaction;
