@@ -27,6 +27,7 @@ public class CleanAirZoneServiceTest {
   private static final String ANY_VALID_CAZ_NAME = "CAZ_NAME";
   private static final String ANY_VALID_OPERATOR_NAME = "OPERATOR_NAME";
   private static final URI ANY_URL = URI.create("www.test.uk");
+  private static final String ANY_DIRECT_DEBIT_START_DATE_TEXT = "4 May 2021";
 
   @InjectMocks
   private CleanAirZoneService cleanAirZoneService;
@@ -95,6 +96,8 @@ public class CleanAirZoneServiceTest {
     assertThat(result.getBody().getCleanAirZones().get(0).getDisplayFrom()).isEqualTo("2021-01-01");
     assertThat(result.getBody().getCleanAirZones().get(0).getDisplayOrder()).isEqualTo(2);
     assertThat(result.getBody().getCleanAirZones().get(0).getPrivacyPolicyUrl()).isEqualTo(ANY_URL);
+    assertThat(result.getBody().getCleanAirZones().get(0).getDirectDebitStartDateText())
+        .isEqualTo(ANY_DIRECT_DEBIT_START_DATE_TEXT);
   }
 
   private void mockRepositoryResultForCleanAirZones() {
@@ -113,6 +116,7 @@ public class CleanAirZoneServiceTest {
                 .displayFrom("2021-01-01")
                 .displayOrder(2)
                 .privacyPolicyUrl(ANY_URL)
+                .directDebitStartDateText(ANY_DIRECT_DEBIT_START_DATE_TEXT)
                 .build()))
         .build());
   }
