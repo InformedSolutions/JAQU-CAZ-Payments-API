@@ -50,7 +50,7 @@ class ReconcilePaymentStatusServiceTest {
   private ReconcilePaymentStatusService reconcilePaymentStatusService;
 
   private final UUID cazIdentifier = UUID.fromString("ab3e9f4b-4076-4154-b6dd-97c5d4800b47");
-  private final static String CLEAN_AIR_ZONE_NAME = "Leeds";
+  private final static String CLEAN_AIR_ZONE_NAME = "Bath";
 
   @Test
   public void shouldThrowNullPointerExceptionWhenPassedNullValue() {

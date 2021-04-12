@@ -55,7 +55,8 @@ public class ReferencesHistoryConverter {
         .cazName(getCleanAirZoneName(cleanAirZoneId))
         .paymentProviderStatus(payment.getExternalPaymentStatus())
         .lineItems(toVehicleEntrantPaymentsDetails(payment.getEntrantPayments()))
-        .modificationHistory(toModificationHistory(paymentModifications))
+        .modificationHistory(
+            ModificationHistoryConverter.toModificationHistory(paymentModifications))
         .build();
   }
 
@@ -78,13 +79,6 @@ public class ReferencesHistoryConverter {
       List<EntrantPayment> entrantPaymentInfoList) {
     return entrantPaymentInfoList.stream()
         .map(this::toVehicleEntrantPaymentDetails)
-        .collect(toList());
-  }
-
-  private List<ModificationHistoryDetails> toModificationHistory(
-      List<PaymentModification> paymentModifications) {
-    return paymentModifications.stream()
-        .map(this::toModificationHistoryDetails)
         .collect(toList());
   }
 

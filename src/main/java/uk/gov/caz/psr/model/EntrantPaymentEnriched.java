@@ -62,7 +62,7 @@ public class EntrantPaymentEnriched {
    * @return this entity.
    */
   public static EntrantPaymentEnriched fromMatchInfo(EntrantPaymentMatchInfo matchInfo,
-      Map<UUID, String> cazIdMap, List<PaymentStatusAuditData> auditData) {
+      Map<UUID, String> cazIdMap, List<PaymentAuditData> auditData) {
     Preconditions.checkNotNull(matchInfo, "match object should be not-null");
 
     return EntrantPaymentEnriched.builder()
@@ -82,7 +82,7 @@ public class EntrantPaymentEnriched {
    * Returns information if a given entrantPayment was charged back.
    */
   private static boolean isEntrantPaymentChargedBack(EntrantPaymentMatchInfo matchInfo,
-      List<PaymentStatusAuditData> auditData) {
+      List<PaymentAuditData> auditData) {
     return getFilteredAuditData(matchInfo, auditData)
         .anyMatch(e -> e.getPaymentStatus().equals(InternalPaymentStatus.CHARGEBACK));
   }
@@ -91,17 +91,17 @@ public class EntrantPaymentEnriched {
    * Returns information if a given entrantPayment was refunded.
    */
   private static boolean isEntrantPaymentRefunded(EntrantPaymentMatchInfo matchInfo,
-      List<PaymentStatusAuditData> auditData) {
+      List<PaymentAuditData> auditData) {
     return getFilteredAuditData(matchInfo, auditData)
         .anyMatch(e -> e.getPaymentStatus().equals(InternalPaymentStatus.REFUNDED));
   }
 
   /**
-   * Method performs a filtering on the provided {@code List<PaymentStatusAuditData} auditData using
+   * Method performs a filtering on the provided {@code List<PaymentAuditData} auditData using
    * the {@link EntrantPaymentMatchInfo}.
    */
-  private static Stream<PaymentStatusAuditData> getFilteredAuditData(
-      EntrantPaymentMatchInfo matchInfo, List<PaymentStatusAuditData> auditData) {
+  private static Stream<PaymentAuditData> getFilteredAuditData(
+      EntrantPaymentMatchInfo matchInfo, List<PaymentAuditData> auditData) {
     return auditData
         .stream()
         .filter(e ->

@@ -103,11 +103,20 @@ public class RetrieveSuccessfulPaymentsJourneyAssertion {
     assertThat(getPayersNames().size()).isEqualTo(2);
   }
 
-  public void responseIncludeDataOfASingleUser() {
+  public RetrieveSuccessfulPaymentsJourneyAssertion responseIncludeDataOfASingleUser() {
     SuccessfulPaymentsResponse response = this.successfulPaymentsResponse;
 
     assertThat(response.getTotalPaymentsCount()).isEqualTo(1);
     assertThat(getPayersNames().size()).isEqualTo(1);
+
+    return this;
+  }
+
+
+  public void responseIncludeChargebackFlag() {
+    SuccessfulPaymentsResponse response = this.successfulPaymentsResponse;
+
+    assertThat(response.getPayments().stream().findFirst().get().isChargedback()).isTrue();
   }
 
   private Set<String> getPayersNames() {
