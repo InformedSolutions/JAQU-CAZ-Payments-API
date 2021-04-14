@@ -58,6 +58,7 @@ public class PaymentHistoryByReferenceTestIT {
       whenRequested()
           .withRandomPaymentReference()
           .then()
+          .headerContainsCorrelationId()
           .responseHasNotFoundStatus();
     }
   }
@@ -72,6 +73,7 @@ public class PaymentHistoryByReferenceTestIT {
       whenRequested()
           .withPaymentReferenceEqualTo(BigInteger.valueOf(1881L))
           .then()
+          .headerContainsCorrelationId()
           .hasEmptyModificationHistory()
           .responseHasOkStatus();
     }
@@ -87,6 +89,7 @@ public class PaymentHistoryByReferenceTestIT {
       whenRequested()
           .withPaymentReferenceEqualTo(BigInteger.valueOf(87L))
           .then()
+          .headerContainsCorrelationId()
           .hasElementsInModificationHistory(3)
           .responseHasOkStatus();
     }
@@ -102,6 +105,7 @@ public class PaymentHistoryByReferenceTestIT {
       whenRequested()
           .withPaymentReferenceEqualTo(BigInteger.valueOf(998L))
           .then()
+          .headerContainsCorrelationId()
           .hasElementsInModificationHistory(1)
           .responseHasOkStatus();
     }

@@ -12,6 +12,7 @@ import uk.gov.caz.psr.dto.PaymentDetailsResponse;
 import uk.gov.caz.psr.dto.PaymentDetailsResponse.VehicleEntrantPaymentDetails;
 import uk.gov.caz.psr.model.EntrantPayment;
 import uk.gov.caz.psr.model.Payment;
+import uk.gov.caz.psr.model.PaymentModification;
 import uk.gov.caz.psr.service.AccountService;
 
 /**
@@ -30,7 +31,8 @@ public class PaymentDetailsConverter {
    * @param payment {@link Payment}
    * @return An instance of {@link PaymentDetailsResponse}.
    */
-  public PaymentDetailsResponse toPaymentDetailsResponse(Payment payment) {
+  public PaymentDetailsResponse toPaymentDetailsResponse(Payment payment,
+      List<PaymentModification> paymentModifications) {
     return PaymentDetailsResponse.builder()
         .centralPaymentReference(payment.getReferenceNumber())
         .paymentProviderId(payment.getExternalId())
@@ -39,6 +41,8 @@ public class PaymentDetailsConverter {
         .payerName(accountService.getPayerName(payment.getUserId()))
         .totalPaid(currencyFormatter.parsePenniesToBigDecimal(payment.getTotalPaid()))
         .lineItems(toVehicleEntrantPaymentsDetails(payment.getEntrantPayments()))
+        .modificationHistory(
+            ModificationHistoryConverter.toModificationHistory(paymentModifications))
         .build();
   }
 

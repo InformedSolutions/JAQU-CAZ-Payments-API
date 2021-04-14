@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static uk.gov.caz.psr.util.TestObjectFactory.Payments.preparePayment;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.caz.psr.model.Payment;
 import uk.gov.caz.psr.repository.PaymentRepository;
 import uk.gov.caz.psr.service.exception.PaymentNotFoundException;
 
@@ -26,31 +24,42 @@ class PaymentServiceTest {
   private PaymentRepository paymentRepository;
 
   @InjectMocks
-  private PaymentService paymentDetailsService;
+  private PaymentService paymentService;
 
-  @Test
-  void shouldReturnPayment() {
-    // given
-    UUID paymentId = UUID.randomUUID();
-    given(paymentRepository.findById(any())).willReturn(Optional.of(preparePayment(paymentId)));
+  @Nested
+  class GetPayment {
 
-    // when
-    Optional<Payment> payment = paymentDetailsService.getPayment(paymentId);
+    @Test
+    public void shouldThrowPaymentNotFoundExceptionWhenPaymentDoesNotExist() {
+      // given
+      UUID paymentId = UUID.randomUUID();
+      given(paymentRepository.findById(any())).willReturn(Optional.empty());
 
-    // then
-    assertThat(payment.isPresent()).isTrue();
+      // when
+      Throwable throwable = catchThrowable(() -> paymentService.getPayment(paymentId));
+
+      // then
+      assertThat(throwable).isInstanceOf(PaymentNotFoundException.class)
+          .hasMessage("Payment with provided paymentId does not exist");
+    }
   }
 
-  @Test
-  void shouldReturnOptionalEmpty() {
-    // given
-    given(paymentRepository.findById(any())).willReturn(Optional.empty());
+  @Nested
+  class GetPaymentHistoryByReferenceNumber {
 
-    // when
-    Optional<Payment> paymentDetails = paymentDetailsService.getPayment(UUID.randomUUID());
+    @Test
+    public void shouldThrowPaymentNotFoundExceptionWhenUserIdsIsNull() {
+      // given
+      given(paymentRepository.findByReferenceNumber(any())).willReturn(Optional.empty());
 
-    // then
-    assertThat(paymentDetails).isEmpty();
+      // when
+      Throwable throwable = catchThrowable(
+          () -> paymentService.getPaymentHistoryByReferenceNumber(any()));
+
+      // then
+      assertThat(throwable).isInstanceOf(PaymentNotFoundException.class)
+          .hasMessage("Payment with provided reference number does not exist");
+    }
   }
 
   @Nested

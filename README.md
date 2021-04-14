@@ -1,5 +1,7 @@
 # JAQU-CAZ Payments API
 
+[![Build Status](http://drone-1587293244.eu-west-2.elb.amazonaws.com/api/badges/InformedSolutions/JAQU-CAZ-Payments-API/status.svg?ref=refs/heads/develop)](http://drone-1587293244.eu-west-2.elb.amazonaws.com/InformedSolutions/JAQU-CAZ-Payments-API)
+
 ## Prerequisites
 
 * Java 8

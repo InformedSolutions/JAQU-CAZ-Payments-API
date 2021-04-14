@@ -263,26 +263,32 @@ public class PaymentInfoByOperatorIdTestIT {
               .put("paymentReference", 22381)
               .put("paymentProviderStatus", "FAILED")
               .put("vrns", Collections.singletonList("MD16ABC"))
+              .put("isChargedback", false)
+              .put("isRefunded", false)
               .build(),
 
           ImmutableMap.<String, Object>builder()
               .put("paymentTimestamp", "2019-11-25 20:39:08")
               .put("totalPaid", 280)
-              .put("cazName", "Leeds")
+              .put("cazName", "Bath")
               .put("paymentId", "282ccd65-1319-4b3b-a21c-dfe58809bedf")
               .put("paymentReference", 1881)
               .put("paymentProviderStatus", "FAILED")
               .put("vrns", Collections.singletonList("RD84VSX"))
+              .put("isChargedback", false)
+              .put("isRefunded", false)
               .build(),
 
           ImmutableMap.<String, Object>builder()
               .put("paymentTimestamp", "2019-11-24 20:39:08")
               .put("totalPaid", 260)
-              .put("cazName", "Leeds")
+              .put("cazName", "Bath")
               .put("paymentId", "485dc5d0-14e1-4007-997e-c2d3cf8b6d1e")
               .put("paymentReference", 998)
               .put("paymentProviderStatus", "SUCCESS")
               .put("vrns", Collections.singletonList("QD84VSX"))
+              .put("isChargedback", false)
+              .put("isRefunded", true)
               .build(),
 
           ImmutableMap.<String, Object>builder()
@@ -293,6 +299,8 @@ public class PaymentInfoByOperatorIdTestIT {
               .put("paymentReference", 87)
               .put("paymentProviderStatus", "SUCCESS")
               .put("vrns", Arrays.asList("ND84VSX", "MD84VSX", "OD84VSX", "PD84VSX"))
+              .put("isChargedback", true)
+              .put("isRefunded", false)
               .build()
       );
     }

@@ -26,4 +26,8 @@ public class PaymentInfoByOperator {
   String paymentProviderStatus;
 
   LocalDateTime paymentTimestamp;
+
+  boolean isRefunded;
+
+  boolean isChargedback;
 }

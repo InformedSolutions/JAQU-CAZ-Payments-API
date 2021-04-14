@@ -14,10 +14,11 @@ services:
   localstack-it:
     image: localstack/localstack:0.11.4
     ports:
+      - "4572:4572"
       - "4576:4576"
       - "4584:4584"
     environment:
-      - SERVICES=sqs,secretsmanager
+      - SERVICES=s3,sqs,secretsmanager
     volumes:
       - "~/tmp/localstack:/tmp/localstack"
     networks:

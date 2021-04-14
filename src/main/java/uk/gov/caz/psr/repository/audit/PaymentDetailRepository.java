@@ -16,8 +16,9 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
 import uk.gov.caz.psr.model.InternalPaymentStatus;
+import uk.gov.caz.psr.model.PaymentAuditData;
 import uk.gov.caz.psr.model.PaymentModification;
-import uk.gov.caz.psr.model.PaymentStatusAuditData;
+import uk.gov.caz.psr.model.PaymentModificationStatus;
 
 /**
  * Repository for persisting information about Logged Action.
@@ -28,14 +29,17 @@ import uk.gov.caz.psr.model.PaymentStatusAuditData;
 @AllArgsConstructor
 public class PaymentDetailRepository {
 
-
   private static final PaymentModificationMapper PAYMENT_MODIFICATION_ROW_MAPPER =
       new PaymentModificationMapper();
 
+  private static final PaymentAuditDataRowMapper PAYMENT_AUDIT_DATA_ROW_MAPPER =
+      new PaymentAuditDataRowMapper();
+
+  private static final PaymentModificationStatusRowMapper PAYMENT_MODIFICATION_STATUS_ROW_MAPPER =
+      new PaymentModificationStatusRowMapper();
+
   private final JdbcTemplate jdbcTemplate;
 
-  private static final PaymentStatusAuditDataRowMapper ROW_MAPPER =
-      new PaymentStatusAuditDataRowMapper();
 
   /**
    * Returns a list of statuses set by the LA for the given set of cleanAirZoneIds, travelDates and
@@ -45,9 +49,9 @@ public class PaymentDetailRepository {
    * @param cazIds list of clean air zone ids
    * @param travelDates list of travel dates
    * @param paymentIds list of payment ids
-   * @return List of {@link PaymentStatusAuditData}.
+   * @return List of {@link PaymentAuditData}.
    */
-  public List<PaymentStatusAuditData> getPaymentStatuses(String vrn, Set<UUID> cazIds,
+  public List<PaymentAuditData> getPaymentStatusesForVrn(String vrn, Set<UUID> cazIds,
       Set<LocalDate> travelDates, Set<UUID> paymentIds) {
     Preconditions.checkNotNull(vrn, "vrn cannot be null");
     Preconditions.checkNotNull(cazIds, "cazIds cannot be null");
@@ -63,8 +67,85 @@ public class PaymentDetailRepository {
           preparedStatement.setArray(4, connection.createArrayOf("uuid", paymentIds.toArray()));
           return preparedStatement;
         },
-        ROW_MAPPER
+        PAYMENT_AUDIT_DATA_ROW_MAPPER
     );
+  }
+
+  /**
+   * Gets payment statuses audit details for paymentId, updateActor and provided payment statuses.
+   *
+   * @param paymentIds List of Payment ID
+   * @param updateActor Describes which actor is responsible for updating the state of Entrant
+   *     Payment
+   * @param paymentStatuses List of statuses to get from the DB .
+   */
+  public List<PaymentModificationStatus> getPaymentStatusesForPaymentIds(Set<UUID> paymentIds,
+      EntrantPaymentUpdateActor updateActor, List<InternalPaymentStatus> paymentStatuses) {
+    Preconditions.checkNotNull(paymentIds, "paymentIds cannot be null");
+    Preconditions.checkNotNull(updateActor, "updateActor cannot be null");
+    Preconditions.checkNotNull(paymentStatuses, "paymentStatuses cannot be null");
+
+    return jdbcTemplate.query(connection -> {
+          PreparedStatement preparedStatement = connection
+              .prepareStatement(Sql.SELECT_PAYMENT_STATUSES_FOR_PAYMENT_ID_SQL);
+          preparedStatement.setArray(1, connection.createArrayOf("uuid", paymentIds.toArray()));
+          preparedStatement.setArray(2,
+              connection.createArrayOf("varchar", paymentStatuses.toArray()));
+          preparedStatement.setString(3, updateActor.toString());
+          return preparedStatement;
+        },
+        PAYMENT_MODIFICATION_STATUS_ROW_MAPPER
+    );
+  }
+
+  /**
+   * Gets payment audit details for paymentId, updateActor and provided payment statuses.
+   *
+   * @param paymentIds List of PaymentIDs
+   * @param updateActor Describes which actor is responsible for updating the state of Entrant
+   *     Payment
+   * @param paymentStatuses List of statuses to get from the DB
+   * @return list of found {@link PaymentModification}
+   */
+  public List<PaymentModification> findAllForPaymentsHistory(List<UUID> paymentIds,
+      EntrantPaymentUpdateActor updateActor, List<InternalPaymentStatus> paymentStatuses) {
+    Preconditions.checkNotNull(paymentIds, "paymentIds cannot be null");
+    Preconditions.checkNotNull(updateActor, "updateActor cannot be null");
+    Preconditions.checkNotNull(paymentStatuses, "paymentStatuses cannot be null");
+
+    return jdbcTemplate.query(connection -> {
+      PreparedStatement preparedStatement = connection.prepareStatement(
+          Sql.FIND_ALL_FOR_PAYMENTS_HISTORY);
+      preparedStatement.setArray(1, connection.createArrayOf("uuid", paymentIds.toArray()));
+      preparedStatement.setString(2, updateActor.toString());
+      preparedStatement.setArray(3, connection.createArrayOf("varchar", paymentStatuses.toArray()));
+      return preparedStatement;
+    }, PAYMENT_MODIFICATION_ROW_MAPPER);
+  }
+
+  /**
+   * Gets payment audit details for paymentId, updateActor and provided payment statuses.
+   *
+   * @param paymentId ID of Payment
+   * @param updateActor Describes which actor is responsible for updating the state of Entrant
+   *     Payment
+   * @param paymentStatuses List of statuses to get from the DB
+   * @return list of found {@link PaymentModification}
+   */
+  public List<PaymentModification> findAllForPaymentHistory(UUID paymentId,
+      EntrantPaymentUpdateActor updateActor, List<InternalPaymentStatus> paymentStatuses) {
+    Preconditions.checkNotNull(paymentId, "paymentId cannot be null");
+    Preconditions.checkNotNull(updateActor, "updateActor cannot be null");
+    Preconditions.checkNotNull(paymentStatuses, "paymentStatuses cannot be null");
+
+    return jdbcTemplate.query(connection -> {
+      PreparedStatement preparedStatement = connection.prepareStatement(
+          Sql.FIND_ALL_FOR_PAYMENT_HISTORY);
+      preparedStatement.setObject(1, paymentId);
+      preparedStatement.setString(2, updateActor.toString());
+      preparedStatement.setArray(3, connection.createArrayOf("varchar", paymentStatuses.toArray()));
+      return preparedStatement;
+    }, PAYMENT_MODIFICATION_ROW_MAPPER);
   }
 
   /**
@@ -77,7 +158,7 @@ public class PaymentDetailRepository {
     try {
       deleteDataBeforeDate("caz_payment_audit.t_clean_air_zone_payment_master", inputDate);
     } catch (Exception ex) {
-      // FOREIN KEY VIOLATION happens when there is record(s) in table 
+      // FOREIGN KEY VIOLATION happens when there is record(s) in table
       // t_clean_air_zone_payment_detail that refer to a record in 
       // t_clean_air_zone_payment_master
       resetMasterRecordCreationTime(inputDate);
@@ -140,6 +221,7 @@ public class PaymentDetailRepository {
   private static class Sql {
 
     static final String FIND_ALL_FOR_PAYMENT_HISTORY = "SELECT "
+        + "t_detail.payment_id, "
         + "t_detail.charge, "
         + "t_detail.travel_date, "
         + "t_detail.case_reference, "
@@ -154,6 +236,21 @@ public class PaymentDetailRepository {
         + "AND t_detail.payment_status = any (?) "
         + "ORDER BY t_detail.entrant_payment_update_timestamp ASC;";
 
+    static final String FIND_ALL_FOR_PAYMENTS_HISTORY = "SELECT "
+        + "t_detail.payment_id, "
+        + "t_detail.charge, "
+        + "t_detail.travel_date, "
+        + "t_detail.case_reference, "
+        + "t_detail.entrant_payment_update_timestamp, "
+        + "t_detail.payment_status, "
+        + "t_master.vrn "
+        + "FROM caz_payment_audit.t_clean_air_zone_payment_detail t_detail "
+        + "INNER JOIN caz_payment_audit.t_clean_air_zone_payment_master t_master ON "
+        + "t_detail.clean_air_zone_payment_master_id = t_master.clean_air_zone_payment_master_id "
+        + "AND t_detail.payment_id = ANY (?) "
+        + "AND t_detail.update_actor = ? "
+        + "AND t_detail.payment_status = any (?);";
+
     private static final String SELECT_PAYMENT_STATUSES_SQL =
         "SELECT vrn, clean_air_zone_id, travel_date, payment_id, payment_status "
             + "FROM caz_payment_audit.t_clean_air_zone_payment_detail t_detail "
@@ -165,21 +262,43 @@ public class PaymentDetailRepository {
             + "AND t_detail.travel_date = ANY (?) "
             + "AND t_detail.payment_id = ANY (?) "
             + "AND update_actor = 'LA'";
+
+    private static final String SELECT_PAYMENT_STATUSES_FOR_PAYMENT_ID_SQL =
+        "SELECT t_detail.payment_status, t_detail.payment_id "
+            + "FROM caz_payment_audit.t_clean_air_zone_payment_detail t_detail "
+            + "WHERE t_detail.payment_id = ANY (?) "
+            + "AND t_detail.payment_status = ANY (?) "
+            + "AND t_detail.update_actor = ?;";
   }
 
   /**
    * A class that maps the row returned from the database to an instance of {@link
-   * PaymentStatusAuditData}.
+   * PaymentAuditData}.
    */
-  static class PaymentStatusAuditDataRowMapper implements RowMapper<PaymentStatusAuditData> {
+  static class PaymentAuditDataRowMapper implements RowMapper<PaymentAuditData> {
 
     @Override
-    public PaymentStatusAuditData mapRow(ResultSet resultSet, int i) throws SQLException {
-      return PaymentStatusAuditData.builder()
+    public PaymentAuditData mapRow(ResultSet resultSet, int i) throws SQLException {
+      return PaymentAuditData.builder()
           .vrn(resultSet.getString("vrn"))
           .paymentId(UUID.fromString(resultSet.getString("payment_id")))
           .travelDate(LocalDate.parse(resultSet.getString("travel_date")))
           .cleanAirZoneId(UUID.fromString(resultSet.getString("clean_air_zone_id")))
+          .paymentStatus(InternalPaymentStatus.valueOf(resultSet.getString("payment_status")))
+          .build();
+    }
+  }
+
+  /**
+   * A class that maps the row returned from the database to an instance of {@link
+   * PaymentModificationStatus}.
+   */
+  static class PaymentModificationStatusRowMapper implements RowMapper<PaymentModificationStatus> {
+
+    @Override
+    public PaymentModificationStatus mapRow(ResultSet resultSet, int i) throws SQLException {
+      return PaymentModificationStatus.builder()
+          .paymentId(UUID.fromString(resultSet.getString("payment_id")))
           .paymentStatus(InternalPaymentStatus.valueOf(resultSet.getString("payment_status")))
           .build();
     }
@@ -195,6 +314,7 @@ public class PaymentDetailRepository {
     @Override
     public PaymentModification mapRow(ResultSet resultSet, int i) throws SQLException {
       return PaymentModification.builder()
+          .paymentId(UUID.fromString(resultSet.getString("payment_id")))
           .amount(resultSet.getInt("charge"))
           .caseReference(resultSet.getString("case_reference"))
           .entrantPaymentStatus(resultSet.getString("payment_status"))
