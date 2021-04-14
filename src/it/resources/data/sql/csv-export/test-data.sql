@@ -32,18 +32,26 @@ VALUES
 ('62127799-74b5-4587-9eb2-2d3e89468173', '057e7b23-10ac-4ed2-b21b-cf53abd653bd', '282ccd65-1319-4b3b-a21c-dfe58809bedf', true);
 
 -- Update entrant payments to have chargeback and refunded statuses in payments audit table
+
+-- Multiple LA modifications for c59d0f46-0f8d-11ea-bbdd-9bfba959fef8
+UPDATE caz_payment.t_clean_air_zone_entrant_payment
+SET payment_status = 'CHARGEBACK', update_actor = 'LA'
+WHERE clean_air_zone_entrant_payment_id = 'c59d0f46-0f8d-11ea-bbdd-9bfba959fef8';
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
 SET payment_status = 'REFUNDED', update_actor = 'LA'
 WHERE clean_air_zone_entrant_payment_id = 'c59d0f46-0f8d-11ea-bbdd-9bfba959fef8';
 
+-- Single LA modification for c9801856-0f8d-11ea-bbdd-0fb9b9867da0
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
 SET payment_status = 'CHARGEBACK', update_actor = 'LA'
 WHERE clean_air_zone_entrant_payment_id = 'c9801856-0f8d-11ea-bbdd-0fb9b9867da0';
 
+-- Single User modification for ce083912-0f8d-11ea-bbdd-47debb103c06
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
 SET tariff_code = 'tariff-2', update_actor = 'USER'
 WHERE clean_air_zone_entrant_payment_id = 'ce083912-0f8d-11ea-bbdd-47debb103c06';
 
+-- Single LA modification for d22c4d6c-0f8d-11ea-bbdd-7ff4b1cc8ff1
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
 SET payment_status = 'CHARGEBACK', update_actor = 'LA'
 WHERE clean_air_zone_entrant_payment_id = 'd22c4d6c-0f8d-11ea-bbdd-7ff4b1cc8ff1';
