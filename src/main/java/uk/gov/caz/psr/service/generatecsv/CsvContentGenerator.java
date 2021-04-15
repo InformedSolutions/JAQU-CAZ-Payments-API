@@ -201,7 +201,7 @@ public class CsvContentGenerator {
   /**
    * Method for retrieving a payer name.
    */
-  public String getPayerName(UUID userId, List<AccountUserResponse> accountUsers) {
+  private String getPayerName(UUID userId, List<AccountUserResponse> accountUsers) {
     AccountUserResponse accountUser = accountUsers.stream()
         .filter(accountUserResponse -> accountUserResponse.getAccountUserId().equals(userId))
         .iterator().next();
@@ -246,6 +246,6 @@ public class CsvContentGenerator {
         .filter(paymentModification -> paymentModification.getVrn().equals(entrantPayment.getVrn())
             && paymentModification.getTravelDate().equals(entrantPayment.getTravelDate())
             && paymentModification.getPaymentId().equals(entrantPayment.getPaymentId()))
-        .findFirst();
+        .reduce((first, second) -> second); // get last element
   }
 }

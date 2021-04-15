@@ -49,6 +49,7 @@ class CsvContentGeneratorTestIT extends ExternalCallsIT {
     assertThat(String.join(",", csvRowResults.get(3))).isEqualTo(
         "2019-11-24,Deleted user,Birmingham,QD84VSX,2019-11-05,£26.00,998,ext-payment-id-2,2,"
             + "£37.00,,,");
+    // returns last LA modification details when more than one:
     assertThat(String.join(",", csvRowResults.get(4))).isEqualTo(
         "2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-01,£8.00,87,ext-payment-id-1,4,£35.00,"
             + "REFUNDED," + LocalDate.now().toString() + ",");
