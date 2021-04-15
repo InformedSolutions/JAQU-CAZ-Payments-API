@@ -7,6 +7,8 @@ import static org.mockito.BDDMockito.given;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +29,8 @@ class PaymentsHistoryCsvFileSupervisorTest {
 
   private static final String S3_BUCKET = "s3Bucket";
   private static final String FILENAME = "filename";
+  private static final List<UUID> ACCOUNT_USER_IDS = Arrays.asList(
+      UUID.randomUUID(), UUID.randomUUID());
 
   @Mock
   private S3Client s3Client;
@@ -52,7 +56,7 @@ class PaymentsHistoryCsvFileSupervisorTest {
     // when
     Throwable throwable = catchThrowable(
         () -> csvFileSupervisor
-            .uploadCsvFileAndGetPresignedUrl(UUID.randomUUID(), UUID.randomUUID()));
+            .uploadCsvFileAndGetPresignedUrl(UUID.randomUUID(), ACCOUNT_USER_IDS));
 
     // then
     then(throwable)
@@ -70,7 +74,7 @@ class PaymentsHistoryCsvFileSupervisorTest {
     // when
     Throwable throwable = catchThrowable(
         () -> csvFileSupervisor
-            .uploadCsvFileAndGetPresignedUrl(UUID.randomUUID(), UUID.randomUUID()));
+            .uploadCsvFileAndGetPresignedUrl(UUID.randomUUID(), ACCOUNT_USER_IDS));
 
     // then
     then(throwable)

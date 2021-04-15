@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -31,12 +34,15 @@ class CsvWriterTestIT extends ExternalCallsIT {
   public void shouldCreateWriterWithCsvContent() throws IOException {
     // given
     UUID accountId = UUID.fromString("1f30838f-69ee-4486-95b4-7dfcd5c6c67a");
-    UUID accountUserId = null;
+    List<UUID> accountUserIds = Arrays.asList(
+        UUID.fromString("ab3e9f4b-4076-4154-b6dd-97c5d4800b47"),
+        UUID.fromString("3f319922-71d2-432c-9757-8e5f060c2447"),
+        UUID.fromString("88732cca-a5c7-4ad6-a60d-7edede935915"));
     mockVccsCleanAirZonesCall();
     mockAccountServiceGetAllUsersCall(accountId.toString(), 200);
 
     // when
-    Writer writer = csvWriter.createWriterWithCsvContent(accountId, accountUserId);
+    Writer writer = csvWriter.createWriterWithCsvContent(accountId, accountUserIds);
 
     // then
     assertThat(writer.toString()).isEqualTo(readExpectedCsv());

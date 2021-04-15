@@ -30,6 +30,7 @@
       **/amazonaws/StreamLambdaHandler.java,
       **/amazonaws/CleanupDanglingPaymentsHandler.java,
       **/amazonaws/CleanupOldAuditDataLambdaHandler.java,
+      **/amazonaws/PaymentsHistoryLambdaHandler.java,
       **/psr/repository/VccsRepository.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
@@ -724,6 +725,7 @@
                 <exclude>**/amazonaws/StreamLambdaHandler$LambdaContainerStats.class</exclude>
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
                 <exclude>**/amazonaws/CleanupOldAuditDataLambdaHandler.class</exclude>
+                <exclude>**/amazonaws/PaymentsHistoryLambdaHandler.class</exclude>
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
                 <exclude>**/psr/model/generatecsv/*_.class</exclude>

@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service.generatecsv;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URL;
+import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,16 +45,17 @@ public class PaymentsHistoryCsvFileSupervisor {
 
   /**
    * Upload csv file to s3.
-   *
-   * @param accountId ID of Account/Fleet.
+   * @param accountId ID of the account.
+   * @param accountUserIds List of account user ids for which we should generate payment history.
    * @return {@link URL}.
    */
-  public URL uploadCsvFileAndGetPresignedUrl(UUID accountId, UUID accountUserId) {
+  public URL uploadCsvFileAndGetPresignedUrl(UUID accountId, List<UUID> accountUserIds) {
     String fileName = prepareFileName(accountId);
     String error = String.format("Exception while uploading file %s/%s", bucket, fileName);
     try {
-      s3Client
-          .putObject(prepareRequestObject(accountId), prepareRequestBody(accountId, accountUserId));
+      s3Client.putObject(
+          prepareRequestObject(accountId),
+          prepareRequestBody(accountId, accountUserIds));
       return csvUrlGenerator.getPresignedUrl(fileName);
     } catch (S3Exception e) {
       logAwsExceptionDetails(e);
@@ -78,9 +80,10 @@ public class PaymentsHistoryCsvFileSupervisor {
   /**
    * Helper method to prepare request body.
    */
-  private RequestBody prepareRequestBody(UUID accountId, UUID accountUserId) throws IOException {
+  private RequestBody prepareRequestBody(UUID accountId, List<UUID> accountUserIds)
+      throws IOException {
     try (Writer csvEntrantPayments = csvWriter
-        .createWriterWithCsvContent(accountId, accountUserId)) {
+        .createWriterWithCsvContent(accountId, accountUserIds)) {
       return RequestBody.fromBytes(csvEntrantPayments.toString().getBytes());
     }
   }

@@ -18,6 +18,7 @@ import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateRequest;
 import uk.gov.caz.psr.dto.accounts.CreateDirectDebitMandateResponse;
 import uk.gov.caz.psr.dto.accounts.DirectDebitMandatesUpdateRequest;
+import uk.gov.caz.psr.dto.accounts.UpdatePaymentHistoryExportRequest;
 import uk.gov.caz.psr.dto.accounts.UserDetailsResponse;
 import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 
@@ -46,11 +47,11 @@ public interface AccountsRepository {
   /**
    * Synchronous wrapper for getAccountVehicles call.
    *
-   * @param accountId the identifier of the account
+   * @param accountId  the identifier of the account
    * @param pageNumber the number of the page
-   * @param pageSize the size of the page
-   * @param cazId Clean Air Zone ID
-   * @param query part of VRN for partial search
+   * @param pageSize   the size of the page
+   * @param cazId      Clean Air Zone ID
+   * @param query      part of VRN for partial search
    */
   default Response<VehiclesResponseDto> getAccountChargeableVehiclesSync(
       UUID accountId, int pageNumber, int pageSize, UUID cazId, String query) {
@@ -97,7 +98,7 @@ public interface AccountsRepository {
    * Synchronous wrapper for getAccountVehicleVrns call.
    *
    * @param accountId the identifier of the account
-   * @param vrn the VRN to query.
+   * @param vrn       the VRN to query.
    * @return details of a single vehicle vrn.
    */
   default Response<VehicleWithCharges> getAccountSingleVehicleVrnSync(
@@ -126,7 +127,7 @@ public interface AccountsRepository {
    * Synchronous wrapper for createDirectDebitMandate call.
    *
    * @param accountId the identifier of the account
-   * @param body DirectDebitMandate details which need to be saved in Accounts Service
+   * @param body      DirectDebitMandate details which need to be saved in Accounts Service
    * @return details of a created DirectDebitMandate from AccountService
    */
   default Response<CreateDirectDebitMandateResponse> createDirectDebitMandateSync(
@@ -196,6 +197,31 @@ public interface AccountsRepository {
   default Response<UserDetailsResponse> getUserDetailsSync(UUID userId) {
     try {
       return getUserDetails(userId).execute();
+    } catch (IOException e) {
+      throw new ExternalServiceCallException(e.getMessage());
+    }
+  }
+
+  /**
+   * Updates the payment history export job in the account microservice.
+   */
+  @Headers({
+      "Accept: application/json",
+      "Content-Type: application/json"
+  })
+  @PATCH("v1/accounts/{accountId}/payment-history-export/{registerJobId}")
+  Call<Void> updatePaymentHistoryExportJob(
+      @Path("accountId") UUID accountId,
+      @Path("registerJobId") Integer registerJobId,
+      @Body UpdatePaymentHistoryExportRequest body);
+
+  /**
+   * A synchronous wrapper for {@code updatePaymentHistoryExportJob} call.
+   */
+  default Response<Void> updatePaymentHistoryExportJobSync(UUID accountId, Integer registerJobId,
+      UpdatePaymentHistoryExportRequest body) {
+    try {
+      return updatePaymentHistoryExportJob(accountId, registerJobId, body).execute();
     } catch (IOException e) {
       throw new ExternalServiceCallException(e.getMessage());
     }
