@@ -50,16 +50,14 @@ public class CsvContentGenerator {
    * Generate {@link List} of String[] which contains csv rows.
    *
    * @param accountId ID of Account.
-   * @param accountUserId ID of AccountUser.
+   * @param accountUserIds List of account user ids for which we should generate payment history.
    * @return {@link List} of String[] which contains csv rows.
    */
-  public List<String[]> generateCsvRows(UUID accountId, UUID accountUserId) {
+  public List<String[]> generateCsvRows(UUID accountId, List<UUID> accountUserIds) {
     List<String[]> csvRows = new ArrayList<>();
-
     List<AccountUserResponse> accountUsers = getAccountUsers(accountId);
-    List<UUID> selectedAccountUserIds = selectAccountUsers(accountUsers, accountUserId);
     List<CsvEntrantPayment> entrantPayments = csvEntrantPaymentRepository.findAllForAccountUsers(
-        selectedAccountUserIds);
+        accountUserIds);
     List<EnrichedCsvEntrantPayment> enrichedEntrantPayments = enrichEntrantPayments(
         entrantPayments, accountUsers);
 
@@ -70,28 +68,6 @@ public class CsvContentGenerator {
       csvRows.add(new String[]{createCsvRow(enrichedCsvEntrantPayment)});
     }
     return csvRows;
-  }
-
-  /**
-   * Returns list of accountUserIDs for selected accountId and accountUserId if present.
-   *
-   * @param accountUsers List of AccountUsers assigned to Account.
-   * @param accountUserId ID of selected AccountUser.
-   * @return {@link List} of UUID which contains account users IDs.
-   */
-  private List<UUID> selectAccountUsers(List<AccountUserResponse> accountUsers,
-      UUID accountUserId) {
-    if (accountUserId == null) {
-      return accountUsers.stream()
-          .map(AccountUserResponse::getAccountUserId)
-          .collect(Collectors.toList());
-    } else {
-      return accountUsers.stream()
-          .filter(
-              accountUserResponse -> accountUserResponse.getAccountUserId().equals(accountUserId))
-          .map(AccountUserResponse::getAccountUserId)
-          .collect(Collectors.toList());
-    }
   }
 
   /**
