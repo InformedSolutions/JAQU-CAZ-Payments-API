@@ -21,7 +21,7 @@ import uk.gov.caz.psr.annotation.IntegrationTest;
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 class CsvContentGeneratorTestIT extends ExternalCallsIT {
   @Autowired
-  private CsvContentGenerator csvGeneratorService;
+  private CsvContentGenerator CsvContentGenerator;
 
   @Test
   public void shouldGetAllCsvRowsWithHeader() {
@@ -35,7 +35,7 @@ class CsvContentGeneratorTestIT extends ExternalCallsIT {
     mockAccountServiceGetAllUsersCall(accountId.toString(), 200);
 
     // when
-    List<String[]> csvRowResults = csvGeneratorService.generateCsvRows(accountId, accountUserIds);
+    List<String[]> csvRowResults = CsvContentGenerator.generateCsvRows(accountId, accountUserIds);
 
     // then
     assertThat(csvRowResults).hasSize(8);
