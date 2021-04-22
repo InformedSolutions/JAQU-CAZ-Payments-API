@@ -2,11 +2,9 @@ package uk.gov.caz.psr.service.generatecsv;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.gocardless.resources.RedirectFlow;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -18,11 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import retrofit2.Response;
-import uk.gov.caz.psr.dto.AccountDirectDebitMandatesResponse;
 import uk.gov.caz.psr.dto.PaymentsHistoryLambdaInput;
 import uk.gov.caz.psr.dto.accounts.UpdatePaymentHistoryExportRequest;
 import uk.gov.caz.psr.repository.AccountsRepository;
