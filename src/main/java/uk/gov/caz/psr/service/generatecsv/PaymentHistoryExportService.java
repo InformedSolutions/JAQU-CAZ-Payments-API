@@ -14,7 +14,6 @@ public class PaymentHistoryExportService {
 
   private AccountsRepository accountsRepository;
   private PaymentsHistoryCsvFileSupervisor paymentsHistoryCsvFileSupervisor;
-  private static final String ERROR_BODY = ", error body: '";
 
   /**
    * Upload csv file to s3 and call accounts api to finalise export process.
@@ -27,8 +26,8 @@ public class PaymentHistoryExportService {
     Response<Void> response = accountsRepository.updatePaymentHistoryExportJobSync(
         request.getAccountId(), request.getRegisterJobId(), patchBody);
     if (!response.isSuccessful()) {
-      throw new ExternalServiceCallException("Accounts service call failed, status code: "
-          + response.code() + ERROR_BODY + getErrorBody(response) + "'");
+      throw new ExternalServiceCallException(String.format("Accounts service call failed, status "
+          + "code: %s, error body: %s", response.code(), getErrorBody(response)));
     }
   }
 
