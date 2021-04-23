@@ -1,6 +1,7 @@
 package uk.gov.caz.psr.service.generatecsv;
 
 import java.net.URL;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import retrofit2.Response;
@@ -12,10 +13,11 @@ import uk.gov.caz.psr.util.ResponseBodyUtils;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PaymentHistoryExportService {
 
-  private AccountsRepository accountsRepository;
-  private PaymentsHistoryCsvFileSupervisor paymentsHistoryCsvFileSupervisor;
+  private final AccountsRepository accountsRepository;
+  private final PaymentsHistoryCsvFileSupervisor paymentsHistoryCsvFileSupervisor;
 
   /**
    * Upload csv file to s3 and call accounts api to finalise export process.
