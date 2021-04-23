@@ -34,8 +34,8 @@ import uk.gov.caz.psr.util.CurrencyFormatter;
 public class CsvContentGenerator {
 
   private static final String CSV_HEADER = "Date of payment,Payment made by,"
-      + "Clean Air Zone,Number plate,Date of entry,Charge,Payment reference,"
-      + "GOV.UK payment ID,Entries paid for,Total amount paid,Status,"
+      + "Clean Air Zone,Number plate,Dates paid for,Charge,Payment reference,"
+      + "GOV.UK payment ID,Days paid for,Total amount paid,Status,"
       + "Date received from local authority,Case reference";
   private static final String ADMINISTRATOR = "Administrator";
   private static final String DELETED_USER = "Deleted user";
