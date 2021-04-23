@@ -2,6 +2,7 @@ package uk.gov.caz.psr.service.generatecsv;
 
 import java.net.URL;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import retrofit2.Response;
 import uk.gov.caz.psr.dto.PaymentsHistoryLambdaInput;
 import uk.gov.caz.psr.dto.accounts.UpdatePaymentHistoryExportRequest;
@@ -10,6 +11,7 @@ import uk.gov.caz.psr.service.exception.ExternalServiceCallException;
 import uk.gov.caz.psr.util.ResponseBodyUtils;
 
 @Slf4j
+@Component
 public class PaymentHistoryExportService {
 
   private AccountsRepository accountsRepository;
