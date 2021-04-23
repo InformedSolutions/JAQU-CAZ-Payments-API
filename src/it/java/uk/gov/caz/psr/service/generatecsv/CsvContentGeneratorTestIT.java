@@ -40,8 +40,8 @@ class CsvContentGeneratorTestIT extends ExternalCallsIT {
     // then
     assertThat(csvRowResults).hasSize(8);
     assertThat(String.join(",", csvRowResults.get(0))).isEqualTo(
-        "Date of payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,"
-            + "Payment reference,GOV.UK payment ID,Entries paid for,Total amount paid,"
+        "Date of payment,Payment made by,Clean Air Zone,Number plate,Dates paid for,Charge,"
+            + "Payment reference,GOV.UK payment ID,Days paid for,Total amount paid,"
             + "Status,Date received from local authority,Case reference");
     assertThat(String.join(",", csvRowResults.get(1))).isEqualTo(
         "2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,£28.00,1881,ext-payment-id-3,1,"
