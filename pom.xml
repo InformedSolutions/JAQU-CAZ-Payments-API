@@ -18,7 +18,7 @@
     <artifactFinalName>${project.artifactId}-${project.version}</artifactFinalName>
 
     <rest-assured.version>4.0.0</rest-assured.version>
-    <internal.libraries.version>2.15.7-SNAPSHOT</internal.libraries.version>
+    <internal.libraries.version>2.16.0-SNAPSHOT</internal.libraries.version>
     <spring-cloud.version>Greenwich.SR6</spring-cloud.version>
 
     <codeCoverage.minCoveredRatio>1</codeCoverage.minCoveredRatio>
@@ -30,6 +30,7 @@
       **/amazonaws/StreamLambdaHandler.java,
       **/amazonaws/CleanupDanglingPaymentsHandler.java,
       **/amazonaws/CleanupOldAuditDataLambdaHandler.java,
+      **/amazonaws/PaymentsHistoryLambdaHandler.java,
       **/psr/repository/VccsRepository.java
     </sonar.coverage.exclusions>
     <sonar.coverage.jacoco.xmlReportPaths>
@@ -724,6 +725,7 @@
                 <exclude>**/amazonaws/StreamLambdaHandler$LambdaContainerStats.class</exclude>
                 <exclude>**/amazonaws/CleanupDanglingPaymentsHandler.class</exclude>
                 <exclude>**/amazonaws/CleanupOldAuditDataLambdaHandler.class</exclude>
+                <exclude>**/amazonaws/PaymentsHistoryLambdaHandler.class</exclude>
                 <!-- exclude auto-generated classes by hibernate-jpamodelgen -->
                 <exclude>**/psr/model/info/*_.class</exclude>
                 <exclude>**/psr/model/generatecsv/*_.class</exclude>
