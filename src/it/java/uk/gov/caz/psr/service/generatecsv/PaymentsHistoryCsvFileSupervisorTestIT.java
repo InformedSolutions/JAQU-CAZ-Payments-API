@@ -41,7 +41,7 @@ class PaymentsHistoryCsvFileSupervisorTestIT extends ExternalCallsIT {
 
   private static final String BUCKET_NAME = "csv-export-bucket";
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
-      .ofPattern("yyyyMMdd_HHmm");
+      .ofPattern("ddMMMMyyyy-HHmmss");
   @Autowired
   private S3Client s3Client;
 
@@ -72,7 +72,7 @@ class PaymentsHistoryCsvFileSupervisorTestIT extends ExternalCallsIT {
 
     // then
     assertThat(getS3Contents()).hasSize(1);
-    assertThat(getKey()).contains("payments-7dfcd5c6c67a").contains(".csv");
+    assertThat(getKey()).contains("Paymenthistory-").contains(".csv");
     assertThat(getUploadedCsvFile()).contains(readExpectedCsv());
     assertThat(url).isNotNull();
   }
