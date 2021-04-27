@@ -14,7 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class CsvFileNameGeneratorTest {
 
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
-      .ofPattern("yyyyMMdd_HHmm");
+      .ofPattern("ddMMMMyyyy-HHmmss");
 
   private CsvFileNameGenerator csvFileNameGenerator = new CsvFileNameGenerator();
 
@@ -28,9 +28,8 @@ class CsvFileNameGeneratorTest {
 
     // then
     assertThat(fileName)
-        .contains("payments-")
-        .contains("88bf69fae9da-")
-        .contains(DATE_TIME_FORMATTER.format(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)))
+        .contains("Paymenthistory-")
+        .contains(DATE_TIME_FORMATTER.format(LocalDateTime.now()))
         .contains(".csv");
   }
 }
