@@ -72,7 +72,7 @@ class PaymentsHistoryCsvFileSupervisorTestIT extends ExternalCallsIT {
 
     // then
     assertThat(getS3Contents()).hasSize(1);
-    assertThat(getKey()).contains("Paymenthistory-").contains(".csv");
+    assertThat(getKey()).contains("Payment-history-").contains(".csv");
     assertThat(getUploadedCsvFile()).contains(readExpectedCsv());
     assertThat(url).isNotNull();
   }

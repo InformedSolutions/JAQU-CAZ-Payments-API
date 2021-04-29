@@ -28,7 +28,7 @@ class CsvFileNameGeneratorTest {
 
     // then
     assertThat(fileName)
-        .contains("Paymenthistory-")
+        .contains("Payment-history-")
         .contains(DATE_TIME_FORMATTER.format(LocalDateTime.now()))
         .contains(".csv");
   }
