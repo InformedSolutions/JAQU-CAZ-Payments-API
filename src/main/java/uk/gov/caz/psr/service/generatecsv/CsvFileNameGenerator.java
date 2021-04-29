@@ -15,7 +15,7 @@ public class CsvFileNameGenerator {
       .ofPattern("ddMMMMyyyy-HHmmss");
 
   private static final String CSV_FILE_EXT = "csv";
-  private static final String PAYMENTS = "Paymenthistory-";
+  private static final String PAYMENTS = "Payment-history-";
   private static final String DOT = ".";
 
   /**
