@@ -35,6 +35,9 @@ public class CsvWriter {
             .withQuoteChar(CSVWriter.NO_QUOTE_CHARACTER)
             .build()) {
 
+      // Write UTF-8 BOM
+      writer.write('\ufeff');
+
       List<String[]> csvRows = csvContentGenerator.generateCsvRows(accountId, accountUserIds);
 
       csvWriter.writeAll(csvRows);
