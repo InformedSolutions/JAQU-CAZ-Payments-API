@@ -62,6 +62,7 @@ redis:
   port: 7000
   ttlInHours: 24
   enabled: true
+  ssl: false
 
 management:
   endpoints:
