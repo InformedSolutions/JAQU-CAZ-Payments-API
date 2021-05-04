@@ -14,6 +14,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
@@ -33,6 +34,9 @@ public class RedisConfiguration {
   @Value("${redis.ttlInHours}")
   private Integer redisTtl;
 
+  @Value("${redis.ssl}")
+  private boolean redisUseSsl;
+  
   /**
    * Customised redis template bean constructor.
    *
@@ -73,12 +77,24 @@ public class RedisConfiguration {
   @Profile("!integration-tests")
   public LettuceConnectionFactory lettuceConnectionFactory() {
     log.info("Creating redis-connection for a cluster");
+
+    LettuceClientConfiguration clientConfiguration;
+    
+    if (redisUseSsl) {
+      log.info("Configuring redis connection using SSL");
+      clientConfiguration =
+          LettuceClientConfiguration.builder().useSsl().disablePeerVerification().build();
+    } else {
+      clientConfiguration = LettuceClientConfiguration.builder().build();
+    }
+
     RedisClusterConfiguration clusterConfiguration =
         new RedisClusterConfiguration();
     clusterConfiguration.clusterNode(redisClusterEndpoint, redisClusterPort);
-    return new LettuceConnectionFactory(clusterConfiguration);
+    return new LettuceConnectionFactory(clusterConfiguration,
+        clientConfiguration);
   }
-
+  
   /**
    * Customised lettuce connection factory for a single node redis instance.
    *
