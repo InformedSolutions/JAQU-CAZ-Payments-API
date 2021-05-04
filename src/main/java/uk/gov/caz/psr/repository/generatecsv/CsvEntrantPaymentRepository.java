@@ -28,6 +28,7 @@ public interface CsvEntrantPaymentRepository extends CrudRepository<CsvEntrantPa
       + "t_match.clean_air_zone_entrant_payment_id = t_entrant.clean_air_zone_entrant_payment_id "
       + "JOIN caz_payment.t_payment as t_payment ON t_payment.payment_id = t_match.payment_id "
       + "WHERE t_payment.user_id in (?1) "
+      + "AND t_payment.payment_provider_status = 'SUCCESS'"
       + "ORDER BY t_payment.payment_submitted_timestamp DESC, t_entrant.vrn ASC, "
       + "t_entrant.travel_date ASC",
       nativeQuery = true)
