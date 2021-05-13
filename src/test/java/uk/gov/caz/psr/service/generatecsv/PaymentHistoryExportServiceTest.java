@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -80,21 +79,20 @@ public class PaymentHistoryExportServiceTest {
     assertThat(throwable).isInstanceOf(ExternalServiceCallException.class);
   }
 
-  private UpdatePaymentHistoryExportRequest mockUpdatePaymentHistoryExportRequest()
-      throws MalformedURLException {
-    URL fileUrl = mockUrl();
-    when(paymentsHistoryCsvFileSupervisor.uploadCsvFileAndGetPresignedUrl(
-        ANY_ACCOUNT_ID, ANY_ACCOUNT_USER_IDS)).thenReturn(fileUrl);
-    return mockPaymentHistoryExportRequest(fileUrl);
+  private UpdatePaymentHistoryExportRequest mockUpdatePaymentHistoryExportRequest() {
+    String fileName = mockFilename();
+    when(paymentsHistoryCsvFileSupervisor.uploadCsvFileAndGetFileName(
+        ANY_ACCOUNT_ID, ANY_ACCOUNT_USER_IDS)).thenReturn(fileName);
+    return mockPaymentHistoryExportRequest(fileName);
   }
 
-  private URL mockUrl() throws MalformedURLException {
-    return new URL("https://return-url.com");
+  private String mockFilename() {
+    return "Payment-history-12052021-142334";
   }
 
-  private UpdatePaymentHistoryExportRequest mockPaymentHistoryExportRequest(URL fileUrl) {
+  private UpdatePaymentHistoryExportRequest mockPaymentHistoryExportRequest(String fileName) {
     return UpdatePaymentHistoryExportRequest.builder()
-        .fileUrl(fileUrl)
+        .fileUrl(fileName)
         .status("FINISHED_SUCCESS")
         .build();
   }

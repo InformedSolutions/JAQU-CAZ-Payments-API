@@ -2,7 +2,6 @@ package uk.gov.caz.psr.service.generatecsv;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,10 +20,9 @@ public class CsvFileNameGenerator {
   /**
    * Generate full Csv file name.
    *
-   * @param accountId ID of Account/Fleet.
    * @return Full Csv file name.
    */
-  public String generate(UUID accountId) {
+  public String generate() {
     LocalDateTime now = LocalDateTime.now();
     return PAYMENTS
         + DATE_TIME_FORMATTER.format(now)

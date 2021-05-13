@@ -6,7 +6,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -68,7 +67,7 @@ class PaymentsHistoryCsvFileSupervisorTestIT extends ExternalCallsIT {
     mockAccountServiceGetAllUsersCall(accountId.toString(), 200);
 
     // when
-    URL url = csvFileSupervisor.uploadCsvFileAndGetPresignedUrl(accountId, accountUserIds);
+    String url = csvFileSupervisor.uploadCsvFileAndGetFileName(accountId, accountUserIds);
 
     // then
     assertThat(getS3Contents()).hasSize(1);
