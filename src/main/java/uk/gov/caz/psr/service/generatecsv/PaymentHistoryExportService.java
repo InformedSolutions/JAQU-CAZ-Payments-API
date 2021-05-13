@@ -1,6 +1,5 @@
 package uk.gov.caz.psr.service.generatecsv;
 
-import java.net.URL;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,9 +23,9 @@ public class PaymentHistoryExportService {
    * @param request A lambda input which need to be used to upload a csv file and call account api.
    */
   public void execute(PaymentsHistoryLambdaInput request)  {
-    URL fileUrl = paymentsHistoryCsvFileSupervisor
-        .uploadCsvFileAndGetPresignedUrl(request.getAccountId(), request.getAccountUserIds());
-    UpdatePaymentHistoryExportRequest patchBody = paymentHistoryExportRequest(fileUrl);
+    String fileName = paymentsHistoryCsvFileSupervisor
+        .uploadCsvFileAndGetFileName(request.getAccountId(), request.getAccountUserIds());
+    UpdatePaymentHistoryExportRequest patchBody = paymentHistoryExportRequest(fileName);
     Response<Void> response = accountsRepository.updatePaymentHistoryExportJobSync(
         request.getAccountId(), request.getRegisterJobId(), patchBody);
     if (!response.isSuccessful()) {
@@ -35,9 +34,9 @@ public class PaymentHistoryExportService {
     }
   }
 
-  private UpdatePaymentHistoryExportRequest paymentHistoryExportRequest(URL fileUrl) {
+  private UpdatePaymentHistoryExportRequest paymentHistoryExportRequest(String fileName) {
     return UpdatePaymentHistoryExportRequest.builder()
-        .fileUrl(fileUrl)
+        .fileUrl(fileName)
         .status("FINISHED_SUCCESS")
         .build();
   }
