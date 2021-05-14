@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0025.1-0-new-payments-reporting-views
+      author: informed
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: utf8
+            endDelimiter: ;GO
+            path: ../rawSql/0025-1.0-create-payments-reporting-views.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true

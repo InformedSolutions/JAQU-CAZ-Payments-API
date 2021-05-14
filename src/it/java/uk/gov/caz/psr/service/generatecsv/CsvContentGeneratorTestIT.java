@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service.generatecsv;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -19,26 +20,28 @@ import uk.gov.caz.psr.annotation.IntegrationTest;
 @Sql(scripts = "classpath:data/sql/clear-all-payments.sql",
     executionPhase = ExecutionPhase.AFTER_TEST_METHOD)
 class CsvContentGeneratorTestIT extends ExternalCallsIT {
-
   @Autowired
-  private CsvContentGenerator csvGeneratorService;
+  private CsvContentGenerator csvContentGenerator;
 
   @Test
-  public void shouldGetAllCsvRowsWithHeaderForAccount() {
+  public void shouldGetAllCsvRowsWithHeader() {
     // given
     UUID accountId = UUID.fromString("1f30838f-69ee-4486-95b4-7dfcd5c6c67a");
-    UUID accountUserId = null;
+    List<UUID> accountUserIds = Arrays.asList(
+        UUID.fromString("ab3e9f4b-4076-4154-b6dd-97c5d4800b47"),
+        UUID.fromString("3f319922-71d2-432c-9757-8e5f060c2447"),
+        UUID.fromString("88732cca-a5c7-4ad6-a60d-7edede935915"));
     mockVccsCleanAirZonesCall();
     mockAccountServiceGetAllUsersCall(accountId.toString(), 200);
 
     // when
-    List<String[]> csvRowResults = csvGeneratorService.generateCsvRows(accountId, accountUserId);
+    List<String[]> csvRowResults = csvContentGenerator.generateCsvRows(accountId, accountUserIds);
 
     // then
     assertThat(csvRowResults).hasSize(8);
     assertThat(String.join(",", csvRowResults.get(0))).isEqualTo(
-        "Date of payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,"
-            + "Payment reference,GOV.UK payment ID,Entries paid for,Total amount paid,"
+        "Date of payment,Payment made by,Clean Air Zone,Number plate,Dates paid for,Charge,"
+            + "Payment reference,GOV.UK payment ID,Days paid for,Total amount paid,"
             + "Status,Date received from local authority,Case reference");
     assertThat(String.join(",", csvRowResults.get(1))).isEqualTo(
         "2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,£28.00,1881,ext-payment-id-3,1,"
@@ -49,6 +52,7 @@ class CsvContentGeneratorTestIT extends ExternalCallsIT {
     assertThat(String.join(",", csvRowResults.get(3))).isEqualTo(
         "2019-11-24,Deleted user,Birmingham,QD84VSX,2019-11-05,£26.00,998,ext-payment-id-2,2,"
             + "£37.00,,,");
+    // returns last LA modification details when more than one:
     assertThat(String.join(",", csvRowResults.get(4))).isEqualTo(
         "2019-11-23,Administrator,Birmingham,ND84VSX,2019-11-01,£8.00,87,ext-payment-id-1,4,£35.00,"
             + "REFUNDED," + LocalDate.now().toString() + ",");
@@ -61,27 +65,5 @@ class CsvContentGeneratorTestIT extends ExternalCallsIT {
     assertThat(String.join(",", csvRowResults.get(7))).isEqualTo(
         "2019-11-23,Administrator,Birmingham,PD84VSX,2019-11-04,£11.00,87,ext-payment-id-1,4,"
             + "£35.00,,,");
-  }
-
-  @Test
-  public void shouldGetAllCsvRowsWithHeaderForAccountUser() {
-    // given
-    UUID accountId = UUID.fromString("1f30838f-69ee-4486-95b4-7dfcd5c6c67a");
-    UUID accountUserId = UUID.fromString("88732cca-a5c7-4ad6-a60d-7edede935915");
-    mockVccsCleanAirZonesCall();
-    mockAccountServiceGetAllUsersCall(accountId.toString(), 200);
-
-    // when
-    List<String[]> csvRowResults = csvGeneratorService.generateCsvRows(accountId, accountUserId);
-
-    // then
-    assertThat(csvRowResults).hasSize(2);
-    assertThat(String.join(",", csvRowResults.get(0))).isEqualTo(
-        "Date of payment,Payment made by,Clean Air Zone,Number plate,Date of entry,Charge,"
-            + "Payment reference,GOV.UK payment ID,Entries paid for,Total amount paid,"
-            + "Status,Date received from local authority,Case reference");
-    assertThat(String.join(",", csvRowResults.get(1))).isEqualTo(
-        "2019-11-25,Jan Kowalski,Birmingham,RD84VSX,2019-11-06,£28.00,1881,ext-payment-id-3,1,"
-            + "£28.00,,,");
   }
 }

@@ -20,7 +20,7 @@ import uk.gov.caz.psr.service.generatecsv.exception.PresignedUrlException;
 @Component
 public class CsvUrlGenerator {
 
-  private static final Duration DURATION_60 = Duration.ofMinutes(60);
+  private static final Duration DURATION_7_DAYS = Duration.ofMinutes(60 * 24 * 7);
   private final String bucket;
   private final S3Presigner s3Presigner;
 
@@ -57,7 +57,7 @@ public class CsvUrlGenerator {
    */
   private GetObjectPresignRequest createGetObjectPresignRequest(String fileName) {
     return GetObjectPresignRequest.builder()
-        .signatureDuration(DURATION_60)
+        .signatureDuration(DURATION_7_DAYS)
         .getObjectRequest(createGetObjectRequest(fileName))
         .build();
   }
