@@ -30,6 +30,7 @@ redis:
   enabled: true
   endpoint: ${redis.url:localhost}
   port: ${redis.custom.port:6380}
+  ssl: false
 
 services:
   gov-uk-pay:
