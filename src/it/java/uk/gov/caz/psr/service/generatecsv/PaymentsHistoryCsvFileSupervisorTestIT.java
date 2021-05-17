@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.SneakyThrows;
@@ -40,7 +41,7 @@ class PaymentsHistoryCsvFileSupervisorTestIT extends ExternalCallsIT {
 
   private static final String BUCKET_NAME = "csv-export-bucket";
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
-      .ofPattern("yyyyMMdd_HHmm");
+      .ofPattern("ddMMMMyyyy-HHmmss");
   @Autowired
   private S3Client s3Client;
 
@@ -62,15 +63,16 @@ class PaymentsHistoryCsvFileSupervisorTestIT extends ExternalCallsIT {
     // given
     UUID accountId = UUID.fromString("1f30838f-69ee-4486-95b4-7dfcd5c6c67a");
     UUID accountUserId = UUID.fromString("88732cca-a5c7-4ad6-a60d-7edede935915");
+    List<UUID> accountUserIds = Collections.singletonList(accountUserId);
     mockVccsCleanAirZonesCall();
     mockAccountServiceGetAllUsersCall(accountId.toString(), 200);
 
     // when
-    URL url = csvFileSupervisor.uploadCsvFileAndGetPresignedUrl(accountId, accountUserId);
+    URL url = csvFileSupervisor.uploadCsvFileAndGetPresignedUrl(accountId, accountUserIds);
 
     // then
     assertThat(getS3Contents()).hasSize(1);
-    assertThat(getKey()).contains("payments-7dfcd5c6c67a").contains(".csv");
+    assertThat(getKey()).contains("Payment-history-").contains(".csv");
     assertThat(getUploadedCsvFile()).contains(readExpectedCsv());
     assertThat(url).isNotNull();
   }

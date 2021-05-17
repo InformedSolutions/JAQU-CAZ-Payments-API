@@ -49,7 +49,7 @@ public class PaymentDataCleanupService {
     try {
       cleanupPaymentAuditData();
       cleanupLoggedActionAuditData();
-      log.info("PaymentAuditDataCleanupService cleanup finished sucessfully");
+      log.info("PaymentAuditDataCleanupService cleanup finished successfully");
     } catch (Exception ex) {
       log.info("PaymentAuditDataCleanupService cleanup failed due to {}", ex.getMessage());
       throw ex;

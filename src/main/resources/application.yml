@@ -347,9 +347,6 @@ swagger:
         isChargedback: indicates if the payment was charged back
       resend-receipt-email:
         email: email to which the receipt email is going to be resent
-      payment-history-csv-export:
-        fileUrl: String containing the url to the s3 file
-        bucketName: String containing the bucket name
 
   operations:
     accounts:
