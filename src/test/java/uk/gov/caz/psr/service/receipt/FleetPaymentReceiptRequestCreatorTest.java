@@ -68,7 +68,7 @@ class FleetPaymentReceiptRequestCreatorTest {
       assertThat(result).containsEntry("amount", "100.00");
       assertThat(result).extracting("charges")
           .asInstanceOf(InstanceOfAssertFactories.list(String.class))
-          .containsExactly("01 January 2019 - " + vrn + " - £100.00");
+          .containsExactly(vrn + " - 01 January 2019 - £100.00");
     }
 
     @Test
@@ -91,9 +91,9 @@ class FleetPaymentReceiptRequestCreatorTest {
       assertThat(result).extracting("charges")
           .asInstanceOf(InstanceOfAssertFactories.list(String.class))
           .containsExactly(
-              "01 February 2017 - " + vrn + " - £100.00",
-              "01 February 2018 - " + vrn + " - £100.00",
-              "01 February 2019 - " + vrn + " - £100.00"
+              vrn + " - 01 February 2017 - £100.00",
+              vrn + " - 01 February 2018 - £100.00",
+              vrn + " - 01 February 2019 - £100.00"
           );
     }
 
@@ -116,9 +116,9 @@ class FleetPaymentReceiptRequestCreatorTest {
       assertThat(result).extracting("charges")
           .asInstanceOf(InstanceOfAssertFactories.list(String.class))
           .containsExactly(
-              "01 February 2017 - ABC - £100.00",
-              "01 February 2019 - ABC - £100.00",
-              "01 February 2019 - CDE - £100.00"
+              "ABC - 01 February 2017 - £100.00",
+              "ABC - 01 February 2019 - £100.00",
+              "CDE - 01 February 2019 - £100.00"
           );
     }
 
