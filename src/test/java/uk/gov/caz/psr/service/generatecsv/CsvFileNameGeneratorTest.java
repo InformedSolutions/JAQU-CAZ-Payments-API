@@ -3,6 +3,7 @@ package uk.gov.caz.psr.service.generatecsv;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,11 +21,12 @@ class CsvFileNameGeneratorTest {
   public void shouldGenerateFileName() {
     // when
     String fileName = csvFileNameGenerator.generate();
+    LocalDateTime timeInBst = LocalDateTime.now(ZoneId.of("Europe/London"));
 
     // then
     assertThat(fileName)
         .contains("Payment-history-")
-        .contains(DATE_TIME_FORMATTER.format(LocalDateTime.now()))
+        .contains(DATE_TIME_FORMATTER.format(timeInBst))
         .contains(".csv");
   }
 }
