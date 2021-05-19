@@ -47,10 +47,11 @@ public class FleetPaymentReceiptRequestCreator extends CustomPaymentReceiptEmail
   private List<String> formatEntrantDatesWithVrns(Payment payment) {
     return payment.getEntrantPayments()
         .stream()
-        .sorted(Comparator.comparing(EntrantPayment::getTravelDate)
-            .thenComparing(EntrantPayment::getVrn))
-        .map(entrantPayment -> formatDate(entrantPayment.getTravelDate()) + " - "
-            + entrantPayment.getVrn() + " - £" + toFormattedPounds(entrantPayment.getCharge()))
+        .sorted(Comparator.comparing(EntrantPayment::getVrn)
+            .thenComparing(EntrantPayment::getTravelDate))
+        .map(entrantPayment -> entrantPayment.getVrn() + " - " + formatDate(
+            entrantPayment.getTravelDate()) + " - £" + toFormattedPounds(
+            entrantPayment.getCharge()))
         .collect(Collectors.toList());
   }
 }
