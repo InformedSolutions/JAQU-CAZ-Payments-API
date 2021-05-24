@@ -3,7 +3,6 @@ package uk.gov.caz.psr.service.generatecsv;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,7 +23,6 @@ import uk.gov.caz.psr.repository.AccountsRepository;
 import uk.gov.caz.psr.repository.VccsRepository;
 import uk.gov.caz.psr.repository.audit.PaymentDetailRepository;
 import uk.gov.caz.psr.repository.generatecsv.CsvEntrantPaymentRepository;
-import uk.gov.caz.psr.util.CurrencyFormatter;
 
 /**
  * Generates content for csv file.
@@ -33,24 +31,21 @@ import uk.gov.caz.psr.util.CurrencyFormatter;
 @AllArgsConstructor
 public class CsvContentGenerator {
 
-  private static final String CSV_HEADER = "Date of payment,Payment made by,"
-      + "Clean Air Zone,Number plate,Dates paid for,Charge,Payment reference,"
-      + "GOV.UK payment ID,Days paid for,Total amount paid,Status,"
-      + "Date received from local authority,Case reference";
   private static final String ADMINISTRATOR = "Administrator";
   private static final String DELETED_USER = "Deleted user";
 
   private final AccountsRepository accountsRepository;
   private final CsvEntrantPaymentRepository csvEntrantPaymentRepository;
-  private final CurrencyFormatter currencyFormatter;
   private final PaymentDetailRepository paymentDetailRepository;
   private final VccsRepository vccsRepository;
+  private final CsvContentGeneratorStrategyFactory csvContentGeneratorStrategyFactory;
 
   /**
    * Generate {@link List} of String[] which contains csv rows.
    *
    * @param accountId ID of Account.
-   * @param accountUserIds List of account user ids for which we should generate payment history.
+   * @param accountUserIds List of account user ids for which we should generate payment
+   *     history.
    * @return {@link List} of String[] which contains csv rows.
    */
   public List<String[]> generateCsvRows(UUID accountId, List<UUID> accountUserIds) {
@@ -61,12 +56,12 @@ public class CsvContentGenerator {
     List<EnrichedCsvEntrantPayment> enrichedEntrantPayments = enrichEntrantPayments(
         entrantPayments, accountUsers);
 
-    // adding header record
-    csvRows.add(new String[]{CSV_HEADER});
+    CsvContentGeneratorStrategy strategy = csvContentGeneratorStrategyFactory
+        .createStrategy(enrichedEntrantPayments);
 
-    for (EnrichedCsvEntrantPayment enrichedCsvEntrantPayment : enrichedEntrantPayments) {
-      csvRows.add(new String[]{createCsvRow(enrichedCsvEntrantPayment)});
-    }
+    csvRows.add(strategy.generateCsvHeader());
+    csvRows.addAll(strategy.generateCsvContent(enrichedEntrantPayments));
+
     return csvRows;
   }
 
@@ -82,8 +77,8 @@ public class CsvContentGenerator {
   }
 
   /**
-   * Method which enrich provided {@code CsvEntrantPayment} list with data from External APIs
-   * and collect it as {@code EnrichedCsvEntrantPayment}.
+   * Method which enrich provided {@code CsvEntrantPayment} list with data from External APIs and
+   * collect it as {@code EnrichedCsvEntrantPayment}.
    */
   private List<EnrichedCsvEntrantPayment> enrichEntrantPayments(
       List<CsvEntrantPayment> entrantPayments, List<AccountUserResponse> accountUsers) {
@@ -100,8 +95,8 @@ public class CsvContentGenerator {
   }
 
   /**
-   * Method which enrich provided {@code CsvEntrantPayment} with data from External APIs
-   * and returns it as {@code EnrichedCsvEntrantPayment}.
+   * Method which enrich provided {@code CsvEntrantPayment} with data from External APIs and returns
+   * it as {@code EnrichedCsvEntrantPayment}.
    */
   private EnrichedCsvEntrantPayment enrichEntrantPayment(CsvEntrantPayment entrantPayment,
       List<AccountUserResponse> accountUsers, Response<CleanAirZonesDto> cleanAirZones,
@@ -122,56 +117,11 @@ public class CsvContentGenerator {
         .entriesCount(entrantPayment.getEntriesCount())
         .totalPaid(entrantPayment.getTotalPaid());
 
-    if (paymentModification.isPresent()) {
-      enrichedCsvEntrantPayment
-          .status(paymentModification.get().getEntrantPaymentStatus())
-          .dateReceivedFromLa(paymentModification.get().getModificationTimestamp().toLocalDate())
-          .caseReference(paymentModification.get().getCaseReference());
-    }
+    paymentModification.ifPresent(modification -> enrichedCsvEntrantPayment
+        .status(modification.getEntrantPaymentStatus())
+        .dateReceivedFromLa(modification.getModificationTimestamp().toLocalDate())
+        .caseReference(modification.getCaseReference()));
     return enrichedCsvEntrantPayment.build();
-  }
-
-  /**
-   * Generates csv row from {@code EnrichedCsvEntrantPayment}.
-   */
-  private String createCsvRow(EnrichedCsvEntrantPayment enrichedCsvEntrantPayment) {
-    return String.join(",",
-        safeToString(enrichedCsvEntrantPayment.getDateOfPayment()),
-        safeToString(enrichedCsvEntrantPayment.getPaymentMadeBy()),
-        safeToString(enrichedCsvEntrantPayment.getCazName()),
-        safeToString(enrichedCsvEntrantPayment.getVrn()),
-        safeToString(enrichedCsvEntrantPayment.getDateOfEntry()),
-        toFormattedPounds(enrichedCsvEntrantPayment.getCharge()),
-        safeToString(enrichedCsvEntrantPayment.getPaymentReference()),
-        safeToString(enrichedCsvEntrantPayment.getPaymentProviderId()),
-        safeToString(enrichedCsvEntrantPayment.getEntriesCount()),
-        toFormattedPounds(enrichedCsvEntrantPayment.getTotalPaid()),
-        safeToString(enrichedCsvEntrantPayment.getStatus()),
-        safeToString(enrichedCsvEntrantPayment.getDateReceivedFromLa()),
-        safeToString(enrichedCsvEntrantPayment.getCaseReference())
-    );
-  }
-
-  /**
-   * Method used to return empty string if object was null.
-   */
-  private String safeToString(Object o) {
-    return o == null ? "" : o.toString();
-  }
-
-  /**
-   * Converts pennies to its string representation in pounds.
-   */
-  final String toFormattedPounds(int amountInPennies) {
-    double amountInPounds = toPounds(amountInPennies);
-    return "£" + String.format(Locale.UK, "%.2f", amountInPounds);
-  }
-
-  /**
-   * Converts pennies ({@code amountInPennies}) to pounds.
-   */
-  final double toPounds(int amountInPennies) {
-    return currencyFormatter.parsePennies(amountInPennies);
   }
 
   /**

@@ -25,4 +25,14 @@ public class Strings {
     int toMask = input.length() - toReveal;
     return input.substring(0, toReveal) + com.google.common.base.Strings.repeat("*", toMask);
   }
+
+  /**
+   * Method performs safe cast to string.
+   *
+   * @param o null or object
+   * @return String
+   */
+  public static String safeToString(Object o) {
+    return o == null ? "" : o.toString();
+  }
 }
