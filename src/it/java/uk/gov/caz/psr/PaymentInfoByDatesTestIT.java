@@ -13,13 +13,13 @@ import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpRequest;
@@ -47,9 +48,11 @@ import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.controller.PaymentsInfoByOperatorController;
 
 @FullyRunningServerIntegrationTest
-public class PaymentInfoByOperatorIdTestIT {
+public class PaymentInfoByDatesTestIT {
 
   private static final String ANY_CORRELATION_ID = "79b7a48f-27c7-4947-bd1c-670f981843ef";
+  private static final String VALID_START_DATE = "2019-11-24";
+  private static final String VALID_END_DATE = "2019-11-26";
   private static ClientAndServer vccsServiceMockServer;
 
   @LocalServerPort
@@ -65,19 +68,78 @@ public class PaymentInfoByOperatorIdTestIT {
   class Validation {
 
     @Nested
-    class WhenRequestedWithMalformedOperatorId {
+    class WhenRequestedWithNullStartDate {
 
       @ParameterizedTest
-      @ValueSource(strings = {"not-uuid-1", "a"})
-      public void shouldReturnResponseWith400StatusCode(String operatorId) {
+      @NullSource
+      public void shouldReturnResponseWith400StatusCode(String startDate) {
         whenRequested()
-            .withOperatorIdEqualTo(operatorId)
+            .withStartDateSizeEqualTo(startDate)
+            .withEndDateSizeEqualTo(VALID_END_DATE)
             .withPageSizeEqualTo(5)
             .withPageNumberEqualTo(1)
             .then()
             .headerContainsCorrelationId()
             .responseHasBadRequestStatus()
-            .andContainsErrorMessageEqualTo("'operatorId' must be a valid UUID");
+            .andContainsErrorMessageEqualTo("'startDate' cannot be null.");
+      }
+    }
+
+    @Nested
+    class WhenRequestedWithNullEndDate {
+
+      @ParameterizedTest
+      @NullSource
+      public void shouldReturnResponseWith400StatusCode(String endDate) {
+        whenRequested()
+            .withStartDateSizeEqualTo(VALID_START_DATE)
+            .withEndDateSizeEqualTo(endDate)
+            .withPageSizeEqualTo(5)
+            .withPageNumberEqualTo(1)
+            .then()
+            .headerContainsCorrelationId()
+            .responseHasBadRequestStatus()
+            .andContainsErrorMessageEqualTo("'endDate' cannot be null.");
+      }
+    }
+
+    @Nested
+    class WhenRequestedWithStartDateAfterEndDateWith400StatusCode {
+
+      @ParameterizedTest
+      @ValueSource(strings = "2019-11-23")
+      public void shouldReturnResponseWith400StatusCode(String endDate) {
+        whenRequested()
+            .withStartDateSizeEqualTo(VALID_START_DATE)
+            .withEndDateSizeEqualTo(endDate)
+            .withPageSizeEqualTo(5)
+            .withPageNumberEqualTo(1)
+            .then()
+            .headerContainsCorrelationId()
+            .responseHasBadRequestStatus()
+            .andContainsErrorMessageEqualTo("'startDate' need to be before 'endDate'");
+      }
+    }
+
+    @Nested
+    class WhenRequestedWithEndDateEqualsStarDateWith200StatusCode {
+
+      @ParameterizedTest
+      @ValueSource(strings = "2019-11-24")
+      public void shouldReturnResponseWith400StatusCode(String endDate) {
+        whenRequested()
+            .withStartDateSizeEqualTo(VALID_START_DATE)
+            .withEndDateSizeEqualTo(endDate)
+            .withPageSizeEqualTo(5)
+            .withPageNumberEqualTo(1)
+            .then()
+            .headerContainsCorrelationId()
+            .responseHasOkStatus()
+            .andPageIsEqualTo(1)
+            .andPageCountIsEqualTo(1)
+            .andPerPageIsEqualTo(5)
+            .andTotalPaymentsCountIsEqualTo(1)
+            .andResultsWereFetchedByTwoDatabaseQueries();
       }
     }
 
@@ -88,7 +150,8 @@ public class PaymentInfoByOperatorIdTestIT {
       @ValueSource(ints = {-1, -2, -10, -15})
       public void shouldReturnResponseWith400StatusCode(int pageNumber) {
         whenRequested()
-            .withRandomOperatorId()
+            .withStartDateSizeEqualTo(VALID_START_DATE)
+            .withEndDateSizeEqualTo(VALID_END_DATE)
             .withPageSizeEqualTo(5)
             .withPageNumberEqualTo(pageNumber)
             .then()
@@ -105,7 +168,8 @@ public class PaymentInfoByOperatorIdTestIT {
       @ValueSource(ints = {0, -1, -2, -10, -15})
       public void shouldReturnResponseWith400StatusCode(int pageSize) {
         whenRequested()
-            .withRandomOperatorId()
+            .withStartDateSizeEqualTo(VALID_START_DATE)
+            .withEndDateSizeEqualTo(VALID_END_DATE)
             .withPageSizeEqualTo(pageSize)
             .withPageNumberEqualTo(0)
             .then()
@@ -117,51 +181,7 @@ public class PaymentInfoByOperatorIdTestIT {
   }
 
   @Nested
-  class WhenRequestedForNonExistingOperatorId {
-
-    @Nested
-    class WithAnyValidPageNumber {
-
-      @ParameterizedTest
-      @ValueSource(ints = {0, 1, 15, 78, 122, 2009})
-      public void shouldReturnEmptyResponse(int pageNumber) {
-        whenRequested()
-            .withRandomOperatorId()
-            .withPageSizeEqualTo(5)
-            .withPageNumberEqualTo(pageNumber)
-            .then()
-            .headerContainsCorrelationId()
-            .andPerPageIsEqualTo(5)
-            .andPageIsEqualTo(pageNumber)
-            .andPageCountIsEqualTo(0)
-            .responseHasOkStatus()
-            .isEmpty();
-      }
-    }
-
-    @Nested
-    class WithAnyValidPageSize {
-
-      @ParameterizedTest
-      @ValueSource(ints = {1, 15, 78, 122, 2020})
-      public void shouldReturnEmptyResponse(int pageSize) {
-        whenRequested()
-            .withRandomOperatorId()
-            .withPageSizeEqualTo(pageSize)
-            .withPageNumberEqualTo(0)
-            .then()
-            .headerContainsCorrelationId()
-            .responseHasOkStatus()
-            .andPerPageIsEqualTo(pageSize)
-            .andPageIsEqualTo(0)
-            .andPageCountIsEqualTo(0)
-            .isEmpty();
-      }
-    }
-  }
-
-  @Nested
-  class WhenRequestedForExistingOperatorId {
+  class WhenRequestedWithValidParams {
 
     @Nested
     class WithDefaultPageSizeAndNumber {
@@ -172,15 +192,16 @@ public class PaymentInfoByOperatorIdTestIT {
         List<Map<String, Object>> expectedPayments = getExpectedPayments();
 
         whenRequested()
-            .withOperatorIdEqualTo("24f630ec-47c6-4cd0-b8aa-1e05a1463492")
+            .withStartDateSizeEqualTo(VALID_START_DATE)
+            .withEndDateSizeEqualTo(VALID_END_DATE)
             .then()
             .headerContainsCorrelationId()
             .responseHasOkStatus()
             .andPageIsEqualTo(0)
             .andPageCountIsEqualTo(1)
             .andPerPageIsEqualTo(10)
-            .andTotalPaymentsCountIsEqualTo(4)
-            .andPaymentsSizeIsEqualTo(4)
+            .andTotalPaymentsCountIsEqualTo(3)
+            .andPaymentsSizeIsEqualTo(3)
             .andPaymentsEqualTo(expectedPayments)
             .andResultsWereFetchedByTwoDatabaseQueries();
       }
@@ -193,15 +214,16 @@ public class PaymentInfoByOperatorIdTestIT {
 
       // first page
       whenRequested()
-          .withOperatorIdEqualTo("24f630ec-47c6-4cd0-b8aa-1e05a1463492")
+          .withStartDateSizeEqualTo(VALID_START_DATE)
+          .withEndDateSizeEqualTo(VALID_END_DATE)
           .withPageSizeEqualTo(1)
           .withPageNumberEqualTo(0)
           .then()
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(0)
-          .andPageCountIsEqualTo(4)
-          .andTotalPaymentsCountIsEqualTo(4)
+          .andPageCountIsEqualTo(3)
+          .andTotalPaymentsCountIsEqualTo(3)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(0)))
@@ -209,48 +231,35 @@ public class PaymentInfoByOperatorIdTestIT {
 
       // second page
       whenRequested()
-          .withOperatorIdEqualTo("24f630ec-47c6-4cd0-b8aa-1e05a1463492")
+          .withStartDateSizeEqualTo(VALID_START_DATE)
+          .withEndDateSizeEqualTo(VALID_END_DATE)
           .withPageSizeEqualTo(1)
           .withPageNumberEqualTo(1)
           .then()
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(1)
-          .andPageCountIsEqualTo(4)
-          .andTotalPaymentsCountIsEqualTo(4)
+          .andPageCountIsEqualTo(3)
+          .andTotalPaymentsCountIsEqualTo(3)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(1)));
 
       // third page
       whenRequested()
-          .withOperatorIdEqualTo("24f630ec-47c6-4cd0-b8aa-1e05a1463492")
+          .withStartDateSizeEqualTo(VALID_START_DATE)
+          .withEndDateSizeEqualTo(VALID_END_DATE)
           .withPageSizeEqualTo(1)
           .withPageNumberEqualTo(2)
           .then()
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(2)
-          .andPageCountIsEqualTo(4)
-          .andTotalPaymentsCountIsEqualTo(4)
+          .andPageCountIsEqualTo(3)
+          .andTotalPaymentsCountIsEqualTo(3)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(2)));
-
-      // fourth page
-      whenRequested()
-          .withOperatorIdEqualTo("24f630ec-47c6-4cd0-b8aa-1e05a1463492")
-          .withPageSizeEqualTo(1)
-          .withPageNumberEqualTo(3)
-          .then()
-          .headerContainsCorrelationId()
-          .responseHasOkStatus()
-          .andPageIsEqualTo(3)
-          .andPageCountIsEqualTo(4)
-          .andTotalPaymentsCountIsEqualTo(4)
-          .andPerPageIsEqualTo(1)
-          .andPaymentsSizeIsEqualTo(1)
-          .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(3)));
     }
 
     private List<Map<String, Object>> getExpectedPayments() {
@@ -289,36 +298,24 @@ public class PaymentInfoByOperatorIdTestIT {
               .put("vrns", Collections.singletonList("QD84VSX"))
               .put("isChargedback", false)
               .put("isRefunded", true)
-              .build(),
-
-          ImmutableMap.<String, Object>builder()
-              .put("paymentTimestamp", "2019-11-23 20:39:08")
-              .put("totalPaid", 352)
-              .put("cazName", "Birmingham")
-              .put("paymentId", "391017e8-e2d5-467f-b271-f6cf966eb931")
-              .put("paymentReference", 87)
-              .put("paymentProviderStatus", "SUCCESS")
-              .put("vrns", Arrays.asList("ND84VSX", "MD84VSX", "OD84VSX", "PD84VSX"))
-              .put("isChargedback", true)
-              .put("isRefunded", false)
               .build()
       );
     }
   }
 
-  private static class PaymentInfoByOperatorIdAssertion {
+  private static class PaymentInfoByDatesAssertion {
 
     private Statistics statistics;
     private RequestSpecification requestSpecification = commonRequestSpecification();
     private ValidatableResponse validatableResponse;
 
-    private PaymentInfoByOperatorIdAssertion(EntityManagerFactory entityManagerFactory) {
+    private PaymentInfoByDatesAssertion(EntityManagerFactory entityManagerFactory) {
       clearHibernateStats(entityManagerFactory);
     }
 
-    public static PaymentInfoByOperatorIdAssertion whenRequested(
+    public static PaymentInfoByDatesAssertion whenRequested(
         EntityManagerFactory entityManagerFactory) {
-      return new PaymentInfoByOperatorIdAssertion(entityManagerFactory);
+      return new PaymentInfoByDatesAssertion(entityManagerFactory);
     }
 
     private RequestSpecification commonRequestSpecification() {
@@ -332,13 +329,13 @@ public class PaymentInfoByOperatorIdTestIT {
       statistics.clear();
     }
 
-    public PaymentInfoByOperatorIdAssertion andResultsWereFetchedByThreeDatabaseQueries() {
+    public PaymentInfoByDatesAssertion andResultsWereFetchedByThreeDatabaseQueries() {
       long queryExecutionCount = getQueriesCount();
       assertThat(queryExecutionCount).isEqualTo(3);
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion andResultsWereFetchedByTwoDatabaseQueries() {
+    public PaymentInfoByDatesAssertion andResultsWereFetchedByTwoDatabaseQueries() {
       long queryExecutionCount = getQueriesCount();
       assertThat(queryExecutionCount).isEqualTo(2);
       return this;
@@ -348,85 +345,86 @@ public class PaymentInfoByOperatorIdTestIT {
       return statistics.getQueryExecutionCount();
     }
 
-    public PaymentInfoByOperatorIdAssertion withPageSizeEqualTo(int pageSize) {
+    public PaymentInfoByDatesAssertion withStartDateSizeEqualTo(String startDate) {
+      requestSpecification = requestSpecification.param("startDate", startDate);
+      return this;
+    }
+
+    public PaymentInfoByDatesAssertion withEndDateSizeEqualTo(String endDate) {
+      requestSpecification = requestSpecification.param("endDate", endDate);
+      return this;
+    }
+
+    public PaymentInfoByDatesAssertion withPageSizeEqualTo(int pageSize) {
       requestSpecification = requestSpecification.param("pageSize", pageSize);
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion withPageNumberEqualTo(int pageNumber) {
+    public PaymentInfoByDatesAssertion withPageNumberEqualTo(int pageNumber) {
       requestSpecification = requestSpecification.param("pageNumber", pageNumber);
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion withOperatorIdEqualTo(String operatorId) {
-      requestSpecification = requestSpecification.pathParam("operatorId", operatorId);
-      return this;
-    }
-
-    public PaymentInfoByOperatorIdAssertion then() {
+    public PaymentInfoByDatesAssertion then() {
       validatableResponse = requestSpecification.get().then();
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion headerContainsCorrelationId() {
+    public PaymentInfoByDatesAssertion headerContainsCorrelationId() {
       validatableResponse = validatableResponse.header(Constants.X_CORRELATION_ID_HEADER,
           ANY_CORRELATION_ID);
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion responseHasOkStatus() {
+    public PaymentInfoByDatesAssertion responseHasOkStatus() {
       validatableResponse = validatableResponse.statusCode(HttpStatus.OK.value());
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion responseHasBadRequestStatus() {
+    public PaymentInfoByDatesAssertion responseHasBadRequestStatus() {
       validatableResponse = validatableResponse.statusCode(HttpStatus.BAD_REQUEST.value()).log().all();
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion isEmpty() {
+    public PaymentInfoByDatesAssertion isEmpty() {
       validatableResponse.body("pageCount", equalTo(0));
       validatableResponse.body("totalPaymentsCount", equalTo(0));
       validatableResponse.body("payments", is(emptyIterable()));
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion andPageIsEqualTo(int expectedPage) {
+    public PaymentInfoByDatesAssertion andPageIsEqualTo(int expectedPage) {
       validatableResponse.body("page", equalTo(expectedPage));
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion andPageCountIsEqualTo(int expectedPageCount) {
+    public PaymentInfoByDatesAssertion andPageCountIsEqualTo(int expectedPageCount) {
       validatableResponse.body("pageCount", equalTo(expectedPageCount));
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion andTotalPaymentsCountIsEqualTo(
+    public PaymentInfoByDatesAssertion andTotalPaymentsCountIsEqualTo(
         int expectedTotalPaymentsCount) {
       validatableResponse.body("totalPaymentsCount", equalTo(expectedTotalPaymentsCount));
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion andPaymentsSizeIsEqualTo(int expectedPaymentsSize) {
+    public PaymentInfoByDatesAssertion andPaymentsSizeIsEqualTo(int expectedPaymentsSize) {
       validatableResponse.body("payments.size()", equalTo(expectedPaymentsSize));
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion andContainsErrorMessageEqualTo(String message) {
+    public PaymentInfoByDatesAssertion andContainsErrorMessageEqualTo(String message) {
       validatableResponse.body("message", equalTo(message));
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion andPerPageIsEqualTo(int expectedPerPageCount) {
+    public PaymentInfoByDatesAssertion andPerPageIsEqualTo(int expectedPerPageCount) {
       validatableResponse.body("perPage", equalTo(expectedPerPageCount));
       return this;
     }
 
-    public PaymentInfoByOperatorIdAssertion withRandomOperatorId() {
-      return withOperatorIdEqualTo(UUID.randomUUID().toString());
-    }
-
-    public PaymentInfoByOperatorIdAssertion andPaymentsEqualTo(
+    public PaymentInfoByDatesAssertion andPaymentsEqualTo(
         List<Map<String, Object>> expectedPayments) {
       List<Map<String, Object>> actualPayments = extractResponse();
 
@@ -470,7 +468,7 @@ public class PaymentInfoByOperatorIdTestIT {
   public void setupRestAssured() {
     RestAssured.port = randomServerPort;
     RestAssured.baseURI = "http://localhost";
-    RestAssured.basePath = PaymentsInfoByOperatorController.OPERATOR_HISTORY_PATH;
+    RestAssured.basePath = PaymentsInfoByOperatorController.OPERATORS_HISTORY_PATH;
   }
 
   @BeforeEach
@@ -496,8 +494,8 @@ public class PaymentInfoByOperatorIdTestIT {
     vccsServiceMockServer.stop();
   }
 
-  private PaymentInfoByOperatorIdAssertion whenRequested() {
-    return PaymentInfoByOperatorIdAssertion.whenRequested(entityManagerFactory);
+  private PaymentInfoByDatesAssertion whenRequested() {
+    return PaymentInfoByDatesAssertion.whenRequested(entityManagerFactory);
   }
 
   private void executeSqlFrom(String classPathFile) {
