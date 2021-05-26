@@ -400,6 +400,8 @@ swagger:
           to a vehicle that has entered their CAZ (a 'vehicle entrant')
     payments-info-by-operator-id:
       description: Gets information about payments made by the given operator represented by their identifier
+    payments-info-by-dates:
+      description: Gets information about payments made by call operators in a given date range.
     whitelist:
       vehicle-details:
         description: >-

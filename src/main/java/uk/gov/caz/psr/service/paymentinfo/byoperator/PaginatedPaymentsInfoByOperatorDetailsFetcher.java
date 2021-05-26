@@ -30,7 +30,7 @@ import uk.gov.caz.psr.service.CleanAirZoneService;
  */
 @Service
 @AllArgsConstructor
-class PaginatedPaymentsInfoByOperatorDetailsFetcher {
+public class PaginatedPaymentsInfoByOperatorDetailsFetcher {
 
   private final EntrantPaymentMatchInfoRepository entrantPaymentMatchInfoRepository;
   private final PaymentDetailRepository paymentDetailRepository;
