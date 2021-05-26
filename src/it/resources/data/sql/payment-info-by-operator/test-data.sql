@@ -1,15 +1,15 @@
 -- operator_id: 24f630ec-47c6-4cd0-b8aa-1e05a1463492
-insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, operator_id, payment_submitted_timestamp, payment_authorised_timestamp, insert_timestamp, central_reference_number)
-values ('391017e8-e2d5-467f-b271-f6cf966eb931', 'ext-payment-id-1', 'CREDIT_DEBIT_CARD', 'SUCCESS', 352, '24f630ec-47c6-4cd0-b8aa-1e05a1463492', '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', '2019-11-23T20:39:08.272Z', 87);
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, operator_id, payment_submitted_timestamp, payment_authorised_timestamp, insert_timestamp, central_reference_number, telephone_payment)
+values ('391017e8-e2d5-467f-b271-f6cf966eb931', 'ext-payment-id-1', 'CREDIT_DEBIT_CARD', 'SUCCESS', 352, '24f630ec-47c6-4cd0-b8aa-1e05a1463492', '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', '2019-11-23T20:39:08.272Z', 87, true);
 
-insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, operator_id, payment_submitted_timestamp, payment_authorised_timestamp, insert_timestamp, central_reference_number)
-values ('485dc5d0-14e1-4007-997e-c2d3cf8b6d1e', 'ext-payment-id-2', 'CREDIT_DEBIT_CARD', 'SUCCESS', 260, '24f630ec-47c6-4cd0-b8aa-1e05a1463492', '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', '2019-11-24T20:39:08.272Z', 998);
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, operator_id, payment_submitted_timestamp, payment_authorised_timestamp, insert_timestamp, central_reference_number, telephone_payment)
+values ('485dc5d0-14e1-4007-997e-c2d3cf8b6d1e', 'ext-payment-id-2', 'CREDIT_DEBIT_CARD', 'SUCCESS', 260, '24f630ec-47c6-4cd0-b8aa-1e05a1463492', '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', '2019-11-24T20:39:08.272Z', 998, true);
 
-insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, operator_id, payment_submitted_timestamp, payment_authorised_timestamp, insert_timestamp, central_reference_number)
-values ('282ccd65-1319-4b3b-a21c-dfe58809bedf', 'ext-payment-id-3', 'CREDIT_DEBIT_CARD', 'FAILED', 280, '24f630ec-47c6-4cd0-b8aa-1e05a1463492', '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', '2019-11-25T20:39:08.272Z', 1881);
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, operator_id, payment_submitted_timestamp, payment_authorised_timestamp, insert_timestamp, central_reference_number, telephone_payment)
+values ('282ccd65-1319-4b3b-a21c-dfe58809bedf', 'ext-payment-id-3', 'CREDIT_DEBIT_CARD', 'FAILED', 280, '24f630ec-47c6-4cd0-b8aa-1e05a1463492', '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', '2019-11-25T20:39:08.272Z', 1881, true);
 
-insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, operator_id, payment_submitted_timestamp, payment_authorised_timestamp, insert_timestamp, central_reference_number)
-values ('3e06222d-dd81-4621-8915-b2a03a8da9ef', 'ext-payment-id-4', 'CREDIT_DEBIT_CARD', 'FAILED', 780, '24f630ec-47c6-4cd0-b8aa-1e05a1463492', '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', '2019-11-26T20:39:08.272Z', 22381);
+insert into caz_payment.t_payment(payment_id, payment_provider_id, payment_method, payment_provider_status, total_paid, operator_id, payment_submitted_timestamp, payment_authorised_timestamp, insert_timestamp, central_reference_number, telephone_payment)
+values ('3e06222d-dd81-4621-8915-b2a03a8da9ef', 'ext-payment-id-4', 'CREDIT_DEBIT_CARD', 'FAILED', 780, '24f630ec-47c6-4cd0-b8aa-1e05a1463492', '2019-11-23T20:38:08.272Z', '2019-11-23T20:39:08.272Z', '2019-11-26T20:39:08.272Z', 22381, true);
 
 insert into caz_payment.t_clean_air_zone_entrant_payment (
     clean_air_zone_entrant_payment_id, vrn, clean_air_zone_id, travel_date, tariff_code, charge, payment_status, update_actor)

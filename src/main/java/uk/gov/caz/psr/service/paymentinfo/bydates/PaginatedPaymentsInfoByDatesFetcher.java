@@ -33,7 +33,8 @@ class PaginatedPaymentsInfoByDatesFetcher {
         criteriaBuilder.and(
             criteriaBuilder
                 .greaterThanOrEqualTo(root.get(PaymentInfo_.INSERT_TIMESTAMP), startDate),
-            criteriaBuilder.lessThan(root.get(PaymentInfo_.INSERT_TIMESTAMP), endDate));
+            criteriaBuilder.lessThan(root.get(PaymentInfo_.INSERT_TIMESTAMP), endDate),
+            criteriaBuilder.equal(root.get(PaymentInfo_.TELEPHONE_PAYMENT), true));
 
     return paymentInfoRepository.findAll(byDates, buildPageRequest(pageSize, pageNumber));
   }
