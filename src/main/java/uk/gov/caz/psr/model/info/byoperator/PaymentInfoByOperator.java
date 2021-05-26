@@ -19,6 +19,8 @@ public class PaymentInfoByOperator {
 
   UUID paymentId;
 
+  UUID operatorId;
+
   long paymentReference;
 
   Set<String> vrns;

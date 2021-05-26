@@ -69,6 +69,7 @@ public class PaginatedPaymentsInfoByOperatorDetailsFetcher {
     return PaymentInfoByOperator.builder()
         .cazName(getCazNameFromAnyMatchingEntrant(cleanAirZoneById, entrantPaymentMatchInfos))
         .paymentId(paymentInfo.getId())
+        .operatorId(paymentInfo.getOperatorId())
         .paymentProviderStatus(paymentInfo.getExternalPaymentStatus().toString())
         .paymentReference(paymentInfo.getReferenceNumber())
         .paymentTimestamp(paymentInfo.getInsertTimestamp())
