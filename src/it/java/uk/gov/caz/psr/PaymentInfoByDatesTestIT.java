@@ -200,8 +200,8 @@ public class PaymentInfoByDatesTestIT {
             .andPageIsEqualTo(0)
             .andPageCountIsEqualTo(1)
             .andPerPageIsEqualTo(10)
-            .andTotalPaymentsCountIsEqualTo(3)
-            .andPaymentsSizeIsEqualTo(3)
+            .andTotalPaymentsCountIsEqualTo(2)
+            .andPaymentsSizeIsEqualTo(2)
             .andPaymentsEqualTo(expectedPayments)
             .andResultsWereFetchedByTwoDatabaseQueries();
       }
@@ -222,8 +222,8 @@ public class PaymentInfoByDatesTestIT {
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(0)
-          .andPageCountIsEqualTo(3)
-          .andTotalPaymentsCountIsEqualTo(3)
+          .andPageCountIsEqualTo(2)
+          .andTotalPaymentsCountIsEqualTo(2)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(0)))
@@ -239,43 +239,15 @@ public class PaymentInfoByDatesTestIT {
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(1)
-          .andPageCountIsEqualTo(3)
-          .andTotalPaymentsCountIsEqualTo(3)
+          .andPageCountIsEqualTo(2)
+          .andTotalPaymentsCountIsEqualTo(2)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(1)));
-
-      // third page
-      whenRequested()
-          .withStartDateSizeEqualTo(VALID_START_DATE)
-          .withEndDateSizeEqualTo(VALID_END_DATE)
-          .withPageSizeEqualTo(1)
-          .withPageNumberEqualTo(2)
-          .then()
-          .headerContainsCorrelationId()
-          .responseHasOkStatus()
-          .andPageIsEqualTo(2)
-          .andPageCountIsEqualTo(3)
-          .andTotalPaymentsCountIsEqualTo(3)
-          .andPerPageIsEqualTo(1)
-          .andPaymentsSizeIsEqualTo(1)
-          .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(2)));
     }
 
     private List<Map<String, Object>> getExpectedPayments() {
       return Arrays.asList(
-          ImmutableMap.<String, Object>builder()
-              .put("paymentTimestamp", "2019-11-26 20:39:08")
-              .put("totalPaid", 780)
-              .put("cazName", "Bath")
-              .put("paymentId", "3e06222d-dd81-4621-8915-b2a03a8da9ef")
-              .put("paymentReference", 22381)
-              .put("paymentProviderStatus", "FAILED")
-              .put("vrns", Collections.singletonList("MD16ABC"))
-              .put("isChargedback", false)
-              .put("isRefunded", false)
-              .build(),
-
           ImmutableMap.<String, Object>builder()
               .put("paymentTimestamp", "2019-11-25 20:39:08")
               .put("totalPaid", 280)
