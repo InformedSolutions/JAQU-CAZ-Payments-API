@@ -331,6 +331,7 @@ swagger:
         caz-name: Clean Air Zone name
         total-paid: The amount of money paid to enter the CAZ
         payment-id: Internal identifier of this payment
+        operator-id: An optional field storing the identifier of the operator who makes the payment. Can be non-null only when telephonePayment is true.
         payment-reference: Customer-friendly payment reference number
         vrns: Collection of VRNs against which the payment was made
         status: External status of this payment
