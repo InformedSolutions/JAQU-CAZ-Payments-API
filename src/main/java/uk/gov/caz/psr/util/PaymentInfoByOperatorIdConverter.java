@@ -40,6 +40,7 @@ public class PaymentInfoByOperatorIdConverter {
             .cazName(paymentInfo.getCazName())
             .totalPaid(paymentInfo.getTotalPaid())
             .paymentId(paymentInfo.getPaymentId())
+            .operatorId(paymentInfo.getOperatorId())
             .paymentReference(paymentInfo.getPaymentReference())
             .vrns(paymentInfo.getVrns())
             .paymentProviderStatus(paymentInfo.getPaymentProviderStatus())
