@@ -89,6 +89,13 @@ public class PaymentsInfoByOperatorResponse {
     UUID paymentId;
 
     /**
+     * An identifier of the operator who is making the payment.
+     */
+    @ApiModelProperty(value =
+        "${swagger.model.descriptions.payments-info-by-operator-id-response.operator-id}")
+    UUID operatorId;
+
+    /**
      * Customer-friendly payment reference number.
      */
     @ApiModelProperty(value =
