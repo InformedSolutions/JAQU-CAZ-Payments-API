@@ -23,9 +23,9 @@ public class PaymentStatusUpdateDetails {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.payment-status}")
   @NotNull
-  @ValueIn(possibleValues = {"paid", "refunded", "chargeback"},
+  @ValueIn(possibleValues = {"paid", "refunded", "chargeback", "failed"},
       message = "Incorrect payment status update, please use "
-          + "\"paid\", \"chargeback\", or \"refunded\" instead")
+          + "\"paid\", \"chargeback\", \"refunded\" or \"failed\" instead")
   String paymentStatus;
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.case-reference}")

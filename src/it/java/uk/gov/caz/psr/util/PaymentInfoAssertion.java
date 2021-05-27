@@ -12,7 +12,6 @@ import static uk.gov.caz.psr.controller.ChargeSettlementController.TIMESTAMP;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 import org.springframework.http.HttpStatus;
@@ -117,6 +116,14 @@ public class PaymentInfoAssertion {
   public PaymentInfoAssertion doesNotContainNotPaidEntries() {
     validatableResponse.body("results.payments.lineItems.findAll { it.paymentStatus == "
         + "'notPaid' }.paymentStatus.flatten().toSet().size()", equalTo(0));
+    return this;
+  }
+
+  public PaymentInfoAssertion containsMarkedAsFailedPayments(boolean hasFailedPayments) {
+    if (hasFailedPayments) {
+      validatableResponse
+          .body("results.payments.lineItems.paymentStatus.flatten()", hasItems("failed"));
+    }
     return this;
   }
 

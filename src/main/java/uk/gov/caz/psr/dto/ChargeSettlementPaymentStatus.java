@@ -14,7 +14,9 @@ public enum ChargeSettlementPaymentStatus {
   @JsonProperty("refunded")
   REFUNDED,
   @JsonProperty("chargeback")
-  CHARGEBACK;
+  CHARGEBACK,
+  @JsonProperty("failed")
+  FAILED;
 
   /**
    * Maps {@link ChargeSettlementPaymentStatus} to {@link InternalPaymentStatus}.

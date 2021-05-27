@@ -284,6 +284,12 @@ public class TestObjectFactory {
           .dateOfCazEntry(date).build();
     }
 
+    public static PaymentStatusUpdateDetails failedWithDateOfCazEntry(LocalDate date) {
+      return PaymentStatusUpdateDetails.builder().caseReference("CaseReference")
+          .paymentStatus("failed")
+          .dateOfCazEntry(date).build();
+    }
+
     public static PaymentStatusUpdateDetails anyWithoutCaseReference() {
       return PaymentStatusUpdateDetails.builder()
           .paymentStatus("refunded")

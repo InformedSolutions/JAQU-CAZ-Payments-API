@@ -7,7 +7,8 @@ public enum InternalPaymentStatus {
   PAID,
   NOT_PAID,
   REFUNDED,
-  CHARGEBACK;
+  CHARGEBACK,
+  FAILED;
 
   /**
    * Maps {@link ExternalPaymentStatus} to {@link InternalPaymentStatus}.
