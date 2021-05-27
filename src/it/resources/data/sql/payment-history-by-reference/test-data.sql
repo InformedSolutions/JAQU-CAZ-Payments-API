@@ -48,5 +48,5 @@ SET tariff_code = 'tariff-2', update_actor = 'USER'
 WHERE clean_air_zone_entrant_payment_id = 'ce083912-0f8d-11ea-bbdd-47debb103c06';
 
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
-SET payment_status = 'CHARGEBACK', update_actor = 'LA'
+SET payment_status = 'FAILED', update_actor = 'LA'
 WHERE clean_air_zone_entrant_payment_id = 'd22c4d6c-0f8d-11ea-bbdd-7ff4b1cc8ff1';
