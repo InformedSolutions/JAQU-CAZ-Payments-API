@@ -76,7 +76,8 @@ public class PaymentService {
         .findAllForPaymentHistory(
             payment.getId(),
             EntrantPaymentUpdateActor.LA,
-            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK)
+            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK,
+                InternalPaymentStatus.FAILED)
         );
   }
 }
