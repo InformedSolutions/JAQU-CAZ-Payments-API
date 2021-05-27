@@ -49,6 +49,7 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private static final String REFUNDED_BUT_NOT_CAPTURED_DATE_STRING = "2019-11-08";
   private static final String PAID_BUT_ENTRANT_NOT_REGISTERED_DATE_STRING = "2019-11-09";
   private static final String TELEPHONE_PAYMENT_DATE_STRING = "2019-11-10";
+  private static final String FAILED_BY_LA_DATE_STRING = "2019-11-11";
 
   private static final String VALID_CAZ_ID = "b8e53786-c5ca-426a-a701-b14ee74857d4";
   private static final String VALID_CORRELATION_HEADER = "79b7a48f-27c7-4947-bd1c-670f981843ef";
@@ -56,10 +57,12 @@ public class GetChargeSettlementPaymentStatusTestIT {
   private static final String VALID_EXTERNAL_ID_FOR_NOT_PAID = "12345test";
   private static final String VALID_EXTERNAL_ID_FOR_PAID = "54321test";
   private static final String VALID_EXTERNAL_ID_FOR_PAID_TELEPHONE_PAYMENT = "987654tyu";
+  private static final String VALID_EXTERNAL_ID_FOR_FAILED_LA = "6543test";
   private static final String VALID_CASE_REFERENCE = "case-reference123";
   private static final Long VALID_PAYMENT_REFERENCE = 3001L;
   private static final Long PAYMENT_REFERENCE_UNPAID = 3000L;
   private static final Long PAYMENT_REFERENCE_TELEPHONE = 3004L;
+  private static final Long PAYMENT_REFERENCE_FAILED_LA = 3005L;
   private static final String PAYMENT_STATUS_GET_PATH = ChargeSettlementController.PAYMENT_STATUS_PATH;
 
   private static final PaymentMethod VALID_PAYMENT_METHOD = PaymentMethod.CREDIT_DEBIT_CARD;
@@ -187,6 +190,31 @@ public class GetChargeSettlementPaymentStatusTestIT {
         .andExpect(content().json(
             getResponseWith(InternalPaymentStatus.REFUNDED, VALID_CASE_REFERENCE,
                 null, 0L, null, false)));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "ND84VSX", // existing
+      "Nd84vSX", "nD84vsX", // with changed capitalisation
+      "ND 84 VSX", "  ND84V S X ", "N D8   4VSX", // with whitespaces
+      "N D8  4v SX " // with whitespaces and changed capitalisation
+  })
+  public void shouldReturn200AndFailedPaymentStatusWhenMarkedAsRefundedByLaButEntrantNotRecorded(
+      String vrn)
+      throws Exception {
+    mockMvc.perform(get(PAYMENT_STATUS_GET_PATH)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header(Constants.X_CORRELATION_ID_HEADER, VALID_CORRELATION_HEADER)
+        .header(Headers.TIMESTAMP, LocalDateTime.now())
+        .header(Headers.X_API_KEY, VALID_CAZ_ID)
+        .param("vrn", vrn)
+        .param("dateOfCazEntry", FAILED_BY_LA_DATE_STRING))
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            getResponseWith(InternalPaymentStatus.FAILED, VALID_CASE_REFERENCE,
+                VALID_EXTERNAL_ID_FOR_FAILED_LA, PAYMENT_REFERENCE_FAILED_LA, VALID_PAYMENT_METHOD,
+                false)));
   }
 
   @ParameterizedTest

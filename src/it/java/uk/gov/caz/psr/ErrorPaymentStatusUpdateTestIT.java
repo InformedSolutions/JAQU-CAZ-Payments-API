@@ -62,18 +62,19 @@ public class ErrorPaymentStatusUpdateTestIT {
   private ObjectMapper objectMapper;
   @Autowired
   private JdbcTemplate jdbcTemplate;
-  
+
   private static final String TEST_VRN = "CAS300";
   private static final String NOT_NULL = "must not be null";
   private static final String NOT_EMPTY = " is mandatory and cannot be blank";
   private static final String INCORRECT_STATUS = "Incorrect payment status update, please use "
-      + "\"paid\", \"chargeback\", or \"refunded\" instead";
-  private static final PaymentStatusUpdateDetails INVALID_TRAVEL_DATE = 
+      + "\"paid\", \"chargeback\", \"refunded\" or \"failed\" instead";
+  private static final PaymentStatusUpdateDetails INVALID_TRAVEL_DATE =
       PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 1));
   private static final String NON_EXISTING_VRN = "MARYSIA";
-  private static final String REQUEST_WITHOUT_PAYMENT_STATUS = "{\"vrn\":\"" + TEST_VRN + "\",\"statusUpdates\""
-      + ":[{\"dateOfCazEntry\":\"2020-02-05\",\"paymentProviderId\":\"akor5rnblpfdasco6pp04dc5if\","
-      + "\"caseReference\":\"test123\"}]}";
+  private static final String REQUEST_WITHOUT_PAYMENT_STATUS =
+      "{\"vrn\":\"" + TEST_VRN + "\",\"statusUpdates\""
+          + ":[{\"dateOfCazEntry\":\"2020-02-05\",\"paymentProviderId\":\"akor5rnblpfdasco6pp04dc5if\","
+          + "\"caseReference\":\"test123\"}]}";
 
   @BeforeEach
   public void startMockServer() {
@@ -92,14 +93,14 @@ public class ErrorPaymentStatusUpdateTestIT {
         .noEntrantPaymentUpdatedInDatabase();
 
   }
-  
+
   @Test
   public void errorsPaymentStatusUpdateWithUnfinishedPayment() {
     given()
         .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithUnfinishedPayment())
         .whenRequestSubmitted()
         .then()
-        .noEntrantPaymentUpdatedInDatabase();    
+        .noEntrantPaymentUpdatedInDatabase();
   }
 
   @Test
@@ -114,7 +115,7 @@ public class ErrorPaymentStatusUpdateTestIT {
         .paymentStatusUpdateRequest(paymentStatusUpdateRequestWithInvalidPaymentStatus())
         .failsWhenInvalidStatusRequestSubmitted();
   }
-  
+
   @Test
   public void paymentStatusUpdateWithoutDateOfCazEntry() {
     given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutDateOfCazEntry())
@@ -122,15 +123,16 @@ public class ErrorPaymentStatusUpdateTestIT {
         .then()
         .noEntrantPaymentUpdatedInDatabase();
   }
-  
+
   @Test
   public void paymentStatusUpdateWithoutPaymentStatus() {
     given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutPaymentStatus())
-        .whenPaymentStatusRequestSubmitted("paymentStatus", NOT_NULL, INCORRECT_STATUS, REQUEST_WITHOUT_PAYMENT_STATUS)
+        .whenPaymentStatusRequestSubmitted("paymentStatus", NOT_NULL, INCORRECT_STATUS,
+            REQUEST_WITHOUT_PAYMENT_STATUS)
         .then()
         .noEntrantPaymentUpdatedInDatabase();
   }
-  
+
   @Test
   public void paymentStatusUpdateWithoutCaseReference() {
     given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithoutCaseReference())
@@ -148,7 +150,7 @@ public class ErrorPaymentStatusUpdateTestIT {
         .statusUpdates(exampleStatusUpdates())
         .build();
   }
-  
+
   private PaymentStatusUpdateRequest paymentStatusUpdateRequestForNonExistingParams() {
     return PaymentStatusUpdateRequest.builder()
         .vrn(NON_EXISTING_VRN)
@@ -176,7 +178,7 @@ public class ErrorPaymentStatusUpdateTestIT {
         .statusUpdates(statusUpdatesWithoutPaymentStatus())
         .build();
   }
-  
+
   private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithUnfinishedPayment() {
     return PaymentStatusUpdateRequest.builder()
         .statusUpdates(unfinishedPaymentStatusUpdate())
@@ -196,19 +198,19 @@ public class ErrorPaymentStatusUpdateTestIT {
         PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(LocalDate.of(2019, 11, 2))
     );
   }
-  
+
   private List<PaymentStatusUpdateDetails> statusUpdatesWithoutCaseReference() {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.anyWithoutCaseReference()
     );
   }
-  
+
   private List<PaymentStatusUpdateDetails> statusUpdatesWithoutDateOfCazEntry() {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.anyWithoutDateOfCazEntry()
     );
   }
-  
+
   private List<PaymentStatusUpdateDetails> statusUpdatesWithoutPaymentStatus() {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.anyWithoutPaymentStatus()
@@ -282,7 +284,8 @@ public class ErrorPaymentStatusUpdateTestIT {
       return this;
     }
 
-    public PaymentStatusUpdateJourneyAssertion whenPaymentStatusRequestSubmitted(String errorField, String msg,
+    public PaymentStatusUpdateJourneyAssertion whenPaymentStatusRequestSubmitted(String errorField,
+        String msg,
         String msg2, String body) {
       String correlationId = "79b7a48f-27c7-4947-bd1c-670f981843ef";
 
@@ -329,7 +332,7 @@ public class ErrorPaymentStatusUpdateTestIT {
           .statusCode(HttpStatus.BAD_REQUEST.value())
           .body("errors[0].vrn", equalTo(VALID_VRN))
           .body("errors[0].detail", containsString(
-              "Incorrect payment status update, please use \"paid\", \"chargeback\", or \"refunded\" instead"));
+              "Incorrect payment status update, please use \"paid\", \"chargeback\", \"refunded\" or \"failed\" instead"));
       return this;
     }
 
@@ -373,8 +376,9 @@ public class ErrorPaymentStatusUpdateTestIT {
           .body("errors[0].status", equalTo(400))
           .body("errors[0].vrn", equalTo(vrn))
           .body("errors[0].title", equalTo("Vehicle entry not found"))
-          .body("errors[0].detail", 
-              containsString("A vehicle entry for the supplied combination of vrn and date of CAZ entry"));
+          .body("errors[0].detail",
+              containsString(
+                  "A vehicle entry for the supplied combination of vrn and date of CAZ entry"));
       return this;
 
     }
