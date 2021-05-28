@@ -87,7 +87,8 @@ public class CsvContentGenerator {
     List<UUID> paymentIds = getPaymentIds(entrantPayments);
     List<PaymentModification> paymentModifications = paymentDetailRepository
         .findAllForPaymentsHistory(paymentIds, EntrantPaymentUpdateActor.LA,
-            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK));
+            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK,
+                InternalPaymentStatus.FAILED));
     return entrantPayments.stream()
         .map(entrantPayment -> enrichEntrantPayment(entrantPayment, accountUsers,
             cleanAirZonesResponse, paymentModifications))
