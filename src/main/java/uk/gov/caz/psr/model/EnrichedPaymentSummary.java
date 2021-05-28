@@ -14,7 +14,7 @@ import lombok.Value;
  */
 @Value
 @Builder
-@JsonIgnoreProperties({"refunded", "chargedback"})
+@JsonIgnoreProperties({"refunded", "chargedback", "unsuccessful"})
 public class EnrichedPaymentSummary {
 
   /**
@@ -54,6 +54,11 @@ public class EnrichedPaymentSummary {
   @JsonProperty(value = "isChargedback")
   boolean isChargedback;
 
+  /**
+   * Indicates if the payment was failed.
+   */
+  @JsonProperty(value = "isUnsuccessful")
+  boolean isUnsuccessful;
 
   /**
    * Date of the payment.
