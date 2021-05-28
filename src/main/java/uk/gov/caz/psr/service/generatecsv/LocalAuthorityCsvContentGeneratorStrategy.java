@@ -46,7 +46,7 @@ public class LocalAuthorityCsvContentGeneratorStrategy implements CsvContentGene
         safeToString(enrichedCsvEntrantPayment.getPaymentProviderId()),
         safeToString(enrichedCsvEntrantPayment.getEntriesCount()),
         toFormattedPounds(enrichedCsvEntrantPayment.getTotalPaid()),
-        safeToString(enrichedCsvEntrantPayment.getStatus()),
+        toHumanizedStatus(enrichedCsvEntrantPayment.getStatus()),
         safeToString(enrichedCsvEntrantPayment.getDateReceivedFromLa()),
         safeToString(enrichedCsvEntrantPayment.getCaseReference()));
   }
@@ -65,5 +65,18 @@ public class LocalAuthorityCsvContentGeneratorStrategy implements CsvContentGene
    */
   final double toPounds(int amountInPennies) {
     return currencyFormatter.parsePennies(amountInPennies);
+  }
+
+  /**
+   * Converts status to humanized version if present.
+   */
+  final String toHumanizedStatus(String status) {
+    if (status == null) {
+      return "";
+    } else if (status.equals("FAILED")) {
+      return "Unsuccessful";
+    } else {
+      return status;
+    }
   }
 }
