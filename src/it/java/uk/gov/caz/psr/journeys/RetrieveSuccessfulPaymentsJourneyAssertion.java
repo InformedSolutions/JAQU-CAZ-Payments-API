@@ -112,11 +112,12 @@ public class RetrieveSuccessfulPaymentsJourneyAssertion {
     return this;
   }
 
-
-  public void responseIncludeChargebackFlag() {
+  public void responseIncludeRequiredFlags() {
     SuccessfulPaymentsResponse response = this.successfulPaymentsResponse;
 
+    assertThat(response.getPayments().stream().findFirst().get().isRefunded()).isTrue();
     assertThat(response.getPayments().stream().findFirst().get().isChargedback()).isTrue();
+    assertThat(response.getPayments().stream().findFirst().get().isUnsuccessful()).isTrue();
   }
 
   private Set<String> getPayersNames() {

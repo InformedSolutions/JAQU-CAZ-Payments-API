@@ -221,6 +221,9 @@ public class RetrieveSuccessfulPaymentsService {
             .isRefunded(
                 paymentHadModifiedStatus(paymentSummary.getPaymentId(),
                     matchingPaymentModificationStatuses, InternalPaymentStatus.REFUNDED))
+            .isUnsuccessful(
+                paymentHadModifiedStatus(paymentSummary.getPaymentId(),
+                    matchingPaymentModificationStatuses, InternalPaymentStatus.FAILED))
             .build())
         .collect(Collectors.toList());
   }
@@ -253,7 +256,8 @@ public class RetrieveSuccessfulPaymentsService {
     List<PaymentModificationStatus> paymentModificationStatuses = paymentDetailRepository
         .getPaymentStatusesForPaymentIds(paymentIds,
             EntrantPaymentUpdateActor.LA,
-            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK));
+            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK,
+                InternalPaymentStatus.FAILED));
     return paymentModificationStatuses.stream()
         .collect(Collectors.groupingBy(PaymentModificationStatus::getPaymentId));
   }
@@ -279,5 +283,4 @@ public class RetrieveSuccessfulPaymentsService {
       return false;
     }
   }
-
 }

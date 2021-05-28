@@ -11,6 +11,7 @@ INSERT INTO caz_payment.t_clean_air_zone_entrant_payment(
 	  ('43ea77cc-93cb-4df3-b731-5244c0de9cc8', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-01', 'tariff_code', 50, 'PAID', 'USER'),
 	  ('688f8278-2f0f-4710-bb7c-6b0cca04c1bc', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-03', 'tariff_code', 50, 'PAID', 'USER'),
 	  ('9cc2dd1a-905e-4eaf-af85-0b14f95aab89', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-02', 'tariff_code', 100, 'PAID', 'USER'),
+	  ('0cc2dd1a-905e-4eaf-af85-0b14f95aab80', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-05', 'tariff_code', 100, 'FAILED', 'USER'),
 	  ('21b7049d-b978-482f-a882-4de6bb9d699c', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-04', 'tariff_code', 100, 'PAID', 'USER');
 
 INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(
@@ -19,8 +20,8 @@ INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(
   ('a277431b-4b42-4f61-af43-b262a0467807', '43ea77cc-93cb-4df3-b731-5244c0de9cc8', 'b71b72a5-902f-4a16-a91d-1a4463b801db', true),
   ('2d34ec3b-6ca3-4a05-9301-8462b46e1cc0', '688f8278-2f0f-4710-bb7c-6b0cca04c1bc', 'b71b72a5-902f-4a16-a91d-1a4463b801db', true),
   ('74af34d6-255d-495d-bbce-aa5bcea9736d', '9cc2dd1a-905e-4eaf-af85-0b14f95aab89', 'b71b72a5-902f-4a16-a91d-1a4463b801db', true),
+  ('06991ad9-c5c1-4173-a31e-88f7a98de8a1', '0cc2dd1a-905e-4eaf-af85-0b14f95aab80', 'b71b72a5-902f-4a16-a91d-1a4463b801db', true),
   ('26991ad9-c5c1-4173-a31e-88f7a98de8c0', '21b7049d-b978-482f-a882-4de6bb9d699c', 'dabc1391-ff31-427a-8000-69037deb2d3a', true);
-
 
 -- Update entrant payments to have chargeback and refunded statuses in payments audit table
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
@@ -30,6 +31,10 @@ WHERE clean_air_zone_entrant_payment_id = '688f8278-2f0f-4710-bb7c-6b0cca04c1bc'
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
 SET payment_status = 'REFUNDED', update_actor = 'LA'
 WHERE clean_air_zone_entrant_payment_id = '9cc2dd1a-905e-4eaf-af85-0b14f95aab89';
+
+UPDATE caz_payment.t_clean_air_zone_entrant_payment
+SET payment_status = 'FAILED', update_actor = 'LA'
+WHERE clean_air_zone_entrant_payment_id = '0cc2dd1a-905e-4eaf-af85-0b14f95aab80';
 
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
 SET tariff_code = 'tariff-2', update_actor = 'USER'

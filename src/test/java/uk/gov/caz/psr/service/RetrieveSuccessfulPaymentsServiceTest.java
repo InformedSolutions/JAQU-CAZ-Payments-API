@@ -28,8 +28,6 @@ import uk.gov.caz.definitions.dto.CleanAirZonesDto;
 import uk.gov.caz.psr.dto.accounts.AccountUserResponse;
 import uk.gov.caz.psr.dto.accounts.AccountUsersResponse;
 import uk.gov.caz.psr.model.EnrichedPaymentSummary;
-import uk.gov.caz.psr.model.EntrantPaymentUpdateActor;
-import uk.gov.caz.psr.model.InternalPaymentStatus;
 import uk.gov.caz.psr.model.PaginationData;
 import uk.gov.caz.psr.model.PaymentSummary;
 import uk.gov.caz.psr.model.PaymentToCleanAirZoneMapping;
