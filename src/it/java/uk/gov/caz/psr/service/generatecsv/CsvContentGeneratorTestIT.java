@@ -71,7 +71,7 @@ class CsvContentGeneratorTestIT extends ExternalCallsIT {
               + "£28.00,,,");
       assertThat(String.join(",", csvRowResults.get(2))).isEqualTo(
           "2019-11-24,Deleted user,Birmingham,PD84VSX,2019-11-04,£11.00,998,ext-payment-id-2,2,"
-              + "£37.00,CHARGEBACK," + LocalDate.now().toString() + ",");
+              + "£37.00,Unsuccessful," + LocalDate.now().toString() + ",");
       assertThat(String.join(",", csvRowResults.get(3))).isEqualTo(
           "2019-11-24,Deleted user,Birmingham,QD84VSX,2019-11-05,£26.00,998,ext-payment-id-2,2,"
               + "£37.00,,,");

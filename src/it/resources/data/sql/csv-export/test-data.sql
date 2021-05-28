@@ -53,5 +53,5 @@ WHERE clean_air_zone_entrant_payment_id = 'ce083912-0f8d-11ea-bbdd-47debb103c06'
 
 -- Single LA modification for d22c4d6c-0f8d-11ea-bbdd-7ff4b1cc8ff1
 UPDATE caz_payment.t_clean_air_zone_entrant_payment
-SET payment_status = 'CHARGEBACK', update_actor = 'LA'
+SET payment_status = 'FAILED', update_actor = 'LA'
 WHERE clean_air_zone_entrant_payment_id = 'd22c4d6c-0f8d-11ea-bbdd-7ff4b1cc8ff1';
