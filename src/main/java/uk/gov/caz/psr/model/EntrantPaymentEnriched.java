@@ -49,6 +49,7 @@ public class EntrantPaymentEnriched {
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.isModified")
   @JsonProperty(value = "isModified")
   boolean isModified;
+
   /**
    * Function constructing entity based on database entities.
    *
@@ -78,8 +79,7 @@ public class EntrantPaymentEnriched {
   private static boolean isPaymentModified(EntrantPaymentMatchInfo matchInfo,
       List<PaymentAuditData> auditData) {
     return getFilteredAuditData(matchInfo, auditData)
-        .anyMatch(e -> InternalPaymentStatus.modifiedStatuses().contains(
-        e.getPaymentStatus()));
+        .anyMatch(e -> e.getPaymentStatus().hasModifiedFlag());
   }
 
   /**

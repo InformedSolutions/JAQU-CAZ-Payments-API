@@ -335,8 +335,7 @@ swagger:
         payment-reference: Customer-friendly payment reference number
         vrns: Collection of VRNs against which the payment was made
         status: External status of this payment
-        isRefunded: indicates if the payment was refunded
-        isChargedback: indicates if the payment was charged back
+        isModified: indicates if the payment was refunded, charged back or failed
       historical-payment:
         travelDate: date of travel
         paymentTimestamp: when payment was done

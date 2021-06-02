@@ -44,8 +44,7 @@ public class PaymentInfoByOperatorIdConverter {
             .paymentReference(paymentInfo.getPaymentReference())
             .vrns(paymentInfo.getVrns())
             .paymentProviderStatus(paymentInfo.getPaymentProviderStatus())
-            .isChargedback(paymentInfo.isChargedback())
-            .isRefunded(paymentInfo.isRefunded())
+            .isModified(paymentInfo.isModified())
             .build()
         )
         .collect(Collectors.toList());

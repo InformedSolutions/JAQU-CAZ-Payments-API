@@ -24,8 +24,12 @@ public enum InternalPaymentStatus {
     return NOT_PAID;
   }
 
-  public static Set<InternalPaymentStatus> modifiedStatuses() {
+  private static Set<InternalPaymentStatus> modifiedStatuses() {
     return new HashSet<>(Arrays.asList(REFUNDED, CHARGEBACK, FAILED));
+  }
+
+  public boolean hasModifiedFlag() {
+    return modifiedStatuses().contains(this);
   }
 
 }
