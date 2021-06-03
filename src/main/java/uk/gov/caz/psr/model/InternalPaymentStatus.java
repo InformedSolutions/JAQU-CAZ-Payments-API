@@ -28,6 +28,10 @@ public enum InternalPaymentStatus {
     return new HashSet<>(Arrays.asList(REFUNDED, CHARGEBACK, FAILED));
   }
 
+  /**
+   * Returns information whether a status has should trigger `modification` flag when
+   * there is a such a payment in history
+   */
   public boolean hasModifiedFlag() {
     return modifiedStatuses().contains(this);
   }
