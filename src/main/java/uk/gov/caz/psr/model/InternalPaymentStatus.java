@@ -30,7 +30,7 @@ public enum InternalPaymentStatus {
 
   /**
    * Returns information whether a status has should trigger `modification` flag when
-   * there is a such a payment in history
+   * there is a such a payment in history.
    */
   public boolean hasModifiedFlag() {
     return modifiedStatuses().contains(this);
