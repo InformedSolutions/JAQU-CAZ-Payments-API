@@ -102,8 +102,7 @@ public class SuccessPaymentStatusUpdateTestIT {
   private List<PaymentStatusUpdateDetails> validStatusUpdates() {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.refundedWithDateOfCazEntry(TRAVEL_DATE_ONE),
-        PaymentStatusUpdateDetailsFactory
-            .refundedWithDateOfCazEntry(TRAVEL_DATE_TWO)
+        PaymentStatusUpdateDetailsFactory.failedWithDateOfCazEntry(TRAVEL_DATE_TWO)
     );
   }
 
@@ -113,7 +112,8 @@ public class SuccessPaymentStatusUpdateTestIT {
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
     private final UUID cleanAirZoneId = UUID.fromString("b8e53786-c5ca-426a-a701-b14ee74857d4");
-    private final int EXPECTED_NUMBER_OF_REFUNDED_RECORDS = 4;
+    private final int EXPECTED_NUMBER_OF_REFUNDED_RECORDS = 3;
+    private final int EXPECTED_NUMBER_OF_FAILED_RECORDS = 2;
 
     private PaymentStatusUpdateRequest paymentStatusUpdateRequest;
 
@@ -160,6 +160,7 @@ public class SuccessPaymentStatusUpdateTestIT {
 
     public PaymentStatusUpdateJourneyAssertion entrantPaymentsAreUpdatedInTheDatabase() {
       verifyThatRefundedEntrantPaymentsExists();
+      verifyThatFailedEntrantPaymentsExists();
       return this;
     }
 
@@ -172,34 +173,47 @@ public class SuccessPaymentStatusUpdateTestIT {
       assertThat(vehicleEntrantCount).isEqualTo(EXPECTED_NUMBER_OF_REFUNDED_RECORDS);
     }
 
+    private void verifyThatFailedEntrantPaymentsExists() {
+      int vehicleEntrantCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
+          "caz_payment.t_clean_air_zone_entrant_payment",
+          "clean_air_zone_id = '" + cleanAirZoneId.toString() + "' AND "
+              + "vrn = 'ND84VSX' AND "
+              + "payment_status = '" + InternalPaymentStatus.FAILED.name() + "'");
+      assertThat(vehicleEntrantCount).isEqualTo(EXPECTED_NUMBER_OF_FAILED_RECORDS);
+    }
+
     public PaymentStatusUpdateJourneyAssertion masterRecordExistsForVrn(String vrn) {
       verifyThatMasterRecordExistsForVrnAndCleanAirZone(vrn);
       return this;
     }
-    
+
     private void verifyThatMasterRecordExistsForVrnAndCleanAirZone(String vrn) {
-      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, AuditTableWrapper.MASTER, 
+      int masterCount = JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, AuditTableWrapper.MASTER,
           "vrn = '" + vrn + "' AND clean_air_zone_id = '" + cleanAirZoneId + "'");
       assertThat(masterCount).isEqualTo(1);
     }
 
     public void detailTableIsUpdated(String vrn) {
-      verifyThatDetailRecordExistsForNewPaymentStatusForBothDates(vrn);      
+      verifyThatDetailRecordExistsForNewPaymentStatusForBothDates(vrn);
     }
-    
+
     private void verifyThatDetailRecordExistsForNewPaymentStatusForBothDates(String vrn) {
-      Object[] params = new Object[] {vrn, cleanAirZoneId};
-      UUID masterId = jdbcTemplate.queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
-      int detailDay1Count = getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(masterId, TRAVEL_DATE_ONE);
-      int detailDay2Count = getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(masterId, TRAVEL_DATE_TWO);
+      Object[] params = new Object[]{vrn, cleanAirZoneId};
+      UUID masterId = jdbcTemplate
+          .queryForObject(AuditTableWrapper.MASTER_ID_SQL, params, UUID.class);
+      int detailDay1Count = getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(masterId,
+          TRAVEL_DATE_ONE, InternalPaymentStatus.REFUNDED);
+      int detailDay2Count = getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(masterId,
+          TRAVEL_DATE_TWO, InternalPaymentStatus.FAILED);
       assertThat(detailDay1Count + detailDay2Count).isEqualTo(2);
     }
-    
-    private int getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(UUID masterId, LocalDate travelDate) {
+
+    private int getDetailRecordNumberForVrnAndCleanAirZoneAndTravelDate(UUID masterId,
+        LocalDate travelDate, InternalPaymentStatus paymentStatus) {
       return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate,
-          AuditTableWrapper.DETAIL,"payment_status = '" + InternalPaymentStatus.REFUNDED.name() 
-          + "' AND " + AuditTableWrapper.MASTER_ID + " = '" + masterId
-          + "' AND travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
+          AuditTableWrapper.DETAIL, "update_actor = 'LA' and payment_status = '" +
+              paymentStatus.name() + "' AND " + AuditTableWrapper.MASTER_ID + " = '" + masterId
+              + "' AND travel_date = '" + travelDate.format(DateTimeFormatter.ISO_DATE) + "'");
     }
   }
 }

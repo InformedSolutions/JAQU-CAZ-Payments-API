@@ -3,6 +3,7 @@ INSERT INTO caz_payment.t_payment(
 	VALUES
 	  ('b71b72a5-902f-4a16-a91d-1a4463b801db', 'CREDIT_DEBIT_CARD', 'SUCCESS', '12345test', 100, now(), now(), 3000, false),
 	  ('b73a9b3c-d692-4e7e-b094-1715c5e4a036', 'CREDIT_DEBIT_CARD', 'SUCCESS', '54321test', 200, now(), now(), 3001, false),
+	  ('3d74c3fb-d6f4-44fd-a209-1cffee1ed5fb', 'CREDIT_DEBIT_CARD', 'SUCCESS', '6543test', 200, now(), now(), 3005, false),
 	  -- Payment which is not finished
 	  ('3e109f68-c11f-48dc-b27a-fa6a6bd387f6', 'CREDIT_DEBIT_CARD', 'STARTED', '12test345', 100, now(), null, 3002, false),
 	  -- Payment which is Failed
@@ -20,6 +21,9 @@ INSERT INTO caz_payment.t_clean_air_zone_entrant_payment(
 
     -- Valid with REFUNDED status
 	  ('688f8278-2f0f-4710-bb7c-6b0cca04c1bc', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-02', 50, 'tariffCode!', 'REFUNDED', 'case-reference123', 'LA', true),
+
+    -- Valid with FAILED status
+	  ('04df6943-d2bf-460b-8437-f2ee4c2371ab', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-11', 50, 'tariffCode!', 'FAILED', 'case-reference123', 'LA', true),
 
     -- Valid with REFUNDED status and not recorded by VCCS
 	  ('fd028442-dc28-43df-b40f-6571c4fc0f98', 'ND84VSX', 'b8e53786-c5ca-426a-a701-b14ee74857d4', '2019-11-08', 50, 'tariffCode!', 'REFUNDED', 'case-reference123', 'LA', false),
@@ -49,6 +53,7 @@ INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(
   ('2d34ec3b-6ca3-4a05-9301-8462b46e1cc0', '688f8278-2f0f-4710-bb7c-6b0cca04c1bc', 'b73a9b3c-d692-4e7e-b094-1715c5e4a036', true),
   ('b5d85dbe-3ece-42d5-be81-d57e41471c5f', '9e8a8d54-25ff-43e6-85f6-01a4c8f2a2d2', 'b71b72a5-902f-4a16-a91d-1a4463b801db', true),
   ('27e276bc-aed1-4b4b-904f-5d94548d8dfe', '9c3f36fa-0ddd-4204-b106-3fc90af6efb6', 'b73a9b3c-d692-4e7e-b094-1715c5e4a036', true),
+  ('9b515be7-182c-4f27-9871-c1c9fd55a2a6', '04df6943-d2bf-460b-8437-f2ee4c2371ab', '3d74c3fb-d6f4-44fd-a209-1cffee1ed5fb', true),
   ('512b0982-3e7e-4be6-b0ef-2b3310627a0a', '9c3f36fa-0ddd-4204-b106-3fc90af6efb6', 'b71b72a5-902f-4a16-a91d-1a4463b801db', false),
   ('279c55ba-6bf6-444e-afe7-c328d2820a3f', '9f6212bc-596f-47ee-a927-928441e405c5', '3e109f68-c11f-48dc-b27a-fa6a6bd387f6', true),
   ('46fda8a5-230d-4ff7-a74d-cf063f66cacf', '88b91c4c-a859-48a4-b179-d23df75a2d92', 'b73a9b3c-d692-4e7e-b094-1715c5e4a036', true),

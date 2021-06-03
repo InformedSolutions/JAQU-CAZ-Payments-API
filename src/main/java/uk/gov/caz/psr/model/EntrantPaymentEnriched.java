@@ -20,7 +20,7 @@ import uk.gov.caz.psr.model.info.EntrantPaymentMatchInfo;
  */
 @Value
 @Builder(toBuilder = true)
-@JsonIgnoreProperties({"refunded", "chargedback"})
+@JsonIgnoreProperties({"modified"})
 public class EntrantPaymentEnriched {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.travelDate}")
@@ -46,13 +46,9 @@ public class EntrantPaymentEnriched {
   @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.paymentStatus}")
   ExternalPaymentStatus paymentProviderStatus;
 
-  @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.isRefunded")
-  @JsonProperty(value = "isRefunded")
-  boolean isRefunded;
-
-  @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.isChargedback")
-  @JsonProperty(value = "isChargedback")
-  boolean isChargedback;
+  @ApiModelProperty(value = "${swagger.model.descriptions.historical-payment.isModified")
+  @JsonProperty(value = "isModified")
+  boolean isModified;
 
   /**
    * Function constructing entity based on database entities.
@@ -73,27 +69,17 @@ public class EntrantPaymentEnriched {
         .paymentId(matchInfo.getPaymentInfo().getId())
         .paymentReference(matchInfo.getPaymentInfo().getReferenceNumber())
         .paymentProviderStatus(matchInfo.getPaymentInfo().getExternalPaymentStatus())
-        .isRefunded(isEntrantPaymentRefunded(matchInfo, auditData))
-        .isChargedback(isEntrantPaymentChargedBack(matchInfo, auditData))
+        .isModified(isPaymentModified(matchInfo, auditData))
         .build();
-  }
-
-  /**
-   * Returns information if a given entrantPayment was charged back.
-   */
-  private static boolean isEntrantPaymentChargedBack(EntrantPaymentMatchInfo matchInfo,
-      List<PaymentAuditData> auditData) {
-    return getFilteredAuditData(matchInfo, auditData)
-        .anyMatch(e -> e.getPaymentStatus().equals(InternalPaymentStatus.CHARGEBACK));
   }
 
   /**
    * Returns information if a given entrantPayment was refunded.
    */
-  private static boolean isEntrantPaymentRefunded(EntrantPaymentMatchInfo matchInfo,
+  private static boolean isPaymentModified(EntrantPaymentMatchInfo matchInfo,
       List<PaymentAuditData> auditData) {
     return getFilteredAuditData(matchInfo, auditData)
-        .anyMatch(e -> e.getPaymentStatus().equals(InternalPaymentStatus.REFUNDED));
+        .anyMatch(e -> e.getPaymentStatus().hasModifiedFlag());
   }
 
   /**

@@ -166,36 +166,33 @@ public class VehiclePaymentHistoryControllerTestIT extends ExternalCallsIT {
         .body("payments[4].paymentId", equalTo("b71b72a5-902f-4a16-a91d-1a4463b801db"))
         .body("payments[4].paymentReference", equalTo(1))
         .body("payments[4].paymentProviderStatus", equalTo("SUCCESS"))
-        .body("payments[4].isRefunded", equalTo(false))
-        .body("payments[4].isChargedback", equalTo(false));
+        .body("payments[4].isModified", equalTo(false));
   }
 
   @Test
-  public void shouldSetIsRefundedFlagWhenPaymentWasRefundedByLA() {
+  public void shouldSetIsModifiedFlagWhenPaymentWasRefundedByLA() {
     executeSqlFrom("data/sql/perform-la-update-to-refunded.sql");
 
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(VRN)
         .whenRequestForHistoryIsMade();
     ValidatableResponse response = assertion.getResponse();
     response
-        .body("payments[4].isRefunded", equalTo(true))
-        .body("payments[4].isChargedback", equalTo(false));
+        .body("payments[4].isModified", equalTo(true));
   }
 
   @Test
-  public void shouldSetIsChargedBackFlagWhenPaymentWasChargedBackByLA() {
+  public void shouldSetIsModifiedFlagWhenPaymentWasChargedBackByLA() {
     executeSqlFrom("data/sql/perform-la-update-to-charged-back.sql");
 
     VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(VRN)
         .whenRequestForHistoryIsMade();
     ValidatableResponse response = assertion.getResponse();
     response
-        .body("payments[4].isRefunded", equalTo(false))
-        .body("payments[4].isChargedback", equalTo(true));
+        .body("payments[4].isModified", equalTo(true));
   }
 
   @Test
-  public void shouldSetIsChargedBackAndIsRefundedFlagsWhenPaymentWasChargedBackAndRefundedByLA() {
+  public void shouldSetIsModifiedFlagWhenPaymentWasChargedBackAndRefundedByLA() {
     executeSqlFrom("data/sql/perform-la-update-to-refunded.sql");
     executeSqlFrom("data/sql/perform-la-update-to-charged-back.sql");
 
@@ -203,8 +200,18 @@ public class VehiclePaymentHistoryControllerTestIT extends ExternalCallsIT {
         .whenRequestForHistoryIsMade();
     ValidatableResponse response = assertion.getResponse();
     response
-        .body("payments[4].isRefunded", equalTo(true))
-        .body("payments[4].isChargedback", equalTo(true));
+        .body("payments[4].isModified", equalTo(true));
+  }
+
+  @Test
+  public void shouldSetIsModifiedFlagWhenPaymentWasFailed() {
+    executeSqlFrom("data/sql/perform-la-update-to-failed.sql");
+
+    VehiclePaymentHistoryJourneyAssertion assertion = givenRequestForVrn(VRN)
+        .whenRequestForHistoryIsMade();
+    ValidatableResponse response = assertion.getResponse();
+    response
+        .body("payments[4].isModified", equalTo(true));
   }
 
   @Test
@@ -216,8 +223,7 @@ public class VehiclePaymentHistoryControllerTestIT extends ExternalCallsIT {
         .whenRequestForHistoryIsMade();
     ValidatableResponse response = assertion.getResponse();
     response
-        .body("payments[0].isRefunded", equalTo(false))
-        .body("payments[0].isChargedback", equalTo(false));
+        .body("payments[0].isModified", equalTo(false));
   }
 
   @Test

@@ -13,7 +13,6 @@ import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -257,8 +256,7 @@ public class PaymentInfoByDatesTestIT {
               .put("paymentReference", 1881)
               .put("paymentProviderStatus", "FAILED")
               .put("vrns", Collections.singletonList("RD84VSX"))
-              .put("isChargedback", false)
-              .put("isRefunded", false)
+              .put("isModified", false)
               .build(),
 
           ImmutableMap.<String, Object>builder()
@@ -270,8 +268,7 @@ public class PaymentInfoByDatesTestIT {
               .put("paymentReference", 998)
               .put("paymentProviderStatus", "SUCCESS")
               .put("vrns", Collections.singletonList("QD84VSX"))
-              .put("isChargedback", false)
-              .put("isRefunded", true)
+              .put("isModified", true)
               .build()
       );
     }

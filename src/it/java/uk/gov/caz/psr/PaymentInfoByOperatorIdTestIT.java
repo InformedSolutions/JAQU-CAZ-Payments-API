@@ -179,8 +179,8 @@ public class PaymentInfoByOperatorIdTestIT {
             .andPageIsEqualTo(0)
             .andPageCountIsEqualTo(1)
             .andPerPageIsEqualTo(10)
-            .andTotalPaymentsCountIsEqualTo(4)
-            .andPaymentsSizeIsEqualTo(4)
+            .andTotalPaymentsCountIsEqualTo(5)
+            .andPaymentsSizeIsEqualTo(5)
             .andPaymentsEqualTo(expectedPayments)
             .andResultsWereFetchedByTwoDatabaseQueries();
       }
@@ -191,6 +191,8 @@ public class PaymentInfoByOperatorIdTestIT {
       mockSuccessVccsCleanAirZonesResponse();
       List<Map<String, Object>> expectedPayments = getExpectedPayments();
 
+      int paymentsCount = 5;
+
       // first page
       whenRequested()
           .withOperatorIdEqualTo("24f630ec-47c6-4cd0-b8aa-1e05a1463492")
@@ -200,8 +202,8 @@ public class PaymentInfoByOperatorIdTestIT {
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(0)
-          .andPageCountIsEqualTo(4)
-          .andTotalPaymentsCountIsEqualTo(4)
+          .andPageCountIsEqualTo(paymentsCount)
+          .andTotalPaymentsCountIsEqualTo(paymentsCount)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(0)))
@@ -216,8 +218,8 @@ public class PaymentInfoByOperatorIdTestIT {
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(1)
-          .andPageCountIsEqualTo(4)
-          .andTotalPaymentsCountIsEqualTo(4)
+          .andPageCountIsEqualTo(paymentsCount)
+          .andTotalPaymentsCountIsEqualTo(paymentsCount)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(1)));
@@ -231,8 +233,8 @@ public class PaymentInfoByOperatorIdTestIT {
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(2)
-          .andPageCountIsEqualTo(4)
-          .andTotalPaymentsCountIsEqualTo(4)
+          .andPageCountIsEqualTo(paymentsCount)
+          .andTotalPaymentsCountIsEqualTo(paymentsCount)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(2)));
@@ -246,11 +248,25 @@ public class PaymentInfoByOperatorIdTestIT {
           .headerContainsCorrelationId()
           .responseHasOkStatus()
           .andPageIsEqualTo(3)
-          .andPageCountIsEqualTo(4)
-          .andTotalPaymentsCountIsEqualTo(4)
+          .andPageCountIsEqualTo(paymentsCount)
+          .andTotalPaymentsCountIsEqualTo(paymentsCount)
           .andPerPageIsEqualTo(1)
           .andPaymentsSizeIsEqualTo(1)
           .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(3)));
+
+      whenRequested()
+          .withOperatorIdEqualTo("24f630ec-47c6-4cd0-b8aa-1e05a1463492")
+          .withPageSizeEqualTo(1)
+          .withPageNumberEqualTo(4)
+          .then()
+          .headerContainsCorrelationId()
+          .responseHasOkStatus()
+          .andPageIsEqualTo(4)
+          .andPageCountIsEqualTo(paymentsCount)
+          .andTotalPaymentsCountIsEqualTo(paymentsCount)
+          .andPerPageIsEqualTo(1)
+          .andPaymentsSizeIsEqualTo(1)
+          .andPaymentsEqualTo(Collections.singletonList(expectedPayments.get(4)));
     }
 
     private List<Map<String, Object>> getExpectedPayments() {
@@ -264,8 +280,7 @@ public class PaymentInfoByOperatorIdTestIT {
               .put("paymentReference", 22381)
               .put("paymentProviderStatus", "FAILED")
               .put("vrns", Collections.singletonList("MD16ABC"))
-              .put("isChargedback", false)
-              .put("isRefunded", false)
+              .put("isModified", false)
               .build(),
 
           ImmutableMap.<String, Object>builder()
@@ -277,8 +292,7 @@ public class PaymentInfoByOperatorIdTestIT {
               .put("paymentReference", 1881)
               .put("paymentProviderStatus", "FAILED")
               .put("vrns", Collections.singletonList("RD84VSX"))
-              .put("isChargedback", false)
-              .put("isRefunded", false)
+              .put("isModified", false)
               .build(),
 
           ImmutableMap.<String, Object>builder()
@@ -290,8 +304,7 @@ public class PaymentInfoByOperatorIdTestIT {
               .put("paymentReference", 998)
               .put("paymentProviderStatus", "SUCCESS")
               .put("vrns", Collections.singletonList("QD84VSX"))
-              .put("isChargedback", false)
-              .put("isRefunded", true)
+              .put("isModified", true)
               .build(),
 
           ImmutableMap.<String, Object>builder()
@@ -303,8 +316,19 @@ public class PaymentInfoByOperatorIdTestIT {
               .put("paymentReference", 87)
               .put("paymentProviderStatus", "SUCCESS")
               .put("vrns", Arrays.asList("ND84VSX", "MD84VSX", "OD84VSX", "PD84VSX"))
-              .put("isChargedback", true)
-              .put("isRefunded", false)
+              .put("isModified", true)
+              .build(),
+
+          ImmutableMap.<String, Object>builder()
+              .put("paymentTimestamp", "2019-11-22 20:39:08")
+              .put("totalPaid", 180)
+              .put("cazName", "Bath")
+              .put("paymentId", "8edd07f4-5dfa-4257-97a1-8725a65087d1")
+              .put("operatorId", "24f630ec-47c6-4cd0-b8aa-1e05a1463492")
+              .put("paymentReference", 77)
+              .put("paymentProviderStatus", "FAILED")
+              .put("vrns", Arrays.asList("ZD84VSX"))
+              .put("isModified", true)
               .build()
       );
     }
