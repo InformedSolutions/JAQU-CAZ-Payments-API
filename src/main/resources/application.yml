@@ -335,8 +335,7 @@ swagger:
         payment-reference: Customer-friendly payment reference number
         vrns: Collection of VRNs against which the payment was made
         status: External status of this payment
-        isRefunded: indicates if the payment was refunded
-        isChargedback: indicates if the payment was charged back
+        isModified: indicates if the payment was refunded, charged back or failed
       historical-payment:
         travelDate: date of travel
         paymentTimestamp: when payment was done
@@ -345,8 +344,7 @@ swagger:
         paymentId: id of payment
         paymentReference: reference number for payment
         paymentStatus: external status of payment (f.e. FAILED, SUCCESS)
-        isRefunded: indicates if the payment was refunded
-        isChargedback: indicates if the payment was charged back
+        isModified: indicates if the payment was refunded, charged back or failed
       resend-receipt-email:
         email: email to which the receipt email is going to be resent
 

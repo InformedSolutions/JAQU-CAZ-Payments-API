@@ -74,17 +74,15 @@ public class PaginatedPaymentsInfoByOperatorDetailsFetcher {
         .paymentReference(paymentInfo.getReferenceNumber())
         .paymentTimestamp(paymentInfo.getInsertTimestamp())
         .totalPaid(paymentInfo.getTotalPaid())
-        .isChargedback(
-            paymentHadModifiedStatus(paymentInfo.getId(), matchingPaymentModificationStatuses,
-                InternalPaymentStatus.CHARGEBACK))
-        .isRefunded(
-            paymentHadModifiedStatus(paymentInfo.getId(), matchingPaymentModificationStatuses,
-                InternalPaymentStatus.REFUNDED))
+        .isModified(paymentHadModifiedStatus(paymentInfo.getId(),
+            matchingPaymentModificationStatuses
+        ))
         .vrns(entrantPaymentMatchInfos.stream()
             .map(EntrantPaymentMatchInfo::getEntrantPaymentInfo)
             .map(EntrantPaymentInfo::getVrn)
             .collect(Collectors.toSet())
         )
+
         .build();
   }
 
@@ -147,7 +145,8 @@ public class PaginatedPaymentsInfoByOperatorDetailsFetcher {
     List<PaymentModificationStatus> paymentModificationStatuses = paymentDetailRepository
         .getPaymentStatusesForPaymentIds(paymentIds,
             EntrantPaymentUpdateActor.LA,
-            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK));
+            Arrays.asList(InternalPaymentStatus.REFUNDED, InternalPaymentStatus.CHARGEBACK,
+                InternalPaymentStatus.FAILED));
     return paymentModificationStatuses.stream()
         .collect(Collectors.groupingBy(PaymentModificationStatus::getPaymentId));
   }
@@ -176,13 +175,12 @@ public class PaginatedPaymentsInfoByOperatorDetailsFetcher {
   }
 
   private boolean paymentHadModifiedStatus(UUID paymentId,
-      Map<UUID, List<PaymentModificationStatus>> matchingPaymentModificationStatuses,
-      InternalPaymentStatus expectedModificationStatus) {
+      Map<UUID, List<PaymentModificationStatus>> matchingPaymentModificationStatuses) {
 
     if (matchingPaymentModificationStatuses.containsKey(paymentId)) {
       return matchingPaymentModificationStatuses.get(paymentId).stream()
-          .anyMatch(paymentModificationStatus -> paymentModificationStatus.getPaymentStatus()
-              .equals(expectedModificationStatus));
+          .anyMatch(paymentModificationStatus ->
+              paymentModificationStatus.getPaymentStatus().hasModifiedFlag());
     } else {
       return false;
     }
