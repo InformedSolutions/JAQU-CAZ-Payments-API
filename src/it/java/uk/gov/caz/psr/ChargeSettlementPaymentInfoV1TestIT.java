@@ -36,7 +36,7 @@ class ChargeSettlementPaymentInfoV1TestIT extends ChargeSettlementPaymentInfoTes
             @ParameterizedTest
             @MethodSource("uk.gov.caz.psr.ChargeSettlementPaymentInfoV1TestIT#coveredTravelDatesRangeWithExpectedLineItemsCountProviderForVrn")
             public void shouldReturnDataForRequestedDaysRange(String fromDatePaidForAsString,
-                String toDatePaidForAsString, int expectedLineItemsCount) {
+                String toDatePaidForAsString, int expectedLineItemsCount, boolean expectedFailedPayments) {
               String vrn = "ND84VSX";
               PaymentInfoAssertion.whenRequested()
                   .withParam("vrn", vrn)
@@ -46,6 +46,7 @@ class ChargeSettlementPaymentInfoV1TestIT extends ChargeSettlementPaymentInfoTes
                   .headerContainsCorrelationId()
                   .responseHasOkStatus()
                   .doesNotContainNotPaidEntries()
+                  .containsMarkedAsFailedPayments(expectedFailedPayments)
                   .containsReferenceNumbers()
                   .totalLineItemsCountIsEqualTo(expectedLineItemsCount);
 
@@ -122,9 +123,9 @@ class ChargeSettlementPaymentInfoV1TestIT extends ChargeSettlementPaymentInfoTes
   // data for VRN ND84VSX
   public static Stream<Arguments> coveredTravelDatesRangeWithExpectedLineItemsCountProviderForVrn() {
     return Stream.of(
-        Arguments.of("1993-04-18", "2019-11-02", 2),
-        Arguments.of("2019-11-03", "2025-02-19", 3),
-        Arguments.of("2019-11-03", "2031-09-22", 3)
+        Arguments.of("1993-04-18", "2019-11-02", 2, false),
+        Arguments.of("2019-11-03", "2025-02-19", 4, true),
+        Arguments.of("2019-11-03", "2031-09-22", 4, true)
     );
   }
 
@@ -132,8 +133,8 @@ class ChargeSettlementPaymentInfoV1TestIT extends ChargeSettlementPaymentInfoTes
   public static Stream<Arguments> uncoveredTravelDatesRangeProviderForVrn() {
     return Stream.of(
         Arguments.of("1998-05-01", "2003-01-02"),
-        Arguments.of("2019-11-07", "2025-02-19"),
-        Arguments.of("2019-11-07", "2031-09-22")
+        Arguments.of("2019-11-11", "2025-02-19"),
+        Arguments.of("2019-11-11", "2031-09-22")
     );
   }
 }

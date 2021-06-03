@@ -56,7 +56,7 @@ public class PaymentsInfoByOperatorResponse {
 
   @Value
   @Builder
-  @JsonIgnoreProperties({"refunded", "chargedback"})
+  @JsonIgnoreProperties({"modified"})
   public static class SinglePaymentsInfoByOperator {
 
     /**
@@ -116,12 +116,12 @@ public class PaymentsInfoByOperatorResponse {
         "${swagger.model.descriptions.payments-info-by-operator-id-response.status}")
     String paymentProviderStatus;
 
-    @ApiModelProperty(value = "${swagger.model.payments-info-by-operator-id-response.isRefunded")
-    @JsonProperty(value = "isRefunded")
-    boolean isRefunded;
+    /**
+     * Flag explaining if any entrant was failed, charged back or refunded.
+     */
+    @ApiModelProperty(value = "${swagger.model.payments-info-by-operator-id-response.isModified")
+    @JsonProperty(value = "isModified")
+    boolean isModified;
 
-    @ApiModelProperty(value = "${swagger.model.payments-info-by-operator-id-response.isChargedback")
-    @JsonProperty(value = "isChargedback")
-    boolean isChargedback;
   }
 }

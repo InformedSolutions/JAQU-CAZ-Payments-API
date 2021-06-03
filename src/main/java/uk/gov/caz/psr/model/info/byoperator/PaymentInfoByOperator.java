@@ -29,7 +29,5 @@ public class PaymentInfoByOperator {
 
   LocalDateTime paymentTimestamp;
 
-  boolean isRefunded;
-
-  boolean isChargedback;
+  boolean isModified;
 }

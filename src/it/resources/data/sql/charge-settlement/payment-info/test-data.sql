@@ -9,7 +9,8 @@ values
 ('c9801856-0f8d-11ea-bbdd-0fb9b9867da0', 'ND84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-02', 'tariff-1', 88, 'PAID', 'USER'),
 ('ce083912-0f8d-11ea-bbdd-47debb103c06', 'ND84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-03', 'tariff-1', 88, 'PAID', 'USER'),
 ('d22c4d6c-0f8d-11ea-bbdd-7ff4b1cc8ff1', 'ND84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-04', 'tariff-1', 88, 'PAID', 'USER'),
-('d572fea8-0f8d-11ea-bbdd-2b420f74f6f3', 'ND84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-05', 'tariff-1', 88, 'PAID', 'USER');
+('d572fea8-0f8d-11ea-bbdd-2b420f74f6f3', 'ND84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-05', 'tariff-1', 88, 'PAID', 'USER'),
+('3a9e60b5-1668-4465-83fa-6fe5f1b0d2a7', 'ND84VSX', '53e03a28-0627-11ea-9511-ffaaee87e375', '2019-11-10', 'tariff-1', 88, 'FAILED', 'LA');
 
 INSERT INTO caz_payment.t_clean_air_zone_entrant_payment_match(id, clean_air_zone_entrant_payment_id, payment_id, latest)
 VALUES
@@ -17,7 +18,8 @@ VALUES
 ('82e32e00-3cfc-11ea-b5aa-5f9be6b00486', 'c9801856-0f8d-11ea-bbdd-0fb9b9867da0', 'd80deb4e-0f8a-11ea-8dc9-93fa5be4476e', true),
 ('86cf6a1a-3cfc-11ea-b5aa-bba49257036a', 'ce083912-0f8d-11ea-bbdd-47debb103c06', 'd80deb4e-0f8a-11ea-8dc9-93fa5be4476e', true),
 ('8b167ea6-3cfc-11ea-b5aa-ab2cc427f844', 'd22c4d6c-0f8d-11ea-bbdd-7ff4b1cc8ff1', 'd80deb4e-0f8a-11ea-8dc9-93fa5be4476e', true),
-('8edf3ae6-3cfc-11ea-b5aa-57415abd2f79', 'd572fea8-0f8d-11ea-bbdd-2b420f74f6f3', 'd80deb4e-0f8a-11ea-8dc9-93fa5be4476e', true);
+('8edf3ae6-3cfc-11ea-b5aa-57415abd2f79', 'd572fea8-0f8d-11ea-bbdd-2b420f74f6f3', 'd80deb4e-0f8a-11ea-8dc9-93fa5be4476e', true),
+('e7363160-6fea-4cef-a44d-f00c24695c58', '3a9e60b5-1668-4465-83fa-6fe5f1b0d2a7', 'd80deb4e-0f8a-11ea-8dc9-93fa5be4476e', true);
 
 -- failed payment for 'ND84VSX' vrn for '2019-11-06' and '2019-11-07' travel dates
 

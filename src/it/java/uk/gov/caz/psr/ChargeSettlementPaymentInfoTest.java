@@ -672,8 +672,8 @@ public abstract class ChargeSettlementPaymentInfoTest {
                   .containsExactlyVrns(matchingVrn)
                   .containsOnePaymentWithProviderIdEqualTo(paymentProviderId)
                   .containsExactlyLineItemsWithTravelDates("2019-11-01", "2019-11-02", "2019-11-03",
-                      "2019-11-04", "2019-11-05")
-                  .totalLineItemsCountIsEqualTo(5);
+                      "2019-11-04", "2019-11-05", "2019-11-10")
+                  .totalLineItemsCountIsEqualTo(6);
 
               verifyResultsWereFetchedByOneDatabaseQuery();
             }
@@ -931,8 +931,8 @@ public abstract class ChargeSettlementPaymentInfoTest {
   public static Stream<Arguments> uncoveredTravelDatesRangeProvider() {
     return Stream.of(
         Arguments.of("2019-05-01", "2019-05-01"),
-        Arguments.of("2019-11-09", "2019-11-09"),
-        Arguments.of("2019-11-09", "2019-11-10"),
+        Arguments.of("2019-11-11", "2019-11-11"),
+        Arguments.of("2019-11-11", "2019-11-12"),
         Arguments.of("2019-10-30", "2019-10-31")
     );
   }
@@ -952,8 +952,8 @@ public abstract class ChargeSettlementPaymentInfoTest {
   public static Stream<Arguments> uncoveredTravelDatesRangeProviderForVrn() {
     return Stream.of(
         Arguments.of("2019-05-01", "2019-05-01"),
-        Arguments.of("2019-11-09", "2019-11-09"),
-        Arguments.of("2019-11-09", "2019-11-10"),
+        Arguments.of("2019-11-11", "2019-11-11"),
+        Arguments.of("2019-11-11", "2019-11-12"),
         Arguments.of("2019-10-30", "2019-10-31")
     );
   }
