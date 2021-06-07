@@ -99,6 +99,29 @@ class ChargeSettlementPaymentInfoV2TestIT extends ChargeSettlementPaymentInfoTes
                       "Query date range exceeded");
             }
           }
+
+          @Nested
+          class WhichHasInvalidDateFormat {
+
+            @Test
+            public void shouldReturnInvalidFormatErrorMessage() {
+              String vrn = "ND84VSX";
+              PaymentInfoAssertion.whenRequested()
+                  .withParam("vrn", vrn)
+                  .withParam("fromDatePaidFor", "a")
+                  .withParam("toDatePaidFor", "b")
+                  .then()
+                  .headerContainsCorrelationId()
+                  .responseHasBadRequestStatus()
+                  .containsErrors(2)
+                  .andContainsErrorWith(0, 400, "fromDatePaidFor",
+                      "Invalid date format of \"fromDatePaidFor\"",
+                      "Parameter validation error")
+                  .andContainsErrorWith(1, 400, "toDatePaidFor",
+                      "Invalid date format of \"toDatePaidFor\"",
+                      "Parameter validation error");
+            }
+          }
         }
       }
     }
