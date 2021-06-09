@@ -33,7 +33,7 @@ class BaseCsvContentGeneratorStrategyTest {
       assertThat(String.join(",", header)).isEqualTo(
           "Date of payment,Payment made by,"
               + "Clean Air Zone,Number plate,Dates paid for,Charge,Payment reference,"
-              + "GOV.UK payment ID,Days paid for,Total amount paid");
+              + "Payment ID,Days paid for,Total amount paid");
     }
   }
 
