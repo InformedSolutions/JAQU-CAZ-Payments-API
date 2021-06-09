@@ -13,7 +13,7 @@ public interface CsvContentGeneratorStrategy {
    */
   String CSV_HEADER = "Date of payment,Payment made by,"
       + "Clean Air Zone,Number plate,Dates paid for,Charge,Payment reference,"
-      + "GOV.UK payment ID,Days paid for,Total amount paid";
+      + "Payment ID,Days paid for,Total amount paid";
 
   /**
    * Method generates a header row.

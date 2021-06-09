@@ -64,7 +64,7 @@ class CsvContentGeneratorStrategyFactoryTest {
   class EnrichedEntrantPaymentsWithLocalAuthorityStatuses {
 
     @ParameterizedTest
-    @ValueSource(strings = {"REFUNDED", "CHARGEBACK"})
+    @ValueSource(strings = {"REFUNDED", "CHARGEBACK", "FAILED"})
     public void returnsLocalAuthorityCsvContentGeneratorStrategy(String status) {
       // given
       List<EnrichedCsvEntrantPayment> data = mockEnrichedEntrantPayments(status);
