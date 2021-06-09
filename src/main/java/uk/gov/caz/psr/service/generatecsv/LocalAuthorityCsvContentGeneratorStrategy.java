@@ -74,7 +74,7 @@ public class LocalAuthorityCsvContentGeneratorStrategy implements CsvContentGene
     if (status == null) {
       return "";
     } else if (status.equals("FAILED")) {
-      return "Unsuccessful";
+      return "UNSUCCESSFUL";
     } else {
       return status;
     }
