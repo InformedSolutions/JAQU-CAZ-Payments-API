@@ -43,6 +43,8 @@ public class CsvContentGeneratorStrategyFactory {
         .anyMatch(enrichedCsvEntrantPayment -> enrichedCsvEntrantPayment.getStatus()
             .equals(InternalPaymentStatus.REFUNDED.toString())
             || enrichedCsvEntrantPayment.getStatus()
-            .equals(InternalPaymentStatus.CHARGEBACK.toString()));
+            .equals(InternalPaymentStatus.CHARGEBACK.toString())
+            || enrichedCsvEntrantPayment.getStatus()
+            .equals(InternalPaymentStatus.FAILED.toString()));
   }
 }
