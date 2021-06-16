@@ -165,31 +165,6 @@ public class PaymentDetailRepository {
     }
   }
 
-  /**
-   * Gets payment audit details for paymentId, updateActor and provided payment statuses.
-   *
-   * @param paymentId ID of Payment
-   * @param updateActor Describes which actor is responsible for updating the state of Entrant
-   *     Payment
-   * @param paymentStatuses List of statuses to get from the DB
-   *
-   * @return list of found {@link PaymentModification}
-   */
-  public List<PaymentModification> findAllForPaymentHistory(UUID paymentId,
-      EntrantPaymentUpdateActor updateActor, List<InternalPaymentStatus> paymentStatuses) {
-
-    return jdbcTemplate.query(connection -> {
-      PreparedStatement preparedStatement = connection.prepareStatement(
-          Sql.FIND_ALL_FOR_PAYMENT_HISTORY);
-      preparedStatement.setObject(1, paymentId);
-      preparedStatement.setString(2, updateActor.toString());
-      preparedStatement.setArray(3, connection.createArrayOf("varchar", paymentStatuses.toArray()));
-      return preparedStatement;
-    }, PAYMENT_MODIFICATION_ROW_MAPPER);
-
-
-  }
-
   private int deleteDataBeforeDate(String tableName, LocalDate inputDate) {
     final String sql = String.format("DELETE FROM %s "
         + "WHERE CAST (date_trunc('day', inserttimestamp) AS date) <= ?", tableName);

@@ -26,7 +26,6 @@ public class PaymentsHistoryCsvFileSupervisor {
   private final S3Client s3Client;
   private final CsvFileNameGenerator csvFileNameGenerator;
   private final CsvWriter csvWriter;
-  private final CsvUrlGenerator csvUrlGenerator;
   private final String bucket;
 
   /**
@@ -34,29 +33,27 @@ public class PaymentsHistoryCsvFileSupervisor {
    */
   public PaymentsHistoryCsvFileSupervisor(S3Client s3Client,
       CsvFileNameGenerator csvFileNameGenerator,
-      CsvWriter csvWriter, @Value("${csv-export-bucket}") String bucket,
-      CsvUrlGenerator csvUrlGenerator) {
+      CsvWriter csvWriter, @Value("${csv-export-bucket}") String bucket) {
     this.s3Client = s3Client;
     this.csvFileNameGenerator = csvFileNameGenerator;
     this.csvWriter = csvWriter;
-    this.csvUrlGenerator = csvUrlGenerator;
     this.bucket = bucket;
   }
 
   /**
    * Upload csv file to s3.
+   *
    * @param accountId ID of the account.
-   * @param accountUserIds List of account user ids for which we should generate payment history.
+   * @param accountUserIds List of account user ids for which we should generate payment
+   *     history.
    * @return {@link URL}.
    */
-  public URL uploadCsvFileAndGetPresignedUrl(UUID accountId, List<UUID> accountUserIds) {
-    String fileName = prepareFileName(accountId);
+  public String uploadCsvFileAndGetFileName(UUID accountId, List<UUID> accountUserIds) {
+    String fileName = prepareFileName();
     String error = String.format("Exception while uploading file %s/%s", bucket, fileName);
     try {
-      s3Client.putObject(
-          prepareRequestObject(accountId),
-          prepareRequestBody(accountId, accountUserIds));
-      return csvUrlGenerator.getPresignedUrl(fileName);
+      s3Client.putObject(prepareRequestObject(), prepareRequestBody(accountId, accountUserIds));
+      return fileName;
     } catch (S3Exception e) {
       logAwsExceptionDetails(e);
       throw new CsvExportException(error);
@@ -69,10 +66,10 @@ public class PaymentsHistoryCsvFileSupervisor {
   /**
    * Helper method to prepare put request object.
    */
-  private PutObjectRequest prepareRequestObject(UUID accountId) {
+  private PutObjectRequest prepareRequestObject() {
     return PutObjectRequest.builder()
         .bucket(bucket)
-        .key(prepareFileName(accountId))
+        .key(prepareFileName())
         .contentType(TEXT_CSV)
         .build();
   }
@@ -91,8 +88,8 @@ public class PaymentsHistoryCsvFileSupervisor {
   /**
    * Helper method to prepare file name.
    */
-  private String prepareFileName(UUID accountId) {
-    return csvFileNameGenerator.generate(accountId);
+  private String prepareFileName() {
+    return csvFileNameGenerator.generate();
   }
 
   /**

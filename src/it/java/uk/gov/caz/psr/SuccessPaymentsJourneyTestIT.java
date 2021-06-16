@@ -54,7 +54,6 @@ import org.springframework.util.StringUtils;
 import uk.gov.caz.correlationid.Constants;
 import uk.gov.caz.psr.annotation.FullyRunningServerIntegrationTest;
 import uk.gov.caz.psr.dto.InitiatePaymentRequest;
-import uk.gov.caz.psr.dto.InitiatePaymentRequest.Transaction;
 import uk.gov.caz.psr.dto.InitiatePaymentResponse;
 import uk.gov.caz.psr.dto.ReconcilePaymentResponse;
 import uk.gov.caz.psr.dto.Transaction;
@@ -71,11 +70,13 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
 
   private static final List<LocalDate> TRAVEL_DATES = Arrays.asList(
       LocalDate.of(2019, 11, 10),
-      LocalDate.of(2019, 11, 2)
+      LocalDate.of(2019, 11, 2),
+      LocalDate.of(2019, 11, 8),
+      LocalDate.of(2019, 11, 13)
   );
   private static final List<String> VRNS = Arrays.asList(
-      "ND84VSX",
       "DL76MWX",
+      "ND84VSX",
       "DS98UDG"
   );
   private static final String EXTERNAL_PAYMENT_ID = "kac1ksqi26f9t2h7q3henmlamc";
@@ -674,16 +675,16 @@ public class SuccessPaymentsJourneyTestIT extends ExternalCallsIT {
     private List<String> getChargesLines() {
       return initiatePaymentRequest.getTransactions()
           .stream()
-          .sorted(Comparator.comparing(Transaction::getTravelDate).thenComparing(Transaction::getVrn))
+          .sorted(Comparator.comparing(Transaction::getVrn).thenComparing(Transaction::getTravelDate))
           .map(this::chargeLineInFleetEmailReceipt)
           .collect(Collectors.toList());
     }
 
     private String chargeLineInFleetEmailReceipt(Transaction transaction) {
       return Joiner.on(" - ").join(
+          transaction.getVrn(),
           transaction.getTravelDate()
               .format(DateTimeFormatter.ofPattern(CustomPaymentReceiptEmailCreator.DATE_FORMAT, Locale.ENGLISH)),
-          transaction.getVrn(),
           "£" + (transaction.getCharge() / 100) + ".00"
       );
     }

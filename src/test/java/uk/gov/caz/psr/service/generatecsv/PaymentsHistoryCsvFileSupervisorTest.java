@@ -41,9 +41,6 @@ class PaymentsHistoryCsvFileSupervisorTest {
   @Mock
   private CsvWriter csvWriter;
 
-  @Mock
-  private CsvUrlGenerator csvUrlGenerator;
-
   @InjectMocks
   private PaymentsHistoryCsvFileSupervisor csvFileSupervisor;
 
@@ -56,7 +53,7 @@ class PaymentsHistoryCsvFileSupervisorTest {
     // when
     Throwable throwable = catchThrowable(
         () -> csvFileSupervisor
-            .uploadCsvFileAndGetPresignedUrl(UUID.randomUUID(), ACCOUNT_USER_IDS));
+            .uploadCsvFileAndGetFileName(UUID.randomUUID(), ACCOUNT_USER_IDS));
 
     // then
     then(throwable)
@@ -74,7 +71,7 @@ class PaymentsHistoryCsvFileSupervisorTest {
     // when
     Throwable throwable = catchThrowable(
         () -> csvFileSupervisor
-            .uploadCsvFileAndGetPresignedUrl(UUID.randomUUID(), ACCOUNT_USER_IDS));
+            .uploadCsvFileAndGetFileName(UUID.randomUUID(), ACCOUNT_USER_IDS));
 
     // then
     then(throwable)
@@ -107,7 +104,7 @@ class PaymentsHistoryCsvFileSupervisorTest {
   }
 
   private void mockGenerateFileName() {
-    given(csvFileNameGenerator.generate(any())).willReturn(FILENAME);
+    given(csvFileNameGenerator.generate()).willReturn(FILENAME);
   }
 
   private void mockCreateWriterWithCsvContent() throws IOException {

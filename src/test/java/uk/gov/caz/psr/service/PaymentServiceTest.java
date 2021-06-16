@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
@@ -55,24 +54,6 @@ class PaymentServiceTest {
       // when
       Throwable throwable = catchThrowable(
           () -> paymentService.getPaymentHistoryByReferenceNumber(any()));
-
-      // then
-      assertThat(throwable).isInstanceOf(PaymentNotFoundException.class)
-          .hasMessage("Payment with provided reference number does not exist");
-    }
-  }
-
-  @Nested
-  class GetPaymentHistoryByReferenceNumber {
-
-    @Test
-    public void shouldThrowPaymentNotFoundExceptionWhenUserIdsIsNull() {
-      // given
-      given(paymentRepository.findByReferenceNumber(any())).willReturn(Optional.empty());
-
-      // when
-      Throwable throwable = catchThrowable(
-          () -> paymentDetailsService.getPaymentHistoryByReferenceNumber(any()));
 
       // then
       assertThat(throwable).isInstanceOf(PaymentNotFoundException.class)
