@@ -1,8 +1,8 @@
 package uk.gov.caz.psr.service.generatecsv;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,15 +17,15 @@ public class CsvFileNameGenerator {
   private static final String CSV_FILE_EXT = "csv";
   private static final String PAYMENTS = "Payment-history-";
   private static final String DOT = ".";
+  private static final ZoneId UK_ZONE_ID = ZoneId.of("Europe/London");
 
   /**
    * Generate full Csv file name.
    *
-   * @param accountId ID of Account/Fleet.
    * @return Full Csv file name.
    */
-  public String generate(UUID accountId) {
-    LocalDateTime now = LocalDateTime.now();
+  public String generate() {
+    LocalDateTime now = LocalDateTime.now(UK_ZONE_ID);
     return PAYMENTS
         + DATE_TIME_FORMATTER.format(now)
         + DOT

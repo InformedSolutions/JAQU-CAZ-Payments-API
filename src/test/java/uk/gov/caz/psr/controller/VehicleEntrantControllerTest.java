@@ -68,11 +68,6 @@ class VehicleEntrantControllerTest {
     Mockito.reset(entrantPaymentService);
   }
 
-  @BeforeEach
-  public void resetMocks() {
-    Mockito.reset(entrantPaymentService);
-  }
-
   @Nested
   class Validation {
 

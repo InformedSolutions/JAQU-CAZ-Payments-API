@@ -230,12 +230,10 @@ public class PaymentHistoryByReferenceTestIT {
       validatableResponse.body("modificationHistory", is(iterableWithSize(size)));
       return this;
     }
-
   }
 
   @SneakyThrows
   private String readFile(String filename) {
     return Resources.toString(Resources.getResource("data/external/" + filename), Charsets.UTF_8);
   }
-
 }

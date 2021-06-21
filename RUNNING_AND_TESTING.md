@@ -77,7 +77,7 @@ This backend component requires Postgres to connect to. If you already have Post
 #### Run service locally
 If you want to run application locally, as regular Spring-Boot application you need to specify
 Spring profile `development`. In this profile service will not use any AWS Lambda related parts or
-switch them to the ones suitable for such local run. However in this mode service will still
+switch them to the ones suitable for such local run. However, in this mode service will still
 use all other AWS services that are publicly available, for example S3. 
 For it to work you need to have correctly configured AWS account and access with `~/.aws/credentials` 
 file and AWS profile specified in `AWS_PROFILE` env variable and AWS Region specified in `AWS_REGION`. 
@@ -118,7 +118,7 @@ contain all HTTP request details, optionally security context as well.
 
 ### Manual testing: Alternative 3: Mocked AWS Services, lightweight local run and test
 This mode should not be used manually in general. We use LocalStack in Integration Tests to make
-them independent from real AWS services and predictable. However in rare cases, before creating
+them independent from real AWS services and predictable. However, in rare cases, before creating
 Integration Test we might want to pre-test something manually. And this Alternative can then be handy.
 
 In this mode we will run our app as regular Spring-Boot application, just like in Alternative 1, so without any Lambda 

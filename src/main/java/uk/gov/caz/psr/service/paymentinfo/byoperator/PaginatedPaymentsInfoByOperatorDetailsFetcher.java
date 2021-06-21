@@ -30,7 +30,7 @@ import uk.gov.caz.psr.service.CleanAirZoneService;
  */
 @Service
 @AllArgsConstructor
-class PaginatedPaymentsInfoByOperatorDetailsFetcher {
+public class PaginatedPaymentsInfoByOperatorDetailsFetcher {
 
   private final EntrantPaymentMatchInfoRepository entrantPaymentMatchInfoRepository;
   private final PaymentDetailRepository paymentDetailRepository;
@@ -69,6 +69,7 @@ class PaginatedPaymentsInfoByOperatorDetailsFetcher {
     return PaymentInfoByOperator.builder()
         .cazName(getCazNameFromAnyMatchingEntrant(cleanAirZoneById, entrantPaymentMatchInfos))
         .paymentId(paymentInfo.getId())
+        .operatorId(paymentInfo.getOperatorId())
         .paymentProviderStatus(paymentInfo.getExternalPaymentStatus().toString())
         .paymentReference(paymentInfo.getReferenceNumber())
         .paymentTimestamp(paymentInfo.getInsertTimestamp())
