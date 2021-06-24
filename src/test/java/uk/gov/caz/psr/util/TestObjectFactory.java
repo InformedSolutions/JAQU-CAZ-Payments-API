@@ -297,6 +297,14 @@ public class TestObjectFactory {
           .build();
     }
 
+    public static PaymentStatusUpdateDetails invalidCaseReference() {
+      return PaymentStatusUpdateDetails.builder()
+          .paymentStatus("refunded")
+          .caseReference("<img src=x>")
+          .dateOfCazEntry(LocalDate.now())
+          .build();
+    }
+
     public static PaymentStatusUpdateDetails anyWithoutDateOfCazEntry() {
       return PaymentStatusUpdateDetails.builder()
           .paymentStatus(ChargeSettlementPaymentStatus.REFUNDED.name())

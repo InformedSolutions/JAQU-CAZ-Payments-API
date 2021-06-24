@@ -91,7 +91,6 @@ public class ErrorPaymentStatusUpdateTestIT {
         .whenRequestSubmitted("vrn", NOT_EMPTY)
         .then()
         .noEntrantPaymentUpdatedInDatabase();
-
   }
 
   @Test
@@ -141,6 +140,14 @@ public class ErrorPaymentStatusUpdateTestIT {
         .noEntrantPaymentUpdatedInDatabase();
   }
 
+  @Test
+  public void paymentStatusUpdateWithInvalidCaseReference() {
+    given().paymentStatusUpdateRequest(paymentStatusUpdateRequestWithInvalidCaseReference())
+        .whenRequestSubmitted("caseReference", "Update caseReference to a valid format")
+        .then()
+        .noEntrantPaymentUpdatedInDatabase();
+  }
+
   private PaymentStatusUpdateJourneyAssertion given() {
     return new PaymentStatusUpdateJourneyAssertion(objectMapper, jdbcTemplate);
   }
@@ -169,6 +176,13 @@ public class ErrorPaymentStatusUpdateTestIT {
     return PaymentStatusUpdateRequest.builder()
         .vrn(TEST_VRN)
         .statusUpdates(statusUpdatesWithoutCaseReference())
+        .build();
+  }
+
+  private PaymentStatusUpdateRequest paymentStatusUpdateRequestWithInvalidCaseReference() {
+    return PaymentStatusUpdateRequest.builder()
+        .vrn(TEST_VRN)
+        .statusUpdates(statusUpdatesWithInvalidCaseReference())
         .build();
   }
 
@@ -202,6 +216,12 @@ public class ErrorPaymentStatusUpdateTestIT {
   private List<PaymentStatusUpdateDetails> statusUpdatesWithoutCaseReference() {
     return Arrays.asList(
         PaymentStatusUpdateDetailsFactory.anyWithoutCaseReference()
+    );
+  }
+
+  private List<PaymentStatusUpdateDetails> statusUpdatesWithInvalidCaseReference() {
+    return Arrays.asList(
+        PaymentStatusUpdateDetailsFactory.invalidCaseReference()
     );
   }
 

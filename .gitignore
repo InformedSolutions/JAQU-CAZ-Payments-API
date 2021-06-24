@@ -39,4 +39,4 @@ bin/
 *.log
 .attach*
 .pmd*
-.DS_Store
+.DS_Store*
