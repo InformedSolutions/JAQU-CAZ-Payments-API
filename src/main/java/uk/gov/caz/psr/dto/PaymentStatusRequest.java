@@ -20,7 +20,7 @@ public class PaymentStatusRequest {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status.date-of-caz-entry}")
   @NotNull
-  @Pattern(regexp =  "^\\d{4}-\\d{2}-\\d{2}$")
+  @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$")
   String dateOfCazEntry;
 
   @SuppressWarnings("PMD.UnusedPrivateMethod")

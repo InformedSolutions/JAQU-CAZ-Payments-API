@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
@@ -30,6 +31,7 @@ public class PaymentStatusUpdateDetails {
 
   @ApiModelProperty(value = "${swagger.model.descriptions.payment-status-update.case-reference}")
   @NotBlank
+  @Pattern(regexp = "^[^%<>:`&]*$", message = "Update caseReference to a valid format")
   @Size(min = 1, max = 15)
   String caseReference;
 
