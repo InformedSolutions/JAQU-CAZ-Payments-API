@@ -261,7 +261,8 @@ class EntrantPaymentServiceTest {
               callBulkProcess();
 
               // then
-              assertResponseProperties(PAID_PAYMENT_STATUS, DIRECT_DEBIT_PAYMENT_METHOD, ANY_TARIFF_CODE);
+              assertResponseProperties(PAID_PAYMENT_STATUS, DIRECT_DEBIT_PAYMENT_METHOD,
+                  ANY_TARIFF_CODE);
               verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
             }
           }
@@ -305,7 +306,31 @@ class EntrantPaymentServiceTest {
               LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate()
           );
           verify(entrantPaymentRepository)
-              .update(buildCazEntrantPayment(true, InternalPaymentStatus.PAID));
+              .update(buildCazEntrantPayment(true, InternalPaymentStatus.PAID,
+                  EntrantPaymentUpdateActor.VCCS_API));
+        }
+      }
+
+      @Nested
+      public class ButVehicleEntrantHasBeenAlreadyRefunded {
+
+        @Test
+        public void thenVehicleEntrantShouldUpdateCapturedAndActor() {
+          // given
+          mockNonEmtpyNotCapturedRefundedCazEntryPaymentRepositoryResponse();
+
+          // when
+          callBulkProcess();
+
+          assertThat(response).isNotEmpty();
+          verify(entrantPaymentRepository).findOneByVrnAndCazEntryDate(
+              UUID.fromString(ANY_UUID),
+              ANY_VRN,
+              LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate()
+          );
+          verify(entrantPaymentRepository)
+              .update(buildCazEntrantPayment(true, InternalPaymentStatus.REFUNDED,
+                  EntrantPaymentUpdateActor.VCCS_API));
         }
       }
 
@@ -329,7 +354,8 @@ class EntrantPaymentServiceTest {
           );
           verify(paymentRepository).findByEntrantPayment(ENTRANT_PAYMENT_ID);
           verify(entrantPaymentRepository, never())
-              .update(buildCazEntrantPayment(true, InternalPaymentStatus.PAID));
+              .update(buildCazEntrantPayment(true, InternalPaymentStatus.PAID,
+                  EntrantPaymentUpdateActor.VCCS_API));
         }
       }
     }
@@ -349,22 +375,32 @@ class EntrantPaymentServiceTest {
       LocalDate date) {
     when(entrantPaymentRepository
         .findOneByVrnAndCazEntryDate(any(UUID.class), anyString(), eq(date)))
-        .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.PAID)));
+        .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.PAID,
+            EntrantPaymentUpdateActor.VCCS_API)));
   }
 
   private void mockNonEmptyPaidCapturedCazEntryPaymentRepositoryResponse() {
     when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
-        .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.PAID)));
+        .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.PAID,
+            EntrantPaymentUpdateActor.VCCS_API)));
   }
 
   private void mockNonEmptyCapturedNotPaidCazEntryPaymentRepositoryResponse() {
     when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
-        .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.NOT_PAID)));
+        .thenReturn(Optional.of(buildCazEntrantPayment(true, InternalPaymentStatus.NOT_PAID,
+            EntrantPaymentUpdateActor.VCCS_API)));
   }
 
   private void mockNonEmptyNotCapturedCazEntryPaymentRepositoryResponse() {
     when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
-        .thenReturn(Optional.of(buildCazEntrantPayment(false, InternalPaymentStatus.PAID)));
+        .thenReturn(Optional.of(buildCazEntrantPayment(false, InternalPaymentStatus.PAID,
+            EntrantPaymentUpdateActor.VCCS_API)));
+  }
+
+  private void mockNonEmtpyNotCapturedRefundedCazEntryPaymentRepositoryResponse() {
+    when(entrantPaymentRepository.findOneByVrnAndCazEntryDate(any(), any(), any()))
+        .thenReturn(Optional.of(buildCazEntrantPayment(false, InternalPaymentStatus.REFUNDED,
+            EntrantPaymentUpdateActor.LA)));
   }
 
   private VehicleEntrantDto buildVehicleEntrantDto() {
@@ -386,7 +422,7 @@ class EntrantPaymentServiceTest {
   }
 
   private EntrantPayment buildCazEntrantPayment(boolean vehicleEntrantCaptured,
-      InternalPaymentStatus internalPaymentStatus) {
+      InternalPaymentStatus internalPaymentStatus, EntrantPaymentUpdateActor actor) {
     return EntrantPayment.builder()
         .cleanAirZoneEntrantPaymentId(ENTRANT_PAYMENT_ID)
         .cleanAirZoneId(UUID.fromString(ANY_UUID))
@@ -397,7 +433,7 @@ class EntrantPaymentServiceTest {
         .charge(50)
         .travelDate(LocalDateTime.parse(ANY_TIMESTAMP).toLocalDate())
         .cazEntryTimestamp(LocalDateTime.parse(ANY_TIMESTAMP))
-        .updateActor(EntrantPaymentUpdateActor.VCCS_API)
+        .updateActor(actor)
         .build();
   }
 
