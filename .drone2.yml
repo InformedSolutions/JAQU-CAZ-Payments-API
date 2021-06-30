@@ -914,8 +914,6 @@ steps:
     environment:
       GIT_PRIVATE_SSH:
         from_secret: jaqu_lower_github_private_key
-    depends_on:
-      - package deployable zip
 
   # Invoke terraform plan for sit
   - name: plan updates in sit
@@ -1158,7 +1156,34 @@ steps:
       event:
         - push
     depends_on:
-      - apply db schema migrations (sit)
+      - deploy to sit2
+
+  - name: codedeploy api sit
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh . --profile target_acc
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh . --profile target_acc
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_payment_history.sh . --profile target_acc
+      - bash deploy_lambda.sh
+      - bash deploy_dangling_payments.sh
+      - bash deploy_payment_history.sh
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: sit
+      LAMBDA_BUCKET: jaqu-shared-project-lambda-bucket
+    when:
+      event:
+        - push
 
   - name: codedeploy api sit2
     image: alpine:3.11.6
@@ -1188,33 +1213,6 @@ steps:
         - push
     depends_on:
       - apply db schema migrations (sit2)
-
-  - name: codedeploy api sit
-    image: alpine:3.11.6
-    commands:
-      - apk add --update bash python python-dev py-pip build-base jq
-      - pip install awscli
-      - mkdir ~/.aws
-      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
-      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh . --profile target_acc
-      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh . --profile target_acc
-      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_payment_history.sh . --profile target_acc
-      - bash deploy_lambda.sh
-      - bash deploy_dangling_payments.sh
-      - bash deploy_payment_history.sh
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: jaqu_controlled_aws_access_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: jaqu_controlled_aws_secret_access_key
-      AWS_DEFAULT_REGION: eu-west-2
-      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
-      PROJECT: payments
-      DEPLOY_ENVIRONMENT: sit
-      LAMBDA_BUCKET: jaqu-shared-project-lambda-bucket
-    when:
-      event:
-        - push
 
   # subscribe to operational monitoring alert in sit
   - name: subscribe to operational monitoring alert in sit
@@ -1248,7 +1246,7 @@ steps:
       - pip3 install awscli
       - mkdir ~/.aws
       - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
-      - python3 ./ci-cd-resources/subscribe_to_alert_topic_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i sit -i mod ISSupport-CAZ@informed.com
+      - python3 ./ci-cd-resources/subscribe_to_alert_topic_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i sit2 -i payments ISSupport-CAZ@informed.com
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: jaqu_controlled_aws_access_key_id
