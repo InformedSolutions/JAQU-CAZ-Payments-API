@@ -889,9 +889,6 @@ steps:
     pull: never
     commands:
       - mvn package -DskipUnitTests
-    when:
-      event:
-        - push
     depends_on:
       - IT test
 
@@ -914,6 +911,8 @@ steps:
     environment:
       GIT_PRIVATE_SSH:
         from_secret: jaqu_lower_github_private_key
+    depends_on:
+      - package
 
   # Invoke terraform plan for sit
   - name: plan updates in sit
