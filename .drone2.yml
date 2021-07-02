@@ -762,7 +762,7 @@ trigger:
     - pull_request
     - push
 concurrency:
-  limit: 1
+  limit: 2
 
 volumes:
   - name: docker_sock
@@ -818,6 +818,8 @@ steps:
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
+    depends_on:
+      - clean agent
 
   # Unit test
   - name: unit test
@@ -837,6 +839,8 @@ steps:
         from_secret: jaqu_lower_nexus_username
       JAQU_NEXUS_PASSWORD:
         from_secret: jaqu_lower_nexus_password
+    depends_on:
+      - build docker maven base
 
   # Integration tests
   - name: integration test
@@ -863,6 +867,8 @@ steps:
       REDIS_CUSTOM_PORT: 6379
     commands:
       - mvn verify -DskipUnitTests -P jacoco --no-transfer-progress
+    depends_on:
+      - unit test
 
   # Package
   - name: package
@@ -883,8 +889,10 @@ steps:
     pull: never
     commands:
       - mvn package -DskipUnitTests
+    depends_on:
+      - integration test
 
-  - name: plan updates into sit
+  - name: clone iac
     image: hashicorp/terraform:0.12.23
     volumes:
       - name: package_directory
@@ -898,6 +906,21 @@ steps:
       - chmod 600 ~/.ssh/known_hosts
       - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
       - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
+      - cd JAQU-CAZ-IAC
+      - git checkout controlled_sit
+    environment:
+      GIT_PRIVATE_SSH:
+        from_secret: jaqu_lower_github_private_key
+    depends_on:
+      - package
+
+  - name: plan updates into sit
+    image: hashicorp/terraform:0.12.23
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk update && apk add bash
       - cd JAQU-CAZ-IAC
       - git checkout controlled_sit
       - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
@@ -930,11 +953,56 @@ steps:
         from_secret: jaqu_controlled_aws_secret_access_key
       AWS_DEFAULT_REGION: eu-west-2
       AWS_ACCOUNT_NAME: jaqu-controlled
-      GIT_PRIVATE_SSH:
-        from_secret: jaqu_lower_github_private_key
     when:
       event:
         - pull_request
+    depends_on:
+      - clone iac
+
+  - name: plan updates into sit2
+    image: hashicorp/terraform:0.12.23
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk update && apk add bash
+      - cd JAQU-CAZ-IAC
+      - git checkout controlled_sit
+      - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
+      - cd terraform-iac/projects/payments/layers/01.networking
+      - PATH=$PATH:../../../../bin/
+      - chmod +x ../../../../bin/tf
+      - tf init
+      - tf workspace select sit2 || tf workspace new sit2
+      - tf plan
+      - cd ../02.backends
+      - tf init
+      - tf workspace select sit2 || tf workspace new sit2
+      - tf plan
+      - cd ../03.api
+      - tf init
+      - tf workspace select sit2 || tf workspace new sit2
+      - tf plan
+    environment:
+      TF_VAR_access_key:
+        from_secret: jaqu_controlled_aws_access_key_id
+      TF_VAR_secret_key:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      TF_VAR_master_access_key:
+        from_secret: jaqu_master_aws_access_key_id
+      TF_VAR_master_secret_key:
+        from_secret: jaqu_master_aws_secret_access_key
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_NAME: jaqu-controlled
+    when:
+      event:
+        - pull_request
+    depends_on:
+      - clone iac
 
   - name: provisioning warning
     image: docker:19.03.11-git
@@ -952,13 +1020,6 @@ steps:
         path: /opt/package
     commands:
       - apk update && apk add bash
-      - mkdir ~/.ssh
-      - echo -e "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
-      - chmod 600 ~/.ssh/id_rsa
-      - touch ~/.ssh/known_hosts
-      - chmod 600 ~/.ssh/known_hosts
-      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
-      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
       - cd JAQU-CAZ-IAC
       - git checkout controlled_sit
       - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
@@ -991,11 +1052,57 @@ steps:
         from_secret: jaqu_controlled_aws_secret_access_key
       AWS_DEFAULT_REGION: eu-west-2
       AWS_ACCOUNT_NAME: jaqu-controlled
-      GIT_PRIVATE_SSH:
-        from_secret: jaqu_lower_github_private_key
     when:
       event:
         - push
+    depends_on:
+      - clone iac
+
+  # Invoke terraform scripts to deploy lambda function
+  - name: deploy to sit2
+    image: hashicorp/terraform:0.12.23
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk update && apk add bash
+      - cd JAQU-CAZ-IAC
+      - git checkout controlled_sit
+      - export TF_VAR_lambda_file=$(ls /opt/package/*.zip | tail -1)
+      - cd terraform-iac/projects/payments/layers/01.networking
+      - PATH=$PATH:../../../../bin/
+      - chmod +x ../../../../bin/tf
+      - tf init
+      - tf workspace select sit2 || tf workspace new sit2
+      - tf apply -auto-approve
+      - cd ../02.backends
+      - tf init
+      - tf workspace select sit2 || tf workspace new sit2
+      - tf apply -auto-approve
+      - cd ../03.api
+      - tf init
+      - tf workspace select sit2 || tf workspace new sit2
+      - tf apply -auto-approve
+    environment:
+      TF_VAR_access_key:
+        from_secret: jaqu_controlled_aws_access_key_id
+      TF_VAR_secret_key:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      TF_VAR_master_access_key:
+        from_secret: jaqu_master_aws_access_key_id
+      TF_VAR_master_secret_key:
+        from_secret: jaqu_master_aws_secret_access_key
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_NAME: jaqu-controlled
+    when:
+      event:
+        - push
+    depends_on:
+      - deploy to sit
 
   # Invokes lambda function with $LATEST alias to deploy schema migrations prior to code deploy rollover
   - name: apply db schema migrations
@@ -1019,6 +1126,33 @@ steps:
     when:
       event:
         - push
+    depends_on:
+      - deploy to sit
+
+  # Invokes lambda function with $LATEST alias to deploy schema migrations prior to code deploy rollover
+  - name: apply db schema migrations (sit2)
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-sit2 --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json --profile target_acc
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+    when:
+      event:
+        - push
+    depends_on:
+      - deploy to sit2
 
   - name: codedeploy api sit
     image: alpine:3.11.6
@@ -1046,6 +1180,37 @@ steps:
     when:
       event:
         - push
+    depends_on:
+      - apply db schema migrations
+
+  - name: codedeploy api sit2
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh . --profile target_acc
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh . --profile target_acc
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_payment_history.sh . --profile target_acc
+      - bash deploy_lambda.sh
+      - bash deploy_dangling_payments.sh
+      - bash deploy_payment_history.sh
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: sit2
+      LAMBDA_BUCKET: jaqu-shared-project-lambda-bucket
+    when:
+      event:
+        - push
+    depends_on:
+      - apply db schema migrations (sit2)
 
   # subscribe to operational monitoring alert in sit
   - name: subscribe to operational monitoring alert in sit
@@ -1068,6 +1233,32 @@ steps:
     when:
       event:
         - push
+    depends_on:
+      - codedeploy api sit
+
+  # subscribe to operational monitoring alert in sit
+  - name: subscribe to operational monitoring alert in sit2
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i sit2 -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_controlled_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_controlled_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: sit2
+    when:
+      event:
+        - push
+    depends_on:
+      - codedeploy api sit2
 
   ################################################# End of SIT Environment Steps #######################################################
 
