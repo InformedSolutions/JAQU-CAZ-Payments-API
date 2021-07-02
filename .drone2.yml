@@ -1002,7 +1002,7 @@ steps:
       event:
         - pull_request
     depends_on:
-      - clone iac
+      - plan updates into sit
 
   - name: provisioning warning
     image: docker:19.03.11-git
