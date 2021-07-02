@@ -74,9 +74,6 @@ local-db-up:
 local-db-down:
 	docker-compose -f docker/docker-compose.yml -p postgres_docker down
 
-local-api:
-	docker-compose -f docker/docker-compose-local-api.yml up -d
-	
 local-up:
 	docker-compose -f docker/docker-compose.yml -p postgres_docker up -d
 
