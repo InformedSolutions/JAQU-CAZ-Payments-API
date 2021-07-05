@@ -1625,6 +1625,13 @@ volumes:
 
 steps:
 
+  - name: check for hotfix pipeline
+    image: alpine:3.11.6
+    environment:
+     DRONE_SOURCE_BRANCH: ${DRONE_SOURCE_BRANCH}
+    commands:
+      - sh ci-cd-resources/hotfix-check.sh
+
   - name: plan updates into uat
     image: hashicorp/terraform:0.12.23
     volumes:
