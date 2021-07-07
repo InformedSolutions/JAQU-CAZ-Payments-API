@@ -153,7 +153,9 @@ public class EntrantPaymentService {
   private void markAsVehicleEntrantCapturedIfNotAlreadySo(EntrantPayment entrantPayment) {
     if (!entrantPayment.isVehicleEntrantCaptured()) {
       EntrantPayment entrantPaymentToUpdate = entrantPayment.toBuilder()
-          .vehicleEntrantCaptured(true).build();
+          .vehicleEntrantCaptured(true)
+          .updateActor(EntrantPaymentUpdateActor.VCCS_API)
+          .build();
       entrantPaymentRepository.update(entrantPaymentToUpdate);
     }
   }
