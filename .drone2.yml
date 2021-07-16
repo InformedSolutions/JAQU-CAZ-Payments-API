@@ -1276,13 +1276,27 @@ trigger:
     - pull_request
     - push
 concurrency:
-  limit: 1
+  limit: 2
 
 volumes:
   - name: package_directory
     temp: {}
 
 steps:
+
+  - name: clone iac
+    image: hashicorp/terraform:0.12.23
+    commands:
+      - apk update && apk add bash
+      - mkdir ~/.ssh
+      - echo -e "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
+      - cd JAQU-CAZ-IAC
+      - git checkout staging_preprod
+    environment:
+      GIT_PRIVATE_SSH:
+        from_secret: jaqu_lower_github_private_key
 
   - name: plan updates into preprod
     image: hashicorp/terraform:0.12.23
@@ -1292,12 +1306,6 @@ steps:
     commands:
       - apk add --update bash python python-dev py-pip build-base jq wget
       - pip install awscli
-      - mkdir ~/.ssh
-      - echo -e "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
-      - chmod 600 ~/.ssh/id_rsa
-      - touch ~/.ssh/known_hosts
-      - chmod 600 ~/.ssh/known_hosts
-      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
       - mkdir ~/.aws
       - echo -e "[profile target_acc]\nrole_arn = $SRC_AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
       - LAMBDA_FUNCTION=payments-lambda-sit
@@ -1306,9 +1314,7 @@ steps:
       - VERSION=`aws lambda get-function --profile target_acc --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Configuration.Version'`
       - wget -O /opt/package/$LAMBDA_FUNCTION-$VERSION.zip $SIGNED_URL
       - export TF_VAR_lambda_file=/opt/package/$LAMBDA_FUNCTION-$VERSION.zip
-      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
       - cd JAQU-CAZ-IAC
-      - git checkout staging_preprod
       - cd terraform-iac/projects/payments/layers/01.networking
       - PATH=$PATH:../../../../bin/
       - chmod +x ../../../../bin/tf
@@ -1339,11 +1345,64 @@ steps:
       AWS_DEFAULT_REGION: eu-west-2
       SRC_AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
       AWS_ACCOUNT_NAME: jaqu-staging
-      GIT_PRIVATE_SSH:
-        from_secret: jaqu_lower_github_private_key
     when:
       event:
         - pull_request
+      depends_on:
+        - clone iac
+
+  - name: plan updates into preprod2
+    image: hashicorp/terraform:0.12.23
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq wget
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $SRC_AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - LAMBDA_FUNCTION=payments-lambda-sit
+      - ENV=sit
+      - SIGNED_URL=`aws lambda get-function --profile target_acc --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Code.Location'`
+      - VERSION=`aws lambda get-function --profile target_acc --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Configuration.Version'`
+      - wget -O /opt/package/$LAMBDA_FUNCTION-$VERSION.zip $SIGNED_URL
+      - export TF_VAR_lambda_file=/opt/package/$LAMBDA_FUNCTION-$VERSION.zip
+      - cd JAQU-CAZ-IAC
+      - cd terraform-iac/projects/payments/layers/01.networking
+      - PATH=$PATH:../../../../bin/
+      - chmod +x ../../../../bin/tf
+      - tf init
+      - tf workspace select preprod2 || tf workspace new preprod2
+      - tf plan
+      - cd ../02.backends
+      - tf init
+      - tf workspace select preprod2 || tf workspace new preprod2
+      - tf plan
+      - cd ../03.api
+      - tf init
+      - tf workspace select preprod2 || tf workspace new preprod2
+      - tf plan
+    environment:
+      TF_VAR_access_key:
+        from_secret: jaqu_staging_aws_access_key_id
+      TF_VAR_secret_key:
+        from_secret: jaqu_staging_aws_secret_access_key
+      TF_VAR_master_access_key:
+        from_secret: jaqu_master_aws_access_key_id
+      TF_VAR_master_secret_key:
+        from_secret: jaqu_master_aws_secret_access_key
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_staging_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_staging_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      SRC_AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+      AWS_ACCOUNT_NAME: jaqu-staging
+    when:
+      event:
+        - pull_request
+      depends_on:
+        - plan updates into preprod
 
   - name: provisioning warning
     image: docker:19.03.11-git
@@ -1362,12 +1421,6 @@ steps:
     commands:
       - apk add --update bash python python-dev py-pip build-base jq wget
       - pip install awscli
-      - mkdir ~/.ssh
-      - echo -e "$GIT_PRIVATE_SSH" > ~/.ssh/id_rsa
-      - chmod 600 ~/.ssh/id_rsa
-      - touch ~/.ssh/known_hosts
-      - chmod 600 ~/.ssh/known_hosts
-      - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts 2> /dev/null
       - mkdir ~/.aws
       - echo -e "[profile target_acc]\nrole_arn = $SRC_AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
       - LAMBDA_FUNCTION=payments-lambda-sit
@@ -1376,9 +1429,7 @@ steps:
       - VERSION=`aws lambda get-function --profile target_acc --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Configuration.Version'`
       - wget -O /opt/package/$LAMBDA_FUNCTION-$VERSION.zip $SIGNED_URL
       - export TF_VAR_lambda_file=/opt/package/$LAMBDA_FUNCTION-$VERSION.zip
-      - git clone git@github.com:InformedSolutions/JAQU-CAZ-IAC.git
       - cd JAQU-CAZ-IAC
-      - git checkout staging_preprod
       - cd terraform-iac/projects/payments/layers/01.networking
       - PATH=$PATH:../../../../bin/
       - chmod +x ../../../../bin/tf
@@ -1409,14 +1460,68 @@ steps:
       AWS_DEFAULT_REGION: eu-west-2
       SRC_AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
       AWS_ACCOUNT_NAME: jaqu-staging
-      GIT_PRIVATE_SSH:
-        from_secret: jaqu_lower_github_private_key
     when:
       event:
         - push
+      depends_on:
+        - plan updates into preprod
+
+  # Invoke terraform scripts to deploy lambda function
+  - name: deploy to preprod2
+    image: hashicorp/terraform:0.12.23
+    volumes:
+      - name: package_directory
+        path: /opt/package
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq wget
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $SRC_AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - LAMBDA_FUNCTION=payments-lambda-sit
+      - ENV=sit
+      - SIGNED_URL=`aws lambda get-function --profile target_acc --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Code.Location'`
+      - VERSION=`aws lambda get-function --profile target_acc --function-name $LAMBDA_FUNCTION --qualifier $ENV| jq --raw-output '.Configuration.Version'`
+      - wget -O /opt/package/$LAMBDA_FUNCTION-$VERSION.zip $SIGNED_URL
+      - export TF_VAR_lambda_file=/opt/package/$LAMBDA_FUNCTION-$VERSION.zip
+      - cd JAQU-CAZ-IAC
+      - cd terraform-iac/projects/payments/layers/01.networking
+      - PATH=$PATH:../../../../bin/
+      - chmod +x ../../../../bin/tf
+      - tf init
+      - tf workspace select preprod2 || tf workspace new preprod2
+      - tf apply -auto-approve
+      - cd ../02.backends
+      - tf init
+      - tf workspace select preprod2 || tf workspace new preprod2
+      - tf apply -auto-approve
+      - cd ../03.api
+      - tf init
+      - tf workspace select preprod2 || tf workspace new preprod2
+      - tf apply -auto-approve
+    environment:
+      TF_VAR_access_key:
+        from_secret: jaqu_staging_aws_access_key_id
+      TF_VAR_secret_key:
+        from_secret: jaqu_staging_aws_secret_access_key
+      TF_VAR_master_access_key:
+        from_secret: jaqu_master_aws_access_key_id
+      TF_VAR_master_secret_key:
+        from_secret: jaqu_master_aws_secret_access_key
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_staging_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_staging_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      SRC_AWS_ACCOUNT_ROLE: arn:aws:iam::072187228077:role/jaqu-controlledServiceRole
+      AWS_ACCOUNT_NAME: jaqu-staging
+    when:
+      event:
+        - push
+      depends_on:
+        - plan updates into preprod2
 
   # Invokes lambda function with $LATEST alias to deploy schema migrations prior to code deploy rollover
-  - name: apply db schema migrations
+  - name: apply db schema migrations (preprod)
     image: alpine:3.11.6
     commands:
       - apk add --update bash python python-dev py-pip build-base jq
@@ -1437,6 +1542,33 @@ steps:
     when:
       event:
         - push
+      depends_on:
+        - deploy to preprod
+
+  # Invokes lambda function with $LATEST alias to deploy schema migrations prior to code deploy rollover
+  - name: apply db schema migrations (preprod2)
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - >
+        aws lambda invoke --invocation-type RequestResponse --function-name payments-lambda-preprod2 --payload "{\"requestContext\": {\"identity\": {}},\"httpMethod\": \"POST\",\"path\": \"/v1/migrate-db\", \"multiValueHeaders\":{\"x-correlation-id\":[\"f09c6856-9746-4d48-813f-3a31f25f96a2\"]}}" output.json --profile target_acc
+      - status_code=$(cat output.json | jq '.statusCode')
+      - if [ $status_code == "200" ]; then exit 0; else exit 1; fi
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_staging_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_staging_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::360470905865:role/jaqu-stagingServiceRole
+    when:
+      event:
+        - push
+      depends_on:
+        - deploy to preprod2
 
   - name: codedeploy api preprod
     image: alpine:3.11.6
@@ -1464,6 +1596,37 @@ steps:
     when:
       event:
         - push
+      depends_on:
+        - apply db schema migrations (preprod)
+
+  - name: codedeploy api preprod2
+    image: alpine:3.11.6
+    commands:
+      - apk add --update bash python python-dev py-pip build-base jq
+      - pip install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_lambda.sh . --profile target_acc
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_dangling_payments.sh . --profile target_acc
+      - aws s3 cp s3://$LAMBDA_BUCKET/$PROJECT/$DEPLOY_ENVIRONMENT/CodeDeploy/deploy_payment_history.sh . --profile target_acc
+      - bash deploy_lambda.sh
+      - bash deploy_dangling_payments.sh
+      - bash deploy_payment_history.sh
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_staging_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_staging_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::360470905865:role/jaqu-stagingServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: preprod2
+      LAMBDA_BUCKET: jaqu-shared-project-lambda-bucket
+    when:
+      event:
+        - push
+      depends_on:
+        - apply db schema migrations (preprod2)
 
   # subscribe to operational monitoring alert in preprod
   - name: subscribe to operational monitoring alert in preprod
@@ -1486,6 +1649,32 @@ steps:
     when:
       event:
         - push
+      depends_on:
+        - codedeploy api preprod
+
+  # subscribe to operational monitoring alert in preprod2
+  - name: subscribe to operational monitoring alert in preprod2
+    image: alpine:3.11.6
+    commands:
+      - apk add --update python3 groff
+      - pip3 install awscli
+      - mkdir ~/.aws
+      - echo -e "[profile target_acc]\nrole_arn = $AWS_ACCOUNT_ROLE\ncredential_source = Environment\nrole_session_name = AWSACCOUNT" > ~/.aws/config
+      - python3 ./ci-cd-resources/subscribe_to_alert_topics_iac_restructure.py -e freeable-memory -e 4xx -e usage -e evictions -e csv -i preprod2 -i payments ISSupport-CAZ@informed.com
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: jaqu_staging_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: jaqu_staging_aws_secret_access_key
+      AWS_DEFAULT_REGION: eu-west-2
+      AWS_ACCOUNT_ROLE: arn:aws:iam::360470905865:role/jaqu-stagingServiceRole
+      PROJECT: payments
+      DEPLOY_ENVIRONMENT: preprod2
+    when:
+      event:
+        - push
+      depends_on:
+        - codedeploy api preprod2
 
   ################################################# End of Preprod Environment Steps #######################################################
 
