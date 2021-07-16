@@ -1276,7 +1276,7 @@ trigger:
     - pull_request
     - push
 concurrency:
-  limit: 1
+  limit: 2
 
 volumes:
   - name: package_directory
